@@ -1,0 +1,1 @@
+D:/WorkProject/OfficeSkill/.codex/AGENTS.md
