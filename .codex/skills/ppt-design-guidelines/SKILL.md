@@ -292,6 +292,89 @@ Before finalizing any PPTX generation request, verify:
 
 ---
 
+## 11. Template Modification Rules
+
+When modifying an existing PPTX template (as opposed to generating from scratch), the agent **must** follow these additional constraints:
+
+### 11.1 Measure Before Writing
+
+- Before inserting text into any text box, use `officecli get <file> <path>` to read the target text box's **width**, **height**, and **font size**.
+- Never assume a text box can hold arbitrary-length content. The template's layout is fixed; the content must fit the container, not the other way around.
+- If the text box has `autoFit=shape` or `autoFit=normal`, text will shrink or overflow silently — treat these as hard boundaries, not elastic containers.
+
+### 11.2 Calculate Character Capacity
+
+Use these estimates to determine maximum content length per text box:
+
+| Font Size | Approx. Chinese chars per cm width | Approx. Latin chars per cm width |
+|:---|:---|:---|
+| 10pt | ~2.8 | ~5.6 |
+| 14pt | ~2.0 | ~4.0 |
+| 18pt | ~1.6 | ~3.1 |
+| 20pt | ~1.4 | ~2.8 |
+| 24pt | ~1.2 | ~2.4 |
+
+**Rules:**
+
+- Convert text box width from EMU to cm: `width_cm = width_emu / 914400 × 2.54`
+- Max characters per line = `width_cm × chars_per_cm` (use the table above)
+- Max lines = `height_cm / (fontSize_pt × 0.0353 × lineSpacing)` (approximate)
+- If the calculated content exceeds capacity, **shorten the text** — do not rely on auto-shrink.
+- For Chinese text, count each CJK character as 1 unit; for mixed text, count Latin characters as 0.5 units.
+
+### 11.3 Respect Existing Layout
+
+- **Do not reposition or resize** template text boxes unless explicitly asked.
+- If a text box is too small for the desired content, split the content across slides or use a shorter phrasing — never force long content into a small container.
+- When template text boxes are arranged in a grid or card layout (multiple small boxes), limit content to **short keywords or phrases** (2–6 characters for Chinese labels, 1–3 words for English).
+- For text boxes narrower than 3cm, use **single words or very short phrases only**.
+
+### 11.4 Replace ALL Placeholders
+
+Before delivering the modified file, the agent must:
+
+1. Run `officecli view <file> text` to scan all text content.
+2. Search for common placeholder patterns:
+   - English: "Text here", "Supporting text", "keyword", "Copy paste fonts", "Unified fonts"
+   - Chinese: "您的内容打在这里", "在此录入", "输入关键字"
+3. Every placeholder text **must** be replaced with relevant content or removed.
+4. If a placeholder text box serves a purely decorative or structural role that has no matching content, set it to an empty string or a single relevant word — never leave template boilerplate visible.
+
+### 11.5 Verify After Modification
+
+After all batch modifications, the agent must:
+
+1. Run `officecli view <file> text` and confirm:
+   - No template placeholder text remains
+   - No content appears truncated or nonsensical
+2. Run `officecli view <file> outline` to verify slide count and structure.
+3. If possible, visually check (via screenshot or preview) that:
+   - No text overflows its container
+   - No elements overlap
+   - Navigation tabs and labels are all consistent
+
+### 11.6 Batch Modification Strategy
+
+When performing batch text replacements on a template:
+
+1. **Query first**: Use `officecli query` with `:contains()` selectors to find exact element paths before modifying.
+2. **Validate IDs exist**: Not all shape IDs from one slide exist on others — always verify paths per slide.
+3. **Group by slide**: Process modifications slide-by-slide to catch errors early.
+4. **Test with short content first**: If unsure about box capacity, set a brief test string, verify it renders correctly, then finalize with full content.
+5. **Prefer keywords over sentences**: Template card layouts are designed for keywords. Use full sentences only in wide, dedicated content areas (width > 8cm).
+
+### 11.7 Common Template Pitfalls
+
+| Pitfall | Symptom | Prevention |
+|:---|:---|:---|
+| Long text in narrow box | Text stacks vertically, becomes unreadable | Measure width first, use ≤ max chars |
+| Unmodified placeholder | "Text here" or "您的内容打在这里" visible | Full-text scan after all edits |
+| Overlapping text layers | Description text covers card elements | Check z-order; use only the appropriate text box |
+| Mixed content density | Some cards have 3 words, others have 30 | Keep parallel elements at consistent length |
+| Missing nav-tab updates | Old section names remain in tab labels | Query all tab-shaped elements and update consistently |
+
+---
+
 ## References
 
 Design principles sourced from:
