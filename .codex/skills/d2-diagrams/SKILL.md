@@ -11,7 +11,7 @@ This skill bundles its own D2 executable at `bin/d2.exe`. Use the provided Pytho
 
 ## Quick Start
 
-1. Clarify the diagram type: architecture, infrastructure, sequence/data flow, dependency map, deployment, or general system overview.
+1. Clarify the diagram type: architecture, infrastructure, sequence/data flow, dependency map, deployment, grid layout, or general system overview.
 2. If the request is based on a codebase, scan first with `rg --files` and targeted `rg` searches. Treat code and IaC as authoritative; use existing docs only as hints.
 3. Create or update files under `./diagrams/` unless the user requests another location.
 4. Write concise `.d2` source with explicit nodes, meaningful edge labels, and grouped containers.
@@ -55,7 +55,7 @@ For repo-derived diagrams, use this sequence:
 
 Read `references/d2-style-guide.md` when creating non-trivial D2 or fixing syntax. Core rules:
 
-- Use `->` for directed relationships; do not use `=>`.
+- Use `->` for directed relationships; `<->` for bidirectional; `--` for undirected. Never use `=>`.
 - Use stable node IDs without spaces, and put human labels after `:`.
 - Put connected nodes near each other in source order.
 - Use `direction: down` or `direction: right` near the top.
@@ -63,18 +63,78 @@ Read `references/d2-style-guide.md` when creating non-trivial D2 or fixing synta
 - Use `class:` for styling and direct `icon:` URLs for technology nodes when icons are desired.
 - Do not set explicit `style.fill` for theme-aware diagrams; let D2 themes handle fills.
 - For simplified diagrams, target 3-8 major components.
-- Distinguish asynchronous flows with dashed edges.
+- Distinguish asynchronous flows with dashed edges (`style.stroke-dash: 5`).
+- Use `shape: sequence_diagram` for sequence/interaction diagrams.
+- Use `grid-rows` / `grid-columns` for structured grid layouts (dashboards, tables, catalogs).
+- Use globs (`*`, `**`) to apply styles globally instead of repeating per-node styling.
+- Use `near:` for positioning titles, legends, and annotations.
+- Use `|md ... |` for Markdown labels, `|latex ... |` for math, `|go ... |` for code blocks.
+- Use arrowhead customization (`source-arrowhead`, `target-arrowhead`) for ER diagrams and crows-foot notation.
+- Apply multiple classes with array syntax: `node.class: [classA; classB]`.
+
+## Diagram Types Guide
+
+### Architecture / Infrastructure (default)
+
+Standard directed graph. Use containers for boundaries (VPC, cluster, service layer).
+
+### Sequence Diagrams
+
+```d2
+shape: sequence_diagram
+alice -> bob: request
+bob -> alice: response
+```
+
+Features: spans (activation boxes), groups (fragments), notes, self-messages, actor shapes (`shape: person`).
+
+### Grid Diagrams
+
+```d2
+grid-columns: 3
+grid-gap: 0
+Executive
+Legislative
+Judicial
+```
+
+Use for: dashboards, catalogs, data tables, structured layouts. First keyword (`grid-rows` or `grid-columns`) is dominant fill direction.
+
+### Text / Documentation Diagrams
+
+```d2
+explanation: |md
+  # Architecture Decision
+  We chose microservices because...
+| {near: center-left}
+```
+
+Combine with `shape: text` for standalone annotations or `near:` for positioned descriptions.
 
 ## Rendering Standards
 
-Use D2 with `--bundle` whenever icons are present so SVGs are self-contained. Default themes:
+Use D2 with `--bundle` whenever icons are present so SVGs are self-contained. Default rendering options:
 
-- Light: `--theme 0`
-- Dark: `--theme 200`
+- Light: `--theme 0` (Neutral Default)
+- Dark: `--theme 200` (Dark Mauve)
 - Preferred layout: `--layout elk`
 - Fallback layout: `--layout dagre`
 
 If rendering fails, inspect the exact D2 error, fix the smallest source issue, and retry. After three failures, simplify the diagram and report what changed.
+
+### Theme Selection
+
+Read `references/d2-themes.md` for the full theme catalog with IDs, previews, and recommended pairings. Common choices:
+
+| Use Case | Light | Dark |
+| --- | --- | --- |
+| General / Default | 0 (Neutral Default) | 200 (Dark Mauve) |
+| Formal Documentation | 1 (Neutral Grey) | 200 (Dark Mauve) |
+| Accessibility | 8 (Colorblind Clear) | 200 (Dark Mauve) |
+| Terminal / CLI Docs | 300 (Terminal) | 300 (Terminal) |
+| C4 Architecture | 303 (C4) | 200 (Dark Mauve) |
+
+Themes can also be set inside `.d2` files via `vars.d2-config.theme-id`. Special themes (Terminal, C4, Origami) change default styles beyond just colors.
 
 ## Project Rules
 
@@ -91,4 +151,5 @@ If `./diagrams/rules.md` exists, read it before creating diagrams. It may define
 - `scripts/write_diagram_readme.py`: Create a standard `./diagrams/README.md` landing page for generated diagram sets.
 - `assets/animations.css`: Motion CSS for arrows, database shapes, queues, text protection, and reduced-motion support.
 - `references/workflow.md`: Codebase scan and comprehensive diagram workflow.
-- `references/d2-style-guide.md`: D2 syntax, layout, classes, icon use, and error recovery.
+- `references/d2-style-guide.md`: D2 syntax, shapes, connections, containers, classes, globs, grids, sequences, positions, text/markdown, icons, layout, styling, and error recovery.
+- `references/d2-themes.md`: Complete theme catalog (20 built-in themes), usage methods, recommended pairings, special theme behaviors, and customization via theme-overrides.
