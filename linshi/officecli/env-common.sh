@@ -51,8 +51,13 @@ default_publish_base_url() {
 }
 
 resolve_officecli_path() {
-  if [[ -n "${OFFICECLI_BIN:-}" && -x "${OFFICECLI_BIN}" ]]; then
+  if [[ -n "${OFFICECLI_BIN:-}" && -f "${OFFICECLI_BIN}" ]]; then
     printf '%s\n' "${OFFICECLI_BIN}"
+    return 0
+  fi
+  local bundled_bin="${OFFICECLI_ENV_SCRIPT_DIR}/lib/bin/win32-x64/officecli.exe"
+  if [[ -f "${bundled_bin}" ]]; then
+    printf '%s\n' "${bundled_bin}"
     return 0
   fi
   if command -v officecli >/dev/null 2>&1; then
@@ -263,6 +268,10 @@ install_officecli_binary() {
     bash -lc "${install_cmd}"
     return 0
   fi
+  if ! truthy "${OFFICECLI_ALLOW_BINARY_INSTALL:-0}"; then
+    echo "officecli binary not found; bundled binary expected at ${OFFICECLI_ENV_SCRIPT_DIR}/lib/bin/win32-x64/officecli.exe" >&2
+    return 1
+  fi
   if ! command -v curl >/dev/null 2>&1; then
     echo "missing curl, unable to auto-install officecli" >&2
     return 1
@@ -312,6 +321,9 @@ refresh_codex_officecli_skill() {
   local refresh_cmd="${OFFICECLI_REFRESH_SKILL_COMMAND:-}"
   if [[ -n "${refresh_cmd}" ]]; then
     bash -lc "${refresh_cmd}"
+    return 0
+  fi
+  if ! truthy "${OFFICECLI_ALLOW_SKILL_REFRESH:-0}"; then
     return 0
   fi
   if ! command -v curl >/dev/null 2>&1; then

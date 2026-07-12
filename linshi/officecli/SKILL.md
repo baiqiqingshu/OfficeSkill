@@ -45,6 +45,17 @@ Do not use this skill for pure Q&A, rough brainstorming with no file output, or 
 - hosted runtime mode uses the OfficeCLI platform service and requires a platform OfficeCLI API key with hosted credits; users should not configure or handle aigateway keys directly
 - OfficeCLI should be installed through one channel at a time; if the user already has a Homebrew-installed `officecli`, do not suggest or run `npm install -g officecli` on top of it
 
+## Bundled Binary
+
+This project-local skill can carry its own Windows binary at `lib/bin/win32-x64/officecli.exe`.
+
+- prefer `OFFICECLI_BIN` when the user explicitly sets it
+- otherwise prefer the bundled binary at `lib/bin/win32-x64/officecli.exe`
+- only then fall back to `officecli` on `PATH`
+- do not install or refresh a global `officecli` binary from this project-local skill unless the user explicitly asks for that
+- set `OFFICECLI_ALLOW_BINARY_INSTALL=1` only when the user approves installing a binary outside the skill directory
+- set `OFFICECLI_ALLOW_SKILL_REFRESH=1` only when the user approves refreshing the user-level Codex skill bundle
+
 ## Authentication
 
 `officecli` supports three authentication modes:
@@ -68,7 +79,7 @@ The environment check and fix scripts detect anonymous mode and surface a login 
 
 When a task involves Office document handling, first check whether the current `officecli` surface appears to support that workflow.
 
-- before every office task, run `fix-officecli-env.sh` once so the agent refreshes the local skill bundle and repairs any missing `officecli` setup
+- before every office task, run `fix-officecli-env.sh` once so the agent checks the project-local bundled binary and repairs missing configuration
 - check whether `officecli` is available before deciding on the final artifact path
 - after the repair step, run `check-officecli-env.sh` to detect whether `officecli` is missing, misconfigured, or already ready
 - treat exit code `0` as ready, `10` as repairable, and `20` as blocked
@@ -81,10 +92,11 @@ When a task involves Office document handling, first check whether the current `
 
 Run `fix-officecli-env.sh` on every task, not only when the environment looks broken.
 
-- the fix script must refresh the local Codex skill bundle first
-- the fix script should install `officecli` when it is missing, but must not refresh an existing binary unless the host explicitly opts in, for example with `OFFICECLI_REFRESH_BINARY=1`
+- the fix script must use the project-local bundled binary first
+- the fix script should not install `officecli` globally when the bundled binary is missing unless `OFFICECLI_ALLOW_BINARY_INSTALL=1` is set with user approval
+- the fix script must not refresh an existing binary unless the host explicitly opts in, for example with `OFFICECLI_REFRESH_BINARY=1`
 - when the user explicitly asks to uninstall `officecli`, run `uninstall-officecli.sh`
-- if `officecli` is missing, the fix script should auto-install it through the public dist installer
+- if `officecli` is missing, report that the expected project-local binary is absent at `lib/bin/win32-x64/officecli.exe`
 - if the user previously installed with Homebrew and wants to switch to npm, tell them to run `brew uninstall officecli/homebrew-officecli/officecli` first; if their formula uses the short name, use `brew uninstall officecli`, then run `npm install -g officecli`
 - if generation or license config is missing, ask only for the missing values and let the fix script call the relevant `officecli config ...` commands
 - publish config is required by default so generated files return online preview URLs

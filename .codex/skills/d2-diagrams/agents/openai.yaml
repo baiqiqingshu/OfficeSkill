@@ -1,0 +1,4 @@
+interface:
+  display_name: "D2 Diagrams"
+  short_description: "Generate and render D2 architecture diagrams."
+  default_prompt: "Use $d2-diagrams to create architecture and infrastructure diagrams from this project."

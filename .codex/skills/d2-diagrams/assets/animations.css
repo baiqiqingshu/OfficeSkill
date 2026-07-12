@@ -1,0 +1,57 @@
+/* D2 Diagram Animations
+ * Auto-injected into rendered SVGs by scripts/enhance_svg.py.
+ */
+
+@keyframes traffic-flow {
+  0% { stroke-dashoffset: 12; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes traffic-flow-slow {
+  0% { stroke-dashoffset: 18; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+path[marker-end] {
+  stroke-dasharray: 8 4;
+  animation: traffic-flow 1s linear infinite;
+}
+
+path[marker-end][stroke-dasharray] {
+  stroke-dasharray: 12 6;
+  animation: traffic-flow-slow 2s linear infinite;
+}
+
+.shape-cylinder > path:first-of-type,
+.shape-cylinder > ellipse {
+  animation: subtle-pulse 3s ease-in-out infinite;
+}
+
+.shape-queue > path:first-of-type {
+  animation: subtle-pulse 2.5s ease-in-out infinite;
+}
+
+text,
+tspan,
+textPath,
+.text,
+[class*="label"] text {
+  animation: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  path[marker-end],
+  path[marker-end][stroke-dasharray],
+  .shape-cylinder > path:first-of-type,
+  .shape-cylinder > ellipse,
+  .shape-queue > path:first-of-type {
+    animation: none;
+  }
+}
