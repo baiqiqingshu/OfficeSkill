@@ -7,6 +7,8 @@ description: Generate, validate, render, and document D2 diagrams for software a
 
 Use this skill to produce clear D2 diagrams and SVG outputs from a user request, existing architecture notes, or a codebase scan. Prefer D2 source as the durable artifact and SVG as the rendered deliverable.
 
+This skill bundles its own D2 executable at `bin/d2.exe`. Use the provided Python scripts for validation and rendering so D2 is resolved from the skill directory first and does not depend on a system-wide install or PATH entry.
+
 ## Quick Start
 
 1. Clarify the diagram type: architecture, infrastructure, sequence/data flow, dependency map, deployment, or general system overview.
@@ -80,6 +82,8 @@ If `./diagrams/rules.md` exists, read it before creating diagrams. It may define
 
 ## Bundled Resources
 
+- `bin/d2.exe`: Bundled D2 CLI used by this skill before falling back to PATH.
+- `scripts/d2_executable.py`: Resolve the bundled D2 executable path for all skill scripts.
 - `scripts/check_d2.py`: Check D2 availability, format validity, optional renderability, node/edge counts, and icon warnings.
 - `scripts/render_d2.py`: Render one `.d2` file to light/dark SVGs with elk-first, dagre-fallback behavior.
 - `scripts/enhance_svg.py`: Inject animation CSS into one SVG or every SVG in a directory.

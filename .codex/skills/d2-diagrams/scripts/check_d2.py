@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import argparse
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from d2_executable import find_d2, missing_d2_message
 
 NODE_RE = re.compile(r"^\s*[A-Za-z0-9_-]+\s*:", re.MULTILINE)
 EDGE_RE = re.compile(r"\S+\s*(?:->|--)\s*\S+")
@@ -27,7 +28,7 @@ def rules_disable_icons(cwd: Path) -> bool:
     return bool(re.search(r"disable.*icon|no.*icon|skip.*icon|icons.*false|icons.*disabled", text))
 
 
-def check_file(path: Path, args: argparse.Namespace) -> int:
+def check_file(path: Path, args: argparse.Namespace, d2: str) -> int:
     if not path.exists():
         print(f"FAIL {path}: file does not exist")
         return 1
@@ -52,7 +53,7 @@ def check_file(path: Path, args: argparse.Namespace) -> int:
             print(f"OK {path}: edge count {edges}")
 
     if not args.no_fmt:
-        result = run(["d2", "fmt", str(path), "--check"])
+        result = run([d2, "fmt", str(path.resolve()), "--check"])
         if result.returncode != 0:
             print(f"FAIL {path}: d2 fmt --check failed")
             print(result.stdout)
@@ -61,9 +62,9 @@ def check_file(path: Path, args: argparse.Namespace) -> int:
             print(f"OK {path}: d2 fmt --check")
 
     if args.render:
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with tempfile.TemporaryDirectory(prefix=".d2-check-", dir=Path.cwd()) as temp_dir:
             output = Path(temp_dir) / "check.svg"
-            result = run(["d2", str(path), str(output), "--layout", args.layout])
+            result = run([d2, str(path.resolve()), str(output.resolve()), "--layout", args.layout])
             if result.returncode != 0 or not output.exists() or output.stat().st_size == 0:
                 print(f"FAIL {path}: test render failed")
                 print(result.stdout)
@@ -90,13 +91,13 @@ def main() -> int:
     parser.add_argument("--no-icon-warning", action="store_true")
     args = parser.parse_args()
 
-    if shutil.which("d2") is None:
-        print("FAIL: d2 executable not found on PATH")
-        print("Install D2 from https://d2lang.com or run: go install oss.terrastruct.com/d2@latest")
+    d2 = find_d2()
+    if d2 is None:
+        print(missing_d2_message())
         return 1
 
-    print(run(["d2", "--version"]).stdout.strip())
-    return max(check_file(path, args) for path in args.files)
+    print(run([d2, "--version"]).stdout.strip())
+    return max(check_file(path, args, d2) for path in args.files)
 
 
 if __name__ == "__main__":
