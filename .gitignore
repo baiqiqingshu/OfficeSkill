@@ -3,3 +3,5 @@
 
 temp/
 assets/
+# 大文件
+临时/*.zip
