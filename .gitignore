@@ -5,7 +5,7 @@ temp/
 /assets/
 # 大文件
 临时/*.zip
-安装包/
+
 
 # Python 缓存
 __pycache__/
