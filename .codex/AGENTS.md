@@ -1,1 +1,0 @@
-D:/QuantSystem/DataPanda/.agent/AGENTS.md

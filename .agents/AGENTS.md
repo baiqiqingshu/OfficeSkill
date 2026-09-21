@@ -1,1 +1,1 @@
-D:/WorkProject/OfficeSkill/.codex/AGENTS.md
+D:/QuantSystem/DataPanda/.agent/AGENTS.md
