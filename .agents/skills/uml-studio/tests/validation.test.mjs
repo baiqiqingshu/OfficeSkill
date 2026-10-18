@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { validateSpec } from '../dist/core.mjs'
+import { renderDiagram, validateSpec } from '../dist/core.mjs'
 const flow = () => ({ version: 1, type: 'flowchart', title: '评审', nodes: [{ id: 'a', label: '提交' }, { id: 'b', label: '通过' }], edges: [{ from: 'a', to: 'b' }] })
 
 test('rejects duplicate identities and dangling edge endpoints rather than dropping content', () => {
@@ -8,6 +8,39 @@ test('rejects duplicate identities and dangling edge endpoints rather than dropp
   assert.throws(() => validateSpec(duplicate), /重复 ID/)
   const dangling = flow(); dangling.edges[0].to = 'missing'
   assert.throws(() => validateSpec(dangling), /端点不存在/)
+})
+
+test('flow terminals share a vertical axis and rendered routes stay orthogonal', async () => {
+  const spec = { version: 1, type: 'flowchart', title: '流程', nodes: [
+    { id: 'start', kind: 'start', label: '开始' }, { id: 'check', label: '检查' }, { id: 'pass', label: '通过' },
+    { id: 'fix', label: '修复' }, { id: 'release', label: '发布' }, { id: 'end', kind: 'end', label: '结束' },
+  ], edges: [
+    { from: 'start', to: 'check' }, { from: 'check', to: 'pass' }, { from: 'pass', to: 'fix' },
+    { from: 'fix', to: 'check' }, { from: 'pass', to: 'release' }, { from: 'release', to: 'end' },
+  ] }
+  const svg = (await renderDiagram(validateSpec(spec))).svg
+  const terminalCenter = (id) => {
+    const group = svg.match(new RegExp(`<g[^>]*data-node-id="${id}"[\\s\\S]*?</g>`))?.[0]
+    const circle = group?.match(/<circle[^>]*cx="([0-9.-]+)"[^>]*cy="([0-9.-]+)"/)
+    assert.ok(circle, `missing ${id} terminal shape`)
+    return { x: Number(circle[1]), y: Number(circle[2]) }
+  }
+  const start = terminalCenter('start'), end = terminalCenter('end')
+  assert.ok(Math.abs(start.x - end.x) < 1)
+  assert.ok(start.y < end.y)
+  const edgeGroups = [...svg.matchAll(/<g[^>]*data-edge-id="[^"]+"[\s\S]*?<\/g>/g)].map(match => match[0])
+  assert.equal(edgeGroups.length, spec.edges.length)
+  for (const group of edgeGroups) for (const [, data] of group.matchAll(/<path[^>]* d="([^"]+)"/g)) {
+    let current
+    for (const [, command, values] of data.matchAll(/([MLQ])([0-9. -]+)/g)) {
+      const numbers = values.trim().split(/ +/).map(Number)
+      if (command === 'M' || command === 'L') {
+        const point = { x: numbers[0], y: numbers[1] }
+        if (command === 'L' && current) assert.ok(Math.abs(current.x - point.x) < 0.01 || Math.abs(current.y - point.y) < 0.01, data)
+        current = point
+      } else current = { x: numbers[2], y: numbers[3] }
+    }
+  }
 })
 
 test('group containment rejects descendant cycles and unknown parents', () => {

@@ -68,7 +68,7 @@ npm run dev
 - 主结构见 schema。除通用元数据外，图节点、时序和鱼骨数据不可混用；未知字段会报错，不静默丢弃。
 - 默认 `theme:"ocean"`；还支持 `paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
 - 色值支持十六进制 `#RGB` / `#RRGGBB` 和 `transparent`。网页支持粘贴色值、系统拾色器与精选色板。PNG / WebP / SVG 可保留透明；JPEG 无透明通道，铺白底。字体使用本机字体；Node 导出可重复传入 `--font-file path.ttf`，不下载远程字体。
-- `direction: "TB" | "LR"` 控制图布局。时序顺序由 `messages` 顺序决定，鱼骨分类按数组顺序排列。
+- `direction: "TB" | "LR"` 控制图布局；未指定时节点图默认为 `TB`。流程图、活动图及泳道图会将开始节点置于首层、结束节点置于末层，并在纵向布局中尽量保持两者中心轴对齐；所有连接保留为连续的正交折线。时序顺序由 `messages` 顺序决定，鱼骨分类按数组顺序排列。
 - 泳道图：`lanes` 声明职责，所有节点必须设置 `lane`。分组使用 `groups` 和节点 `group`；`parent` 允许嵌套，禁止循环包含。
 - 类节点可有 `attributes`、`operations`；用 `kind` 选择 UML 图元。依赖、包含、扩展、继承、实现、聚合、组合用连线 `kind`，不要只改标签冒充 UML 关系。
 - 时序消息支持 `sync`、`async`、`return`、`create`、`destroy`。`activate` 打开接收方激活条；`return` 的 `deactivate` 关闭发送方激活，其他消息关闭接收方激活。销毁关闭目标的全部激活，未关闭的激活绘至图底。
@@ -78,6 +78,7 @@ npm run dev
 ### 布局与文字
 
 `layout.mode` 支持 `compact`（默认）、`balanced`、`spacious`、`grid`。紧凑默认元素 / 区域间距为 24 / 40；网格默认每列 3 个节点。显式 `layout.elementGap/regionGap` 优先于 `style.gap`，后者优先于模式默认值。网页切换模式会清除间距覆盖，使预设立即生效。
+- ELK 根据连接关系自动分层、减少交叉并优先拉直边。存在多个分组区域时，区域容器默认横向排列，组内仍遵循 `direction`；泳道按泳道方向布局。直接相连节点会尽量保持同层或同列，节点过多时结合 `maxPerColumn` 分列。
 
 可设置 `showTitle`、`maxWidth/maxHeight`（整图等比上限，不裁切）、`nodeMaxWidth/nodeMaxHeight`（节点换行后自适应缩放）、`elementGap`、`regionGap`、`maxPerColumn`。尺寸上限和每列数量为 0 表示不限；节点尺寸 / 每列数量只用于节点图，时序与鱼骨使用专用布局。不要用缩小字号代替删减用户要求的内容；极小节点上限会缩小文字，应按可读性设置。
 

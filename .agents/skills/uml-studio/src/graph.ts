@@ -205,8 +205,11 @@ function layoutOptions(direction: 'TB' | 'LR', padding: string, spec: DiagramSpe
     'elk.padding': padding, 'elk.spacing.nodeNode': String(spec.layout?.elementGap ?? 24),
     'elk.layered.spacing.nodeNodeBetweenLayers': String(spec.layout?.elementGap ?? 24),
     'elk.spacing.edgeNode': '18', 'elk.spacing.edgeEdge': '14', 'elk.spacing.edgeLabel': '10',
-    'elk.spacing.labelNode': '12', 'elk.spacing.labelLabel': '8',
     'elk.layered.spacing.edgeNodeBetweenLayers': '20', 'elk.layered.spacing.edgeEdgeBetweenLayers': '14',
+    'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
+    'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
+    'elk.layered.nodePlacement.bk.edgeStraightening': 'IMPROVE_STRAIGHTNESS',
+    'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
     'elk.layered.mergeEdges': 'false', 'elk.separateConnectedComponents': 'true',
     'elk.spacing.componentComponent': String(spec.layout?.regionGap ?? 40),
@@ -220,6 +223,7 @@ function buildGraph(
   additionalGroups?: string[],
 ): ElkNode {
   const direction = spec.direction ?? 'TB';
+  const rootDirection: 'TB' | 'LR' = !lane && groups.length > 1 ? 'LR' : direction;
   const groupById = new Map(groups.map(group => [group.id, group]));
   const included = new Set<string>();
   const memberships = [...refs.map(ref => ref.node.group), ...(additionalGroups ?? [])];
@@ -237,7 +241,7 @@ function buildGraph(
   const padding = lane
     ? (direction === 'TB' ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]`)
     : '[top=24,left=24,bottom=24,right=24]';
-  root.layoutOptions = layoutOptions(direction, padding, spec);
+  root.layoutOptions = layoutOptions(rootDirection, padding, spec);
   if (lane) {
     root.width = direction === 'TB' ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
     root.height = direction === 'TB' ? 180 + header : Math.max(180, measure(lane.label, theme.fontSize).height + 28);
@@ -274,8 +278,10 @@ function buildGraph(
       const size = Math.max(10, ref.theme.fontSize - 2);
       const metrics = measure(caption, size);
       const placement = direction === 'TB' ? '[H_RIGHT,V_CENTER,OUTSIDE]' : '[H_CENTER,V_BOTTOM,OUTSIDE]';
-      child.layoutOptions = { 'elk.nodeLabels.placement': placement, 'elk.spacing.labelNode': '10' };
-      child.labels = [{ id: `${ref.id}-caption`, text: caption, width: metrics.width + 4, height: metrics.height + 4, layoutOptions: { 'elk.nodeLabels.placement': placement } }];
+      child.layoutOptions = { 'elk.layered.nodePlacement.favorStraightEdges': 'true', 'elk.spacing.labelNode': '10', 'elk.nodeLabels.placement': placement };
+      if (ref.kind === 'start') child.layoutOptions['elk.layered.layering.layerConstraint'] = 'FIRST_SEPARATE';
+      else if (ref.kind === 'end') child.layoutOptions['elk.layered.layering.layerConstraint'] = 'LAST_SEPARATE';
+      child.labels = [{ id: `${ref.id}-caption`, text: caption, width: metrics.width + 4, height: metrics.height + 4 }];
     }
     const parent = ref.node.group ? groupNodes.get(ref.node.group) : undefined;
     (parent?.children ?? root.children)!.push(child);
@@ -806,6 +812,29 @@ function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox
   return placed;
 }
 
+function alignFlowTerminals(result: LayoutResult, direction: 'TB' | 'LR'): void {
+  if (direction === 'LR') return;
+  const starts = result.nodes.filter(box => box.ref.kind === 'start');
+  const ends = result.nodes.filter(box => box.ref.kind === 'end');
+  if (starts.length !== 1 || ends.length !== 1) return;
+  const start = starts[0]!, end = ends[0]!;
+  const targetX = start.x + start.width / 2;
+  const delta = targetX - (end.x + end.width / 2);
+  if (Math.abs(delta) < 0.5) return;
+  end.x += delta;
+  for (const route of result.routes) {
+    if (route.ref.edge.to !== end.ref.node.id) continue;
+    const path = route.paths[route.paths.length - 1];
+    if (!path || path.length < 2) continue;
+    const previous = path[path.length - 2]!, last = path[path.length - 1]!;
+    const next = { x: targetX, y: last.y };
+    path.splice(path.length - 1, 1);
+    if (Math.abs(previous.y - next.y) > 0.5) path.push({ x: targetX, y: previous.y });
+    path.push(next);
+    for (const point of route.labels.values()) point.x += delta;
+  }
+}
+
 /** Layout every graph family with bundled ELK; sequence and fishbone have dedicated renderers. */
 export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Promise<RenderedDiagram> {
   const explicitRegions = Boolean(spec.layout?.maxPerColumn) || spec.layout?.regionGap !== undefined || spec.layout?.mode === 'grid';
@@ -866,7 +895,7 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
     const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
     result = collectLayout(output, { x: 0, y: 0 }, refs, containers, edgeRefs);
   }
-  if (explicitRegions) routeBetweenLanes(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? theme.gap });
+  alignFlowTerminals(result, direction);
   const nodeById = new Map(result.nodes.map(box => [box.ref.node.id, box]));
   for (const route of result.routes) {
     const first = route.paths[0], last = route.paths[route.paths.length - 1];
