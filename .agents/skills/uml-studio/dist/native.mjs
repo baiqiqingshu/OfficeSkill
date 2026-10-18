@@ -515,7 +515,6 @@ function layoutOptions(direction, padding, spec) {
 }
 function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, additionalGroups) {
   const direction = spec.direction ?? "TB";
-  const rootDirection = !lane && groups.length > 1 ? "LR" : direction;
   const groupById = new Map(groups.map((group) => [group.id, group]));
   const included = /* @__PURE__ */ new Set();
   const memberships = [...refs.map((ref) => ref.node.group), ...additionalGroups ?? []];
@@ -530,7 +529,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
   const root = { id: rootId, children: [], edges: [] };
   const header = lane ? direction === "TB" ? measure(lane.label, theme.fontSize).height + 24 : measure(lane.label, theme.fontSize).width + 32 : 0;
   const padding = lane ? direction === "TB" ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]` : "[top=24,left=24,bottom=24,right=24]";
-  root.layoutOptions = layoutOptions(rootDirection, padding, spec);
+  root.layoutOptions = layoutOptions(direction, padding, spec);
   if (lane) {
     root.width = direction === "TB" ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
     root.height = direction === "TB" ? 180 + header : Math.max(180, measure(lane.label, theme.fontSize).height + 28);
@@ -568,8 +567,6 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
       const metrics = measure(caption, size);
       const placement = direction === "TB" ? "[H_RIGHT,V_CENTER,OUTSIDE]" : "[H_CENTER,V_BOTTOM,OUTSIDE]";
       child.layoutOptions = { "elk.layered.nodePlacement.favorStraightEdges": "true", "elk.spacing.labelNode": "10", "elk.nodeLabels.placement": placement };
-      if (ref.kind === "start") child.layoutOptions["elk.layered.layering.layerConstraint"] = "FIRST_SEPARATE";
-      else if (ref.kind === "end") child.layoutOptions["elk.layered.layering.layerConstraint"] = "LAST_SEPARATE";
       child.labels = [{ id: `${ref.id}-caption`, text: caption, width: metrics.width + 4, height: metrics.height + 4 }];
     }
     const parent = ref.node.group ? groupNodes.get(ref.node.group) : void 0;
@@ -590,67 +587,135 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
   }
   return root;
 }
-function packRegions(root, spec, theme) {
-  const limit = spec.layout?.maxPerColumn ?? 0;
-  const elementGap = spec.layout?.elementGap ?? theme.gap;
-  const regionGap = spec.layout?.regionGap ?? theme.gap;
-  const vertical = limit > 0 || spec.direction !== "LR";
-  function place(region) {
-    const padding = region.layoutOptions?.["elk.padding"] ?? "";
+async function layoutRegions(root, spec, elk, refs, columns, automaticColumns) {
+  const elementGap = spec.layout?.elementGap ?? 24, regionGap = spec.layout?.regionGap ?? 40;
+  const edges = root.edges ?? [];
+  const outgoing = /* @__PURE__ */ new Map();
+  const incoming = /* @__PURE__ */ new Set();
+  for (const edge of edges) {
+    const list = outgoing.get(edge.sources[0]) ?? [];
+    list.push(edge);
+    outgoing.set(edge.sources[0], list);
+    for (const id2 of edge.targets) incoming.add(id2);
+  }
+  const feedback = /* @__PURE__ */ new Set(), active = /* @__PURE__ */ new Set(), visited = /* @__PURE__ */ new Set();
+  function visit(id2) {
+    if (visited.has(id2)) return;
+    visited.add(id2);
+    active.add(id2);
+    for (const edge of outgoing.get(id2) ?? []) {
+      if (edge.targets.some((target) => active.has(target))) feedback.add(edge.id);
+      else for (const target of edge.targets) visit(target);
+    }
+    active.delete(id2);
+  }
+  const localIds = /* @__PURE__ */ new Set();
+  function collect(region) {
+    if (!region.children) localIds.add(region.id);
+    else for (const child of region.children) collect(child);
+  }
+  collect(root);
+  for (const id2 of localIds) if (refs.get(id2)?.kind === "start" || !incoming.has(id2)) visit(id2);
+  for (const id2 of localIds) visit(id2);
+  const terminal = (node) => ["start", "end"].includes(refs.get(node.id)?.kind ?? "");
+  const natural = /* @__PURE__ */ new Map();
+  const minimumSizes = /* @__PURE__ */ new Map();
+  async function place(region, columnLimit = spec.layout?.maxPerColumn ?? 0) {
+    if (!minimumSizes.has(region.id)) minimumSizes.set(region.id, { width: region.width ?? 0, height: region.height ?? 0 });
     const inset = { top: 24, left: 24, bottom: 24, right: 24 };
     for (const side of ["top", "left", "bottom", "right"]) {
-      const match = padding.match(new RegExp(`${side}=([\\d.]+)`));
+      const match = region.layoutOptions?.["elk.padding"]?.match(new RegExp(`${side}=([\\d.]+)`));
       if (match) inset[side] = Number(match[1]);
     }
-    const leaves = (region.children ?? []).filter((child) => !child.children);
+    const leaves = (region.children ?? []).filter((child) => !child.children && !terminal(child));
     const nested = (region.children ?? []).filter((child) => child.children);
-    let right = inset.left, bottom = inset.top;
-    let columnX = inset.left, rowY = inset.top, columnWidth = 0;
-    leaves.forEach((child, index) => {
-      if (vertical && limit && index && index % limit === 0) {
-        columnX += columnWidth + elementGap;
-        rowY = inset.top;
-        columnWidth = 0;
+    let content = natural.get(region.id);
+    if (!content) {
+      const ids = new Set(leaves.map((child) => child.id));
+      const input = {
+        id: `${region.id}-content`,
+        children: leaves,
+        edges: edges.filter((edge) => !feedback.has(edge.id) && edge.sources.every((id2) => ids.has(id2)) && edge.targets.every((id2) => ids.has(id2))),
+        layoutOptions: layoutOptions(spec.direction ?? "TB", "[top=0,left=0,bottom=0,right=0]", spec)
+      };
+      const output = leaves.length ? await elk.layout(input) : void 0;
+      content = { children: output?.children ?? [], width: output?.width ?? 0, height: output?.height ?? 0 };
+      natural.set(region.id, content);
+    }
+    const placed = content.children.map((child) => ({ ...child }));
+    let width = content.width, height = content.height;
+    if (columnLimit > 0 && placed.length > columnLimit) {
+      const horizontal = spec.direction === "LR";
+      placed.sort((a, b) => (horizontal ? (a.x ?? 0) - (b.x ?? 0) : (a.y ?? 0) - (b.y ?? 0)) || (horizontal ? (a.y ?? 0) - (b.y ?? 0) : (a.x ?? 0) - (b.x ?? 0)));
+      const columnCount = Math.ceil(placed.length / columnLimit);
+      const widths = Array(columnCount).fill(0), heights = Array(columnLimit).fill(0);
+      placed.forEach((child, index) => {
+        const column = Math.floor(index / columnLimit), offset = index % columnLimit;
+        const row = column % 2 ? columnLimit - 1 - offset : offset;
+        const labelWidth = Math.max(0, ...(child.labels ?? []).map((label2) => (label2.x ?? (child.width ?? 0) + 10) + (label2.width ?? 0)));
+        const labelHeight = Math.max(0, ...(child.labels ?? []).map((label2) => (label2.y ?? 0) + (label2.height ?? 0)));
+        widths[column] = Math.max(widths[column], child.width ?? 0, labelWidth);
+        heights[row] = Math.max(heights[row], child.height ?? 0, labelHeight);
+      });
+      const xs = [], ys = [];
+      width = height = 0;
+      const columnGap = Math.max(elementGap, ...edges.flatMap((edge) => (edge.labels ?? []).map((label2) => (label2.width ?? 0) + 16)));
+      for (const size of widths) {
+        xs.push(width);
+        width += size + columnGap;
       }
-      child.x = columnX;
-      child.y = rowY;
-      let occupiedWidth = child.width ?? 0, occupiedHeight = child.height ?? 0;
-      for (const label2 of child.labels ?? []) {
-        label2.x = vertical ? occupiedWidth + 10 : Math.max(0, ((child.width ?? 0) - (label2.width ?? 0)) / 2);
-        label2.y = vertical ? Math.max(0, ((child.height ?? 0) - (label2.height ?? 0)) / 2) : occupiedHeight + 10;
-        occupiedWidth = Math.max(occupiedWidth, label2.x + (label2.width ?? 0));
-        occupiedHeight = Math.max(occupiedHeight, label2.y + (label2.height ?? 0));
+      for (const size of heights) {
+        ys.push(height);
+        height += size + elementGap;
       }
-      right = Math.max(right, child.x + occupiedWidth);
-      bottom = Math.max(bottom, child.y + occupiedHeight);
-      columnWidth = Math.max(columnWidth, occupiedWidth);
-      if (vertical) rowY += occupiedHeight + elementGap;
-      else columnX += occupiedWidth + elementGap;
-    });
+      width -= columnGap;
+      height -= elementGap;
+      placed.forEach((child, index) => {
+        const column = Math.floor(index / columnLimit), offset = index % columnLimit;
+        const row = column % 2 ? columnLimit - 1 - offset : offset;
+        const occupiedWidth = Math.max(child.width ?? 0, ...(child.labels ?? []).map((label2) => (label2.x ?? (child.width ?? 0) + 10) + (label2.width ?? 0)));
+        const occupiedHeight = Math.max(child.height ?? 0, ...(child.labels ?? []).map((label2) => (label2.y ?? 0) + (label2.height ?? 0)));
+        child.x = xs[column] + (widths[column] - occupiedWidth) / 2;
+        child.y = ys[row] + (heights[row] - occupiedHeight) / 2;
+        columns.set(child.id, `${region.id}-column${column}`);
+      });
+    } else for (const child of placed) columns.set(child.id, region.id);
+    for (const child of placed) {
+      child.x = (child.x ?? 0) + inset.left;
+      child.y = (child.y ?? 0) + inset.top;
+    }
+    for (const child of nested) await place(child);
+    if (automaticColumns && !columnLimit && nested.length > 1) {
+      for (const child of nested) {
+        const count = (child.children ?? []).filter((node) => !node.children && !terminal(node)).length;
+        const peers = nested.filter((peer) => peer !== child).map((peer) => peer.height ?? 0).sort((a, b) => a - b);
+        const typical = peers[Math.floor((peers.length - 1) / 2)] ?? 0;
+        if (count > 6 && typical > 0 && (child.height ?? 0) > typical * 2) {
+          await place(child, Math.max(3, Math.ceil(count / Math.ceil((child.height ?? 0) / typical))));
+        }
+      }
+    }
+    let right = inset.left + width, bottom = inset.top + height;
     for (const child of nested) {
-      place(child);
-      child.x = vertical ? right + (right > inset.left ? regionGap : 0) : inset.left;
-      child.y = vertical ? inset.top : bottom + (bottom > inset.top ? regionGap : 0);
-      right = Math.max(right, child.x + (child.width ?? 0));
+      child.x = right + (right > inset.left ? regionGap : 0);
+      child.y = inset.top;
+      right = child.x + (child.width ?? 0);
       bottom = Math.max(bottom, child.y + (child.height ?? 0));
     }
-    region.width = Math.max(region.width ?? 0, right + inset.right);
-    region.height = Math.max(region.height ?? 0, bottom + inset.bottom);
+    const terminals = (region.children ?? []).filter(terminal);
+    region.children = [...placed, ...nested, ...terminals];
+    region.width = Math.max(minimumSizes.get(region.id).width, right + inset.right);
+    region.height = Math.max(minimumSizes.get(region.id).height, bottom + inset.bottom);
+    region.edges = [];
   }
-  place(root);
+  await place(root);
   return root;
 }
-function collectLayout(root, origin, refs, containerRefs, edgeRefs) {
-  const nodes = [];
-  const containers = [];
-  const routes = [];
-  const positions = /* @__PURE__ */ new Map();
-  const owners = [];
+function collectLayout(root, refs, containerRefs) {
+  const nodes = [], containers = [];
   function visit(node, parent, depth) {
     const position = { x: parent.x + (node.x ?? 0), y: parent.y + (node.y ?? 0) };
-    positions.set(node.id, position);
-    const ref = refs.get(node.id);
-    const container = containerRefs.get(node.id);
+    const ref = refs.get(node.id), container = containerRefs.get(node.id);
     if (ref) {
       const label2 = node.labels?.find((candidate) => candidate.id === `${ref.id}-caption`);
       const caption = label2 ? {
@@ -664,36 +729,10 @@ function collectLayout(root, origin, refs, containerRefs, edgeRefs) {
       nodes.push({ ...position, width: node.width ?? ref.width, height: node.height ?? ref.height, ref, caption });
     }
     if (container) containers.push({ ...position, width: node.width ?? 200, height: node.height ?? 140, ref: container, depth });
-    for (const edge of node.edges ?? []) owners.push({ edge, origin: position });
     for (const child of node.children ?? []) visit(child, position, depth + 1);
   }
-  visit(root, { x: origin.x - (root.x ?? 0), y: origin.y - (root.y ?? 0) }, 0);
-  for (const { edge, origin: owner } of owners) {
-    const ref = edgeRefs.get(edge.id);
-    if (!ref) continue;
-    const containerId = edge.container;
-    const offset = containerId && positions.get(containerId) || owner;
-    const sections = edge.sections ?? [];
-    const ordered = [...sections];
-    if (ordered.length > 1) {
-      const first = ordered.find((section) => !section.incomingSections?.length);
-      if (first) {
-        ordered.length = 0;
-        let section = first;
-        while (section && !ordered.includes(section)) {
-          ordered.push(section);
-          const nextId = section.outgoingSections?.[0];
-          section = nextId ? sections.find((candidate) => candidate.id === nextId) : void 0;
-        }
-        for (const candidate of sections) if (!ordered.includes(candidate)) ordered.push(candidate);
-      }
-    }
-    const paths = ordered.map((section) => [section.startPoint, ...section.bendPoints ?? [], section.endPoint].map((point) => ({ x: point.x + offset.x, y: point.y + offset.y })));
-    const labels = /* @__PURE__ */ new Map();
-    for (const label2 of edge.labels ?? []) if (label2.id && label2.x != null && label2.y != null) labels.set(label2.id, { x: label2.x + offset.x, y: label2.y + offset.y });
-    if (paths.length) routes.push({ ref, paths, labels });
-  }
-  return { nodes, containers, routes, width: root.width ?? 240, height: root.height ?? 160 };
+  visit(root, { x: -(root.x ?? 0), y: -(root.y ?? 0) }, 0);
+  return { nodes, containers, routes: [], width: root.width ?? 240, height: root.height ?? 160 };
 }
 function intersects(a, b, margin = 0) {
   return a.x < b.x + b.width + margin && a.x + a.width + margin > b.x && a.y < b.y + b.height + margin && a.y + a.height + margin > b.y;
@@ -785,15 +824,19 @@ function obstacleRouter(start, end, obstacles, used) {
       const horizontal = a.y === b.y;
       const blocked = obstacles.some((box) => horizontal ? a.y > box.y + 0.01 && a.y < box.y + box.height - 0.01 && Math.max(a.x, b.x) > box.x + 0.01 && Math.min(a.x, b.x) < box.x + box.width - 0.01 : a.x > box.x + 0.01 && a.x < box.x + box.width - 0.01 && Math.max(a.y, b.y) > box.y + 0.01 && Math.min(a.y, b.y) < box.y + box.height - 0.01);
       if (blocked) continue;
-      let overlap = 0;
+      let overlap = 0, crossings = 0;
       for (const path of used) for (let index = 1; index < path.length; index++) {
         const c = path[index - 1], d = path[index];
         if (horizontal && c.y === d.y && Math.abs(a.y - c.y) < 0.1) overlap += Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
         if (!horizontal && c.x === d.x && Math.abs(a.x - c.x) < 0.1) overlap += Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+        if (horizontal !== Math.abs(c.y - d.y) < 0.01) {
+          const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
+          if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
+        }
       }
       const direction = horizontal ? 1 : 2;
       const state = neighbor * 3 + direction;
-      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction ? 22 : 0) + overlap * 3;
+      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + crossings * 80;
       if (cost >= costs[state]) continue;
       costs[state] = cost;
       previous[state] = current.state;
@@ -820,7 +863,7 @@ function simplify(points) {
   }
   return result;
 }
-function routeBetweenLanes(edges, result, direction, theme) {
+function routeEdges(edges, result, direction, theme) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
   const obstacles = result.nodes.map((box) => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
@@ -833,8 +876,11 @@ function routeBetweenLanes(edges, result, direction, theme) {
   const assignments = edges.map((ref) => {
     const source = byId.get(ref.edge.from);
     const target = byId.get(ref.edge.to);
-    const side = Math.abs(target.x - source.x) > Math.abs(target.y - source.y) ? source.x < target.x ? "right" : "left" : source.y < target.y ? "bottom" : "top";
-    const targetSide = side === "right" ? "left" : side === "left" ? "right" : side === "bottom" ? "top" : "bottom";
+    const sourceX = source.x + source.width / 2, sourceY = source.y + source.height / 2;
+    const targetX = target.x + target.width / 2, targetY = target.y + target.height / 2;
+    const forward = direction === "TB" ? targetY > sourceY : targetX > sourceX;
+    const side = source === target ? "right" : forward && target.ref.kind === "end" ? direction === "TB" ? "bottom" : "right" : Math.abs(targetX - sourceX) > Math.abs(targetY - sourceY) ? sourceX < targetX ? "right" : "left" : sourceY < targetY ? "bottom" : "top";
+    const targetSide = source === target ? "top" : target.ref.kind === "end" ? direction === "TB" ? "top" : "left" : side === "right" ? "left" : side === "left" ? "right" : side === "bottom" ? "top" : "bottom";
     const sourceKey = `${source.ref.id}-${side}`, targetKey = `${target.ref.id}-${targetSide}`;
     counts.set(sourceKey, (counts.get(sourceKey) ?? 0) + 1);
     counts.set(targetKey, (counts.get(targetKey) ?? 0) + 1);
@@ -846,19 +892,34 @@ function routeBetweenLanes(edges, result, direction, theme) {
     const sourceIndex = (seen.get(item.sourceKey) ?? 0) + 1, targetIndex = (seen.get(item.targetKey) ?? 0) + 1;
     seen.set(item.sourceKey, sourceIndex);
     seen.set(item.targetKey, targetIndex);
-    const sourceFraction = sourceIndex / ((counts.get(item.sourceKey) ?? 1) + 1);
-    const targetFraction = targetIndex / ((counts.get(item.targetKey) ?? 1) + 1);
+    const sameRow = Math.abs(item.source.y + item.source.height / 2 - item.target.y - item.target.height / 2) < 0.01;
+    const sameColumn = Math.abs(item.source.x + item.source.width / 2 - item.target.x - item.target.width / 2) < 0.01;
+    const straight = item.source !== item.target && (sameRow || sameColumn);
+    const sourceFraction = straight ? 0.5 : sourceIndex / ((counts.get(item.sourceKey) ?? 1) + 1);
+    const targetFraction = straight ? 0.5 : targetIndex / ((counts.get(item.targetKey) ?? 1) + 1);
     const sides = [item.side, ...["left", "right", "top", "bottom"].filter((side) => side !== item.side)];
     const targetSides = [item.targetSide, ...["left", "right", "top", "bottom"].filter((side) => side !== item.targetSide)];
-    let route;
+    let route, bestScore = Infinity;
     for (const side of sides) {
       for (const targetSide of targetSides) {
+        if (item.source === item.target && side === targetSide) continue;
         const endpoints = [[item.source, side, sourceFraction], [item.target, targetSide, targetFraction]];
         const anchors = endpoints.map(([box, attach, fraction]) => {
-          const x = attach === "left" ? box.x : attach === "right" ? box.x + box.width : box.x + box.width * fraction;
-          const y = attach === "top" ? box.y : attach === "bottom" ? box.y + box.height : box.y + box.height * fraction;
+          const symbol = box.ref.symbol;
+          const bounds = symbol ? {
+            x: box.x + symbol.x * box.width / box.ref.renderWidth,
+            y: box.y + symbol.y * box.height / box.ref.renderHeight,
+            width: symbol.width * box.width / box.ref.renderWidth,
+            height: symbol.height * box.height / box.ref.renderHeight
+          } : box;
+          const x = attach === "left" ? bounds.x : attach === "right" ? bounds.x + bounds.width : bounds.x + bounds.width * fraction;
+          const y = attach === "top" ? bounds.y : attach === "bottom" ? bounds.y + bounds.height : bounds.y + bounds.height * fraction;
           const distance = Math.max(clearance + 1, Math.min(28, theme.gap / 2));
-          return { port: { x, y }, stub: { x: x + (attach === "right" ? distance : attach === "left" ? -distance : 0), y: y + (attach === "bottom" ? distance : attach === "top" ? -distance : 0) } };
+          const stub = {
+            x: attach === "right" ? box.x + box.width + distance : attach === "left" ? box.x - distance : x,
+            y: attach === "bottom" ? box.y + box.height + distance : attach === "top" ? box.y - distance : y
+          };
+          return { port: { x, y }, stub };
         });
         const clear = anchors.every((anchor, index) => {
           const box = index ? item.target : item.source;
@@ -870,14 +931,31 @@ function routeBetweenLanes(edges, result, direction, theme) {
         if (!clear) continue;
         const middle = obstacleRouter(anchors[0].stub, anchors[1].stub, obstacles, used);
         if (!middle) continue;
-        route = simplify([anchors[0].port, ...middle, anchors[1].port]);
-        break;
+        const candidate = simplify([anchors[0].port, ...middle, anchors[1].port]);
+        let length = 0, overlaps = 0, crossings = 0;
+        for (let i = 1; i < candidate.length; i++) {
+          const a = candidate[i - 1], b = candidate[i], horizontal = Math.abs(a.y - b.y) < 0.01;
+          length += Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+          for (const path of used) for (let j = 1; j < path.length; j++) {
+            const c = path[j - 1], d = path[j], otherHorizontal = Math.abs(c.y - d.y) < 0.01;
+            if (horizontal && otherHorizontal && Math.abs(a.y - c.y) < 0.01) overlaps += Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
+            else if (!horizontal && !otherHorizontal && Math.abs(a.x - c.x) < 0.01) overlaps += Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+            else if (horizontal !== otherHorizontal) {
+              const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
+              if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
+            }
+          }
+        }
+        const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + (side === item.side ? 0 : 32) + (targetSide === item.targetSide ? 0 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
+        if (score < bestScore) {
+          bestScore = score;
+          route = candidate;
+        }
       }
-      if (route) break;
     }
     if (!route) throw new Error(`Unable to route relationship ${item.ref.edge.from} \u2192 ${item.ref.edge.to}.`);
     used.push(route);
-    result.routes.push({ ref: item.ref, paths: [route], labels: /* @__PURE__ */ new Map() });
+    result.routes.push({ ref: item.ref, paths: [route] });
   }
 }
 function clipEndpoint(point, neighbor, box) {
@@ -922,22 +1000,6 @@ function clipEndpoint(point, neighbor, box) {
   } else if (kind === "database" && !horizontal) {
     point.y = neighbor.y < cy ? box.y + 10 - 10 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2)) : box.y + box.height - 10 + 10 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2));
   }
-}
-function roundedPath(points) {
-  const path = simplify(points);
-  if (!path.length) return "";
-  let value = `M${numeric(path[0].x)} ${numeric(path[0].y)}`;
-  for (let index = 1; index < path.length - 1; index++) {
-    const before = path[index - 1], corner = path[index], after = path[index + 1];
-    const incoming = Math.hypot(corner.x - before.x, corner.y - before.y), outgoing = Math.hypot(after.x - corner.x, after.y - corner.y);
-    const radius = Math.min(8, incoming / 2, outgoing / 2);
-    if (radius < 0.01) continue;
-    const start = { x: corner.x + (before.x - corner.x) * radius / incoming, y: corner.y + (before.y - corner.y) * radius / incoming };
-    const end = { x: corner.x + (after.x - corner.x) * radius / outgoing, y: corner.y + (after.y - corner.y) * radius / outgoing };
-    value += ` L${numeric(start.x)} ${numeric(start.y)} Q${numeric(corner.x)} ${numeric(corner.y)} ${numeric(end.x)} ${numeric(end.y)}`;
-  }
-  const last = path[path.length - 1];
-  return `${value} L${numeric(last.x)} ${numeric(last.y)}`;
 }
 function markerDefinitions(prefix, theme) {
   const stroke = esc(theme.primary), background = esc(theme.background === "transparent" ? theme.surface : theme.background), solid = esc(theme.primary);
@@ -1069,8 +1131,6 @@ function placeLabels(routes, nodes, containers, direction) {
   const placed = [];
   for (const route of routes) for (const label2 of route.ref.labels) {
     const candidates = [];
-    const original = route.labels.get(label2.id);
-    if (original) candidates.push({ box: { ...original, width: label2.width, height: label2.height, value: label2.value, size: label2.size }, score: -30 });
     const segments = [];
     for (const path of route.paths) for (let index = 1; index < path.length; index++) {
       const a = path[index - 1], b = path[index];
@@ -1112,38 +1172,164 @@ function placeLabels(routes, nodes, containers, direction) {
   }
   return placed;
 }
-function alignFlowTerminals(result, direction) {
-  if (direction === "LR") return;
-  const starts = result.nodes.filter((box) => box.ref.kind === "start");
-  const ends = result.nodes.filter((box) => box.ref.kind === "end");
-  if (starts.length !== 1 || ends.length !== 1) return;
-  const start = starts[0], end = ends[0];
-  const targetX = start.x + start.width / 2;
-  const delta = targetX - (end.x + end.width / 2);
-  if (Math.abs(delta) < 0.5) return;
-  end.x += delta;
-  for (const route of result.routes) {
-    if (route.ref.edge.to !== end.ref.node.id) continue;
-    const path = route.paths[route.paths.length - 1];
-    if (!path || path.length < 2) continue;
-    const previous = path[path.length - 2], last = path[path.length - 1];
-    const next = { x: targetX, y: last.y };
-    path.splice(path.length - 1, 1);
-    if (Math.abs(previous.y - next.y) > 0.5) path.push({ x: targetX, y: previous.y });
-    path.push(next);
-    for (const point of route.labels.values()) point.x += delta;
+function occupiedNode(box) {
+  const caption = box.caption;
+  const left = Math.min(0, caption?.x ?? 0), top = Math.min(0, caption?.y ?? 0);
+  return {
+    x: box.x + left,
+    y: box.y + top,
+    width: Math.max(box.width, caption ? caption.x + caption.width : 0) - left,
+    height: Math.max(box.height, caption ? caption.y + caption.height : 0) - top
+  };
+}
+function alignConnectedNodes(result, edges, columns, spec) {
+  const horizontal = Boolean(spec.lanes?.length) && spec.direction === "LR";
+  const axis = horizontal ? "x" : "y", cross = horizontal ? "y" : "x";
+  const size = horizontal ? "width" : "height", crossSize = horizontal ? "height" : "width";
+  const nodes = result.nodes.filter((box) => !["start", "end"].includes(box.ref.kind));
+  const index = new Map(nodes.map((box, i) => [box.ref.node.id, i]));
+  const parents = nodes.map((_, i) => i);
+  const find = (i) => parents[i] === i ? i : parents[i] = find(parents[i]);
+  const bounds = nodes.map(occupiedNode), gap = spec.layout?.elementGap ?? 24;
+  const center = (i) => nodes[i][axis] + nodes[i][size] / 2;
+  const constraints = [];
+  for (let a = 0; a < nodes.length; a++) for (let b = a + 1; b < nodes.length; b++) {
+    if (bounds[a][cross] >= bounds[b][cross] + bounds[b][crossSize] + gap / 2 || bounds[b][cross] >= bounds[a][cross] + bounds[a][crossSize] + gap / 2) continue;
+    const [from, to] = center(a) <= center(b) ? [a, b] : [b, a];
+    const distance = bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + gap;
+    constraints.push({ from, to, distance });
+  }
+  for (const edge of edges) {
+    const a = index.get(edge.edge.from), b = index.get(edge.edge.to);
+    if (a === void 0 || b === void 0 || columns.get(nodes[a].ref.id) !== columns.get(nodes[b].ref.id) || Math.abs(center(a) - center(b)) < 0.01) continue;
+    const [from, to] = center(a) < center(b) ? [a, b] : [b, a];
+    constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + gap });
+  }
+  const adjacency = () => {
+    const graph = /* @__PURE__ */ new Map();
+    for (const constraint of constraints) {
+      const from = find(constraint.from), to = find(constraint.to);
+      if (from !== to) {
+        const next = graph.get(from) ?? [];
+        next.push(to);
+        graph.set(from, next);
+      }
+    }
+    return graph;
+  };
+  const reachable = (graph, from, to) => {
+    const pending2 = [from], visited = /* @__PURE__ */ new Set();
+    while (pending2.length) {
+      const current = pending2.pop();
+      if (current === to) return true;
+      if (visited.has(current)) continue;
+      visited.add(current);
+      pending2.push(...graph.get(current) ?? []);
+    }
+    return false;
+  };
+  const candidates = edges.flatMap((ref) => {
+    const from = index.get(ref.edge.from), to = index.get(ref.edge.to);
+    return from === void 0 || to === void 0 || columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id) ? [] : [{ from, to, difference: Math.abs(center(from) - center(to)) }];
+  }).sort((a, b) => a.difference - b.difference);
+  for (const candidate of candidates) {
+    const from = find(candidate.from), to = find(candidate.to);
+    if (from === to) continue;
+    const graph = adjacency();
+    if (!reachable(graph, from, to) && !reachable(graph, to, from)) parents[to] = from;
+  }
+  const values = /* @__PURE__ */ new Map(), indegrees = /* @__PURE__ */ new Map();
+  const outgoing = /* @__PURE__ */ new Map();
+  const columnTops = /* @__PURE__ */ new Map();
+  nodes.forEach((box, i) => {
+    const region = columns.get(box.ref.id).replace(/-column\d+$/, "");
+    columnTops.set(region, Math.min(columnTops.get(region) ?? Infinity, bounds[i][axis]));
+  });
+  nodes.forEach((box, i) => {
+    const row = find(i), top = columnTops.get(columns.get(box.ref.id).replace(/-column\d+$/, ""));
+    values.set(row, Math.max(values.get(row) ?? -Infinity, top + center(i) - bounds[i][axis]));
+    indegrees.set(row, 0);
+  });
+  for (const constraint of constraints) {
+    const from = find(constraint.from), to = find(constraint.to);
+    if (from === to) continue;
+    const list = outgoing.get(from) ?? [];
+    list.push({ ...constraint, from, to });
+    outgoing.set(from, list);
+    indegrees.set(to, (indegrees.get(to) ?? 0) + 1);
+  }
+  const pending = [...indegrees].filter(([, degree]) => !degree).map(([row]) => row);
+  for (let i = 0; i < pending.length; i++) for (const constraint of outgoing.get(pending[i]) ?? []) {
+    values.set(constraint.to, Math.max(values.get(constraint.to), values.get(constraint.from) + constraint.distance));
+    const degree = indegrees.get(constraint.to) - 1;
+    indegrees.set(constraint.to, degree);
+    if (!degree) pending.push(constraint.to);
+  }
+  nodes.forEach((box, i) => {
+    box[axis] = values.get(find(i)) - box[size] / 2;
+  });
+  const groups = new Map((spec.groups ?? []).map((group) => [group.id, group.parent]));
+  for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) {
+    const members = nodes.filter((box) => {
+      if (container.ref.kind === "lane") return box.ref.node.lane === container.ref.originalId || !box.ref.node.lane && container.ref.originalId.startsWith("__uml_unassigned_lane__");
+      let group = box.ref.node.group;
+      while (group) {
+        if (group === container.ref.originalId) return true;
+        group = groups.get(group);
+      }
+      return false;
+    });
+    for (const box of members) {
+      const occupied = occupiedNode(box);
+      container[size] = Math.max(container[size], occupied[axis] + occupied[size] + 24 - container[axis]);
+    }
+    for (const child of result.containers) if (child.depth > container.depth && child.ref.lane === container.ref.lane && (container.ref.kind === "lane" || groups.get(child.ref.originalId) === container.ref.originalId)) {
+      container[size] = Math.max(container[size], child[axis] + child[size] + 24 - container[axis]);
+    }
+  }
+}
+function placeFlowTerminals(result, edges, direction, gap) {
+  const starts = result.nodes.filter((box) => box.ref.kind === "start"), ends = result.nodes.filter((box) => box.ref.kind === "end");
+  if (!starts.length && !ends.length) return;
+  const horizontal = direction === "LR", axis = horizontal ? "x" : "y", cross = horizontal ? "y" : "x";
+  const size = horizontal ? "width" : "height", crossSize = horizontal ? "height" : "width";
+  const body = result.nodes.filter((box) => !["start", "end"].includes(box.ref.kind));
+  const bounds = [...body.map(occupiedNode), ...result.containers];
+  const first = Math.min(24, ...bounds.map((box) => box[axis]));
+  const crossMin = Math.min(24, ...bounds.map((box) => box[cross]));
+  const crossMax = Math.max(crossMin + 32, ...bounds.map((box) => box[cross] + box[crossSize]));
+  const successor = edges.find((edge) => edge.edge.from === starts[0]?.ref.node.id);
+  const anchor = body.find((box) => box.ref.node.id === successor?.edge.to);
+  const center = anchor ? anchor[cross] + anchor[crossSize] / 2 : (crossMin + crossMax) / 2;
+  const reserve = starts.length ? Math.max(...starts.map((box) => occupiedNode(box)[size])) + gap : 0;
+  for (const box of [...body, ...result.containers]) box[axis] += reserve;
+  const last = Math.max(first + reserve, ...body.map((box) => {
+    const occupied = occupiedNode(box);
+    return occupied[axis] + occupied[size];
+  }), ...result.containers.map((box) => box[axis] + box[size]));
+  for (const [terminals, position] of [[starts, first], [ends, last + gap]]) {
+    const span = terminals.reduce((total, box) => total + occupiedNode(box)[crossSize] + gap, -gap);
+    let cursor = center - span / 2;
+    for (const box of terminals) {
+      const occupied = occupiedNode(box), offset = occupied[cross] - box[cross];
+      box[axis] = position;
+      const renderCross = horizontal ? box.ref.renderHeight : box.ref.renderWidth;
+      const symbolCenter = box.ref.symbol ? (box.ref.symbol[cross] + box.ref.symbol[crossSize] / 2) * box[crossSize] / renderCross : box[crossSize] / 2;
+      box[cross] = terminals.length === 1 ? center - symbolCenter : cursor - offset;
+      cursor += occupied[crossSize] + gap;
+    }
   }
 }
 async function renderGraph(spec, suppliedTheme) {
-  const explicitRegions = Boolean(spec.layout?.maxPerColumn) || spec.layout?.regionGap !== void 0 || spec.layout?.mode === "grid";
+  const automaticColumns = spec.layout?.maxPerColumn === void 0;
   spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
   const direction = spec.direction ?? "TB";
   const nodes = (spec.nodes ?? []).map((node, index) => createNode(node, index, spec, theme));
   const edges = (spec.edges ?? []).map((edge, index) => createEdge(edge, index, theme, spec.type));
   const refs = new Map(nodes.map((node) => [node.id, node]));
-  const edgeRefs = new Map(edges.map((edge) => [edge.id, edge]));
   const containers = /* @__PURE__ */ new Map();
+  const columns = /* @__PURE__ */ new Map();
   const elk = layoutEngine ??= new ELK();
   let result;
   if (spec.lanes?.length) {
@@ -1179,10 +1365,10 @@ async function renderGraph(spec, suppliedTheme) {
         lane.id === unassignedId ? emptyGroups.map((group) => group.id) : void 0
       );
       const minimumWidth = input.width ?? 240, minimumHeight = input.height ?? 180;
-      const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
+      const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
       output.width = Math.max(minimumWidth, output.width ?? 0);
       output.height = Math.max(minimumHeight, output.height ?? 0);
-      layouts.push(collectLayout(output, { x: 0, y: 0 }, refs, containers, edgeRefs));
+      layouts.push(collectLayout(output, refs, containers));
     }
     const crossSize = Math.max(180, ...layouts.map((layout2) => direction === "TB" ? layout2.height : layout2.width));
     let offset = 0;
@@ -1191,20 +1377,27 @@ async function renderGraph(spec, suppliedTheme) {
       const dx = direction === "TB" ? offset : 0, dy = direction === "LR" ? offset : 0;
       for (const box of layout2.nodes) result.nodes.push({ ...box, x: box.x + dx, y: box.y + dy });
       for (const box of layout2.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === "lane" && direction === "LR" ? crossSize : box.width, height: box.ref.kind === "lane" && direction === "TB" ? crossSize : box.height });
-      for (const route of layout2.routes) result.routes.push({ ...route, paths: route.paths.map((path) => path.map((point) => ({ x: point.x + dx, y: point.y + dy }))), labels: new Map([...route.labels].map(([id2, point]) => [id2, { x: point.x + dx, y: point.y + dy }])) });
       offset += (direction === "TB" ? layout2.width : layout2.height) + (spec.layout?.regionGap ?? 0);
     }
     const extent = offset - (spec.layout?.regionGap ?? 0);
     result.width = direction === "TB" ? extent : crossSize;
     result.height = direction === "TB" ? crossSize : extent;
-    const nodeLanes = new Map(nodes.map((node) => [node.node.id, node.node.lane ?? unassignedId]));
-    if (!explicitRegions) routeBetweenLanes(edges.filter((edge) => nodeLanes.get(edge.edge.from) !== nodeLanes.get(edge.edge.to)), result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 });
   } else {
     const input = buildGraph("root", nodes, spec.groups ?? [], edges, spec, theme, containers);
-    const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
-    result = collectLayout(output, { x: 0, y: 0 }, refs, containers, edgeRefs);
+    const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
+    result = collectLayout(output, refs, containers);
   }
-  alignFlowTerminals(result, direction);
+  alignConnectedNodes(result, edges, columns, spec);
+  placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
+  result.width = Math.max(0, ...result.nodes.map((box) => {
+    const occupied = occupiedNode(box);
+    return occupied.x + occupied.width;
+  }), ...result.containers.map((box) => box.x + box.width));
+  result.height = Math.max(0, ...result.nodes.map((box) => {
+    const occupied = occupiedNode(box);
+    return occupied.y + occupied.height;
+  }), ...result.containers.map((box) => box.y + box.height));
+  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 });
   const nodeById = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   for (const route of result.routes) {
     const first = route.paths[0], last = route.paths[route.paths.length - 1];
@@ -1221,7 +1414,10 @@ async function renderGraph(spec, suppliedTheme) {
     const end = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
     const start = kind === "aggregation" || kind === "composition" ? kind : "";
     paths += `<g class="uml-edge uml-edge-${kind}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" \u2192 "))}</title>`;
-    for (let index = 0; index < route.paths.length; index++) paths += `<path d="${roundedPath(route.paths[index])}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
+    for (let index = 0; index < route.paths.length; index++) {
+      const data = simplify(route.paths[index]).map((point, i) => `${i ? "L" : "M"}${numeric(point.x)} ${numeric(point.y)}`).join(" ");
+      paths += `<path d="${data}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
+    }
     paths += "</g>";
   }
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(box, theme, direction)).join("");
