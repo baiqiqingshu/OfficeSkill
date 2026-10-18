@@ -76,8 +76,10 @@ export async function renderNativeImage(
   if (!Number.isFinite(quality) || quality < 0 || quality > 1)
     throw new Error("图片质量必须在 0–1 之间");
   const diagram = await renderDiagram(spec);
-  const width = Math.max(1, Math.round(diagram.width * scale)),
-    height = Math.max(1, Math.round(diagram.height * scale));
+  if (format === "svg" && scale === 1)
+    return { data: Buffer.from(diagram.svg), width: diagram.width, height: diagram.height, format };
+  const width = Math.max(1, Math.ceil(diagram.width * scale)),
+    height = Math.max(1, Math.ceil(diagram.height * scale));
   const svg = diagram.svg
     .replace(/^(<svg\b[^>]*\bwidth=")[^"]+/, `$1${width}`)
     .replace(/^(<svg\b[^>]*\bheight=")[^"]+/, `$1${height}`);

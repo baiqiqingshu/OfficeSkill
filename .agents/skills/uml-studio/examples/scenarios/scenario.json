@@ -1,0 +1,22 @@
+{
+  "version":1, "id":"commerce-scenario", "type":"scenario", "title":"4+1 场景视图 · 下单成功与支付补偿", "theme":"lavender", "direction":"LR",
+  "description":"场景串联参与者、库存、支付与通知；支付失败触发释放库存并返回调整订单，成功路径进入异步确认。",
+  "groups":[{"id":"system","label":"交易平台 / 关键场景","kind":"boundary"}],
+  "nodes":[
+    {"id":"buyer","label":"购买者","kind":"actor"},{"id":"bank","label":"支付渠道","kind":"actor"},
+    {"id":"submit","label":"1 · 提交订单","kind":"action","group":"system"},
+    {"id":"reserve","label":"2 · 预留库存","kind":"action","group":"system"},
+    {"id":"pay","label":"3 · 发起支付","kind":"action","group":"system"},
+    {"id":"paid","label":"支付成功？","kind":"decision","group":"system"},
+    {"id":"confirm","label":"4 · 确认订单与履约","kind":"action","group":"system"},
+    {"id":"notify","label":"5 · 发送确认通知","kind":"action","group":"system"},
+    {"id":"release","label":"释放预留库存","kind":"action","group":"system"},
+    {"id":"revise","label":"调整订单或更换渠道","kind":"action","group":"system"}
+  ],
+  "edges":[
+    {"from":"buyer","to":"submit","kind":"association"},{"from":"submit","to":"reserve"},
+    {"from":"reserve","to":"pay"},{"from":"bank","to":"pay","kind":"association"},{"from":"pay","to":"paid"},
+    {"from":"paid","to":"confirm","label":"成功"},{"from":"confirm","to":"notify","label":"异步通知","dashed":true},
+    {"from":"paid","to":"release","label":"失败"},{"from":"release","to":"revise"},{"from":"revise","to":"submit","label":"重新下单"}
+  ]
+}

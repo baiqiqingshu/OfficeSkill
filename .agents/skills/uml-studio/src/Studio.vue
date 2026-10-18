@@ -1386,7 +1386,7 @@ defineExpose({
                       ><select
                         id="layout-mode"
                         class="select-input layout-mode-select"
-                        :value="applied.layout?.mode ?? 'compact'"
+                        :value="applied.layout?.mode ?? 'balanced'"
                         @change="
                           selectLayoutMode(
                             ($event.target as HTMLSelectElement)
@@ -1425,7 +1425,7 @@ defineExpose({
                       ><select
                         id="layout-direction"
                         class="select-input"
-                        :value="applied.direction ?? 'TB'"
+                        :value="applied.direction ?? (applied.type === 'usecase' ? 'LR' : 'TB')"
                         :disabled="!graphDiagram"
                         @change="
                           updateSpec((spec) => {

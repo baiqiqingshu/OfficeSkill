@@ -1,0 +1,20 @@
+{
+  "version":1, "id":"fulfillment-modules", "type":"module", "title":"履约平台 · 功能分解与共享能力", "theme":"ocean", "direction":"LR",
+  "description":"主模块分解为三个业务模块，每个业务模块继续分解；多个叶子依赖共享审计能力，避免仅以树形数据检验布局。",
+  "nodes":[
+    {"id":"platform","label":"订单履约平台","kind":"component"},
+    {"id":"order","label":"订单管理","kind":"component"},{"id":"warehouse","label":"仓储作业","kind":"component"},{"id":"delivery","label":"配送管理","kind":"component"},
+    {"id":"create","label":"订单创建与校验"},{"id":"cancel","label":"取消与退款"},
+    {"id":"allocate","label":"库存分配与拣货"},{"id":"pack","label":"复核与打包"},
+    {"id":"dispatch","label":"运单与承运商分配"},{"id":"track","label":"轨迹查询与异常处理"},
+    {"id":"audit","label":"共享审计与追踪","kind":"component","style":{"primary":"#ad4d32"}}
+  ],
+  "edges":[
+    {"from":"platform","to":"order","kind":"composition"},{"from":"platform","to":"warehouse","kind":"composition"},
+    {"from":"platform","to":"delivery","kind":"composition"},{"from":"order","to":"create","kind":"composition"},
+    {"from":"order","to":"cancel","kind":"composition"},{"from":"warehouse","to":"allocate","kind":"composition"},
+    {"from":"warehouse","to":"pack","kind":"composition"},{"from":"delivery","to":"dispatch","kind":"composition"},
+    {"from":"delivery","to":"track","kind":"composition"},{"from":"cancel","to":"audit","kind":"dependency"},
+    {"from":"pack","to":"audit","kind":"dependency"},{"from":"track","to":"audit","kind":"dependency"}
+  ]
+}

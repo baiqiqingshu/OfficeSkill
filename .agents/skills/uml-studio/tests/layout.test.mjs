@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { renderDiagram, validateSpec } from '../dist/core.mjs'
+import { renderDiagram, resolveLayout, validateSpec } from '../dist/core.mjs'
 
 function geometry(svg) {
   const nodes = new Map(), containers = new Map(), routes = []
@@ -133,4 +133,26 @@ test('self relationships keep distinct ports and do not collapse into invisible 
   const path = graph.routes[0].paths[0]
   assert.ok(path.length >= 4)
   assert.notDeepEqual(path[0], path.at(-1))
+})
+
+test('balanced is the default and same-side fan-out reuses one source port', async () => {
+  assert.equal(resolveLayout({ version: 1, type: 'flowchart', title: '默认' }).mode, 'balanced')
+  const spec = { version: 1, type: 'flowchart', title: '共点', direction: 'LR',
+    nodes: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'c', label: 'C' }],
+    edges: [{ from: 'a', to: 'b' }, { from: 'a', to: 'c' }] }
+  const graph = geometry((await renderDiagram(validateSpec(spec))).svg)
+  assertRoutes(graph, spec.edges)
+  assert.deepEqual(graph.routes[0].paths[0][0], graph.routes[1].paths[0][0])
+})
+
+test('usecase relationships are direct lines and sequence databases use cylinder outlines', async () => {
+  const usecase = { version: 1, type: 'usecase', title: '直线', direction: 'LR',
+    nodes: [{ id: 'actor', label: '用户', kind: 'actor' }, { id: 'one', label: '用例一', kind: 'usecase' }, { id: 'two', label: '用例二', kind: 'usecase' }],
+    edges: [{ from: 'actor', to: 'one' }, { from: 'actor', to: 'two' }] }
+  const graph = geometry((await renderDiagram(validateSpec(usecase))).svg)
+  assert.equal(graph.routes.length, 2)
+  for (const route of graph.routes) assert.equal(route.paths[0].length, 2)
+  const sequence = { version: 1, type: 'sequence', title: '数据库', participants: [{ id: 'db', label: '数据库', kind: 'database' }, { id: 'user', label: '用户' }], messages: [{ from: 'user', to: 'db', label: '写入' }] }
+  const svg = (await renderDiagram(validateSpec(sequence))).svg
+  assert.match(svg, /M [^\"]+ A [^\"]+ V [^\"]+ A [^\"]+ Z/)
 })

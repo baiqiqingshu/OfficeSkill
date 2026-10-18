@@ -1,0 +1,18 @@
+{
+  "version":1, "id":"commerce-process", "type":"process", "title":"4+1 进程视图 · Outbox、并发消费与死信", "theme":"forest", "direction":"LR",
+  "description":"运行时进程通过事务 Outbox 和消息队列协作；多个消费者共用消息入口，失败进入死信后人工重放，自环表示消费者幂等重试。",
+  "nodes":[
+    {"id":"client","label":"客户端","kind":"actor"},{"id":"api","label":"API 进程池","kind":"server","detail":"无状态 / 并发请求"},
+    {"id":"db","label":"订单与 Outbox","kind":"database"},{"id":"relay","label":"Outbox Relay","kind":"component"},
+    {"id":"queue","label":"订单事件队列","kind":"queue"},{"id":"fulfill","label":"履约 Worker 池","kind":"server"},
+    {"id":"notify","label":"通知 Worker 池","kind":"server"},{"id":"dead","label":"死信队列","kind":"queue"},
+    {"id":"replay","label":"人工核查与重放","kind":"component"}
+  ],
+  "edges":[
+    {"from":"client","to":"api","label":"下单请求"},{"from":"api","to":"db","label":"同一事务"},
+    {"from":"db","to":"relay","label":"待发事件"},{"from":"relay","to":"queue","label":"OrderPlaced","dashed":true},
+    {"from":"queue","to":"fulfill","label":"消费者组 A","dashed":true},{"from":"queue","to":"notify","label":"消费者组 B","dashed":true},
+    {"from":"fulfill","to":"fulfill","label":"幂等重试"},{"from":"notify","to":"dead","label":"超出重试次数","dashed":true},
+    {"from":"dead","to":"replay","label":"告警与核查"},{"from":"replay","to":"queue","label":"受控重放","dashed":true}
+  ]
+}

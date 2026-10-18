@@ -96,7 +96,7 @@ export async function exportSvgImage(svg: string, options: ExportOptions = {}): 
   if (!Object.hasOwn(MIME, format)) throw new Error('不支持的图片格式。');
   const scale = options.scale ?? (format === 'svg' ? 1 : 2);
   if (!Number.isFinite(scale) || scale <= 0) throw new Error('导出倍率必须为大于 0 的有限数字。');
-  const quality = options.quality ?? 0.94;
+  const quality = options.quality ?? 0.92;
   if (!Number.isFinite(quality) || quality < 0 || quality > 1) throw new Error('图片质量必须介于 0 和 1 之间。');
   // SVG export is also usable from Node, where no DOM or canvas exists.
   if (format === 'svg' && scale === 1) return new Blob([svg], { type: MIME.svg });

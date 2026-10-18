@@ -6,7 +6,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
+import { writeGallery } from './gallery.mjs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+await writeGallery()
 const require = createRequire(import.meta.url)
 // Keep redistribution notices with the runtime, including standalone HTML exports.
 async function collectLicenses() {

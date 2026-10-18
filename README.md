@@ -4,9 +4,11 @@
 
 ## 直接体验
 
-双击打开：**[离线多图 Demo](.agents/skills/uml-studio/demo-dist/index.html)**，包含鱼骨图与两张不同主题的活动图。
+双击打开：**[离线多图 Demo](.agents/skills/uml-studio/demo-dist/index.html)**，包含 26 张图：20 个复杂业务场景、3 个布局与样式对照、3 个入门用例，覆盖全部 18 类图。
 
-默认海蓝视觉风格、紧凑布局，不显示图内标题。左侧管理图表；导出 / 复制工具栏在“编辑图表”附近、预览上方，样式设置位于预览下方，默认收起，可展开后调整配色、字体与布局。编辑区支持表单与 JSON 源码切换，按钮增删节点、连线、参与者、消息、鱼骨分类和递归原因。每张图独立保存数据与设置。预览可滚轮定点缩放、按住拖拽平移、用滚动条浏览、恢复原始大小 / 适应画布，不改变导出内容。
+场景包括登录多重判断、发布并行汇合、四方报销泳道、嵌套时序片段、订单领域基数、跨区域部署、死信重放与递归鱼骨。每张图的说明列出观察点；[场景与验证索引](.agents/skills/uml-studio/references/demo-coverage.md) 说明覆盖范围和运行方式。
+
+默认海蓝视觉风格、均衡布局，不显示图内标题。左侧管理图表；导出 / 复制工具栏在“编辑图表”附近、预览上方，样式设置位于预览下方，默认收起，可展开后调整配色、字体与布局。编辑区支持表单与 JSON 源码切换，按钮增删节点、连线、参与者、消息、鱼骨分类和递归原因。每张图独立保存数据与设置。预览可滚轮定点缩放、按住拖拽平移、用滚动条浏览、恢复原始大小 / 适应画布，不改变导出内容。
 
 HTML 内联 Vue 运行时、布局库、CSS、JSON，无 CDN、无远程字体，离线也能继续编辑和导出。网页不会自动覆盖磁盘上的原文件，修改后须点击“保存 HTML”下载新文件。
 
@@ -66,14 +68,15 @@ npm run diagram -- --list
 
 ## 布局、文字与配色
 
-- 布局模式：紧凑（默认）、均衡、宽松、分栏网格。紧凑的默认元素 / 区域间距为 24 / 40，均衡为 48 / 72，宽松为 80 / 112；网格默认每列 3 个节点。
+- 布局模式：紧凑、均衡（默认）、宽松、分栏网格。紧凑的默认元素 / 区域间距为 24 / 40，均衡为 48 / 72，宽松为 80 / 112；网格默认每列 3 个节点。
 - `layout.showTitle`：默认 `false`，只隐藏图片内标题 / 说明，图表名称仍保留在工作台和无障碍信息中。
 - `layout.maxWidth/maxHeight`：整图等比尺寸上限，保留完整 viewBox，不裁掉节点。`nodeMaxWidth/nodeMaxHeight` 限制节点，文字会换行并在必要时缩放。
 - `layout.elementGap/regionGap/maxPerColumn`：元素间距、区域间距、区域内每列最大普通节点数（起止节点不计入）。显式 `0` 不限列内节点且禁止自动折列；未设置时允许高度失衡区域自动折列。节点和分栏参数仅用于节点图。
 - `style.fontFamily/fontSize/fontWeight/fontStyle/textDecoration`：字体预设 / 自定义回退列表、字号、字重、斜体、下划线。颜色支持文本粘贴、系统拾色器、31 个精选实色和透明背景。
 - 显式布局间距优先于原有 `style.gap`，后者优先于模式默认值；网页切换模式会清除这些间距覆盖，使新模式立即生效。
-- 节点图先分离回退边，再按连接关系分层；嵌套同级区域横排，跨区域直连节点优先同行，蛇形折列优先让相邻列交接节点同行。对齐以不重叠、保持列内顺序和区域包含为前提。
-- 开始 / 结束使用区域外的独立顶部 / 底部留白带，单起止符号固定同轴；显式 `LR` 时对应左右留白与水平同轴。原始 `group/lane` 数据不变。间距和分栏设置不会丢失连线；定位完成后统一生成连续正交折线，比较路径长度、折点、交叉和重叠并避让节点与文字。
+- 用例图默认横向，使用专用布局：按角色关联归组，主用例与包含 / 扩展能力分列，比较行序和角色两侧位置以减少直线穿越、交叉与线长；同侧角色关联共用端口。显式方向、分组、嵌套边界和每列数量仍生效。
+- 其它节点图先分离回退边，再按连接关系分层；嵌套同级区域横排，跨区域直连节点优先同行，蛇形折列优先让相邻列交接节点同行。对齐以不重叠、保持列内顺序和区域包含为前提。
+- 开始 / 结束使用区域外的独立顶部 / 底部留白带，单起止符号固定同轴；显式 `LR` 时对应左右留白与水平同轴。原始 `group/lane` 数据不变。间距和分栏设置不会丢失连线；定位完成后统一生成连续正交折线，比较路径长度、折点、交叉和重叠并避让节点与文字；用例图关系使用直线，并复用同方向的源端口。
 
 PNG / WebP / SVG 支持透明，JPEG 铺白底。跨机器的字体安装可能不同；CLI 可用 `--font-file path.ttf`（可重复）加载本地字体，不承诺原生导出与浏览器逐像素一致。
 
@@ -94,7 +97,7 @@ HTML 始终包含全部已应用图形；保存时有未应用草稿会明确提
 | [SKILL.md](.agents/skills/uml-studio/SKILL.md) | Agent 路由、生成步骤、完整使用约定 |
 | [schemas/diagram.schema.json](.agents/skills/uml-studio/schemas/diagram.schema.json) | 可供模型和编辑器使用的 JSON Schema |
 | [schemas/document.schema.json](.agents/skills/uml-studio/schemas/document.schema.json) | 多图文档 Schema，可包含同类多图 |
-| [examples/](.agents/skills/uml-studio/examples/) | 18 类 JSON 示例 |
+| [examples/](.agents/skills/uml-studio/examples/) | 18 类简明模板、20 个复杂场景与多图设计册 |
 | `.agents/skills/uml-studio/src/` | Vue 组件、类型、校验器、布局与导出源码 |
 | `.agents/skills/uml-studio/dist/` | Node 渲染器、Vue 组件模块、组件 CSS 与类型声明 |
 | `.agents/skills/uml-studio/assets/` | 可内联进单个 HTML 的完整工作台运行资源 |
@@ -120,11 +123,19 @@ Headless Node API 为 `import { renderDiagram, validateSpec } from '@office/uml-
 npm run typecheck
 npm run build
 npm test
+# 逐图导出与视觉证据，结果写入 temp/uml-demo-evidence/
+npm run demo:verify -w @office/uml-studio
 ```
 
 构建会重新生成离线 Demo、组件模块、类型声明、Schema 与第三方许可声明。新实现采用 MIT；ELK.js 等依赖保留各自许可，详见 SKILL 目录的 `THIRD_PARTY_NOTICES.txt`，相关声明也随独立 HTML 内嵌运行时一起保留。
 
 ## 本次交付验证
+
+### Demo 场景扩展验证
+
+- 离线 Demo 从 3 张扩展到 26 张，覆盖 18 类图；20 个复杂场景与 3 个布局对照均由独立源 JSON 生成，原有 3 个入门用例保留。
+- 完整构建与 74 项测试通过；复杂节点场景额外覆盖四种模式 × 两种方向，共 144 种布局组合，检查节点、关系、标注、容器与可识别图元的几何约束。
+- 浏览器逐一切换全部 26 张图并确认 SVG 预览；4 类复杂图实际导出全部四种图片格式，26 图逐图 SVG / PNG、视觉拼图和检查报告保存在 `temp/uml-demo-evidence/`。自动几何检查不代表所有连线和留白已经达到最佳视觉效果。
 
 ### 布局与路由修复验证
 

@@ -18,6 +18,8 @@
     "./style.css": "./dist/diagram.css"
   },
   "scripts": {
+    "demo:refresh": "node scripts/gallery.mjs",
+    "demo:verify": "node scripts/verify-demo.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/build.mjs",
     "typecheck": "vue-tsc --noEmit",

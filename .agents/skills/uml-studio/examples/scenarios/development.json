@@ -1,0 +1,22 @@
+{
+  "version":1, "id":"commerce-development", "type":"development", "title":"4+1 开发视图 · 代码所有权与适配边界", "theme":"slate",
+  "description":"研发团队按入口、核心包和适配器组织代码；契约测试独立依赖端口与实现，展示源码依赖而非运行时调用。",
+  "groups":[
+    {"id":"apps","label":"应用入口 / apps","kind":"package"},{"id":"core","label":"交易团队 / packages","kind":"package"},
+    {"id":"adapters","label":"平台团队 / adapters","kind":"package"},{"id":"tests","label":"质量工程 / tests","kind":"package"}
+  ],
+  "nodes":[
+    {"id":"api","label":"order-api","kind":"component","group":"apps"},{"id":"worker","label":"fulfillment-worker","kind":"component","group":"apps"},
+    {"id":"application","label":"order/application","kind":"package","group":"core"},{"id":"domain","label":"order/domain","kind":"package","group":"core"},
+    {"id":"ports","label":"order/ports","kind":"package","group":"core"},{"id":"contracts","label":"event-contracts","kind":"package","group":"core"},
+    {"id":"sql","label":"postgres-adapter","kind":"component","group":"adapters"},{"id":"mq","label":"event-adapter","kind":"component","group":"adapters"},
+    {"id":"contract-test","label":"adapter-contract-tests","kind":"package","group":"tests"}
+  ],
+  "edges":[
+    {"from":"api","to":"application","kind":"dependency"},{"from":"worker","to":"application","kind":"dependency"},
+    {"from":"application","to":"domain","kind":"dependency"},{"from":"application","to":"ports","kind":"dependency"},
+    {"from":"worker","to":"contracts","kind":"dependency"},{"from":"mq","to":"contracts","kind":"dependency"},
+    {"from":"sql","to":"ports","kind":"dependency"},{"from":"mq","to":"ports","kind":"dependency"},
+    {"from":"contract-test","to":"ports","kind":"dependency"},{"from":"contract-test","to":"sql","kind":"dependency"}
+  ]
+}

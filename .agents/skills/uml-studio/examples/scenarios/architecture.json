@@ -1,0 +1,25 @@
+{
+  "version":1, "id":"commerce-architecture", "type":"architecture", "title":"交易平台 · 接入、业务与数据集成", "theme":"midnight",
+  "description":"两个客户端通过网关访问三个业务域；各域使用独立存储，订单事件异步驱动搜索索引与通知。观察扇出、汇入、区域标题避让。",
+  "groups":[
+    {"id":"clients","label":"访问渠道","kind":"boundary"},{"id":"services","label":"业务服务","kind":"boundary"},
+    {"id":"storage","label":"数据存储","kind":"boundary"},{"id":"integration","label":"异步集成","kind":"boundary"}
+  ],
+  "nodes":[
+    {"id":"web","label":"用户 Web","kind":"component","group":"clients"},{"id":"mobile","label":"移动应用","kind":"component","group":"clients"},
+    {"id":"gateway","label":"API 网关","kind":"component","detail":"认证 / 限流 / 路由","group":"services"},
+    {"id":"catalog","label":"商品服务","kind":"component","group":"services"},{"id":"order","label":"订单服务","kind":"component","group":"services"},
+    {"id":"account","label":"账户服务","kind":"component","group":"services"},
+    {"id":"catalog-db","label":"商品数据库","kind":"database","group":"storage"},{"id":"order-db","label":"订单数据库","kind":"database","group":"storage"},
+    {"id":"account-db","label":"账户数据库","kind":"database","group":"storage"},
+    {"id":"bus","label":"领域事件总线","kind":"queue","group":"integration"},{"id":"search","label":"搜索索引 Worker","kind":"component","group":"integration"},
+    {"id":"notify","label":"通知 Worker","kind":"component","group":"integration"}
+  ],
+  "edges":[
+    {"from":"web","to":"gateway","label":"HTTPS"},{"from":"mobile","to":"gateway","label":"HTTPS"},
+    {"from":"gateway","to":"catalog"},{"from":"gateway","to":"order"},{"from":"gateway","to":"account"},
+    {"from":"catalog","to":"catalog-db"},{"from":"order","to":"order-db"},{"from":"account","to":"account-db"},
+    {"from":"order","to":"bus","label":"OrderPlaced","dashed":true},{"from":"catalog","to":"bus","label":"ProductChanged","dashed":true},
+    {"from":"bus","to":"search","label":"订阅","dashed":true},{"from":"bus","to":"notify","label":"订阅","dashed":true}
+  ]
+}

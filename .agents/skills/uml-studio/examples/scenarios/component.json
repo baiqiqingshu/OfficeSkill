@@ -1,0 +1,29 @@
+{
+  "version":1, "id":"checkout-components", "type":"component", "title":"结算服务 · 嵌套区域与跨边界依赖", "theme":"slate",
+  "description":"系统内两个同级业务区域，领域接口连接外部适配器；并行依赖与跨区域连线验证区域包含、同行对齐和避让。",
+  "groups":[
+    {"id":"system","label":"交易服务","kind":"boundary"},
+    {"id":"application","label":"应用编排","parent":"system","kind":"package"},
+    {"id":"domain","label":"领域能力","parent":"system","kind":"package"},
+    {"id":"adapters","label":"基础设施适配","kind":"package"}
+  ],
+  "nodes":[
+    {"id":"api","label":"Checkout API","kind":"component","group":"application"},
+    {"id":"service","label":"CheckoutService","kind":"component","group":"application"},
+    {"id":"order","label":"Order Aggregate","kind":"component","group":"domain"},
+    {"id":"stock","label":"InventoryPort","kind":"interface","group":"domain","operations":["+ reserve(sku, quantity)"]},
+    {"id":"payment","label":"PaymentPort","kind":"interface","group":"domain","operations":["+ charge(orderId, amount)"]},
+    {"id":"repo","label":"OrderRepository","kind":"interface","group":"domain","operations":["+ save(order)"]},
+    {"id":"stock-adapter","label":"库存 RPC 适配器","kind":"component","group":"adapters"},
+    {"id":"bank-adapter","label":"支付渠道适配器","kind":"component","group":"adapters"},
+    {"id":"sql","label":"PostgreSQL 适配器","kind":"component","group":"adapters"},
+    {"id":"db","label":"交易数据库","kind":"database","group":"adapters"}
+  ],
+  "edges":[
+    {"from":"api","to":"service","kind":"dependency"},{"from":"service","to":"order","kind":"dependency"},
+    {"from":"service","to":"stock","kind":"dependency"},{"from":"service","to":"payment","kind":"dependency"},
+    {"from":"service","to":"repo","kind":"dependency"},{"from":"stock-adapter","to":"stock","kind":"realization"},
+    {"from":"bank-adapter","to":"payment","kind":"realization"},{"from":"sql","to":"repo","kind":"realization"},
+    {"from":"sql","to":"db","label":"SQL"}
+  ]
+}

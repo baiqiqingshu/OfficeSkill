@@ -1,0 +1,36 @@
+{
+  "version":1, "id":"checkout-sequence", "type":"sequence", "title":"订单支付 · 嵌套片段与任务生命周期", "theme":"blueprint",
+  "description":"同步调用、嵌套自调用、两个数据库、成功/失败分支，以及可选通知任务中的重试和并行投递。创建之前与销毁之后没有任务消息。",
+  "participants":[
+    {"id":"buyer","label":"购买者","kind":"actor"},{"id":"api","label":"订单 API"},
+    {"id":"payment","label":"支付服务"},{"id":"db","label":"订单数据库","kind":"database"},
+    {"id":"job","label":"临时通知任务"},{"id":"audit","label":"投递审计数据库","kind":"database"}
+  ],
+  "messages":[
+    {"from":"buyer","to":"api","label":"提交订单与幂等请求编号","kind":"sync","activate":true},
+    {"from":"api","to":"api","label":"校验商品、金额与请求签名","kind":"sync","activate":true},
+    {"from":"api","to":"api","label":"校验完成","kind":"return","deactivate":true},
+    {"from":"api","to":"payment","label":"扣款：携带订单号和幂等键，避免重试导致重复扣款","kind":"sync","activate":true},
+    {"from":"payment","to":"api","label":"返回支付结果","kind":"return","deactivate":true},
+    {"from":"api","to":"db","label":"写入已支付订单和待投递事件","kind":"sync","activate":true},
+    {"from":"db","to":"api","label":"事务提交成功","kind":"return","deactivate":true},
+    {"from":"api","to":"buyer","label":"返回订单编号与支付凭证","kind":"return"},
+    {"from":"api","to":"buyer","label":"返回支付失败及可重试原因","kind":"return"},
+    {"from":"api","to":"job","label":"创建通知任务","kind":"create"},
+    {"from":"api","to":"job","label":"异步投递订单确认事件","kind":"async","activate":true},
+    {"from":"job","to":"job","label":"计算指数退避和下次投递时间","kind":"sync","activate":true},
+    {"from":"job","to":"job","label":"本次尝试结束","kind":"return","deactivate":true},
+    {"from":"job","to":"buyer","label":"发送订单确认邮件","kind":"async"},
+    {"from":"job","to":"audit","label":"持久化投递结果与追踪标识","kind":"sync","activate":true},
+    {"from":"audit","to":"job","label":"审计写入成功","kind":"return","deactivate":true},
+    {"from":"job","to":"api","label":"通知处理完成","kind":"return","deactivate":true},
+    {"from":"api","to":"job","label":"释放临时任务","kind":"destroy"},
+    {"from":"api","to":"buyer","label":"请求处理结束","kind":"return","deactivate":true}
+  ],
+  "fragments":[
+    {"kind":"alt","label":"支付成功","from":5,"to":8,"elseAt":8,"elseLabel":"支付失败，订单不进入履约"},
+    {"kind":"opt","label":"支付成功且购买者启用通知","from":9,"to":17},
+    {"kind":"loop","label":"最多三次尝试，失败后指数退避","from":11,"to":12},
+    {"kind":"par","label":"通知购买者","from":13,"to":15,"elseAt":14,"elseLabel":"记录投递审计"}
+  ]
+}

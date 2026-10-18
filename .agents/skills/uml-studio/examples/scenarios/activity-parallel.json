@@ -1,0 +1,20 @@
+{
+  "version":1,"id":"release-parallel","type":"activity","title":"发布流水线 · 并行检查、汇合与回滚","theme":"ocean",
+  "description":"构建后并行执行安全扫描、集成测试和制品签名，全部汇合后进入灰度；验收失败触发回滚并重新构建。",
+  "nodes":[
+    {"id":"start","label":"开始","kind":"start"},{"id":"build","label":"构建候选制品"},
+    {"id":"fork","label":"并行检查","kind":"fork"},{"id":"security","label":"依赖漏洞与镜像扫描"},
+    {"id":"integration","label":"集成与契约测试"},{"id":"sign","label":"生成签名与物料清单"},
+    {"id":"join","label":"全部检查完成","kind":"join"},{"id":"canary","label":"灰度发布 5% 流量"},
+    {"id":"healthy","label":"错误率与延迟达标？","kind":"decision"},{"id":"rollout","label":"逐步扩大至全量"},
+    {"id":"rollback","label":"恢复上一版本并记录原因"},{"id":"end","label":"发布完成","kind":"end"}
+  ],
+  "edges":[
+    {"from":"start","to":"build"},{"from":"build","to":"fork"},
+    {"from":"fork","to":"security"},{"from":"fork","to":"integration"},{"from":"fork","to":"sign"},
+    {"from":"security","to":"join"},{"from":"integration","to":"join"},{"from":"sign","to":"join"},
+    {"from":"join","to":"canary"},{"from":"canary","to":"healthy"},
+    {"from":"healthy","to":"rollout","label":"达标"},{"from":"healthy","to":"rollback","label":"超出阈值"},
+    {"from":"rollback","to":"build","label":"修复后重建"},{"from":"rollout","to":"end"}
+  ]
+}

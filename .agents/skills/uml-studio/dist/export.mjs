@@ -82,7 +82,7 @@ async function exportSvgImage(svg, options = {}) {
   if (!Object.hasOwn(MIME, format)) throw new Error("\u4E0D\u652F\u6301\u7684\u56FE\u7247\u683C\u5F0F\u3002");
   const scale = options.scale ?? (format === "svg" ? 1 : 2);
   if (!Number.isFinite(scale) || scale <= 0) throw new Error("\u5BFC\u51FA\u500D\u7387\u5FC5\u987B\u4E3A\u5927\u4E8E 0 \u7684\u6709\u9650\u6570\u5B57\u3002");
-  const quality = options.quality ?? 0.94;
+  const quality = options.quality ?? 0.92;
   if (!Number.isFinite(quality) || quality < 0 || quality > 1) throw new Error("\u56FE\u7247\u8D28\u91CF\u5FC5\u987B\u4ECB\u4E8E 0 \u548C 1 \u4E4B\u95F4\u3002");
   if (format === "svg" && scale === 1) return new Blob([svg], { type: MIME.svg });
   const { root, width, height } = svgDocument(svg);

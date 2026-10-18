@@ -39,6 +39,7 @@ interface ContainerBox extends Rect { ref: ContainerRef; depth: number }
 interface EdgeRef { id: string; edge: DiagramEdge; labels: { id: string; value: string; role: 'main' | 'from' | 'to'; width: number; height: number; size: number }[] }
 interface Route { ref: EdgeRef; paths: Point[][] }
 interface LabelBox extends Rect { value: string; size: number }
+interface EdgeLabelBox extends LabelBox { ref: EdgeRef; role: 'main' | 'from' | 'to'; anchor: Point; leader?: boolean }
 interface LayoutResult { nodes: NodeBox[]; containers: ContainerBox[]; routes: Route[]; width: number; height: number }
 
 let graphNumber = 0;
@@ -549,7 +550,213 @@ function simplify(points: Point[]): Point[] {
   return result;
 }
 
-function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme): void {
+function directEndpoint(box: NodeBox, other: NodeBox): Point {
+  const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  if (box.ref.kind === 'actor') {
+    const dx = other.x + other.width / 2 - cx, dy = other.y + other.height / 2 - cy;
+    if (Math.abs(dx) < box.width / 2 && Math.abs(dy) > box.height / 2)
+      return { x: cx, y: dy > 0 ? box.y + box.height : box.y };
+    return { x: cx + (dx >= 0 ? 25 : -25) * box.width / box.ref.renderWidth, y: box.y + 35 * box.height / box.ref.renderHeight };
+  }
+  const destination = other.ref.kind === 'actor' ? directEndpoint(other, box) : { x: other.x + other.width / 2, y: other.y + other.height / 2 };
+  const dx = destination.x - cx, dy = destination.y - cy;
+  if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return { x: cx, y: cy };
+  if (box.ref.kind === 'usecase') {
+    const rx = box.width / 2, ry = box.height / 2;
+    const scale = 1 / Math.sqrt((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry));
+    return { x: cx + dx * scale, y: cy + dy * scale };
+  }
+  const scaleX = Math.abs(dx) < 0.001 ? Infinity : (box.width / 2) / Math.abs(dx);
+  const scaleY = Math.abs(dy) < 0.001 ? Infinity : (box.height / 2) / Math.abs(dy);
+  const scale = Math.min(scaleX, scaleY);
+  return { x: cx + dx * scale, y: cy + dy * scale };
+}
+
+function layoutUsecases(refs: NodeRef[], edges: EdgeRef[], spec: DiagramSpec, theme: Theme): LayoutResult {
+  const horizontal = spec.direction !== 'TB';
+  const axis = horizontal ? 'y' : 'x', size = horizontal ? 'height' : 'width';
+  const gap = spec.layout?.elementGap ?? 48, regionGap = spec.layout?.regionGap ?? 72;
+  const nodes: NodeBox[] = refs.map(ref => ({ x: 0, y: 0, width: ref.width, height: ref.height, ref }));
+  const actors = nodes.filter(box => box.ref.kind === 'actor' && !box.ref.node.group);
+  const cases = nodes.filter(box => !actors.includes(box));
+  const byId = new Map(nodes.map(box => [box.ref.node.id, box]));
+  const caseIds = new Set(cases.map(box => box.ref.node.id));
+  const relations = edges.filter(ref => caseIds.has(ref.edge.from) && caseIds.has(ref.edge.to) && ref.edge.from !== ref.edge.to)
+    .map(ref => edgeKind(ref.edge, 'usecase') === 'extend' ? [ref.edge.to, ref.edge.from] : [ref.edge.from, ref.edge.to]);
+  const outgoing = new Map(cases.map(box => [box.ref.node.id, [] as string[]]));
+  for (const [source, target] of relations) outgoing.get(source)!.push(target);
+  const active = new Set<string>(), visited = new Set<string>(), ordered: string[] = [];
+  const forward: string[][] = [];
+  function visit(id: string): void {
+    if (visited.has(id)) return;
+    visited.add(id); active.add(id);
+    for (const target of outgoing.get(id) ?? []) if (!active.has(target)) { forward.push([id, target]); visit(target); }
+    active.delete(id); ordered.push(id);
+  }
+  for (const box of cases) visit(box.ref.node.id);
+  const ranks = new Map(cases.map(box => [box.ref.node.id, 0]));
+  for (const source of ordered.reverse()) for (const [from, target] of forward)
+    if (from === source) ranks.set(target, Math.max(ranks.get(target)!, ranks.get(source)! + 1));
+  const owner = new Map<string, number>();
+  for (const [index, actor] of actors.entries()) {
+    const queue = edges.flatMap(ref => ref.edge.from === actor.ref.node.id && caseIds.has(ref.edge.to) ? [ref.edge.to]
+      : ref.edge.to === actor.ref.node.id && caseIds.has(ref.edge.from) ? [ref.edge.from] : []);
+    const distances = new Map(queue.map(id => [id, 0]));
+    for (let offset = 0; offset < queue.length; offset++) {
+      const id = queue[offset], distance = distances.get(id)!;
+      const priority = distance * actors.length + index;
+      if (priority < (owner.get(id) ?? Infinity)) owner.set(id, priority);
+      for (const [source, target] of relations) {
+        const neighbor = source === id ? target : target === id ? source : undefined;
+        if (neighbor && !distances.has(neighbor)) { distances.set(neighbor, distance + 1); queue.push(neighbor); }
+      }
+    }
+  }
+  const buckets: { boxes: NodeBox[]; slots: number[] }[] = [];
+  const containers: ContainerBox[] = [];
+  const groups = spec.groups ?? [];
+  function region(id: string | undefined, depth: number): { width: number; height: number; members: NodeBox[]; regions: ContainerBox[]; grids: typeof buckets } {
+    const group = groups.find(candidate => candidate.id === id);
+    const header = group ? measure(group.label, theme.fontSize).height + (group.kind === 'node' ? 40 : 22) : 0;
+    const padding = group ? 28 : 0, top = group ? header + 24 : 0;
+    const leaves = cases.filter(box => box.ref.node.group === id);
+    const layers = [...new Set(leaves.map(box => ranks.get(box.ref.node.id)!))].sort((first, second) => first - second)
+      .map(rank => leaves.filter(box => ranks.get(box.ref.node.id) === rank).sort((first, second) => {
+        const firstOwner = owner.get(first.ref.node.id), secondOwner = owner.get(second.ref.node.id);
+        return (firstOwner === undefined ? actors.length : firstOwner % Math.max(1, actors.length))
+          - (secondOwner === undefined ? actors.length : secondOwner % Math.max(1, actors.length));
+      })).flatMap(layer => {
+        const limit = spec.layout?.maxPerColumn ?? 0;
+        return limit > 0 ? Array.from({ length: Math.ceil(layer.length / limit) }, (_, index) => layer.slice(index * limit, (index + 1) * limit)) : [layer];
+      });
+    const rows = Math.max(0, ...layers.map(layer => layer.length));
+    const rowSize = Math.max(1, ...leaves.map(box => box[size]));
+    const rowGap = Math.max(gap, ...edges.flatMap(ref => ref.labels.map(label => (horizontal ? label.height : label.width) + 16)));
+    const fan = Math.max(1, ...leaves.map(box => relations.filter(([source, target]) => source === box.ref.node.id || target === box.ref.node.id).length));
+    const layerGap = Math.max(regionGap, ...edges.flatMap(ref => ref.labels.map(label => (horizontal ? label.width : label.height) + 24 + Math.max(0, fan - 2) * 32)));
+    const grids: typeof buckets = [];
+    let extent = 0;
+    for (const layer of layers) {
+      const alongSize = Math.max(...layer.map(box => horizontal ? box.width : box.height));
+      const slots = Array.from({ length: rows }, (_, index) => (horizontal ? top : padding) + rowSize / 2 + index * (rowSize + rowGap));
+      for (const [index, box] of layer.entries()) {
+        box[axis] = slots[index + Math.floor((rows - layer.length) / 2)] - box[size] / 2;
+        if (horizontal) box.x = padding + extent + (alongSize - box.width) / 2;
+        else box.y = top + extent + (alongSize - box.height) / 2;
+      }
+      grids.push({ boxes: layer, slots });
+      extent += alongSize + layerGap;
+    }
+    const across = rows ? rows * rowSize + (rows - 1) * rowGap : 0;
+    let width = padding * 2 + (horizontal ? Math.max(0, extent - layerGap) : across);
+    let height = top + padding + (horizontal ? across : Math.max(0, extent - layerGap));
+    const members = [...leaves], regions: ContainerBox[] = [];
+    for (const child of groups.filter(candidate => candidate.parent === id)) {
+      const placed = region(child.id, depth + 1);
+      const dx = Math.max(padding, width - padding + (members.length || regions.length ? regionGap : 0)), dy = top;
+      for (const box of placed.members) { box.x += dx; box.y += dy; }
+      for (const box of placed.regions) { box.x += dx; box.y += dy; }
+      for (const grid of placed.grids) grid.slots = grid.slots.map(slot => slot + (horizontal ? dy : dx));
+      members.push(...placed.members); regions.push(...placed.regions); grids.push(...placed.grids);
+      width = dx + placed.width + padding; height = Math.max(height, dy + placed.height + padding);
+    }
+    if (group) {
+      width = Math.max(width, measure(group.label, theme.fontSize).width + 56, 180);
+      height = Math.max(height, header + 88);
+      regions.push({ x: 0, y: 0, width, height, depth, ref: { id: `usecase-${group.id}`, originalId: group.id, label: group.label, kind: group.kind ?? 'boundary', header } });
+    }
+    return { width, height, members, regions, grids };
+  }
+  const placed = region(undefined, 0);
+  containers.push(...placed.regions); buckets.push(...placed.grids);
+  const minAlong = Math.min(0, ...cases.map(box => horizontal ? box.x : box.y), ...containers.map(box => horizontal ? box.x : box.y));
+  const maxAlong = Math.max(180, ...cases.map(box => horizontal ? box.x + box.width : box.y + box.height), ...containers.map(box => horizontal ? box.x + box.width : box.y + box.height));
+  const related = (actor: NodeBox): NodeBox[] => edges.flatMap(ref => ref.edge.from === actor.ref.node.id ? [byId.get(ref.edge.to)!]
+    : ref.edge.to === actor.ref.node.id ? [byId.get(ref.edge.from)!] : []).filter(box => box !== actor);
+  const arm = (box: NodeBox) => horizontal ? 35 * box.height / box.ref.renderHeight : box.width / 2;
+  const center = (box: NodeBox) => box[axis] + box[size] / 2;
+  const positionActor = (actor: NodeBox, cross: number, far: boolean): void => {
+    actor[axis] = cross - arm(actor);
+    if (horizontal) actor.x = far ? maxAlong + regionGap : minAlong - regionGap - actor.width;
+    else actor.y = far ? maxAlong + regionGap : minAlong - regionGap - actor.height;
+  };
+  const positioned: NodeBox[] = [];
+  for (const [index, actor] of actors.entries()) {
+    const targets = related(actor).filter(box => caseIds.has(box.ref.node.id));
+    const mean = targets.length ? targets.reduce((sum, box) => sum + center(box), 0) / targets.length : index * (actor[size] + gap);
+    positionActor(actor, mean, false);
+    while (positioned.some(box => intersects(box, actor, 16))) actor[axis] += actor[size] + gap;
+    positioned.push(actor);
+  }
+  const segments = edges.filter(ref => ref.edge.from !== ref.edge.to).map(ref => ({ ref, source: byId.get(ref.edge.from)!, target: byId.get(ref.edge.to)! }));
+  function score(): number {
+    let cost = 0;
+    const lines = segments.map(segment => ({ ...segment, start: directEndpoint(segment.source, segment.target), end: directEndpoint(segment.target, segment.source) }));
+    for (const line of lines) {
+      const dx = line.end.x - line.start.x, dy = line.end.y - line.start.y;
+      cost += Math.hypot(dx, dy) / 40 * (edgeKind(line.ref.edge, 'usecase') === 'include' ? 1.25 : 1);
+      for (const box of nodes) {
+        if (box === line.source || box === line.target) continue;
+        let hit: boolean;
+        if (box.ref.kind === 'usecase') {
+          const rx = box.width / 2 + 5, ry = box.height / 2 + 5;
+          const startX = (line.start.x - box.x - box.width / 2) / rx, startY = (line.start.y - box.y - box.height / 2) / ry;
+          const unitX = dx / rx, unitY = dy / ry, squared = unitX * unitX + unitY * unitY;
+          const fraction = squared ? Math.max(0, Math.min(1, -(startX * unitX + startY * unitY) / squared)) : 0;
+          hit = Math.hypot(startX + unitX * fraction, startY + unitY * fraction) < 1;
+        } else hit = segmentIntersectsRect(line.start, line.end, box, 4);
+        if (hit) cost += 1_000_000;
+      }
+    }
+    for (let index = 0; index < lines.length; index++) for (const other of lines.slice(index + 1)) {
+      const line = lines[index];
+      const turn = (first: Point, last: Point, point: Point) => (last.x - first.x) * (point.y - first.y) - (last.y - first.y) * (point.x - first.x);
+      if (turn(line.start, line.end, other.start) * turn(line.start, line.end, other.end) < -0.01
+        && turn(other.start, other.end, line.start) * turn(other.start, other.end, line.end) < -0.01) cost += 10_000;
+    }
+    return cost;
+  }
+  let best = score();
+  for (let pass = 0; pass < 6; pass++) {
+    const before = best;
+    for (const grid of buckets) for (const box of grid.boxes) {
+      const previous = box[axis];
+      let chosen = previous, swapped: NodeBox | undefined;
+      for (const slot of grid.slots) {
+        const other = grid.boxes.find(candidate => candidate !== box && Math.abs(center(candidate) - slot) < 0.01);
+        const otherPosition = other?.[axis];
+        box[axis] = slot - box[size] / 2;
+        if (other) other[axis] = previous + box[size] / 2 - other[size] / 2;
+        const candidate = score();
+        if (candidate < best - 0.01) { best = candidate; chosen = box[axis]; swapped = other; }
+        box[axis] = previous;
+        if (other) other[axis] = otherPosition!;
+      }
+      box[axis] = chosen;
+      if (swapped) swapped[axis] = previous + box[size] / 2 - swapped[size] / 2;
+    }
+    for (const actor of actors) {
+      const previous = { x: actor.x, y: actor.y };
+      let chosen = previous;
+      const targets = related(actor), positions = targets.map(box => box.ref.kind === 'actor' ? box[axis] + arm(box) : center(box));
+      if (positions.length) positions.push(positions.reduce((sum, value) => sum + value, 0) / positions.length);
+      const lower = Math.min(0, ...cases.map(center)), upper = Math.max(placed.height, placed.width, ...cases.map(center));
+      const step = Math.max(actor[size] / 2 + 8, gap);
+      for (let value = lower; value <= upper && positions.length < 80; value += step) positions.push(value);
+      for (const cross of positions) for (const far of [false, true]) {
+        positionActor(actor, cross, far);
+        if (actors.some(other => other !== actor && intersects(actor, other, 16))) continue;
+        const candidate = score();
+        if (candidate < best - 0.01) { best = candidate; chosen = { x: actor.x, y: actor.y }; }
+      }
+      Object.assign(actor, chosen);
+    }
+    if (before - best < 0.01) break;
+  }
+  return { nodes, containers, routes: [], width: placed.width, height: placed.height };
+}
+
+function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme, type: DiagramSpec['type']): void {
   const byId = new Map(result.nodes.map(box => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
   const obstacles: Rect[] = result.nodes.map(box => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
@@ -576,12 +783,18 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
   const seen = new Map<string, number>();
   const used = result.routes.flatMap(route => route.paths);
   for (const item of assignments) {
+    if (type === 'usecase' && item.source !== item.target) {
+      const route = [directEndpoint(item.source, item.target), directEndpoint(item.target, item.source)];
+      result.routes.push({ ref: item.ref, paths: [route] });
+      used.push(route);
+      continue;
+    }
     const sourceIndex = (seen.get(item.sourceKey) ?? 0) + 1, targetIndex = (seen.get(item.targetKey) ?? 0) + 1;
     seen.set(item.sourceKey, sourceIndex); seen.set(item.targetKey, targetIndex);
     const sameRow = Math.abs(item.source.y + item.source.height / 2 - item.target.y - item.target.height / 2) < 0.01;
     const sameColumn = Math.abs(item.source.x + item.source.width / 2 - item.target.x - item.target.width / 2) < 0.01;
     const straight = item.source !== item.target && (sameRow || sameColumn);
-    const sourceFraction = straight ? 0.5 : sourceIndex / ((counts.get(item.sourceKey) ?? 1) + 1);
+    const sourceFraction = 0.5;
     const targetFraction = straight ? 0.5 : targetIndex / ((counts.get(item.targetKey) ?? 1) + 1);
     const sides: Side[] = [item.side, ...(['left', 'right', 'top', 'bottom'] as Side[]).filter(side => side !== item.side)];
     const targetSides: Side[] = [item.targetSide, ...(['left', 'right', 'top', 'bottom'] as Side[]).filter(side => side !== item.targetSide)];
@@ -630,8 +843,11 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
             }
           }
         }
+        const sourceFanout = assignments.filter(candidate => candidate.source === item.source && candidate.side === item.side).length;
+        const targetFanin = assignments.filter(candidate => candidate.target === item.target && candidate.targetSide === item.targetSide).length;
         const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80
-          + (side === item.side ? 0 : 32) + (targetSide === item.targetSide ? 0 : 32)
+          + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32)
+          + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 160 : 32)
           + (item.target.ref.kind === 'end' && targetSide !== item.targetSide ? 200 : 0);
         if (score < bestScore) { bestScore = score; route = candidate; }
       }
@@ -687,7 +903,7 @@ function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
 
 function markerDefinitions(prefix: string, theme: Theme): string {
   const stroke = esc(theme.primary), background = esc(theme.background === 'transparent' ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
+  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
 }
 
 function renderContainer(box: ContainerBox, theme: Theme, direction: 'TB' | 'LR'): string {
@@ -810,51 +1026,117 @@ function renderNode(box: NodeBox, spec: DiagramSpec): string {
   return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([ref.sourceNode.label, ref.sourceNode.detail, ...(ref.sourceNode.attributes ?? []), ...(ref.sourceNode.operations ?? [])].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
 }
 
-function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox[], direction: 'TB' | 'LR'): LabelBox[] {
-  const occupied: Rect[] = [...nodes];
+function segmentIntersectsRect(a: Point, b: Point, box: Rect, margin = 0): boolean {
+  let low = 0, high = 1;
+  for (const [start, delta, min, max] of [
+    [a.x, b.x - a.x, box.x - margin, box.x + box.width + margin],
+    [a.y, b.y - a.y, box.y - margin, box.y + box.height + margin],
+  ]) {
+    if (Math.abs(delta) < 0.001) { if (start < min || start > max) return false; }
+    else {
+      const first = (min - start) / delta, last = (max - start) / delta;
+      low = Math.max(low, Math.min(first, last)); high = Math.min(high, Math.max(first, last));
+      if (low > high) return false;
+    }
+  }
+  return true;
+}
+
+function segmentRectDistance(a: Point, b: Point, box: Rect): number {
+  if (segmentIntersectsRect(a, b, box)) return 0;
+  const dx = b.x - a.x, dy = b.y - a.y, squared = dx * dx + dy * dy;
+  const corners = [{ x: box.x, y: box.y }, { x: box.x + box.width, y: box.y },
+    { x: box.x, y: box.y + box.height }, { x: box.x + box.width, y: box.y + box.height }];
+  const distances = corners.map(point => {
+    const fraction = squared ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / squared)) : 0;
+    return Math.hypot(point.x - a.x - dx * fraction, point.y - a.y - dy * fraction);
+  });
+  for (const point of [a, b]) distances.push(Math.hypot(Math.max(box.x - point.x, 0, point.x - box.x - box.width), Math.max(box.y - point.y, 0, point.y - box.y - box.height)));
+  return Math.min(...distances);
+}
+
+function labelIntersectsNode(label: Rect, node: NodeBox): boolean {
+  if (!intersects(label, node, 5)) return false;
+  const dx = Math.max(label.x - 5 - node.x - node.width / 2, 0, node.x + node.width / 2 - label.x - label.width - 5) / (node.width / 2);
+  const dy = Math.max(label.y - 5 - node.y - node.height / 2, 0, node.y + node.height / 2 - label.y - label.height - 5) / (node.height / 2);
+  if (node.ref.kind === 'decision') return dx + dy < 1;
+  if (['usecase', 'start', 'end'].includes(node.ref.kind)) return dx * dx + dy * dy < 1;
+  return true;
+}
+
+function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox[], direction: 'TB' | 'LR'): EdgeLabelBox[] {
+  const occupied: Rect[] = [];
   for (const box of nodes) if (box.caption) occupied.push({ x: box.x + box.caption.x, y: box.y + box.caption.y, width: box.caption.width, height: box.caption.height });
   for (const box of containers) occupied.push(box.ref.kind === 'lane' && direction === 'LR'
     ? { x: box.x, y: box.y, width: box.ref.header, height: box.height }
     : { x: box.x, y: box.y, width: box.width, height: box.ref.header });
-  const allSegments: { a: Point; b: Point }[] = [];
-  for (const route of routes) for (const path of route.paths) for (let index = 1; index < path.length; index++) allSegments.push({ a: path[index - 1], b: path[index] });
-  const placed: LabelBox[] = [];
-  for (const route of routes) for (const label of route.ref.labels) {
-    const candidates: { box: LabelBox; score: number }[] = [];
-    const segments: { a: Point; b: Point; length: number; order: number }[] = [];
+  const allSegments: { a: Point; b: Point; route: Route; length: number; offset: number }[] = [];
+  for (const route of routes) {
+    let offset = 0;
     for (const path of route.paths) for (let index = 1; index < path.length; index++) {
-      const a = path[index - 1], b = path[index];
-      segments.push({ a, b, length: Math.abs(a.x - b.x) + Math.abs(a.y - b.y), order: segments.length });
+      const a = path[index - 1], b = path[index], length = Math.hypot(b.x - a.x, b.y - a.y);
+      if (length > 0.01) allSegments.push({ a, b, route, length, offset });
+      offset += length;
     }
+  }
+  const placed: EdgeLabelBox[] = [];
+  for (const route of routes) for (const label of route.ref.labels) {
+    const candidates: { box: EdgeLabelBox; score: number }[] = [];
+    const segments = allSegments.filter(segment => segment.route === route);
+    const others = allSegments.filter(segment => segment.route !== route);
+    const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+    const branch = label.role === 'main' && nodes.find(node => node.ref.node.id === route.ref.edge.from)?.ref.kind === 'decision';
+    const desired = label.role === 'from' || branch ? Math.min(36, total / 2) : label.role === 'to' ? total - Math.min(36, total / 2) : total / 2;
     for (const segment of segments) {
-      const { a, b, length, order } = segment;
-      if (length < 1) continue;
-      const horizontal = Math.abs(a.y - b.y) < 0.01;
-      const desired = label.role === 'from' ? 0.2 : label.role === 'to' ? 0.8 : 0.5;
-      for (const fraction of [desired, 0.5, 0.25, 0.75]) for (const gap of [8, 16, 30, 50, 80, 120, 180, 260]) {
-        const center = { x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction };
-        const penalty = label.role === 'from' ? order * 100 : label.role === 'to' ? (segments.length - 1 - order) * 100 : -Math.min(length, 300) / 5;
-        const first: LabelBox = { x: horizontal ? center.x - label.width / 2 : center.x + gap, y: horizontal ? center.y - gap - label.height : center.y - label.height / 2, width: label.width, height: label.height, value: label.value, size: label.size };
-        const second: LabelBox = { ...first, x: horizontal ? first.x : center.x - gap - label.width, y: horizontal ? center.y + gap : first.y };
-        candidates.push({ box: first, score: penalty + gap + Math.abs(fraction - desired) * 20 }, { box: second, score: penalty + gap + 2 + Math.abs(fraction - desired) * 20 });
+      const { a, b, length, offset } = segment;
+      const ux = (b.x - a.x) / length, uy = (b.y - a.y) / length;
+      const overlaps = others.flatMap(other => {
+        const cross = (point: Point) => Math.abs((point.x - a.x) * uy - (point.y - a.y) * ux);
+        if (cross(other.a) > 0.01 || cross(other.b) > 0.01) return [];
+        const first = (other.a.x - a.x) * ux + (other.a.y - a.y) * uy;
+        const last = (other.b.x - a.x) * ux + (other.b.y - a.y) * uy;
+        const start = Math.max(0, Math.min(first, last)), end = Math.min(length, Math.max(first, last));
+        return end > start + 0.01 ? [{ start, end }] : [];
+      });
+      const cuts = [...new Set([0, length, ...overlaps.flatMap(overlap => [overlap.start, overlap.end])])].sort((first, second) => first - second);
+      for (let index = 1; index < cuts.length; index++) {
+        const start = cuts[index - 1], end = cuts[index], middle = (start + end) / 2;
+        const shared = overlaps.some(overlap => middle > overlap.start && middle < overlap.end);
+        const positions = new Set([middle, start + (end - start) / 4, end - (end - start) / 4,
+          Math.max(start, Math.min(end, desired - offset))]);
+        const steps = Math.min(60, Math.ceil((end - start) / 12));
+        for (let step = 0; step <= steps; step++) positions.add(start + (end - start) * step / Math.max(1, steps));
+        const shifts = end - start < Math.abs(ux) * label.width + Math.abs(uy) * label.height + 16 ? [0, -12, 12, -24, 24] : [0];
+        for (const position of positions) for (const gap of [8, 12, 18, 28, 44, 68, 100]) for (const sign of [1, -1]) for (const shift of shifts) {
+          const anchor = { x: a.x + ux * position, y: a.y + uy * position };
+          const normalX = -uy * sign, normalY = ux * sign;
+          const distance = gap + Math.abs(normalX) * label.width / 2 + Math.abs(normalY) * label.height / 2;
+          const box: EdgeLabelBox = { x: anchor.x + normalX * distance + ux * shift - label.width / 2, y: anchor.y + normalY * distance + uy * shift - label.height / 2,
+            width: label.width, height: label.height, value: label.value, size: label.size, ref: route.ref, role: label.role, anchor };
+          const nearest = Math.min(...others.map(other => segmentRectDistance(other.a, other.b, box)));
+          const own = segmentRectDistance(a, b, box), ambiguous = shared || nearest < own + 3;
+          box.leader = ambiguous || own > 18;
+          candidates.push({ box, score: Math.abs(offset + position - desired) * (branch || label.role !== 'main' ? 0.3 : 0.1)
+            + gap * 2 + Math.abs(shift) + (shared ? 4000 : ambiguous ? 1000 : 0) + (gap > 18 ? 500 : 0) });
+        }
       }
     }
     candidates.sort((a, b) => a.score - b.score);
-    let chosen: LabelBox | undefined;
+    const sharedAnchor = (anchor: Point) => others.some(other => segmentRectDistance(other.a, other.b, { ...anchor, width: 0, height: 0 }) < 0.01);
+    let chosen: EdgeLabelBox | undefined;
     for (const candidate of candidates) {
+      if (nodes.some(node => labelIntersectsNode(candidate.box, node))) continue;
       if (occupied.some(box => intersects(candidate.box, box, 5))) continue;
-      const crosses = allSegments.some(({ a, b }) => Math.abs(a.y - b.y) < 0.01
-        ? a.y > candidate.box.y - 6 && a.y < candidate.box.y + candidate.box.height + 6 && Math.max(a.x, b.x) > candidate.box.x - 4 && Math.min(a.x, b.x) < candidate.box.x + candidate.box.width + 4
-        : a.x > candidate.box.x - 6 && a.x < candidate.box.x + candidate.box.width + 6 && Math.max(a.y, b.y) > candidate.box.y - 4 && Math.min(a.y, b.y) < candidate.box.y + candidate.box.height + 4);
-      if (crosses) continue;
-      chosen = candidate.box; break;
+      if (allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, candidate.box, 4))) continue;
+      if (candidate.box.leader && sharedAnchor(candidate.box.anchor)) continue;
+      chosen = candidate.box;
+      break;
     }
     if (!chosen) {
-      // Keep dense cardinality annotations readable in a free exterior band.
-      const anchor = route.paths[0][0];
-      let y = Math.min(...occupied.map(box => box.y), anchor.y) - label.height - 16;
-      chosen = { x: anchor.x - label.width / 2, y, width: label.width, height: label.height, value: label.value, size: label.size };
-      while (occupied.some(box => intersects(chosen!, box, 5))) { y -= label.height + 12; chosen.y = y; }
+      const candidate = (candidates.find(candidate => !sharedAnchor(candidate.box.anchor)) ?? candidates[0]).box;
+      chosen = { ...candidate, leader: true };
+      while (nodes.some(node => labelIntersectsNode(chosen!, node)) || occupied.some(box => intersects(chosen!, box, 5))
+        || allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, chosen!, 4))) chosen.y -= label.height + 12;
     }
     placed.push(chosen); occupied.push(chosen);
   }
@@ -879,13 +1161,21 @@ function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Ma
   const parents = nodes.map((_, i) => i);
   const find = (i: number): number => parents[i] === i ? i : (parents[i] = find(parents[i]));
   const bounds = nodes.map(occupiedNode), gap = spec.layout?.elementGap ?? 24;
+  const labelGaps = new Map<string, number>();
+  for (const ref of edges) {
+    const from = index.get(ref.edge.from), to = index.get(ref.edge.to);
+    if (from === undefined || to === undefined) continue;
+    const key = [from, to].sort((first, second) => first - second).join(':');
+    labelGaps.set(key, Math.max(labelGaps.get(key) ?? gap, ...ref.labels.map(label => label[size] + 16)));
+  }
+  const separation = (from: number, to: number) => Math.max(gap, labelGaps.get([from, to].sort((first, second) => first - second).join(':')) ?? gap);
   const center = (i: number) => nodes[i][axis] + nodes[i][size] / 2;
   const constraints: { from: number; to: number; distance: number }[] = [];
   for (let a = 0; a < nodes.length; a++) for (let b = a + 1; b < nodes.length; b++) {
     if (bounds[a][cross] >= bounds[b][cross] + bounds[b][crossSize] + gap / 2
       || bounds[b][cross] >= bounds[a][cross] + bounds[a][crossSize] + gap / 2) continue;
     const [from, to] = center(a) <= center(b) ? [a, b] : [b, a];
-    const distance = bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + gap;
+    const distance = bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to);
     constraints.push({ from, to, distance });
   }
   // Preserve layer precedence for branches that do not share an overlapping column footprint.
@@ -893,7 +1183,7 @@ function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Ma
     const a = index.get(edge.edge.from), b = index.get(edge.edge.to);
     if (a === undefined || b === undefined || columns.get(nodes[a].ref.id) !== columns.get(nodes[b].ref.id) || Math.abs(center(a) - center(b)) < 0.01) continue;
     const [from, to] = center(a) < center(b) ? [a, b] : [b, a];
-    constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + gap });
+    constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to) });
   }
   const adjacency = (): Map<number, number[]> => {
     const graph = new Map<number, number[]>();
@@ -918,6 +1208,25 @@ function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Ma
     return from === undefined || to === undefined || columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id)
       ? [] : [{ from, to, difference: Math.abs(center(from) - center(to)) }];
   }).sort((a, b) => a.difference - b.difference);
+  const related = new Map<string, Set<number>>();
+  for (const edge of edges) {
+    const from = index.get(edge.edge.from), to = index.get(edge.edge.to);
+    if (from === undefined || to === undefined) continue;
+    for (const [key, node] of [[`from:${from}`, to], [`to:${to}`, from]] as const) {
+      const peers = related.get(key) ?? new Set<number>();
+      peers.add(node);
+      related.set(key, peers);
+    }
+  }
+  for (const peers of related.values()) {
+    const values = [...peers];
+    for (let first = 0; first < values.length; first++) for (let second = first + 1; second < values.length; second++) {
+      const a = values[first]!, b = values[second]!;
+      if (columns.get(nodes[a].ref.id) === columns.get(nodes[b].ref.id)) continue;
+      candidates.push({ from: a, to: b, difference: Math.abs(center(a) - center(b)) });
+    }
+  }
+  candidates.sort((a, b) => a.difference - b.difference);
   for (const candidate of candidates) {
     const from = find(candidate.from), to = find(candidate.to);
     if (from === to) continue;
@@ -998,7 +1307,7 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   const automaticColumns = spec.layout?.maxPerColumn === undefined;
   spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
-  const direction = spec.direction ?? 'TB';
+  const direction = spec.direction ?? (spec.type === 'usecase' ? 'LR' : 'TB');
   const nodes = (spec.nodes ?? []).map((node, index) => createNode(node, index, spec, theme));
   const edges = (spec.edges ?? []).map((edge, index) => createEdge(edge, index, theme, spec.type));
   const refs = new Map(nodes.map(node => [node.id, node]));
@@ -1006,7 +1315,9 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   const columns = new Map<string, string>();
   const elk = layoutEngine ??= new ELK();
   let result: LayoutResult;
-  if (spec.lanes?.length) {
+  if (spec.type === 'usecase' && !spec.lanes?.length) {
+    result = layoutUsecases(nodes, edges, spec, theme);
+  } else if (spec.lanes?.length) {
     const lanes = [...spec.lanes];
     const unassigned = nodes.filter(node => !node.node.lane);
     const occupiedGroups = new Set<string>();
@@ -1050,17 +1361,19 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
     const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
     result = collectLayout(output, refs, containers);
   }
-  alignConnectedNodes(result, edges, columns, spec);
+  if (spec.type !== 'usecase') alignConnectedNodes(result, edges, columns, spec);
   placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
   result.width = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.x + occupied.width; }), ...result.containers.map(box => box.x + box.width));
   result.height = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.y + occupied.height; }), ...result.containers.map(box => box.y + box.height));
-  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 });
+  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type);
   const nodeById = new Map(result.nodes.map(box => [box.ref.node.id, box]));
   for (const route of result.routes) {
     const first = route.paths[0], last = route.paths[route.paths.length - 1];
     const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
-    if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
-    if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+    if (spec.type !== 'usecase') {
+      if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
+      if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+    }
   }
   const labels = placeLabels(result.routes, result.nodes, result.containers, direction);
   const prefix = `uml-graph-${++graphNumber}`;
@@ -1079,7 +1392,10 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   }
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map(box => renderContainer(box, theme, direction)).join('');
   const nodeShapes = result.nodes.map(box => renderNode(box, spec)).join('');
-  const labelShapes = labels.map(label => `<g class="uml-edge-label"><rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`).join('');
+  const labelShapes = labels.map(label => {
+    const leader = label.leader ? `<path class="uml-label-leader" d="M${numeric(label.anchor.x)} ${numeric(label.anchor.y)} L${numeric(Math.max(label.x, Math.min(label.x + label.width, label.anchor.x)))} ${numeric(Math.max(label.y, Math.min(label.y + label.height, label.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : '';
+    return `<g class="uml-edge-label" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`;
+  }).join('');
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) { minX = Math.min(minX, box.x - theme.lineWidth); minY = Math.min(minY, box.y - theme.lineWidth); maxX = Math.max(maxX, box.x + box.width + theme.lineWidth); maxY = Math.max(maxY, box.y + box.height + theme.lineWidth); }
   for (const box of result.nodes) if (box.caption) {

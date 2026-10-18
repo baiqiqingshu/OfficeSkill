@@ -6822,7 +6822,7 @@ const layoutDefaults = {
   grid: { elementGap: 24, regionGap: 40, maxPerColumn: 3 }
 };
 function resolveLayout(spec) {
-  const mode = spec.layout?.mode ?? "compact";
+  const mode = spec.layout?.mode ?? "balanced";
   const defaults2 = layoutDefaults[mode];
   return {
     ...spec.layout,
@@ -6856,7 +6856,7 @@ const style = object({
   gap: num(24, 240)
 });
 const layout = object({
-  mode: { ...en(...layoutModes.map((mode) => mode.value)), default: "compact" },
+  mode: { ...en(...layoutModes.map((mode) => mode.value)), default: "balanced" },
   showTitle: { type: "boolean", default: false },
   maxWidth: num(0, 1e5),
   maxHeight: num(0, 1e5),
@@ -98530,7 +98530,230 @@ function simplify(points) {
   }
   return result;
 }
-function routeEdges(edges, result, direction, theme) {
+function directEndpoint(box, other) {
+  const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  if (box.ref.kind === "actor") {
+    const dx2 = other.x + other.width / 2 - cx, dy2 = other.y + other.height / 2 - cy;
+    if (Math.abs(dx2) < box.width / 2 && Math.abs(dy2) > box.height / 2)
+      return { x: cx, y: dy2 > 0 ? box.y + box.height : box.y };
+    return { x: cx + (dx2 >= 0 ? 25 : -25) * box.width / box.ref.renderWidth, y: box.y + 35 * box.height / box.ref.renderHeight };
+  }
+  const destination = other.ref.kind === "actor" ? directEndpoint(other, box) : { x: other.x + other.width / 2, y: other.y + other.height / 2 };
+  const dx = destination.x - cx, dy = destination.y - cy;
+  if (Math.abs(dx) < 1e-3 && Math.abs(dy) < 1e-3) return { x: cx, y: cy };
+  if (box.ref.kind === "usecase") {
+    const rx = box.width / 2, ry = box.height / 2;
+    const scale2 = 1 / Math.sqrt(dx * dx / (rx * rx) + dy * dy / (ry * ry));
+    return { x: cx + dx * scale2, y: cy + dy * scale2 };
+  }
+  const scaleX = Math.abs(dx) < 1e-3 ? Infinity : box.width / 2 / Math.abs(dx);
+  const scaleY = Math.abs(dy) < 1e-3 ? Infinity : box.height / 2 / Math.abs(dy);
+  const scale = Math.min(scaleX, scaleY);
+  return { x: cx + dx * scale, y: cy + dy * scale };
+}
+function layoutUsecases(refs, edges, spec, theme) {
+  const horizontal = spec.direction !== "TB";
+  const axis = horizontal ? "y" : "x", size = horizontal ? "height" : "width";
+  const gap = spec.layout?.elementGap ?? 48, regionGap = spec.layout?.regionGap ?? 72;
+  const nodes = refs.map((ref2) => ({ x: 0, y: 0, width: ref2.width, height: ref2.height, ref: ref2 }));
+  const actors = nodes.filter((box) => box.ref.kind === "actor" && !box.ref.node.group);
+  const cases = nodes.filter((box) => !actors.includes(box));
+  const byId = new Map(nodes.map((box) => [box.ref.node.id, box]));
+  const caseIds = new Set(cases.map((box) => box.ref.node.id));
+  const relations = edges.filter((ref2) => caseIds.has(ref2.edge.from) && caseIds.has(ref2.edge.to) && ref2.edge.from !== ref2.edge.to).map((ref2) => edgeKind(ref2.edge, "usecase") === "extend" ? [ref2.edge.to, ref2.edge.from] : [ref2.edge.from, ref2.edge.to]);
+  const outgoing = new Map(cases.map((box) => [box.ref.node.id, []]));
+  for (const [source, target] of relations) outgoing.get(source).push(target);
+  const active = /* @__PURE__ */ new Set(), visited = /* @__PURE__ */ new Set(), ordered = [];
+  const forward = [];
+  function visit(id2) {
+    if (visited.has(id2)) return;
+    visited.add(id2);
+    active.add(id2);
+    for (const target of outgoing.get(id2) ?? []) if (!active.has(target)) {
+      forward.push([id2, target]);
+      visit(target);
+    }
+    active.delete(id2);
+    ordered.push(id2);
+  }
+  for (const box of cases) visit(box.ref.node.id);
+  const ranks = new Map(cases.map((box) => [box.ref.node.id, 0]));
+  for (const source of ordered.reverse()) for (const [from, target] of forward)
+    if (from === source) ranks.set(target, Math.max(ranks.get(target), ranks.get(source) + 1));
+  const owner = /* @__PURE__ */ new Map();
+  for (const [index, actor] of actors.entries()) {
+    const queue = edges.flatMap((ref2) => ref2.edge.from === actor.ref.node.id && caseIds.has(ref2.edge.to) ? [ref2.edge.to] : ref2.edge.to === actor.ref.node.id && caseIds.has(ref2.edge.from) ? [ref2.edge.from] : []);
+    const distances = new Map(queue.map((id2) => [id2, 0]));
+    for (let offset = 0; offset < queue.length; offset++) {
+      const id2 = queue[offset], distance = distances.get(id2);
+      const priority = distance * actors.length + index;
+      if (priority < (owner.get(id2) ?? Infinity)) owner.set(id2, priority);
+      for (const [source, target] of relations) {
+        const neighbor = source === id2 ? target : target === id2 ? source : void 0;
+        if (neighbor && !distances.has(neighbor)) {
+          distances.set(neighbor, distance + 1);
+          queue.push(neighbor);
+        }
+      }
+    }
+  }
+  const buckets = [];
+  const containers = [];
+  const groups = spec.groups ?? [];
+  function region(id2, depth) {
+    const group = groups.find((candidate) => candidate.id === id2);
+    const header = group ? measure$1(group.label, theme.fontSize).height + (group.kind === "node" ? 40 : 22) : 0;
+    const padding = group ? 28 : 0, top = group ? header + 24 : 0;
+    const leaves = cases.filter((box) => box.ref.node.group === id2);
+    const layers = [...new Set(leaves.map((box) => ranks.get(box.ref.node.id)))].sort((first, second) => first - second).map((rank) => leaves.filter((box) => ranks.get(box.ref.node.id) === rank).sort((first, second) => {
+      const firstOwner = owner.get(first.ref.node.id), secondOwner = owner.get(second.ref.node.id);
+      return (firstOwner === void 0 ? actors.length : firstOwner % Math.max(1, actors.length)) - (secondOwner === void 0 ? actors.length : secondOwner % Math.max(1, actors.length));
+    })).flatMap((layer) => {
+      const limit = spec.layout?.maxPerColumn ?? 0;
+      return limit > 0 ? Array.from({ length: Math.ceil(layer.length / limit) }, (_, index) => layer.slice(index * limit, (index + 1) * limit)) : [layer];
+    });
+    const rows = Math.max(0, ...layers.map((layer) => layer.length));
+    const rowSize = Math.max(1, ...leaves.map((box) => box[size]));
+    const rowGap = Math.max(gap, ...edges.flatMap((ref2) => ref2.labels.map((label2) => (horizontal ? label2.height : label2.width) + 16)));
+    const fan = Math.max(1, ...leaves.map((box) => relations.filter(([source, target]) => source === box.ref.node.id || target === box.ref.node.id).length));
+    const layerGap = Math.max(regionGap, ...edges.flatMap((ref2) => ref2.labels.map((label2) => (horizontal ? label2.width : label2.height) + 24 + Math.max(0, fan - 2) * 32)));
+    const grids = [];
+    let extent = 0;
+    for (const layer of layers) {
+      const alongSize = Math.max(...layer.map((box) => horizontal ? box.width : box.height));
+      const slots = Array.from({ length: rows }, (_, index) => (horizontal ? top : padding) + rowSize / 2 + index * (rowSize + rowGap));
+      for (const [index, box] of layer.entries()) {
+        box[axis] = slots[index + Math.floor((rows - layer.length) / 2)] - box[size] / 2;
+        if (horizontal) box.x = padding + extent + (alongSize - box.width) / 2;
+        else box.y = top + extent + (alongSize - box.height) / 2;
+      }
+      grids.push({ boxes: layer, slots });
+      extent += alongSize + layerGap;
+    }
+    const across = rows ? rows * rowSize + (rows - 1) * rowGap : 0;
+    let width = padding * 2 + (horizontal ? Math.max(0, extent - layerGap) : across);
+    let height = top + padding + (horizontal ? across : Math.max(0, extent - layerGap));
+    const members = [...leaves], regions = [];
+    for (const child of groups.filter((candidate) => candidate.parent === id2)) {
+      const placed2 = region(child.id, depth + 1);
+      const dx = Math.max(padding, width - padding + (members.length || regions.length ? regionGap : 0)), dy = top;
+      for (const box of placed2.members) {
+        box.x += dx;
+        box.y += dy;
+      }
+      for (const box of placed2.regions) {
+        box.x += dx;
+        box.y += dy;
+      }
+      for (const grid of placed2.grids) grid.slots = grid.slots.map((slot) => slot + (horizontal ? dy : dx));
+      members.push(...placed2.members);
+      regions.push(...placed2.regions);
+      grids.push(...placed2.grids);
+      width = dx + placed2.width + padding;
+      height = Math.max(height, dy + placed2.height + padding);
+    }
+    if (group) {
+      width = Math.max(width, measure$1(group.label, theme.fontSize).width + 56, 180);
+      height = Math.max(height, header + 88);
+      regions.push({ x: 0, y: 0, width, height, depth, ref: { id: `usecase-${group.id}`, originalId: group.id, label: group.label, kind: group.kind ?? "boundary", header } });
+    }
+    return { width, height, members, regions, grids };
+  }
+  const placed = region(void 0, 0);
+  containers.push(...placed.regions);
+  buckets.push(...placed.grids);
+  const minAlong = Math.min(0, ...cases.map((box) => horizontal ? box.x : box.y), ...containers.map((box) => horizontal ? box.x : box.y));
+  const maxAlong = Math.max(180, ...cases.map((box) => horizontal ? box.x + box.width : box.y + box.height), ...containers.map((box) => horizontal ? box.x + box.width : box.y + box.height));
+  const related = (actor) => edges.flatMap((ref2) => ref2.edge.from === actor.ref.node.id ? [byId.get(ref2.edge.to)] : ref2.edge.to === actor.ref.node.id ? [byId.get(ref2.edge.from)] : []).filter((box) => box !== actor);
+  const arm = (box) => horizontal ? 35 * box.height / box.ref.renderHeight : box.width / 2;
+  const center = (box) => box[axis] + box[size] / 2;
+  const positionActor = (actor, cross, far) => {
+    actor[axis] = cross - arm(actor);
+    if (horizontal) actor.x = far ? maxAlong + regionGap : minAlong - regionGap - actor.width;
+    else actor.y = far ? maxAlong + regionGap : minAlong - regionGap - actor.height;
+  };
+  const positioned = [];
+  for (const [index, actor] of actors.entries()) {
+    const targets = related(actor).filter((box) => caseIds.has(box.ref.node.id));
+    const mean = targets.length ? targets.reduce((sum, box) => sum + center(box), 0) / targets.length : index * (actor[size] + gap);
+    positionActor(actor, mean, false);
+    while (positioned.some((box) => intersects(box, actor, 16))) actor[axis] += actor[size] + gap;
+    positioned.push(actor);
+  }
+  const segments = edges.filter((ref2) => ref2.edge.from !== ref2.edge.to).map((ref2) => ({ ref: ref2, source: byId.get(ref2.edge.from), target: byId.get(ref2.edge.to) }));
+  function score() {
+    let cost = 0;
+    const lines = segments.map((segment) => ({ ...segment, start: directEndpoint(segment.source, segment.target), end: directEndpoint(segment.target, segment.source) }));
+    for (const line2 of lines) {
+      const dx = line2.end.x - line2.start.x, dy = line2.end.y - line2.start.y;
+      cost += Math.hypot(dx, dy) / 40 * (edgeKind(line2.ref.edge, "usecase") === "include" ? 1.25 : 1);
+      for (const box of nodes) {
+        if (box === line2.source || box === line2.target) continue;
+        let hit;
+        if (box.ref.kind === "usecase") {
+          const rx = box.width / 2 + 5, ry = box.height / 2 + 5;
+          const startX = (line2.start.x - box.x - box.width / 2) / rx, startY = (line2.start.y - box.y - box.height / 2) / ry;
+          const unitX = dx / rx, unitY = dy / ry, squared = unitX * unitX + unitY * unitY;
+          const fraction = squared ? Math.max(0, Math.min(1, -(startX * unitX + startY * unitY) / squared)) : 0;
+          hit = Math.hypot(startX + unitX * fraction, startY + unitY * fraction) < 1;
+        } else hit = segmentIntersectsRect(line2.start, line2.end, box, 4);
+        if (hit) cost += 1e6;
+      }
+    }
+    for (let index = 0; index < lines.length; index++) for (const other of lines.slice(index + 1)) {
+      const line2 = lines[index];
+      const turn = (first, last, point) => (last.x - first.x) * (point.y - first.y) - (last.y - first.y) * (point.x - first.x);
+      if (turn(line2.start, line2.end, other.start) * turn(line2.start, line2.end, other.end) < -0.01 && turn(other.start, other.end, line2.start) * turn(other.start, other.end, line2.end) < -0.01) cost += 1e4;
+    }
+    return cost;
+  }
+  let best = score();
+  for (let pass = 0; pass < 6; pass++) {
+    const before = best;
+    for (const grid of buckets) for (const box of grid.boxes) {
+      const previous = box[axis];
+      let chosen = previous, swapped;
+      for (const slot of grid.slots) {
+        const other = grid.boxes.find((candidate2) => candidate2 !== box && Math.abs(center(candidate2) - slot) < 0.01);
+        const otherPosition = other?.[axis];
+        box[axis] = slot - box[size] / 2;
+        if (other) other[axis] = previous + box[size] / 2 - other[size] / 2;
+        const candidate = score();
+        if (candidate < best - 0.01) {
+          best = candidate;
+          chosen = box[axis];
+          swapped = other;
+        }
+        box[axis] = previous;
+        if (other) other[axis] = otherPosition;
+      }
+      box[axis] = chosen;
+      if (swapped) swapped[axis] = previous + box[size] / 2 - swapped[size] / 2;
+    }
+    for (const actor of actors) {
+      const previous = { x: actor.x, y: actor.y };
+      let chosen = previous;
+      const targets = related(actor), positions = targets.map((box) => box.ref.kind === "actor" ? box[axis] + arm(box) : center(box));
+      if (positions.length) positions.push(positions.reduce((sum, value) => sum + value, 0) / positions.length);
+      const lower = Math.min(0, ...cases.map(center)), upper = Math.max(placed.height, placed.width, ...cases.map(center));
+      const step = Math.max(actor[size] / 2 + 8, gap);
+      for (let value = lower; value <= upper && positions.length < 80; value += step) positions.push(value);
+      for (const cross of positions) for (const far of [false, true]) {
+        positionActor(actor, cross, far);
+        if (actors.some((other) => other !== actor && intersects(actor, other, 16))) continue;
+        const candidate = score();
+        if (candidate < best - 0.01) {
+          best = candidate;
+          chosen = { x: actor.x, y: actor.y };
+        }
+      }
+      Object.assign(actor, chosen);
+    }
+    if (before - best < 0.01) break;
+  }
+  return { nodes, containers, routes: [], width: placed.width, height: placed.height };
+}
+function routeEdges(edges, result, direction, theme, type2) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
   const obstacles = result.nodes.map((box) => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
@@ -98556,13 +98779,19 @@ function routeEdges(edges, result, direction, theme) {
   const seen = /* @__PURE__ */ new Map();
   const used = result.routes.flatMap((route) => route.paths);
   for (const item of assignments) {
+    if (type2 === "usecase" && item.source !== item.target) {
+      const route2 = [directEndpoint(item.source, item.target), directEndpoint(item.target, item.source)];
+      result.routes.push({ ref: item.ref, paths: [route2] });
+      used.push(route2);
+      continue;
+    }
     const sourceIndex = (seen.get(item.sourceKey) ?? 0) + 1, targetIndex = (seen.get(item.targetKey) ?? 0) + 1;
     seen.set(item.sourceKey, sourceIndex);
     seen.set(item.targetKey, targetIndex);
     const sameRow = Math.abs(item.source.y + item.source.height / 2 - item.target.y - item.target.height / 2) < 0.01;
     const sameColumn = Math.abs(item.source.x + item.source.width / 2 - item.target.x - item.target.width / 2) < 0.01;
     const straight = item.source !== item.target && (sameRow || sameColumn);
-    const sourceFraction = straight ? 0.5 : sourceIndex / ((counts.get(item.sourceKey) ?? 1) + 1);
+    const sourceFraction = 0.5;
     const targetFraction = straight ? 0.5 : targetIndex / ((counts.get(item.targetKey) ?? 1) + 1);
     const sides = [item.side, ...["left", "right", "top", "bottom"].filter((side) => side !== item.side)];
     const targetSides = [item.targetSide, ...["left", "right", "top", "bottom"].filter((side) => side !== item.targetSide)];
@@ -98613,7 +98842,9 @@ function routeEdges(edges, result, direction, theme) {
             }
           }
         }
-        const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + (side === item.side ? 0 : 32) + (targetSide === item.targetSide ? 0 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
+        const sourceFanout = assignments.filter((candidate2) => candidate2.source === item.source && candidate2.side === item.side).length;
+        const targetFanin = assignments.filter((candidate2) => candidate2.target === item.target && candidate2.targetSide === item.targetSide).length;
+        const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32) + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 160 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
         if (score < bestScore) {
           bestScore = score;
           route = candidate;
@@ -98670,7 +98901,7 @@ function clipEndpoint(point, neighbor, box) {
 }
 function markerDefinitions(prefix, theme) {
   const stroke = esc(theme.primary), background = esc(theme.background === "transparent" ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
+  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
 }
 function renderContainer(box, theme, direction) {
   const { x, y, width: w, height: h, ref: ref2 } = box;
@@ -98789,50 +99020,129 @@ function renderNode(box, spec) {
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
   return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([ref2.sourceNode.label, ref2.sourceNode.detail, ...ref2.sourceNode.attributes ?? [], ...ref2.sourceNode.operations ?? []].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
 }
+function segmentIntersectsRect(a, b, box, margin = 0) {
+  let low = 0, high = 1;
+  for (const [start, delta, min, max] of [
+    [a.x, b.x - a.x, box.x - margin, box.x + box.width + margin],
+    [a.y, b.y - a.y, box.y - margin, box.y + box.height + margin]
+  ]) {
+    if (Math.abs(delta) < 1e-3) {
+      if (start < min || start > max) return false;
+    } else {
+      const first = (min - start) / delta, last = (max - start) / delta;
+      low = Math.max(low, Math.min(first, last));
+      high = Math.min(high, Math.max(first, last));
+      if (low > high) return false;
+    }
+  }
+  return true;
+}
+function segmentRectDistance(a, b, box) {
+  if (segmentIntersectsRect(a, b, box)) return 0;
+  const dx = b.x - a.x, dy = b.y - a.y, squared = dx * dx + dy * dy;
+  const corners = [
+    { x: box.x, y: box.y },
+    { x: box.x + box.width, y: box.y },
+    { x: box.x, y: box.y + box.height },
+    { x: box.x + box.width, y: box.y + box.height }
+  ];
+  const distances = corners.map((point) => {
+    const fraction = squared ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / squared)) : 0;
+    return Math.hypot(point.x - a.x - dx * fraction, point.y - a.y - dy * fraction);
+  });
+  for (const point of [a, b]) distances.push(Math.hypot(Math.max(box.x - point.x, 0, point.x - box.x - box.width), Math.max(box.y - point.y, 0, point.y - box.y - box.height)));
+  return Math.min(...distances);
+}
+function labelIntersectsNode(label2, node) {
+  if (!intersects(label2, node, 5)) return false;
+  const dx = Math.max(label2.x - 5 - node.x - node.width / 2, 0, node.x + node.width / 2 - label2.x - label2.width - 5) / (node.width / 2);
+  const dy = Math.max(label2.y - 5 - node.y - node.height / 2, 0, node.y + node.height / 2 - label2.y - label2.height - 5) / (node.height / 2);
+  if (node.ref.kind === "decision") return dx + dy < 1;
+  if (["usecase", "start", "end"].includes(node.ref.kind)) return dx * dx + dy * dy < 1;
+  return true;
+}
 function placeLabels(routes, nodes, containers, direction) {
-  const occupied = [...nodes];
+  const occupied = [];
   for (const box of nodes) if (box.caption) occupied.push({ x: box.x + box.caption.x, y: box.y + box.caption.y, width: box.caption.width, height: box.caption.height });
   for (const box of containers) occupied.push(box.ref.kind === "lane" && direction === "LR" ? { x: box.x, y: box.y, width: box.ref.header, height: box.height } : { x: box.x, y: box.y, width: box.width, height: box.ref.header });
   const allSegments = [];
-  for (const route of routes) for (const path of route.paths) for (let index = 1; index < path.length; index++) allSegments.push({ a: path[index - 1], b: path[index] });
+  for (const route of routes) {
+    let offset = 0;
+    for (const path of route.paths) for (let index = 1; index < path.length; index++) {
+      const a = path[index - 1], b = path[index], length = Math.hypot(b.x - a.x, b.y - a.y);
+      if (length > 0.01) allSegments.push({ a, b, route, length, offset });
+      offset += length;
+    }
+  }
   const placed = [];
   for (const route of routes) for (const label2 of route.ref.labels) {
     const candidates = [];
-    const segments = [];
-    for (const path of route.paths) for (let index = 1; index < path.length; index++) {
-      const a = path[index - 1], b = path[index];
-      segments.push({ a, b, length: Math.abs(a.x - b.x) + Math.abs(a.y - b.y), order: segments.length });
-    }
+    const segments = allSegments.filter((segment) => segment.route === route);
+    const others = allSegments.filter((segment) => segment.route !== route);
+    const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+    const branch = label2.role === "main" && nodes.find((node) => node.ref.node.id === route.ref.edge.from)?.ref.kind === "decision";
+    const desired = label2.role === "from" || branch ? Math.min(36, total / 2) : label2.role === "to" ? total - Math.min(36, total / 2) : total / 2;
     for (const segment of segments) {
-      const { a, b, length, order } = segment;
-      if (length < 1) continue;
-      const horizontal = Math.abs(a.y - b.y) < 0.01;
-      const desired = label2.role === "from" ? 0.2 : label2.role === "to" ? 0.8 : 0.5;
-      for (const fraction of [desired, 0.5, 0.25, 0.75]) for (const gap of [8, 16, 30, 50, 80, 120, 180, 260]) {
-        const center = { x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction };
-        const penalty = label2.role === "from" ? order * 100 : label2.role === "to" ? (segments.length - 1 - order) * 100 : -Math.min(length, 300) / 5;
-        const first = { x: horizontal ? center.x - label2.width / 2 : center.x + gap, y: horizontal ? center.y - gap - label2.height : center.y - label2.height / 2, width: label2.width, height: label2.height, value: label2.value, size: label2.size };
-        const second = { ...first, x: horizontal ? first.x : center.x - gap - label2.width, y: horizontal ? center.y + gap : first.y };
-        candidates.push({ box: first, score: penalty + gap + Math.abs(fraction - desired) * 20 }, { box: second, score: penalty + gap + 2 + Math.abs(fraction - desired) * 20 });
+      const { a, b, length, offset } = segment;
+      const ux = (b.x - a.x) / length, uy = (b.y - a.y) / length;
+      const overlaps = others.flatMap((other) => {
+        const cross = (point) => Math.abs((point.x - a.x) * uy - (point.y - a.y) * ux);
+        if (cross(other.a) > 0.01 || cross(other.b) > 0.01) return [];
+        const first = (other.a.x - a.x) * ux + (other.a.y - a.y) * uy;
+        const last = (other.b.x - a.x) * ux + (other.b.y - a.y) * uy;
+        const start = Math.max(0, Math.min(first, last)), end = Math.min(length, Math.max(first, last));
+        return end > start + 0.01 ? [{ start, end }] : [];
+      });
+      const cuts = [.../* @__PURE__ */ new Set([0, length, ...overlaps.flatMap((overlap) => [overlap.start, overlap.end])])].sort((first, second) => first - second);
+      for (let index = 1; index < cuts.length; index++) {
+        const start = cuts[index - 1], end = cuts[index], middle = (start + end) / 2;
+        const shared = overlaps.some((overlap) => middle > overlap.start && middle < overlap.end);
+        const positions = /* @__PURE__ */ new Set([
+          middle,
+          start + (end - start) / 4,
+          end - (end - start) / 4,
+          Math.max(start, Math.min(end, desired - offset))
+        ]);
+        const steps = Math.min(60, Math.ceil((end - start) / 12));
+        for (let step = 0; step <= steps; step++) positions.add(start + (end - start) * step / Math.max(1, steps));
+        const shifts = end - start < Math.abs(ux) * label2.width + Math.abs(uy) * label2.height + 16 ? [0, -12, 12, -24, 24] : [0];
+        for (const position of positions) for (const gap of [8, 12, 18, 28, 44, 68, 100]) for (const sign of [1, -1]) for (const shift of shifts) {
+          const anchor = { x: a.x + ux * position, y: a.y + uy * position };
+          const normalX = -uy * sign, normalY = ux * sign;
+          const distance = gap + Math.abs(normalX) * label2.width / 2 + Math.abs(normalY) * label2.height / 2;
+          const box = {
+            x: anchor.x + normalX * distance + ux * shift - label2.width / 2,
+            y: anchor.y + normalY * distance + uy * shift - label2.height / 2,
+            width: label2.width,
+            height: label2.height,
+            value: label2.value,
+            size: label2.size,
+            ref: route.ref,
+            role: label2.role,
+            anchor
+          };
+          const nearest = Math.min(...others.map((other) => segmentRectDistance(other.a, other.b, box)));
+          const own = segmentRectDistance(a, b, box), ambiguous = shared || nearest < own + 3;
+          box.leader = ambiguous || own > 18;
+          candidates.push({ box, score: Math.abs(offset + position - desired) * (branch || label2.role !== "main" ? 0.3 : 0.1) + gap * 2 + Math.abs(shift) + (shared ? 4e3 : ambiguous ? 1e3 : 0) + (gap > 18 ? 500 : 0) });
+        }
       }
     }
     candidates.sort((a, b) => a.score - b.score);
+    const sharedAnchor = (anchor) => others.some((other) => segmentRectDistance(other.a, other.b, { ...anchor, width: 0, height: 0 }) < 0.01);
     let chosen;
     for (const candidate of candidates) {
+      if (nodes.some((node) => labelIntersectsNode(candidate.box, node))) continue;
       if (occupied.some((box) => intersects(candidate.box, box, 5))) continue;
-      const crosses = allSegments.some(({ a, b }) => Math.abs(a.y - b.y) < 0.01 ? a.y > candidate.box.y - 6 && a.y < candidate.box.y + candidate.box.height + 6 && Math.max(a.x, b.x) > candidate.box.x - 4 && Math.min(a.x, b.x) < candidate.box.x + candidate.box.width + 4 : a.x > candidate.box.x - 6 && a.x < candidate.box.x + candidate.box.width + 6 && Math.max(a.y, b.y) > candidate.box.y - 4 && Math.min(a.y, b.y) < candidate.box.y + candidate.box.height + 4);
-      if (crosses) continue;
+      if (allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, candidate.box, 4))) continue;
+      if (candidate.box.leader && sharedAnchor(candidate.box.anchor)) continue;
       chosen = candidate.box;
       break;
     }
     if (!chosen) {
-      const anchor = route.paths[0][0];
-      let y = Math.min(...occupied.map((box) => box.y), anchor.y) - label2.height - 16;
-      chosen = { x: anchor.x - label2.width / 2, y, width: label2.width, height: label2.height, value: label2.value, size: label2.size };
-      while (occupied.some((box) => intersects(chosen, box, 5))) {
-        y -= label2.height + 12;
-        chosen.y = y;
-      }
+      const candidate = (candidates.find((candidate2) => !sharedAnchor(candidate2.box.anchor)) ?? candidates[0]).box;
+      chosen = { ...candidate, leader: true };
+      while (nodes.some((node) => labelIntersectsNode(chosen, node)) || occupied.some((box) => intersects(chosen, box, 5)) || allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, chosen, 4))) chosen.y -= label2.height + 12;
     }
     placed.push(chosen);
     occupied.push(chosen);
@@ -98858,19 +99168,27 @@ function alignConnectedNodes(result, edges, columns, spec) {
   const parents = nodes.map((_, i) => i);
   const find = (i) => parents[i] === i ? i : parents[i] = find(parents[i]);
   const bounds = nodes.map(occupiedNode), gap = spec.layout?.elementGap ?? 24;
+  const labelGaps = /* @__PURE__ */ new Map();
+  for (const ref2 of edges) {
+    const from = index.get(ref2.edge.from), to = index.get(ref2.edge.to);
+    if (from === void 0 || to === void 0) continue;
+    const key = [from, to].sort((first, second) => first - second).join(":");
+    labelGaps.set(key, Math.max(labelGaps.get(key) ?? gap, ...ref2.labels.map((label2) => label2[size] + 16)));
+  }
+  const separation = (from, to) => Math.max(gap, labelGaps.get([from, to].sort((first, second) => first - second).join(":")) ?? gap);
   const center = (i) => nodes[i][axis] + nodes[i][size] / 2;
   const constraints = [];
   for (let a = 0; a < nodes.length; a++) for (let b = a + 1; b < nodes.length; b++) {
     if (bounds[a][cross] >= bounds[b][cross] + bounds[b][crossSize] + gap / 2 || bounds[b][cross] >= bounds[a][cross] + bounds[a][crossSize] + gap / 2) continue;
     const [from, to] = center(a) <= center(b) ? [a, b] : [b, a];
-    const distance = bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + gap;
+    const distance = bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to);
     constraints.push({ from, to, distance });
   }
   for (const edge of edges) {
     const a = index.get(edge.edge.from), b = index.get(edge.edge.to);
     if (a === void 0 || b === void 0 || columns.get(nodes[a].ref.id) !== columns.get(nodes[b].ref.id) || Math.abs(center(a) - center(b)) < 0.01) continue;
     const [from, to] = center(a) < center(b) ? [a, b] : [b, a];
-    constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + gap });
+    constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to) });
   }
   const adjacency = () => {
     const graph = /* @__PURE__ */ new Map();
@@ -98899,6 +99217,25 @@ function alignConnectedNodes(result, edges, columns, spec) {
     const from = index.get(ref2.edge.from), to = index.get(ref2.edge.to);
     return from === void 0 || to === void 0 || columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id) ? [] : [{ from, to, difference: Math.abs(center(from) - center(to)) }];
   }).sort((a, b) => a.difference - b.difference);
+  const related = /* @__PURE__ */ new Map();
+  for (const edge of edges) {
+    const from = index.get(edge.edge.from), to = index.get(edge.edge.to);
+    if (from === void 0 || to === void 0) continue;
+    for (const [key, node] of [[`from:${from}`, to], [`to:${to}`, from]]) {
+      const peers = related.get(key) ?? /* @__PURE__ */ new Set();
+      peers.add(node);
+      related.set(key, peers);
+    }
+  }
+  for (const peers of related.values()) {
+    const values2 = [...peers];
+    for (let first = 0; first < values2.length; first++) for (let second = first + 1; second < values2.length; second++) {
+      const a = values2[first], b = values2[second];
+      if (columns.get(nodes[a].ref.id) === columns.get(nodes[b].ref.id)) continue;
+      candidates.push({ from: a, to: b, difference: Math.abs(center(a) - center(b)) });
+    }
+  }
+  candidates.sort((a, b) => a.difference - b.difference);
   for (const candidate of candidates) {
     const from = find(candidate.from), to = find(candidate.to);
     if (from === to) continue;
@@ -98991,7 +99328,7 @@ async function renderGraph(spec, suppliedTheme) {
   const automaticColumns = spec.layout?.maxPerColumn === void 0;
   spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
-  const direction = spec.direction ?? "TB";
+  const direction = spec.direction ?? (spec.type === "usecase" ? "LR" : "TB");
   const nodes = (spec.nodes ?? []).map((node, index) => createNode(node, index, spec, theme));
   const edges = (spec.edges ?? []).map((edge, index) => createEdge(edge, index, theme, spec.type));
   const refs = new Map(nodes.map((node) => [node.id, node]));
@@ -98999,7 +99336,9 @@ async function renderGraph(spec, suppliedTheme) {
   const columns = /* @__PURE__ */ new Map();
   const elk = layoutEngine ??= new ELK();
   let result;
-  if (spec.lanes?.length) {
+  if (spec.type === "usecase" && !spec.lanes?.length) {
+    result = layoutUsecases(nodes, edges, spec, theme);
+  } else if (spec.lanes?.length) {
     const lanes = [...spec.lanes];
     const unassigned = nodes.filter((node) => !node.node.lane);
     const occupiedGroups = /* @__PURE__ */ new Set();
@@ -99054,7 +99393,7 @@ async function renderGraph(spec, suppliedTheme) {
     const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
     result = collectLayout(output, refs, containers);
   }
-  alignConnectedNodes(result, edges, columns, spec);
+  if (spec.type !== "usecase") alignConnectedNodes(result, edges, columns, spec);
   placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
   result.width = Math.max(0, ...result.nodes.map((box) => {
     const occupied = occupiedNode(box);
@@ -99064,13 +99403,15 @@ async function renderGraph(spec, suppliedTheme) {
     const occupied = occupiedNode(box);
     return occupied.y + occupied.height;
   }), ...result.containers.map((box) => box.y + box.height));
-  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 });
+  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type);
   const nodeById = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   for (const route of result.routes) {
     const first = route.paths[0], last = route.paths[route.paths.length - 1];
     const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
-    if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
-    if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+    if (spec.type !== "usecase") {
+      if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
+      if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+    }
   }
   const labels = placeLabels(result.routes, result.nodes, result.containers, direction);
   const prefix = `uml-graph-${++graphNumber}`;
@@ -99089,7 +99430,10 @@ async function renderGraph(spec, suppliedTheme) {
   }
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(box, theme, direction)).join("");
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
-  const labelShapes = labels.map((label2) => `<g class="uml-edge-label"><rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`).join("");
+  const labelShapes = labels.map((label2) => {
+    const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
+    return `<g class="uml-edge-label" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`;
+  }).join("");
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) {
     minX = Math.min(minX, box.x - theme.lineWidth);
@@ -99295,7 +99639,7 @@ function renderSequence(spec, theme) {
     if (m.kind === "destroy" && !destroyAt.has(m.to)) destroyAt.set(m.to, i);
   });
   const headerY = (p) => createAt.has(p.id) ? ys[createAt.get(p.id)] - boxHeight / 2 : top;
-  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
+  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
   let fragmentAnnotations = "";
   const guard = (left, top2, lines) => {
     const width2 = Math.max(...lines.map((value) => measure(value, guardSize))) + 8;
@@ -99389,9 +99733,16 @@ function renderSequence(spec, theme) {
         weight: 600
       });
     } else {
-      body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${p.kind === "database" ? 0 : theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      if (p.kind === "database")
-        body += `<ellipse cx="${cx}" cy="${py + 8}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      if (p.kind === "database") {
+        const left = cx - participantWidth / 2;
+        const top2 = py + 8;
+        const bottom2 = py + boxHeight - 8;
+        body += `<path d="M ${left} ${top2} A ${participantWidth / 2} 8 0 0 1 ${cx + participantWidth / 2} ${top2} V ${bottom2} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom2} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<ellipse cx="${cx}" cy="${top2}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<path d="M ${left} ${bottom2} A ${participantWidth / 2} 8 0 0 0 ${cx + participantWidth / 2} ${bottom2}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      } else {
+        body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      }
       body += text(
         cx,
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
@@ -99742,7 +100093,7 @@ async function exportSvgImage(svg, options = {}) {
   if (!Object.hasOwn(MIME, format2)) throw new Error("不支持的图片格式。");
   const scale = options.scale ?? (format2 === "svg" ? 1 : 2);
   if (!Number.isFinite(scale) || scale <= 0) throw new Error("导出倍率必须为大于 0 的有限数字。");
-  const quality = options.quality ?? 0.94;
+  const quality = options.quality ?? 0.92;
   if (!Number.isFinite(quality) || quality < 0 || quality > 1) throw new Error("图片质量必须介于 0 和 1 之间。");
   if (format2 === "svg" && scale === 1) return new Blob([svg], { type: MIME.svg });
   const { root, width, height } = svgDocument(svg);

@@ -1,0 +1,27 @@
+{
+  "version":1, "id":"incident-causes", "type":"fishbone", "title":"支付延迟 · 六维根因与递归原因", "theme":"amber",
+  "description":"六类原因且数量不均，包含三层子原因和较长文字；验证上下骨架、递归缩进与文本换行。",
+  "fishbone":{"effect":"支付请求 P99 延迟超过 3 秒","categories":[
+    {"id":"people","label":"人员协作","causes":[
+      {"label":"值班交接不完整","children":[{"label":"未记录临时限流阈值","children":[{"label":"交接模板没有配置变更字段"}]}]},
+      {"label":"跨团队升级响应慢"}
+    ]},
+    {"id":"process","label":"发布流程","causes":[
+      {"label":"灰度验证只检查平均耗时","children":[{"label":"缺少尾延迟验收阈值"}]},
+      {"label":"回滚演练未覆盖数据库连接配置"}
+    ]},
+    {"id":"code","label":"应用实现","causes":[
+      {"label":"同步调用链过长","children":[{"label":"通知投递阻塞支付响应"}]},
+      {"label":"连接池等待时间未设上限"},{"label":"重试缺少随机退避"}
+    ]},
+    {"id":"data","label":"数据访问","causes":[
+      {"label":"订单查询触发全表扫描","children":[{"label":"组合索引未覆盖租户与创建时间"}]}
+    ]},
+    {"id":"infra","label":"基础设施","causes":[
+      {"label":"跨可用区网络抖动"},{"label":"CPU 限额导致周期性节流","children":[{"label":"压测环境资源配置与生产不同"}]}
+    ]},
+    {"id":"observe","label":"监控度量","causes":[
+      {"label":"告警只统计成功请求"},{"label":"缺少数据库连接等待与渠道响应时间的分段指标"}
+    ]}
+  ]}
+}

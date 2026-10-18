@@ -1,0 +1,24 @@
+{
+  "version":1, "id":"import-pipeline", "type":"flowchart", "title":"数据导入 · 长文本、人工复核与重试", "theme":"amber", "direction":"LR",
+  "description":"横向流程包含编码异常、字段映射返工和导入失败重试。中英混排及特殊字符验证自动换行和 XML 转义。",
+  "layout":{"maxPerColumn":4,"nodeMaxWidth":220},
+  "nodes":[
+    {"id":"start","label":"开始","kind":"start"},{"id":"upload","label":"上传 CSV / JSON 数据文件"},
+    {"id":"encoding","label":"编码与分隔符可识别？","kind":"decision"},{"id":"repair","label":"选择 UTF-8 编码并修正分隔符"},
+    {"id":"mapping","label":"配置字段映射：customer_id → 客户编号"},
+    {"id":"preview","label":"预览前 100 行并检查必填字段、重复编号与金额范围"},
+    {"id":"valid","label":"错误数 < 10 且完整率 > 99%？","kind":"decision"},
+    {"id":"manual","label":"人工复核异常记录 & 确认修正"},{"id":"import","label":"分批导入并保存检查点"},
+    {"id":"success","label":"全部批次成功？","kind":"decision"},{"id":"retry","label":"从最近检查点恢复失败批次"},
+    {"id":"report","label":"输出导入报告与失败明细"},{"id":"end","label":"完成","kind":"end"}
+  ],
+  "edges":[
+    {"from":"start","to":"upload"},{"from":"upload","to":"encoding"},
+    {"from":"encoding","to":"mapping","label":"可识别"},{"from":"encoding","to":"repair","label":"需修正"},
+    {"from":"repair","to":"upload"},{"from":"mapping","to":"preview"},{"from":"preview","to":"valid"},
+    {"from":"valid","to":"import","label":"满足阈值"},{"from":"valid","to":"manual","label":"人工确认"},
+    {"from":"manual","to":"mapping","label":"修改映射后重检"},{"from":"import","to":"success"},
+    {"from":"success","to":"report","label":"成功"},{"from":"success","to":"retry","label":"失败"},
+    {"from":"retry","to":"import"},{"from":"report","to":"end"}
+  ]
+}

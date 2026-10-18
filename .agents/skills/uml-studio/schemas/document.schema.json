@@ -201,7 +201,7 @@
                 "spacious",
                 "grid"
               ],
-              "default": "compact"
+              "default": "balanced"
             },
             "showTitle": {
               "type": "boolean",

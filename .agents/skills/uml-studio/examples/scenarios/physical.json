@@ -1,0 +1,25 @@
+{
+  "version":1, "id":"commerce-physical", "type":"physical", "title":"4+1 物理视图 · 两可用区与三层容器", "theme":"blueprint",
+  "description":"区域内两个可用区分别包含宿主机与制品；负载均衡分流，跨区数据库复制。验证三层包含、同级区域排列和跨深度连线。",
+  "groups":[
+    {"id":"region","label":"生产区域 / 华东","kind":"node"},
+    {"id":"zone-a","label":"可用区 A","kind":"node","parent":"region"},{"id":"zone-b","label":"可用区 B","kind":"node","parent":"region"},
+    {"id":"host-a","label":"应用宿主机 A","kind":"node","parent":"zone-a"},{"id":"host-b","label":"应用宿主机 B","kind":"node","parent":"zone-b"}
+  ],
+  "nodes":[
+    {"id":"lb","label":"区域负载均衡","kind":"server","group":"region"},
+    {"id":"api-a","label":"订单 API 制品 A","kind":"component","stereotype":"artifact","group":"host-a"},
+    {"id":"worker-a","label":"履约 Worker A","kind":"component","stereotype":"artifact","group":"host-a"},
+    {"id":"api-b","label":"订单 API 制品 B","kind":"component","stereotype":"artifact","group":"host-b"},
+    {"id":"worker-b","label":"履约 Worker B","kind":"component","stereotype":"artifact","group":"host-b"},
+    {"id":"primary","label":"数据库主节点","kind":"database","group":"zone-a"},{"id":"replica","label":"数据库备节点","kind":"database","group":"zone-b"},
+    {"id":"objects","label":"区域对象存储","kind":"database","group":"region"}
+  ],
+  "edges":[
+    {"from":"lb","to":"api-a","label":"HTTP"},{"from":"lb","to":"api-b","label":"HTTP"},
+    {"from":"api-a","to":"primary","label":"读写"},{"from":"api-b","to":"primary","label":"跨区读写"},
+    {"from":"primary","to":"replica","label":"流式复制","dashed":true},
+    {"from":"worker-a","to":"objects","label":"归档"},{"from":"worker-b","to":"objects","label":"归档"},
+    {"from":"api-a","to":"worker-a","label":"本机任务"},{"from":"api-b","to":"worker-b","label":"本机任务"}
+  ]
+}

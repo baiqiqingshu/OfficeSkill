@@ -1,0 +1,22 @@
+{
+  "version":1, "id":"monorepo-packages", "type":"package", "title":"Monorepo · 分层依赖与共享契约", "theme":"mint",
+  "description":"嵌套业务包与独立基础设施包；两个应用共享契约和领域核心，依赖方向保持可替换的适配边界。",
+  "groups":[
+    {"id":"apps","label":"apps / 入口","kind":"package"},{"id":"core","label":"packages / 业务核心","kind":"package"},
+    {"id":"ordering","label":"ordering / 订单域","kind":"package","parent":"core"},{"id":"infra","label":"adapters / 外部实现","kind":"package"}
+  ],
+  "nodes":[
+    {"id":"web","label":"storefront","kind":"package","group":"apps"},{"id":"admin","label":"operations-ui","kind":"package","group":"apps"},
+    {"id":"api","label":"order-api","kind":"package","group":"apps"},{"id":"contracts","label":"api-contracts","kind":"package","group":"core"},
+    {"id":"app","label":"application","kind":"package","group":"ordering"},{"id":"domain","label":"domain","kind":"package","group":"ordering"},
+    {"id":"ports","label":"ports","kind":"package","group":"ordering"},{"id":"shared","label":"shared-kernel","kind":"package","group":"core"},
+    {"id":"sql","label":"postgres-adapter","kind":"package","group":"infra"},{"id":"events","label":"event-adapter","kind":"package","group":"infra"}
+  ],
+  "edges":[
+    {"from":"web","to":"contracts","kind":"dependency"},{"from":"admin","to":"contracts","kind":"dependency"},
+    {"from":"api","to":"contracts","kind":"dependency"},{"from":"api","to":"app","kind":"dependency"},
+    {"from":"app","to":"domain","kind":"dependency"},{"from":"app","to":"ports","kind":"dependency"},
+    {"from":"domain","to":"shared","kind":"dependency"},{"from":"ports","to":"shared","kind":"dependency"},
+    {"from":"sql","to":"ports","kind":"dependency"},{"from":"events","to":"ports","kind":"dependency"}
+  ]
+}

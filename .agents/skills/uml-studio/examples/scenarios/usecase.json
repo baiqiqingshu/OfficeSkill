@@ -1,0 +1,24 @@
+{
+  "version":1, "id":"commerce-usecases", "type":"usecase", "title":"交易平台 · 多角色与包含扩展关系", "theme":"lavender", "direction":"LR",
+  "description":"三个业务角色和外部支付渠道，共用登录与查询能力；包含、扩展、角色泛化及系统边界并存。所有关系使用直线。",
+  "groups":[{"id":"platform","label":"交易平台","kind":"boundary"}],
+  "nodes":[
+    {"id":"buyer","label":"购买者","kind":"actor"},{"id":"member","label":"会员","kind":"actor"},
+    {"id":"operator","label":"运营人员","kind":"actor"},{"id":"bank","label":"支付渠道","kind":"actor"},
+    {"id":"search","label":"查询商品","kind":"usecase","group":"platform"},
+    {"id":"checkout","label":"提交订单","kind":"usecase","group":"platform"},
+    {"id":"login","label":"验证登录身份","kind":"usecase","group":"platform"},
+    {"id":"pay","label":"完成支付","kind":"usecase","group":"platform"},
+    {"id":"coupon","label":"使用会员优惠","kind":"usecase","group":"platform"},
+    {"id":"refund","label":"申请退款","kind":"usecase","group":"platform"},
+    {"id":"approve","label":"审核退款","kind":"usecase","group":"platform"}
+  ],
+  "edges":[
+    {"from":"member","to":"buyer","kind":"inheritance"},
+    {"from":"buyer","to":"search","kind":"association"},{"from":"buyer","to":"checkout","kind":"association"},
+    {"from":"buyer","to":"refund","kind":"association"},{"from":"member","to":"coupon","kind":"association"},
+    {"from":"operator","to":"approve","kind":"association"},{"from":"bank","to":"pay","kind":"association"},
+    {"from":"checkout","to":"login","kind":"include"},{"from":"checkout","to":"pay","kind":"include"},
+    {"from":"refund","to":"login","kind":"include"},{"from":"coupon","to":"checkout","kind":"extend","label":"会员可用"}
+  ]
+}

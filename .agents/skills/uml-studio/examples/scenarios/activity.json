@@ -1,0 +1,31 @@
+{
+  "version":1, "id":"login-branches", "type":"activity", "title":"登录认证 · 多重判断与失败回退", "theme":"ocean",
+  "description":"四个判断重复使用是/否标注；格式错误和锁定账号返回输入，不存在与密码错误汇合到统一提示。观察标签归属、独立分支及回退边。",
+  "nodes":[
+    {"id":"start","label":"开始","kind":"start"},
+    {"id":"input","label":"输入账号和密码","kind":"action"},
+    {"id":"submit","label":"点击登录","kind":"action"},
+    {"id":"valid","label":"参数格式正确？","kind":"decision"},
+    {"id":"invalid","label":"提示参数格式错误","kind":"action"},
+    {"id":"query","label":"查询账号与密码哈希","kind":"action"},
+    {"id":"exists","label":"用户存在？","kind":"decision"},
+    {"id":"notfound","label":"提示账号或密码错误","kind":"action"},
+    {"id":"locked","label":"账号已锁定？","kind":"decision"},
+    {"id":"block","label":"提示账号已锁定","kind":"action"},
+    {"id":"check","label":"密码正确？","kind":"decision"},
+    {"id":"gen","label":"生成访问令牌","kind":"action"},
+    {"id":"home","label":"登录成功，进入首页","kind":"action"},
+    {"id":"end","label":"结束","kind":"end"}
+  ],
+  "edges":[
+    {"id":"enter","from":"start","to":"input"},{"id":"submit","from":"input","to":"submit"},
+    {"id":"validate","from":"submit","to":"valid"},
+    {"id":"valid-yes","from":"valid","to":"query","label":"是"},{"id":"valid-no","from":"valid","to":"invalid","label":"否"},
+    {"id":"correct-input","from":"invalid","to":"input"},{"id":"lookup","from":"query","to":"exists"},
+    {"id":"exists-yes","from":"exists","to":"locked","label":"是"},{"id":"exists-no","from":"exists","to":"notfound","label":"否"},
+    {"id":"locked-yes","from":"locked","to":"block","label":"是"},{"id":"locked-no","from":"locked","to":"check","label":"否"},
+    {"id":"retry-unlocked","from":"block","to":"input"},
+    {"id":"password-yes","from":"check","to":"gen","label":"是"},{"id":"password-no","from":"check","to":"notfound","label":"否"},
+    {"id":"open-home","from":"gen","to":"home"},{"id":"finish","from":"home","to":"end"}
+  ]
+}

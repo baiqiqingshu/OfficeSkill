@@ -1,0 +1,28 @@
+{
+  "version":1, "id":"expense-swimlane", "type":"swimlane", "title":"费用报销 · 四方交接与退回补件", "theme":"forest",
+  "description":"申请人、主管、财务、支付平台之间多次交接；补件回到申请人，付款失败在支付平台内重试。起止符号保留职责归属但位于泳道外。",
+  "lanes":[{"id":"applicant","label":"申请人"},{"id":"manager","label":"部门主管"},{"id":"finance","label":"财务审核"},{"id":"bank","label":"支付平台"}],
+  "nodes":[
+    {"id":"start","label":"开始","kind":"start","lane":"applicant"},
+    {"id":"submit","label":"提交报销单及凭证","lane":"applicant"},
+    {"id":"review","label":"业务用途合规？","kind":"decision","lane":"manager"},
+    {"id":"revise","label":"补充用途与附件","lane":"applicant"},
+    {"id":"invoice","label":"核验发票与预算","lane":"finance"},
+    {"id":"valid","label":"材料完整？","kind":"decision","lane":"finance"},
+    {"id":"pay","label":"发起付款","lane":"bank"},
+    {"id":"paid","label":"付款成功？","kind":"decision","lane":"bank"},
+    {"id":"retry","label":"核实账户后重试","lane":"bank"},
+    {"id":"record","label":"记账并归档凭证","lane":"finance"},
+    {"id":"notify","label":"查看到账通知","lane":"applicant"},
+    {"id":"end","label":"完成","kind":"end","lane":"applicant"}
+  ],
+  "edges":[
+    {"from":"start","to":"submit"},{"from":"submit","to":"review"},
+    {"from":"review","to":"invoice","label":"通过"},{"from":"review","to":"revise","label":"退回"},
+    {"from":"revise","to":"submit","label":"重新提交"},{"from":"invoice","to":"valid"},
+    {"from":"valid","to":"pay","label":"完整"},{"from":"valid","to":"revise","label":"补件"},
+    {"from":"pay","to":"paid"},{"from":"paid","to":"record","label":"成功"},
+    {"from":"paid","to":"retry","label":"失败"},{"from":"retry","to":"pay"},
+    {"from":"record","to":"notify"},{"from":"notify","to":"end"}
+  ]
+}

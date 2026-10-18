@@ -247,7 +247,7 @@ export function renderSequence(
     createAt.has(p.id) ? ys[createAt.get(p.id)!]! - boxHeight / 2 : top;
   let body =
     header.svg +
-    `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
+    `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
   let fragmentAnnotations = "";
   const guard = (left: number, top: number, lines: string[]): string => {
     const width =
@@ -353,9 +353,16 @@ export function renderSequence(
         weight: 600,
       });
     } else {
-      body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${p.kind === "database" ? 0 : theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      if (p.kind === "database")
-        body += `<ellipse cx="${cx}" cy="${py + 8}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      if (p.kind === "database") {
+        const left = cx - participantWidth / 2;
+        const top = py + 8;
+        const bottom = py + boxHeight - 8;
+        body += `<path d="M ${left} ${top} A ${participantWidth / 2} 8 0 0 1 ${cx + participantWidth / 2} ${top} V ${bottom} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<ellipse cx="${cx}" cy="${top}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<path d="M ${left} ${bottom} A ${participantWidth / 2} 8 0 0 0 ${cx + participantWidth / 2} ${bottom}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      } else {
+        body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      }
       body += text(
         cx,
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,

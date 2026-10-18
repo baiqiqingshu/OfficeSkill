@@ -1,0 +1,22 @@
+{
+  "version":1, "id":"order-domain", "type":"class", "title":"订单领域 · 所有权、接口与基数", "theme":"paper", "direction":"LR",
+  "description":"实体继承、聚合、组合、关联、依赖和接口实现共存；检查长泛型签名、两端基数及同一类多条出边。",
+  "nodes":[
+    {"id":"entity","label":"Entity","kind":"class","stereotype":"abstract","attributes":["+ id: UUID","+ version: number"],"operations":["+ equals(other: Entity): boolean"]},
+    {"id":"customer","label":"Customer","kind":"class","attributes":["+ name: string","+ email: string"],"operations":["+ placeOrder(): Order"]},
+    {"id":"order","label":"Order","kind":"class","attributes":["+ number: string","- status: OrderStatus","- createdAt: Instant"],"operations":["+ submit(): void","+ total(): Money","+ cancel(reason: string): void"]},
+    {"id":"line","label":"OrderLine","kind":"class","attributes":["+ sku: string","+ quantity: number","+ unitPrice: Money"],"operations":["+ subtotal(): Money"]},
+    {"id":"product","label":"Product","kind":"class","attributes":["+ sku: string","+ title: string"]},
+    {"id":"payment","label":"PaymentPort","kind":"interface","operations":["+ charge(orderId: UUID, amount: Money): Promise<Receipt>"]},
+    {"id":"bank","label":"BankAdapter","kind":"class","operations":["+ charge(orderId: UUID, amount: Money): Promise<Receipt>"]},
+    {"id":"repo","label":"OrderRepository","kind":"interface","operations":["+ save(order: Order): Promise<void>","+ findById(id: UUID): Promise<Order | null>"]}
+  ],
+  "edges":[
+    {"from":"order","to":"entity","kind":"inheritance"},{"from":"customer","to":"entity","kind":"inheritance"},
+    {"from":"customer","to":"order","kind":"aggregation","fromLabel":"1","toLabel":"0..*","label":"拥有"},
+    {"from":"order","to":"line","kind":"composition","fromLabel":"1","toLabel":"1..*"},
+    {"from":"line","to":"product","kind":"association","fromLabel":"0..*","toLabel":"1"},
+    {"from":"order","to":"payment","kind":"dependency","label":"扣款"},
+    {"from":"bank","to":"payment","kind":"realization"},{"from":"repo","to":"order","kind":"dependency","label":"持久化"}
+  ]
+}

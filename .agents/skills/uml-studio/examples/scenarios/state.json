@@ -1,0 +1,22 @@
+{
+  "version":1, "id":"payment-lifecycle", "type":"state", "title":"支付单 · 超时、重试与退款生命周期", "theme":"rose",
+  "description":"状态内部动作、自转换、成功和关闭两个终态；支付失败可重试，退款查询在原状态内重复。",
+  "nodes":[
+    {"id":"start","label":"创建","kind":"start"},
+    {"id":"pending","label":"待支付","kind":"state","detail":"entry / 启动超时计时器\nexit / 取消计时器"},
+    {"id":"processing","label":"支付处理中","kind":"state","detail":"do / 等待渠道回调"},
+    {"id":"failed","label":"支付失败","kind":"state","detail":"entry / 记录失败原因"},
+    {"id":"paid","label":"已支付","kind":"state","detail":"entry / 发布支付成功事件"},
+    {"id":"refund","label":"退款处理中","kind":"state","detail":"do / 核对渠道退款结果"},
+    {"id":"refunded","label":"已退款","kind":"state"},{"id":"closed","label":"已关闭","kind":"state"},
+    {"id":"end-paid","label":"结算完成","kind":"end"},{"id":"end-closed","label":"流程结束","kind":"end"}
+  ],
+  "edges":[
+    {"from":"start","to":"pending"},{"from":"pending","to":"processing","label":"发起支付"},
+    {"from":"pending","to":"closed","label":"超时或取消"},{"from":"processing","to":"processing","label":"重复回调 / 幂等处理"},
+    {"from":"processing","to":"paid","label":"扣款成功"},{"from":"processing","to":"failed","label":"渠道拒绝"},
+    {"from":"failed","to":"pending","label":"用户重试"},{"from":"paid","to":"refund","label":"申请退款"},
+    {"from":"paid","to":"end-paid","label":"结算完成"},{"from":"refund","to":"refund","label":"重试查询"},
+    {"from":"refund","to":"refunded","label":"退款确认"},{"from":"refunded","to":"end-closed"},{"from":"closed","to":"end-closed"}
+  ]
+}

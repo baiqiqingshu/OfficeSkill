@@ -52,7 +52,7 @@ const layoutDefaults: Record<NonNullable<DiagramLayoutOptions['mode']>, {element
 
 /** Explicit layout fields win over legacy style.gap, which wins over mode defaults. */
 export function resolveLayout(spec: DiagramSpec): DiagramLayoutOptions {
-  const mode = spec.layout?.mode ?? 'compact';
+  const mode = spec.layout?.mode ?? 'balanced';
   const defaults = layoutDefaults[mode];
   return { ...spec.layout, mode, elementGap: spec.layout?.elementGap ?? spec.style?.gap ?? defaults.elementGap,
     regionGap: spec.layout?.regionGap ?? spec.style?.gap ?? defaults.regionGap,

@@ -1,27 +1,3529 @@
 {
   "version": 1,
-  "title": "UML Studio · 多图设计册",
+  "title": "UML Studio · 场景与布局验证册",
   "diagrams": [
     {
-      "version": 1, "id": "delivery-causes", "type": "fishbone", "title": "交付延期 · 原因分析", "theme": "ocean", "style": {"fontSize":18},
-      "fishbone": {"effect":"软件交付延期","categories":[
-        {"id":"people","label":"团队协作","causes":[{"label":"跨团队交接滞后","children":[{"label":"责任边界不明确"}]},{"label":"关键人员排期冲突"}]},
-        {"id":"scope","label":"需求管理","causes":[{"label":"变更缺少影响评估"},{"label":"验收标准不明确"}]},
-        {"id":"engineering","label":"工程能力","causes":[{"label":"构建部署依赖人工"},{"label":"核心模块耦合较高"}]},
-        {"id":"quality","label":"质量保障","causes":[{"label":"回归覆盖不足"},{"label":"联调验证安排靠后"}]}
-      ]}
+      "version": 1,
+      "id": "login-branches",
+      "type": "activity",
+      "title": "登录认证 · 多重判断与失败回退",
+      "theme": "ocean",
+      "description": "四个判断重复使用是/否标注；格式错误和锁定账号返回输入，不存在与密码错误汇合到统一提示。观察标签归属、独立分支及回退边。",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "input",
+          "label": "输入账号和密码",
+          "kind": "action"
+        },
+        {
+          "id": "submit",
+          "label": "点击登录",
+          "kind": "action"
+        },
+        {
+          "id": "valid",
+          "label": "参数格式正确？",
+          "kind": "decision"
+        },
+        {
+          "id": "invalid",
+          "label": "提示参数格式错误",
+          "kind": "action"
+        },
+        {
+          "id": "query",
+          "label": "查询账号与密码哈希",
+          "kind": "action"
+        },
+        {
+          "id": "exists",
+          "label": "用户存在？",
+          "kind": "decision"
+        },
+        {
+          "id": "notfound",
+          "label": "提示账号或密码错误",
+          "kind": "action"
+        },
+        {
+          "id": "locked",
+          "label": "账号已锁定？",
+          "kind": "decision"
+        },
+        {
+          "id": "block",
+          "label": "提示账号已锁定",
+          "kind": "action"
+        },
+        {
+          "id": "check",
+          "label": "密码正确？",
+          "kind": "decision"
+        },
+        {
+          "id": "gen",
+          "label": "生成访问令牌",
+          "kind": "action"
+        },
+        {
+          "id": "home",
+          "label": "登录成功，进入首页",
+          "kind": "action"
+        },
+        {
+          "id": "end",
+          "label": "结束",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "id": "enter",
+          "from": "start",
+          "to": "input"
+        },
+        {
+          "id": "submit",
+          "from": "input",
+          "to": "submit"
+        },
+        {
+          "id": "validate",
+          "from": "submit",
+          "to": "valid"
+        },
+        {
+          "id": "valid-yes",
+          "from": "valid",
+          "to": "query",
+          "label": "是"
+        },
+        {
+          "id": "valid-no",
+          "from": "valid",
+          "to": "invalid",
+          "label": "否"
+        },
+        {
+          "id": "correct-input",
+          "from": "invalid",
+          "to": "input"
+        },
+        {
+          "id": "lookup",
+          "from": "query",
+          "to": "exists"
+        },
+        {
+          "id": "exists-yes",
+          "from": "exists",
+          "to": "locked",
+          "label": "是"
+        },
+        {
+          "id": "exists-no",
+          "from": "exists",
+          "to": "notfound",
+          "label": "否"
+        },
+        {
+          "id": "locked-yes",
+          "from": "locked",
+          "to": "block",
+          "label": "是"
+        },
+        {
+          "id": "locked-no",
+          "from": "locked",
+          "to": "check",
+          "label": "否"
+        },
+        {
+          "id": "retry-unlocked",
+          "from": "block",
+          "to": "input"
+        },
+        {
+          "id": "password-yes",
+          "from": "check",
+          "to": "gen",
+          "label": "是"
+        },
+        {
+          "id": "password-no",
+          "from": "check",
+          "to": "notfound",
+          "label": "否"
+        },
+        {
+          "id": "open-home",
+          "from": "gen",
+          "to": "home"
+        },
+        {
+          "id": "finish",
+          "from": "home",
+          "to": "end"
+        }
+      ]
     },
     {
-      "version": 1, "id": "review-ocean", "type": "activity", "title": "需求评审 · 海蓝主题", "theme":"ocean",
-      "layout":{"showTitle":false,"elementGap":48,"regionGap":72,"maxPerColumn":3},
-      "nodes":[{"id":"start","label":"开始","kind":"start"},{"id":"submit","label":"提交评审材料","kind":"action"},{"id":"review","label":"评审是否通过？","kind":"decision"},{"id":"revise","label":"完善需求说明","kind":"action"},{"id":"schedule","label":"安排实施计划","kind":"action"},{"id":"end","label":"完成","kind":"end"}],
-      "edges":[{"from":"start","to":"submit"},{"from":"submit","to":"review"},{"from":"review","to":"revise","label":"需完善"},{"from":"revise","to":"review"},{"from":"review","to":"schedule","label":"通过"},{"from":"schedule","to":"end"}]
+      "version": 1,
+      "id": "checkout-sequence",
+      "type": "sequence",
+      "title": "订单支付 · 嵌套片段与任务生命周期",
+      "theme": "blueprint",
+      "description": "同步调用、嵌套自调用、两个数据库、成功/失败分支，以及可选通知任务中的重试和并行投递。创建之前与销毁之后没有任务消息。",
+      "participants": [
+        {
+          "id": "buyer",
+          "label": "购买者",
+          "kind": "actor"
+        },
+        {
+          "id": "api",
+          "label": "订单 API"
+        },
+        {
+          "id": "payment",
+          "label": "支付服务"
+        },
+        {
+          "id": "db",
+          "label": "订单数据库",
+          "kind": "database"
+        },
+        {
+          "id": "job",
+          "label": "临时通知任务"
+        },
+        {
+          "id": "audit",
+          "label": "投递审计数据库",
+          "kind": "database"
+        }
+      ],
+      "messages": [
+        {
+          "from": "buyer",
+          "to": "api",
+          "label": "提交订单与幂等请求编号",
+          "kind": "sync",
+          "activate": true
+        },
+        {
+          "from": "api",
+          "to": "api",
+          "label": "校验商品、金额与请求签名",
+          "kind": "sync",
+          "activate": true
+        },
+        {
+          "from": "api",
+          "to": "api",
+          "label": "校验完成",
+          "kind": "return",
+          "deactivate": true
+        },
+        {
+          "from": "api",
+          "to": "payment",
+          "label": "扣款：携带订单号和幂等键，避免重试导致重复扣款",
+          "kind": "sync",
+          "activate": true
+        },
+        {
+          "from": "payment",
+          "to": "api",
+          "label": "返回支付结果",
+          "kind": "return",
+          "deactivate": true
+        },
+        {
+          "from": "api",
+          "to": "db",
+          "label": "写入已支付订单和待投递事件",
+          "kind": "sync",
+          "activate": true
+        },
+        {
+          "from": "db",
+          "to": "api",
+          "label": "事务提交成功",
+          "kind": "return",
+          "deactivate": true
+        },
+        {
+          "from": "api",
+          "to": "buyer",
+          "label": "返回订单编号与支付凭证",
+          "kind": "return"
+        },
+        {
+          "from": "api",
+          "to": "buyer",
+          "label": "返回支付失败及可重试原因",
+          "kind": "return"
+        },
+        {
+          "from": "api",
+          "to": "job",
+          "label": "创建通知任务",
+          "kind": "create"
+        },
+        {
+          "from": "api",
+          "to": "job",
+          "label": "异步投递订单确认事件",
+          "kind": "async",
+          "activate": true
+        },
+        {
+          "from": "job",
+          "to": "job",
+          "label": "计算指数退避和下次投递时间",
+          "kind": "sync",
+          "activate": true
+        },
+        {
+          "from": "job",
+          "to": "job",
+          "label": "本次尝试结束",
+          "kind": "return",
+          "deactivate": true
+        },
+        {
+          "from": "job",
+          "to": "buyer",
+          "label": "发送订单确认邮件",
+          "kind": "async"
+        },
+        {
+          "from": "job",
+          "to": "audit",
+          "label": "持久化投递结果与追踪标识",
+          "kind": "sync",
+          "activate": true
+        },
+        {
+          "from": "audit",
+          "to": "job",
+          "label": "审计写入成功",
+          "kind": "return",
+          "deactivate": true
+        },
+        {
+          "from": "job",
+          "to": "api",
+          "label": "通知处理完成",
+          "kind": "return",
+          "deactivate": true
+        },
+        {
+          "from": "api",
+          "to": "job",
+          "label": "释放临时任务",
+          "kind": "destroy"
+        },
+        {
+          "from": "api",
+          "to": "buyer",
+          "label": "请求处理结束",
+          "kind": "return",
+          "deactivate": true
+        }
+      ],
+      "fragments": [
+        {
+          "kind": "alt",
+          "label": "支付成功",
+          "from": 5,
+          "to": 8,
+          "elseAt": 8,
+          "elseLabel": "支付失败，订单不进入履约"
+        },
+        {
+          "kind": "opt",
+          "label": "支付成功且购买者启用通知",
+          "from": 9,
+          "to": 17
+        },
+        {
+          "kind": "loop",
+          "label": "最多三次尝试，失败后指数退避",
+          "from": 11,
+          "to": 12
+        },
+        {
+          "kind": "par",
+          "label": "通知购买者",
+          "from": 13,
+          "to": 15,
+          "elseAt": 14,
+          "elseLabel": "记录投递审计"
+        }
+      ]
     },
     {
-      "version": 1, "id": "release-rose", "type":"activity", "title":"发布审批 · 玫瑰主题", "theme":"rose",
-      "layout":{"showTitle":true,"maxWidth":1000,"maxHeight":900,"elementGap":52},
-      "nodes":[{"id":"start","label":"开始","kind":"start"},{"id":"build","label":"构建与自动化检查","kind":"action"},{"id":"approve","label":"发布负责人确认","kind":"action"},{"id":"deploy","label":"灰度发布与验证","kind":"action"},{"id":"end","label":"结束","kind":"end"}],
-      "edges":[{"from":"start","to":"build"},{"from":"build","to":"approve"},{"from":"approve","to":"deploy"},{"from":"deploy","to":"end"}]
+      "version": 1,
+      "id": "expense-swimlane",
+      "type": "swimlane",
+      "title": "费用报销 · 四方交接与退回补件",
+      "theme": "forest",
+      "description": "申请人、主管、财务、支付平台之间多次交接；补件回到申请人，付款失败在支付平台内重试。起止符号保留职责归属但位于泳道外。",
+      "lanes": [
+        {
+          "id": "applicant",
+          "label": "申请人"
+        },
+        {
+          "id": "manager",
+          "label": "部门主管"
+        },
+        {
+          "id": "finance",
+          "label": "财务审核"
+        },
+        {
+          "id": "bank",
+          "label": "支付平台"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start",
+          "lane": "applicant"
+        },
+        {
+          "id": "submit",
+          "label": "提交报销单及凭证",
+          "lane": "applicant"
+        },
+        {
+          "id": "review",
+          "label": "业务用途合规？",
+          "kind": "decision",
+          "lane": "manager"
+        },
+        {
+          "id": "revise",
+          "label": "补充用途与附件",
+          "lane": "applicant"
+        },
+        {
+          "id": "invoice",
+          "label": "核验发票与预算",
+          "lane": "finance"
+        },
+        {
+          "id": "valid",
+          "label": "材料完整？",
+          "kind": "decision",
+          "lane": "finance"
+        },
+        {
+          "id": "pay",
+          "label": "发起付款",
+          "lane": "bank"
+        },
+        {
+          "id": "paid",
+          "label": "付款成功？",
+          "kind": "decision",
+          "lane": "bank"
+        },
+        {
+          "id": "retry",
+          "label": "核实账户后重试",
+          "lane": "bank"
+        },
+        {
+          "id": "record",
+          "label": "记账并归档凭证",
+          "lane": "finance"
+        },
+        {
+          "id": "notify",
+          "label": "查看到账通知",
+          "lane": "applicant"
+        },
+        {
+          "id": "end",
+          "label": "完成",
+          "kind": "end",
+          "lane": "applicant"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "submit"
+        },
+        {
+          "from": "submit",
+          "to": "review"
+        },
+        {
+          "from": "review",
+          "to": "invoice",
+          "label": "通过"
+        },
+        {
+          "from": "review",
+          "to": "revise",
+          "label": "退回"
+        },
+        {
+          "from": "revise",
+          "to": "submit",
+          "label": "重新提交"
+        },
+        {
+          "from": "invoice",
+          "to": "valid"
+        },
+        {
+          "from": "valid",
+          "to": "pay",
+          "label": "完整"
+        },
+        {
+          "from": "valid",
+          "to": "revise",
+          "label": "补件"
+        },
+        {
+          "from": "pay",
+          "to": "paid"
+        },
+        {
+          "from": "paid",
+          "to": "record",
+          "label": "成功"
+        },
+        {
+          "from": "paid",
+          "to": "retry",
+          "label": "失败"
+        },
+        {
+          "from": "retry",
+          "to": "pay"
+        },
+        {
+          "from": "record",
+          "to": "notify"
+        },
+        {
+          "from": "notify",
+          "to": "end"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "import-pipeline",
+      "type": "flowchart",
+      "title": "数据导入 · 长文本、人工复核与重试",
+      "theme": "amber",
+      "direction": "LR",
+      "description": "横向流程包含编码异常、字段映射返工和导入失败重试。中英混排及特殊字符验证自动换行和 XML 转义。",
+      "layout": {
+        "maxPerColumn": 4,
+        "nodeMaxWidth": 220
+      },
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "upload",
+          "label": "上传 CSV / JSON 数据文件"
+        },
+        {
+          "id": "encoding",
+          "label": "编码与分隔符可识别？",
+          "kind": "decision"
+        },
+        {
+          "id": "repair",
+          "label": "选择 UTF-8 编码并修正分隔符"
+        },
+        {
+          "id": "mapping",
+          "label": "配置字段映射：customer_id → 客户编号"
+        },
+        {
+          "id": "preview",
+          "label": "预览前 100 行并检查必填字段、重复编号与金额范围"
+        },
+        {
+          "id": "valid",
+          "label": "错误数 < 10 且完整率 > 99%？",
+          "kind": "decision"
+        },
+        {
+          "id": "manual",
+          "label": "人工复核异常记录 & 确认修正"
+        },
+        {
+          "id": "import",
+          "label": "分批导入并保存检查点"
+        },
+        {
+          "id": "success",
+          "label": "全部批次成功？",
+          "kind": "decision"
+        },
+        {
+          "id": "retry",
+          "label": "从最近检查点恢复失败批次"
+        },
+        {
+          "id": "report",
+          "label": "输出导入报告与失败明细"
+        },
+        {
+          "id": "end",
+          "label": "完成",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "upload"
+        },
+        {
+          "from": "upload",
+          "to": "encoding"
+        },
+        {
+          "from": "encoding",
+          "to": "mapping",
+          "label": "可识别"
+        },
+        {
+          "from": "encoding",
+          "to": "repair",
+          "label": "需修正"
+        },
+        {
+          "from": "repair",
+          "to": "upload"
+        },
+        {
+          "from": "mapping",
+          "to": "preview"
+        },
+        {
+          "from": "preview",
+          "to": "valid"
+        },
+        {
+          "from": "valid",
+          "to": "import",
+          "label": "满足阈值"
+        },
+        {
+          "from": "valid",
+          "to": "manual",
+          "label": "人工确认"
+        },
+        {
+          "from": "manual",
+          "to": "mapping",
+          "label": "修改映射后重检"
+        },
+        {
+          "from": "import",
+          "to": "success"
+        },
+        {
+          "from": "success",
+          "to": "report",
+          "label": "成功"
+        },
+        {
+          "from": "success",
+          "to": "retry",
+          "label": "失败"
+        },
+        {
+          "from": "retry",
+          "to": "import"
+        },
+        {
+          "from": "report",
+          "to": "end"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-usecases",
+      "type": "usecase",
+      "title": "交易平台 · 多角色与包含扩展关系",
+      "theme": "lavender",
+      "direction": "LR",
+      "description": "三个业务角色和外部支付渠道，共用登录与查询能力；包含、扩展、角色泛化及系统边界并存。所有关系使用直线。",
+      "groups": [
+        {
+          "id": "platform",
+          "label": "交易平台",
+          "kind": "boundary"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "buyer",
+          "label": "购买者",
+          "kind": "actor"
+        },
+        {
+          "id": "member",
+          "label": "会员",
+          "kind": "actor"
+        },
+        {
+          "id": "operator",
+          "label": "运营人员",
+          "kind": "actor"
+        },
+        {
+          "id": "bank",
+          "label": "支付渠道",
+          "kind": "actor"
+        },
+        {
+          "id": "search",
+          "label": "查询商品",
+          "kind": "usecase",
+          "group": "platform"
+        },
+        {
+          "id": "checkout",
+          "label": "提交订单",
+          "kind": "usecase",
+          "group": "platform"
+        },
+        {
+          "id": "login",
+          "label": "验证登录身份",
+          "kind": "usecase",
+          "group": "platform"
+        },
+        {
+          "id": "pay",
+          "label": "完成支付",
+          "kind": "usecase",
+          "group": "platform"
+        },
+        {
+          "id": "coupon",
+          "label": "使用会员优惠",
+          "kind": "usecase",
+          "group": "platform"
+        },
+        {
+          "id": "refund",
+          "label": "申请退款",
+          "kind": "usecase",
+          "group": "platform"
+        },
+        {
+          "id": "approve",
+          "label": "审核退款",
+          "kind": "usecase",
+          "group": "platform"
+        }
+      ],
+      "edges": [
+        {
+          "from": "member",
+          "to": "buyer",
+          "kind": "inheritance"
+        },
+        {
+          "from": "buyer",
+          "to": "search",
+          "kind": "association"
+        },
+        {
+          "from": "buyer",
+          "to": "checkout",
+          "kind": "association"
+        },
+        {
+          "from": "buyer",
+          "to": "refund",
+          "kind": "association"
+        },
+        {
+          "from": "member",
+          "to": "coupon",
+          "kind": "association"
+        },
+        {
+          "from": "operator",
+          "to": "approve",
+          "kind": "association"
+        },
+        {
+          "from": "bank",
+          "to": "pay",
+          "kind": "association"
+        },
+        {
+          "from": "checkout",
+          "to": "login",
+          "kind": "include"
+        },
+        {
+          "from": "checkout",
+          "to": "pay",
+          "kind": "include"
+        },
+        {
+          "from": "refund",
+          "to": "login",
+          "kind": "include"
+        },
+        {
+          "from": "coupon",
+          "to": "checkout",
+          "kind": "extend",
+          "label": "会员可用"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "order-domain",
+      "type": "class",
+      "title": "订单领域 · 所有权、接口与基数",
+      "theme": "paper",
+      "direction": "LR",
+      "description": "实体继承、聚合、组合、关联、依赖和接口实现共存；检查长泛型签名、两端基数及同一类多条出边。",
+      "nodes": [
+        {
+          "id": "entity",
+          "label": "Entity",
+          "kind": "class",
+          "stereotype": "abstract",
+          "attributes": [
+            "+ id: UUID",
+            "+ version: number"
+          ],
+          "operations": [
+            "+ equals(other: Entity): boolean"
+          ]
+        },
+        {
+          "id": "customer",
+          "label": "Customer",
+          "kind": "class",
+          "attributes": [
+            "+ name: string",
+            "+ email: string"
+          ],
+          "operations": [
+            "+ placeOrder(): Order"
+          ]
+        },
+        {
+          "id": "order",
+          "label": "Order",
+          "kind": "class",
+          "attributes": [
+            "+ number: string",
+            "- status: OrderStatus",
+            "- createdAt: Instant"
+          ],
+          "operations": [
+            "+ submit(): void",
+            "+ total(): Money",
+            "+ cancel(reason: string): void"
+          ]
+        },
+        {
+          "id": "line",
+          "label": "OrderLine",
+          "kind": "class",
+          "attributes": [
+            "+ sku: string",
+            "+ quantity: number",
+            "+ unitPrice: Money"
+          ],
+          "operations": [
+            "+ subtotal(): Money"
+          ]
+        },
+        {
+          "id": "product",
+          "label": "Product",
+          "kind": "class",
+          "attributes": [
+            "+ sku: string",
+            "+ title: string"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "PaymentPort",
+          "kind": "interface",
+          "operations": [
+            "+ charge(orderId: UUID, amount: Money): Promise<Receipt>"
+          ]
+        },
+        {
+          "id": "bank",
+          "label": "BankAdapter",
+          "kind": "class",
+          "operations": [
+            "+ charge(orderId: UUID, amount: Money): Promise<Receipt>"
+          ]
+        },
+        {
+          "id": "repo",
+          "label": "OrderRepository",
+          "kind": "interface",
+          "operations": [
+            "+ save(order: Order): Promise<void>",
+            "+ findById(id: UUID): Promise<Order | null>"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "order",
+          "to": "entity",
+          "kind": "inheritance"
+        },
+        {
+          "from": "customer",
+          "to": "entity",
+          "kind": "inheritance"
+        },
+        {
+          "from": "customer",
+          "to": "order",
+          "kind": "aggregation",
+          "fromLabel": "1",
+          "toLabel": "0..*",
+          "label": "拥有"
+        },
+        {
+          "from": "order",
+          "to": "line",
+          "kind": "composition",
+          "fromLabel": "1",
+          "toLabel": "1..*"
+        },
+        {
+          "from": "line",
+          "to": "product",
+          "kind": "association",
+          "fromLabel": "0..*",
+          "toLabel": "1"
+        },
+        {
+          "from": "order",
+          "to": "payment",
+          "kind": "dependency",
+          "label": "扣款"
+        },
+        {
+          "from": "bank",
+          "to": "payment",
+          "kind": "realization"
+        },
+        {
+          "from": "repo",
+          "to": "order",
+          "kind": "dependency",
+          "label": "持久化"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "payment-lifecycle",
+      "type": "state",
+      "title": "支付单 · 超时、重试与退款生命周期",
+      "theme": "rose",
+      "description": "状态内部动作、自转换、成功和关闭两个终态；支付失败可重试，退款查询在原状态内重复。",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "创建",
+          "kind": "start"
+        },
+        {
+          "id": "pending",
+          "label": "待支付",
+          "kind": "state",
+          "detail": "entry / 启动超时计时器\nexit / 取消计时器"
+        },
+        {
+          "id": "processing",
+          "label": "支付处理中",
+          "kind": "state",
+          "detail": "do / 等待渠道回调"
+        },
+        {
+          "id": "failed",
+          "label": "支付失败",
+          "kind": "state",
+          "detail": "entry / 记录失败原因"
+        },
+        {
+          "id": "paid",
+          "label": "已支付",
+          "kind": "state",
+          "detail": "entry / 发布支付成功事件"
+        },
+        {
+          "id": "refund",
+          "label": "退款处理中",
+          "kind": "state",
+          "detail": "do / 核对渠道退款结果"
+        },
+        {
+          "id": "refunded",
+          "label": "已退款",
+          "kind": "state"
+        },
+        {
+          "id": "closed",
+          "label": "已关闭",
+          "kind": "state"
+        },
+        {
+          "id": "end-paid",
+          "label": "结算完成",
+          "kind": "end"
+        },
+        {
+          "id": "end-closed",
+          "label": "流程结束",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "pending"
+        },
+        {
+          "from": "pending",
+          "to": "processing",
+          "label": "发起支付"
+        },
+        {
+          "from": "pending",
+          "to": "closed",
+          "label": "超时或取消"
+        },
+        {
+          "from": "processing",
+          "to": "processing",
+          "label": "重复回调 / 幂等处理"
+        },
+        {
+          "from": "processing",
+          "to": "paid",
+          "label": "扣款成功"
+        },
+        {
+          "from": "processing",
+          "to": "failed",
+          "label": "渠道拒绝"
+        },
+        {
+          "from": "failed",
+          "to": "pending",
+          "label": "用户重试"
+        },
+        {
+          "from": "paid",
+          "to": "refund",
+          "label": "申请退款"
+        },
+        {
+          "from": "paid",
+          "to": "end-paid",
+          "label": "结算完成"
+        },
+        {
+          "from": "refund",
+          "to": "refund",
+          "label": "重试查询"
+        },
+        {
+          "from": "refund",
+          "to": "refunded",
+          "label": "退款确认"
+        },
+        {
+          "from": "refunded",
+          "to": "end-closed"
+        },
+        {
+          "from": "closed",
+          "to": "end-closed"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "checkout-components",
+      "type": "component",
+      "title": "结算服务 · 嵌套区域与跨边界依赖",
+      "theme": "slate",
+      "description": "系统内两个同级业务区域，领域接口连接外部适配器；并行依赖与跨区域连线验证区域包含、同行对齐和避让。",
+      "groups": [
+        {
+          "id": "system",
+          "label": "交易服务",
+          "kind": "boundary"
+        },
+        {
+          "id": "application",
+          "label": "应用编排",
+          "parent": "system",
+          "kind": "package"
+        },
+        {
+          "id": "domain",
+          "label": "领域能力",
+          "parent": "system",
+          "kind": "package"
+        },
+        {
+          "id": "adapters",
+          "label": "基础设施适配",
+          "kind": "package"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "api",
+          "label": "Checkout API",
+          "kind": "component",
+          "group": "application"
+        },
+        {
+          "id": "service",
+          "label": "CheckoutService",
+          "kind": "component",
+          "group": "application"
+        },
+        {
+          "id": "order",
+          "label": "Order Aggregate",
+          "kind": "component",
+          "group": "domain"
+        },
+        {
+          "id": "stock",
+          "label": "InventoryPort",
+          "kind": "interface",
+          "group": "domain",
+          "operations": [
+            "+ reserve(sku, quantity)"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "PaymentPort",
+          "kind": "interface",
+          "group": "domain",
+          "operations": [
+            "+ charge(orderId, amount)"
+          ]
+        },
+        {
+          "id": "repo",
+          "label": "OrderRepository",
+          "kind": "interface",
+          "group": "domain",
+          "operations": [
+            "+ save(order)"
+          ]
+        },
+        {
+          "id": "stock-adapter",
+          "label": "库存 RPC 适配器",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "bank-adapter",
+          "label": "支付渠道适配器",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "sql",
+          "label": "PostgreSQL 适配器",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "db",
+          "label": "交易数据库",
+          "kind": "database",
+          "group": "adapters"
+        }
+      ],
+      "edges": [
+        {
+          "from": "api",
+          "to": "service",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "order",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "stock",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "payment",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "repo",
+          "kind": "dependency"
+        },
+        {
+          "from": "stock-adapter",
+          "to": "stock",
+          "kind": "realization"
+        },
+        {
+          "from": "bank-adapter",
+          "to": "payment",
+          "kind": "realization"
+        },
+        {
+          "from": "sql",
+          "to": "repo",
+          "kind": "realization"
+        },
+        {
+          "from": "sql",
+          "to": "db",
+          "label": "SQL"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "monorepo-packages",
+      "type": "package",
+      "title": "Monorepo · 分层依赖与共享契约",
+      "theme": "mint",
+      "description": "嵌套业务包与独立基础设施包；两个应用共享契约和领域核心，依赖方向保持可替换的适配边界。",
+      "groups": [
+        {
+          "id": "apps",
+          "label": "apps / 入口",
+          "kind": "package"
+        },
+        {
+          "id": "core",
+          "label": "packages / 业务核心",
+          "kind": "package"
+        },
+        {
+          "id": "ordering",
+          "label": "ordering / 订单域",
+          "kind": "package",
+          "parent": "core"
+        },
+        {
+          "id": "infra",
+          "label": "adapters / 外部实现",
+          "kind": "package"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "label": "storefront",
+          "kind": "package",
+          "group": "apps"
+        },
+        {
+          "id": "admin",
+          "label": "operations-ui",
+          "kind": "package",
+          "group": "apps"
+        },
+        {
+          "id": "api",
+          "label": "order-api",
+          "kind": "package",
+          "group": "apps"
+        },
+        {
+          "id": "contracts",
+          "label": "api-contracts",
+          "kind": "package",
+          "group": "core"
+        },
+        {
+          "id": "app",
+          "label": "application",
+          "kind": "package",
+          "group": "ordering"
+        },
+        {
+          "id": "domain",
+          "label": "domain",
+          "kind": "package",
+          "group": "ordering"
+        },
+        {
+          "id": "ports",
+          "label": "ports",
+          "kind": "package",
+          "group": "ordering"
+        },
+        {
+          "id": "shared",
+          "label": "shared-kernel",
+          "kind": "package",
+          "group": "core"
+        },
+        {
+          "id": "sql",
+          "label": "postgres-adapter",
+          "kind": "package",
+          "group": "infra"
+        },
+        {
+          "id": "events",
+          "label": "event-adapter",
+          "kind": "package",
+          "group": "infra"
+        }
+      ],
+      "edges": [
+        {
+          "from": "web",
+          "to": "contracts",
+          "kind": "dependency"
+        },
+        {
+          "from": "admin",
+          "to": "contracts",
+          "kind": "dependency"
+        },
+        {
+          "from": "api",
+          "to": "contracts",
+          "kind": "dependency"
+        },
+        {
+          "from": "api",
+          "to": "app",
+          "kind": "dependency"
+        },
+        {
+          "from": "app",
+          "to": "domain",
+          "kind": "dependency"
+        },
+        {
+          "from": "app",
+          "to": "ports",
+          "kind": "dependency"
+        },
+        {
+          "from": "domain",
+          "to": "shared",
+          "kind": "dependency"
+        },
+        {
+          "from": "ports",
+          "to": "shared",
+          "kind": "dependency"
+        },
+        {
+          "from": "sql",
+          "to": "ports",
+          "kind": "dependency"
+        },
+        {
+          "from": "events",
+          "to": "ports",
+          "kind": "dependency"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-architecture",
+      "type": "architecture",
+      "title": "交易平台 · 接入、业务与数据集成",
+      "theme": "midnight",
+      "description": "两个客户端通过网关访问三个业务域；各域使用独立存储，订单事件异步驱动搜索索引与通知。观察扇出、汇入、区域标题避让。",
+      "groups": [
+        {
+          "id": "clients",
+          "label": "访问渠道",
+          "kind": "boundary"
+        },
+        {
+          "id": "services",
+          "label": "业务服务",
+          "kind": "boundary"
+        },
+        {
+          "id": "storage",
+          "label": "数据存储",
+          "kind": "boundary"
+        },
+        {
+          "id": "integration",
+          "label": "异步集成",
+          "kind": "boundary"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "label": "用户 Web",
+          "kind": "component",
+          "group": "clients"
+        },
+        {
+          "id": "mobile",
+          "label": "移动应用",
+          "kind": "component",
+          "group": "clients"
+        },
+        {
+          "id": "gateway",
+          "label": "API 网关",
+          "kind": "component",
+          "detail": "认证 / 限流 / 路由",
+          "group": "services"
+        },
+        {
+          "id": "catalog",
+          "label": "商品服务",
+          "kind": "component",
+          "group": "services"
+        },
+        {
+          "id": "order",
+          "label": "订单服务",
+          "kind": "component",
+          "group": "services"
+        },
+        {
+          "id": "account",
+          "label": "账户服务",
+          "kind": "component",
+          "group": "services"
+        },
+        {
+          "id": "catalog-db",
+          "label": "商品数据库",
+          "kind": "database",
+          "group": "storage"
+        },
+        {
+          "id": "order-db",
+          "label": "订单数据库",
+          "kind": "database",
+          "group": "storage"
+        },
+        {
+          "id": "account-db",
+          "label": "账户数据库",
+          "kind": "database",
+          "group": "storage"
+        },
+        {
+          "id": "bus",
+          "label": "领域事件总线",
+          "kind": "queue",
+          "group": "integration"
+        },
+        {
+          "id": "search",
+          "label": "搜索索引 Worker",
+          "kind": "component",
+          "group": "integration"
+        },
+        {
+          "id": "notify",
+          "label": "通知 Worker",
+          "kind": "component",
+          "group": "integration"
+        }
+      ],
+      "edges": [
+        {
+          "from": "web",
+          "to": "gateway",
+          "label": "HTTPS"
+        },
+        {
+          "from": "mobile",
+          "to": "gateway",
+          "label": "HTTPS"
+        },
+        {
+          "from": "gateway",
+          "to": "catalog"
+        },
+        {
+          "from": "gateway",
+          "to": "order"
+        },
+        {
+          "from": "gateway",
+          "to": "account"
+        },
+        {
+          "from": "catalog",
+          "to": "catalog-db"
+        },
+        {
+          "from": "order",
+          "to": "order-db"
+        },
+        {
+          "from": "account",
+          "to": "account-db"
+        },
+        {
+          "from": "order",
+          "to": "bus",
+          "label": "OrderPlaced",
+          "dashed": true
+        },
+        {
+          "from": "catalog",
+          "to": "bus",
+          "label": "ProductChanged",
+          "dashed": true
+        },
+        {
+          "from": "bus",
+          "to": "search",
+          "label": "订阅",
+          "dashed": true
+        },
+        {
+          "from": "bus",
+          "to": "notify",
+          "label": "订阅",
+          "dashed": true
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "fulfillment-modules",
+      "type": "module",
+      "title": "履约平台 · 功能分解与共享能力",
+      "theme": "ocean",
+      "direction": "LR",
+      "description": "主模块分解为三个业务模块，每个业务模块继续分解；多个叶子依赖共享审计能力，避免仅以树形数据检验布局。",
+      "nodes": [
+        {
+          "id": "platform",
+          "label": "订单履约平台",
+          "kind": "component"
+        },
+        {
+          "id": "order",
+          "label": "订单管理",
+          "kind": "component"
+        },
+        {
+          "id": "warehouse",
+          "label": "仓储作业",
+          "kind": "component"
+        },
+        {
+          "id": "delivery",
+          "label": "配送管理",
+          "kind": "component"
+        },
+        {
+          "id": "create",
+          "label": "订单创建与校验"
+        },
+        {
+          "id": "cancel",
+          "label": "取消与退款"
+        },
+        {
+          "id": "allocate",
+          "label": "库存分配与拣货"
+        },
+        {
+          "id": "pack",
+          "label": "复核与打包"
+        },
+        {
+          "id": "dispatch",
+          "label": "运单与承运商分配"
+        },
+        {
+          "id": "track",
+          "label": "轨迹查询与异常处理"
+        },
+        {
+          "id": "audit",
+          "label": "共享审计与追踪",
+          "kind": "component",
+          "style": {
+            "primary": "#ad4d32"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "from": "platform",
+          "to": "order",
+          "kind": "composition"
+        },
+        {
+          "from": "platform",
+          "to": "warehouse",
+          "kind": "composition"
+        },
+        {
+          "from": "platform",
+          "to": "delivery",
+          "kind": "composition"
+        },
+        {
+          "from": "order",
+          "to": "create",
+          "kind": "composition"
+        },
+        {
+          "from": "order",
+          "to": "cancel",
+          "kind": "composition"
+        },
+        {
+          "from": "warehouse",
+          "to": "allocate",
+          "kind": "composition"
+        },
+        {
+          "from": "warehouse",
+          "to": "pack",
+          "kind": "composition"
+        },
+        {
+          "from": "delivery",
+          "to": "dispatch",
+          "kind": "composition"
+        },
+        {
+          "from": "delivery",
+          "to": "track",
+          "kind": "composition"
+        },
+        {
+          "from": "cancel",
+          "to": "audit",
+          "kind": "dependency"
+        },
+        {
+          "from": "pack",
+          "to": "audit",
+          "kind": "dependency"
+        },
+        {
+          "from": "track",
+          "to": "audit",
+          "kind": "dependency"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "production-deployment",
+      "type": "deployment",
+      "title": "生产部署 · 双实例、缓存与主备复制",
+      "theme": "blueprint",
+      "direction": "LR",
+      "description": "接入区、两个应用实例与数据区；同一实例连接数据库、缓存、消息队列，带协议和端口标注，主备数据库复制独立表示。",
+      "groups": [
+        {
+          "id": "edge",
+          "label": "公网接入区",
+          "kind": "node"
+        },
+        {
+          "id": "cluster",
+          "label": "生产 Kubernetes 集群",
+          "kind": "node"
+        },
+        {
+          "id": "data",
+          "label": "受限数据区",
+          "kind": "node"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "client",
+          "label": "用户浏览器",
+          "kind": "component"
+        },
+        {
+          "id": "ingress",
+          "label": "Ingress / WAF",
+          "kind": "server",
+          "group": "edge"
+        },
+        {
+          "id": "pod-a",
+          "label": "订单实例 A",
+          "kind": "server",
+          "stereotype": "pod",
+          "group": "cluster"
+        },
+        {
+          "id": "pod-b",
+          "label": "订单实例 B",
+          "kind": "server",
+          "stereotype": "pod",
+          "group": "cluster"
+        },
+        {
+          "id": "worker",
+          "label": "履约消费者",
+          "kind": "server",
+          "stereotype": "worker",
+          "group": "cluster"
+        },
+        {
+          "id": "primary",
+          "label": "PostgreSQL 主库",
+          "kind": "database",
+          "group": "data"
+        },
+        {
+          "id": "replica",
+          "label": "PostgreSQL 备库",
+          "kind": "database",
+          "group": "data"
+        },
+        {
+          "id": "redis",
+          "label": "Redis 缓存",
+          "kind": "database",
+          "group": "data"
+        },
+        {
+          "id": "mq",
+          "label": "消息队列",
+          "kind": "queue",
+          "group": "data"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "ingress",
+          "label": "HTTPS :443"
+        },
+        {
+          "from": "ingress",
+          "to": "pod-a",
+          "label": "HTTP :8080"
+        },
+        {
+          "from": "ingress",
+          "to": "pod-b",
+          "label": "HTTP :8080"
+        },
+        {
+          "from": "pod-a",
+          "to": "primary",
+          "label": "SQL :5432"
+        },
+        {
+          "from": "pod-b",
+          "to": "primary",
+          "label": "SQL :5432"
+        },
+        {
+          "from": "primary",
+          "to": "replica",
+          "label": "WAL 复制",
+          "dashed": true
+        },
+        {
+          "from": "pod-a",
+          "to": "redis",
+          "label": "RESP :6379"
+        },
+        {
+          "from": "pod-b",
+          "to": "redis",
+          "label": "RESP :6379"
+        },
+        {
+          "from": "pod-a",
+          "to": "mq",
+          "label": "AMQP :5672",
+          "dashed": true
+        },
+        {
+          "from": "mq",
+          "to": "worker",
+          "label": "消费",
+          "dashed": true
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-logical",
+      "type": "logical",
+      "title": "4+1 逻辑视图 · 聚合与领域端口",
+      "theme": "paper",
+      "direction": "LR",
+      "description": "逻辑视图表达业务对象、所有权和领域约束；与同册开发、进程、物理、场景视图使用相同业务域，但不重复同一结构。",
+      "nodes": [
+        {
+          "id": "customer",
+          "label": "客户",
+          "kind": "class",
+          "attributes": [
+            "+ customerId: UUID",
+            "+ email: string"
+          ]
+        },
+        {
+          "id": "order",
+          "label": "订单聚合",
+          "kind": "class",
+          "attributes": [
+            "+ orderId: UUID",
+            "+ status: OrderStatus"
+          ],
+          "operations": [
+            "+ submit()",
+            "+ cancel()"
+          ]
+        },
+        {
+          "id": "line",
+          "label": "订单明细",
+          "kind": "class",
+          "attributes": [
+            "+ sku: string",
+            "+ quantity: number"
+          ]
+        },
+        {
+          "id": "money",
+          "label": "金额",
+          "kind": "class",
+          "stereotype": "value object",
+          "attributes": [
+            "+ amount: Decimal",
+            "+ currency: Currency"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "支付单",
+          "kind": "class",
+          "attributes": [
+            "+ paymentId: UUID",
+            "+ state: PaymentState"
+          ]
+        },
+        {
+          "id": "stock",
+          "label": "库存端口",
+          "kind": "interface",
+          "operations": [
+            "+ reserve(sku, quantity)"
+          ]
+        },
+        {
+          "id": "shipment",
+          "label": "配送单",
+          "kind": "class",
+          "attributes": [
+            "+ trackingNumber: string"
+          ]
+        },
+        {
+          "id": "rule",
+          "label": "约束：仅已支付订单可发货",
+          "kind": "note"
+        }
+      ],
+      "edges": [
+        {
+          "from": "customer",
+          "to": "order",
+          "kind": "association",
+          "fromLabel": "1",
+          "toLabel": "0..*"
+        },
+        {
+          "from": "order",
+          "to": "line",
+          "kind": "composition",
+          "fromLabel": "1",
+          "toLabel": "1..*"
+        },
+        {
+          "from": "line",
+          "to": "money",
+          "kind": "composition"
+        },
+        {
+          "from": "order",
+          "to": "payment",
+          "kind": "association",
+          "fromLabel": "1",
+          "toLabel": "0..1"
+        },
+        {
+          "from": "order",
+          "to": "stock",
+          "kind": "dependency",
+          "label": "预留库存"
+        },
+        {
+          "from": "order",
+          "to": "shipment",
+          "kind": "association",
+          "fromLabel": "1",
+          "toLabel": "0..*"
+        },
+        {
+          "from": "rule",
+          "to": "shipment",
+          "kind": "dependency",
+          "dashed": true
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-development",
+      "type": "development",
+      "title": "4+1 开发视图 · 代码所有权与适配边界",
+      "theme": "slate",
+      "description": "研发团队按入口、核心包和适配器组织代码；契约测试独立依赖端口与实现，展示源码依赖而非运行时调用。",
+      "groups": [
+        {
+          "id": "apps",
+          "label": "应用入口 / apps",
+          "kind": "package"
+        },
+        {
+          "id": "core",
+          "label": "交易团队 / packages",
+          "kind": "package"
+        },
+        {
+          "id": "adapters",
+          "label": "平台团队 / adapters",
+          "kind": "package"
+        },
+        {
+          "id": "tests",
+          "label": "质量工程 / tests",
+          "kind": "package"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "api",
+          "label": "order-api",
+          "kind": "component",
+          "group": "apps"
+        },
+        {
+          "id": "worker",
+          "label": "fulfillment-worker",
+          "kind": "component",
+          "group": "apps"
+        },
+        {
+          "id": "application",
+          "label": "order/application",
+          "kind": "package",
+          "group": "core"
+        },
+        {
+          "id": "domain",
+          "label": "order/domain",
+          "kind": "package",
+          "group": "core"
+        },
+        {
+          "id": "ports",
+          "label": "order/ports",
+          "kind": "package",
+          "group": "core"
+        },
+        {
+          "id": "contracts",
+          "label": "event-contracts",
+          "kind": "package",
+          "group": "core"
+        },
+        {
+          "id": "sql",
+          "label": "postgres-adapter",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "mq",
+          "label": "event-adapter",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "contract-test",
+          "label": "adapter-contract-tests",
+          "kind": "package",
+          "group": "tests"
+        }
+      ],
+      "edges": [
+        {
+          "from": "api",
+          "to": "application",
+          "kind": "dependency"
+        },
+        {
+          "from": "worker",
+          "to": "application",
+          "kind": "dependency"
+        },
+        {
+          "from": "application",
+          "to": "domain",
+          "kind": "dependency"
+        },
+        {
+          "from": "application",
+          "to": "ports",
+          "kind": "dependency"
+        },
+        {
+          "from": "worker",
+          "to": "contracts",
+          "kind": "dependency"
+        },
+        {
+          "from": "mq",
+          "to": "contracts",
+          "kind": "dependency"
+        },
+        {
+          "from": "sql",
+          "to": "ports",
+          "kind": "dependency"
+        },
+        {
+          "from": "mq",
+          "to": "ports",
+          "kind": "dependency"
+        },
+        {
+          "from": "contract-test",
+          "to": "ports",
+          "kind": "dependency"
+        },
+        {
+          "from": "contract-test",
+          "to": "sql",
+          "kind": "dependency"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-process",
+      "type": "process",
+      "title": "4+1 进程视图 · Outbox、并发消费与死信",
+      "theme": "forest",
+      "direction": "LR",
+      "description": "运行时进程通过事务 Outbox 和消息队列协作；多个消费者共用消息入口，失败进入死信后人工重放，自环表示消费者幂等重试。",
+      "nodes": [
+        {
+          "id": "client",
+          "label": "客户端",
+          "kind": "actor"
+        },
+        {
+          "id": "api",
+          "label": "API 进程池",
+          "kind": "server",
+          "detail": "无状态 / 并发请求"
+        },
+        {
+          "id": "db",
+          "label": "订单与 Outbox",
+          "kind": "database"
+        },
+        {
+          "id": "relay",
+          "label": "Outbox Relay",
+          "kind": "component"
+        },
+        {
+          "id": "queue",
+          "label": "订单事件队列",
+          "kind": "queue"
+        },
+        {
+          "id": "fulfill",
+          "label": "履约 Worker 池",
+          "kind": "server"
+        },
+        {
+          "id": "notify",
+          "label": "通知 Worker 池",
+          "kind": "server"
+        },
+        {
+          "id": "dead",
+          "label": "死信队列",
+          "kind": "queue"
+        },
+        {
+          "id": "replay",
+          "label": "人工核查与重放",
+          "kind": "component"
+        }
+      ],
+      "edges": [
+        {
+          "from": "client",
+          "to": "api",
+          "label": "下单请求"
+        },
+        {
+          "from": "api",
+          "to": "db",
+          "label": "同一事务"
+        },
+        {
+          "from": "db",
+          "to": "relay",
+          "label": "待发事件"
+        },
+        {
+          "from": "relay",
+          "to": "queue",
+          "label": "OrderPlaced",
+          "dashed": true
+        },
+        {
+          "from": "queue",
+          "to": "fulfill",
+          "label": "消费者组 A",
+          "dashed": true
+        },
+        {
+          "from": "queue",
+          "to": "notify",
+          "label": "消费者组 B",
+          "dashed": true
+        },
+        {
+          "from": "fulfill",
+          "to": "fulfill",
+          "label": "幂等重试"
+        },
+        {
+          "from": "notify",
+          "to": "dead",
+          "label": "超出重试次数",
+          "dashed": true
+        },
+        {
+          "from": "dead",
+          "to": "replay",
+          "label": "告警与核查"
+        },
+        {
+          "from": "replay",
+          "to": "queue",
+          "label": "受控重放",
+          "dashed": true
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-physical",
+      "type": "physical",
+      "title": "4+1 物理视图 · 两可用区与三层容器",
+      "theme": "blueprint",
+      "description": "区域内两个可用区分别包含宿主机与制品；负载均衡分流，跨区数据库复制。验证三层包含、同级区域排列和跨深度连线。",
+      "groups": [
+        {
+          "id": "region",
+          "label": "生产区域 / 华东",
+          "kind": "node"
+        },
+        {
+          "id": "zone-a",
+          "label": "可用区 A",
+          "kind": "node",
+          "parent": "region"
+        },
+        {
+          "id": "zone-b",
+          "label": "可用区 B",
+          "kind": "node",
+          "parent": "region"
+        },
+        {
+          "id": "host-a",
+          "label": "应用宿主机 A",
+          "kind": "node",
+          "parent": "zone-a"
+        },
+        {
+          "id": "host-b",
+          "label": "应用宿主机 B",
+          "kind": "node",
+          "parent": "zone-b"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "lb",
+          "label": "区域负载均衡",
+          "kind": "server",
+          "group": "region"
+        },
+        {
+          "id": "api-a",
+          "label": "订单 API 制品 A",
+          "kind": "component",
+          "stereotype": "artifact",
+          "group": "host-a"
+        },
+        {
+          "id": "worker-a",
+          "label": "履约 Worker A",
+          "kind": "component",
+          "stereotype": "artifact",
+          "group": "host-a"
+        },
+        {
+          "id": "api-b",
+          "label": "订单 API 制品 B",
+          "kind": "component",
+          "stereotype": "artifact",
+          "group": "host-b"
+        },
+        {
+          "id": "worker-b",
+          "label": "履约 Worker B",
+          "kind": "component",
+          "stereotype": "artifact",
+          "group": "host-b"
+        },
+        {
+          "id": "primary",
+          "label": "数据库主节点",
+          "kind": "database",
+          "group": "zone-a"
+        },
+        {
+          "id": "replica",
+          "label": "数据库备节点",
+          "kind": "database",
+          "group": "zone-b"
+        },
+        {
+          "id": "objects",
+          "label": "区域对象存储",
+          "kind": "database",
+          "group": "region"
+        }
+      ],
+      "edges": [
+        {
+          "from": "lb",
+          "to": "api-a",
+          "label": "HTTP"
+        },
+        {
+          "from": "lb",
+          "to": "api-b",
+          "label": "HTTP"
+        },
+        {
+          "from": "api-a",
+          "to": "primary",
+          "label": "读写"
+        },
+        {
+          "from": "api-b",
+          "to": "primary",
+          "label": "跨区读写"
+        },
+        {
+          "from": "primary",
+          "to": "replica",
+          "label": "流式复制",
+          "dashed": true
+        },
+        {
+          "from": "worker-a",
+          "to": "objects",
+          "label": "归档"
+        },
+        {
+          "from": "worker-b",
+          "to": "objects",
+          "label": "归档"
+        },
+        {
+          "from": "api-a",
+          "to": "worker-a",
+          "label": "本机任务"
+        },
+        {
+          "from": "api-b",
+          "to": "worker-b",
+          "label": "本机任务"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "commerce-scenario",
+      "type": "scenario",
+      "title": "4+1 场景视图 · 下单成功与支付补偿",
+      "theme": "lavender",
+      "direction": "LR",
+      "description": "场景串联参与者、库存、支付与通知；支付失败触发释放库存并返回调整订单，成功路径进入异步确认。",
+      "groups": [
+        {
+          "id": "system",
+          "label": "交易平台 / 关键场景",
+          "kind": "boundary"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "buyer",
+          "label": "购买者",
+          "kind": "actor"
+        },
+        {
+          "id": "bank",
+          "label": "支付渠道",
+          "kind": "actor"
+        },
+        {
+          "id": "submit",
+          "label": "1 · 提交订单",
+          "kind": "action",
+          "group": "system"
+        },
+        {
+          "id": "reserve",
+          "label": "2 · 预留库存",
+          "kind": "action",
+          "group": "system"
+        },
+        {
+          "id": "pay",
+          "label": "3 · 发起支付",
+          "kind": "action",
+          "group": "system"
+        },
+        {
+          "id": "paid",
+          "label": "支付成功？",
+          "kind": "decision",
+          "group": "system"
+        },
+        {
+          "id": "confirm",
+          "label": "4 · 确认订单与履约",
+          "kind": "action",
+          "group": "system"
+        },
+        {
+          "id": "notify",
+          "label": "5 · 发送确认通知",
+          "kind": "action",
+          "group": "system"
+        },
+        {
+          "id": "release",
+          "label": "释放预留库存",
+          "kind": "action",
+          "group": "system"
+        },
+        {
+          "id": "revise",
+          "label": "调整订单或更换渠道",
+          "kind": "action",
+          "group": "system"
+        }
+      ],
+      "edges": [
+        {
+          "from": "buyer",
+          "to": "submit",
+          "kind": "association"
+        },
+        {
+          "from": "submit",
+          "to": "reserve"
+        },
+        {
+          "from": "reserve",
+          "to": "pay"
+        },
+        {
+          "from": "bank",
+          "to": "pay",
+          "kind": "association"
+        },
+        {
+          "from": "pay",
+          "to": "paid"
+        },
+        {
+          "from": "paid",
+          "to": "confirm",
+          "label": "成功"
+        },
+        {
+          "from": "confirm",
+          "to": "notify",
+          "label": "异步通知",
+          "dashed": true
+        },
+        {
+          "from": "paid",
+          "to": "release",
+          "label": "失败"
+        },
+        {
+          "from": "release",
+          "to": "revise"
+        },
+        {
+          "from": "revise",
+          "to": "submit",
+          "label": "重新下单"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "incident-causes",
+      "type": "fishbone",
+      "title": "支付延迟 · 六维根因与递归原因",
+      "theme": "amber",
+      "description": "六类原因且数量不均，包含三层子原因和较长文字；验证上下骨架、递归缩进与文本换行。",
+      "fishbone": {
+        "effect": "支付请求 P99 延迟超过 3 秒",
+        "categories": [
+          {
+            "id": "people",
+            "label": "人员协作",
+            "causes": [
+              {
+                "label": "值班交接不完整",
+                "children": [
+                  {
+                    "label": "未记录临时限流阈值",
+                    "children": [
+                      {
+                        "label": "交接模板没有配置变更字段"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "label": "跨团队升级响应慢"
+              }
+            ]
+          },
+          {
+            "id": "process",
+            "label": "发布流程",
+            "causes": [
+              {
+                "label": "灰度验证只检查平均耗时",
+                "children": [
+                  {
+                    "label": "缺少尾延迟验收阈值"
+                  }
+                ]
+              },
+              {
+                "label": "回滚演练未覆盖数据库连接配置"
+              }
+            ]
+          },
+          {
+            "id": "code",
+            "label": "应用实现",
+            "causes": [
+              {
+                "label": "同步调用链过长",
+                "children": [
+                  {
+                    "label": "通知投递阻塞支付响应"
+                  }
+                ]
+              },
+              {
+                "label": "连接池等待时间未设上限"
+              },
+              {
+                "label": "重试缺少随机退避"
+              }
+            ]
+          },
+          {
+            "id": "data",
+            "label": "数据访问",
+            "causes": [
+              {
+                "label": "订单查询触发全表扫描",
+                "children": [
+                  {
+                    "label": "组合索引未覆盖租户与创建时间"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "infra",
+            "label": "基础设施",
+            "causes": [
+              {
+                "label": "跨可用区网络抖动"
+              },
+              {
+                "label": "CPU 限额导致周期性节流",
+                "children": [
+                  {
+                    "label": "压测环境资源配置与生产不同"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "observe",
+            "label": "监控度量",
+            "causes": [
+              {
+                "label": "告警只统计成功请求"
+              },
+              {
+                "label": "缺少数据库连接等待与渠道响应时间的分段指标"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "id": "release-parallel",
+      "type": "activity",
+      "title": "发布流水线 · 并行检查、汇合与回滚",
+      "theme": "ocean",
+      "description": "构建后并行执行安全扫描、集成测试和制品签名，全部汇合后进入灰度；验收失败触发回滚并重新构建。",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "build",
+          "label": "构建候选制品"
+        },
+        {
+          "id": "fork",
+          "label": "并行检查",
+          "kind": "fork"
+        },
+        {
+          "id": "security",
+          "label": "依赖漏洞与镜像扫描"
+        },
+        {
+          "id": "integration",
+          "label": "集成与契约测试"
+        },
+        {
+          "id": "sign",
+          "label": "生成签名与物料清单"
+        },
+        {
+          "id": "join",
+          "label": "全部检查完成",
+          "kind": "join"
+        },
+        {
+          "id": "canary",
+          "label": "灰度发布 5% 流量"
+        },
+        {
+          "id": "healthy",
+          "label": "错误率与延迟达标？",
+          "kind": "decision"
+        },
+        {
+          "id": "rollout",
+          "label": "逐步扩大至全量"
+        },
+        {
+          "id": "rollback",
+          "label": "恢复上一版本并记录原因"
+        },
+        {
+          "id": "end",
+          "label": "发布完成",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "build"
+        },
+        {
+          "from": "build",
+          "to": "fork"
+        },
+        {
+          "from": "fork",
+          "to": "security"
+        },
+        {
+          "from": "fork",
+          "to": "integration"
+        },
+        {
+          "from": "fork",
+          "to": "sign"
+        },
+        {
+          "from": "security",
+          "to": "join"
+        },
+        {
+          "from": "integration",
+          "to": "join"
+        },
+        {
+          "from": "sign",
+          "to": "join"
+        },
+        {
+          "from": "join",
+          "to": "canary"
+        },
+        {
+          "from": "canary",
+          "to": "healthy"
+        },
+        {
+          "from": "healthy",
+          "to": "rollout",
+          "label": "达标"
+        },
+        {
+          "from": "healthy",
+          "to": "rollback",
+          "label": "超出阈值"
+        },
+        {
+          "from": "rollback",
+          "to": "build",
+          "label": "修复后重建"
+        },
+        {
+          "from": "rollout",
+          "to": "end"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "unbalanced-regions",
+      "type": "component",
+      "title": "文档处理 · 不均衡区域自动折列",
+      "theme": "rose",
+      "description": "主区域有 12 个连续步骤，旁路仅两个节点；不显式设置每列上限，观察自动折列与同行交接。提示节点没有连线，仍应保留。",
+      "groups": [
+        {
+          "id": "pipeline",
+          "label": "文档处理流水线",
+          "kind": "boundary"
+        },
+        {
+          "id": "archive",
+          "label": "归档旁路",
+          "kind": "boundary"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "receive",
+          "label": "接收源文件",
+          "group": "pipeline"
+        },
+        {
+          "id": "detect",
+          "label": "识别文件格式",
+          "group": "pipeline"
+        },
+        {
+          "id": "extract",
+          "label": "提取文字与图片",
+          "group": "pipeline"
+        },
+        {
+          "id": "normalize",
+          "label": "标准化文本编码",
+          "group": "pipeline"
+        },
+        {
+          "id": "segment",
+          "label": "段落与标题分段",
+          "group": "pipeline"
+        },
+        {
+          "id": "tables",
+          "label": "识别表格结构",
+          "group": "pipeline"
+        },
+        {
+          "id": "validate",
+          "label": "验证结构完整性",
+          "group": "pipeline"
+        },
+        {
+          "id": "classify",
+          "label": "分类与元数据提取",
+          "group": "pipeline"
+        },
+        {
+          "id": "redact",
+          "label": "执行敏感字段脱敏",
+          "group": "pipeline"
+        },
+        {
+          "id": "index",
+          "label": "生成搜索索引",
+          "group": "pipeline"
+        },
+        {
+          "id": "preview",
+          "label": "生成浏览预览",
+          "group": "pipeline"
+        },
+        {
+          "id": "publish",
+          "label": "发布处理结果",
+          "group": "pipeline"
+        },
+        {
+          "id": "store",
+          "label": "归档原始文件",
+          "kind": "database",
+          "group": "archive"
+        },
+        {
+          "id": "checksum",
+          "label": "校验归档摘要",
+          "group": "archive"
+        },
+        {
+          "id": "note",
+          "label": "提示：原始文件和处理结果分开保留",
+          "kind": "note"
+        }
+      ],
+      "edges": [
+        {
+          "from": "receive",
+          "to": "detect"
+        },
+        {
+          "from": "detect",
+          "to": "extract"
+        },
+        {
+          "from": "extract",
+          "to": "normalize"
+        },
+        {
+          "from": "normalize",
+          "to": "segment"
+        },
+        {
+          "from": "segment",
+          "to": "tables"
+        },
+        {
+          "from": "tables",
+          "to": "validate"
+        },
+        {
+          "from": "validate",
+          "to": "classify"
+        },
+        {
+          "from": "classify",
+          "to": "redact"
+        },
+        {
+          "from": "redact",
+          "to": "index"
+        },
+        {
+          "from": "index",
+          "to": "preview"
+        },
+        {
+          "from": "preview",
+          "to": "publish"
+        },
+        {
+          "from": "receive",
+          "to": "store",
+          "label": "保留源文件"
+        },
+        {
+          "from": "store",
+          "to": "checksum"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "login-compact-lr",
+      "type": "activity",
+      "title": "登录认证 · 紧凑横向对照",
+      "theme": "mint",
+      "description": "四个判断重复使用是/否标注；格式错误和锁定账号返回输入，不存在与密码错误汇合到统一提示。观察标签归属、独立分支及回退边。",
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "input",
+          "label": "输入账号和密码",
+          "kind": "action"
+        },
+        {
+          "id": "submit",
+          "label": "点击登录",
+          "kind": "action"
+        },
+        {
+          "id": "valid",
+          "label": "参数格式正确？",
+          "kind": "decision"
+        },
+        {
+          "id": "invalid",
+          "label": "提示参数格式错误",
+          "kind": "action"
+        },
+        {
+          "id": "query",
+          "label": "查询账号与密码哈希",
+          "kind": "action"
+        },
+        {
+          "id": "exists",
+          "label": "用户存在？",
+          "kind": "decision"
+        },
+        {
+          "id": "notfound",
+          "label": "提示账号或密码错误",
+          "kind": "action"
+        },
+        {
+          "id": "locked",
+          "label": "账号已锁定？",
+          "kind": "decision"
+        },
+        {
+          "id": "block",
+          "label": "提示账号已锁定",
+          "kind": "action"
+        },
+        {
+          "id": "check",
+          "label": "密码正确？",
+          "kind": "decision"
+        },
+        {
+          "id": "gen",
+          "label": "生成访问令牌",
+          "kind": "action"
+        },
+        {
+          "id": "home",
+          "label": "登录成功，进入首页",
+          "kind": "action"
+        },
+        {
+          "id": "end",
+          "label": "结束",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "id": "enter",
+          "from": "start",
+          "to": "input"
+        },
+        {
+          "id": "submit",
+          "from": "input",
+          "to": "submit"
+        },
+        {
+          "id": "validate",
+          "from": "submit",
+          "to": "valid"
+        },
+        {
+          "id": "valid-yes",
+          "from": "valid",
+          "to": "query",
+          "label": "是"
+        },
+        {
+          "id": "valid-no",
+          "from": "valid",
+          "to": "invalid",
+          "label": "否"
+        },
+        {
+          "id": "correct-input",
+          "from": "invalid",
+          "to": "input"
+        },
+        {
+          "id": "lookup",
+          "from": "query",
+          "to": "exists"
+        },
+        {
+          "id": "exists-yes",
+          "from": "exists",
+          "to": "locked",
+          "label": "是"
+        },
+        {
+          "id": "exists-no",
+          "from": "exists",
+          "to": "notfound",
+          "label": "否"
+        },
+        {
+          "id": "locked-yes",
+          "from": "locked",
+          "to": "block",
+          "label": "是"
+        },
+        {
+          "id": "locked-no",
+          "from": "locked",
+          "to": "check",
+          "label": "否"
+        },
+        {
+          "id": "retry-unlocked",
+          "from": "block",
+          "to": "input"
+        },
+        {
+          "id": "password-yes",
+          "from": "check",
+          "to": "gen",
+          "label": "是"
+        },
+        {
+          "id": "password-no",
+          "from": "check",
+          "to": "notfound",
+          "label": "否"
+        },
+        {
+          "id": "open-home",
+          "from": "gen",
+          "to": "home"
+        },
+        {
+          "id": "finish",
+          "from": "home",
+          "to": "end"
+        }
+      ],
+      "direction": "LR",
+      "layout": {
+        "mode": "compact"
+      }
+    },
+    {
+      "version": 1,
+      "id": "components-grid",
+      "type": "component",
+      "title": "结算服务 · 网格折列对照",
+      "theme": "lavender",
+      "description": "系统内两个同级业务区域，领域接口连接外部适配器；并行依赖与跨区域连线验证区域包含、同行对齐和避让。",
+      "groups": [
+        {
+          "id": "system",
+          "label": "交易服务",
+          "kind": "boundary"
+        },
+        {
+          "id": "application",
+          "label": "应用编排",
+          "parent": "system",
+          "kind": "package"
+        },
+        {
+          "id": "domain",
+          "label": "领域能力",
+          "parent": "system",
+          "kind": "package"
+        },
+        {
+          "id": "adapters",
+          "label": "基础设施适配",
+          "kind": "package"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "api",
+          "label": "Checkout API",
+          "kind": "component",
+          "group": "application"
+        },
+        {
+          "id": "service",
+          "label": "CheckoutService",
+          "kind": "component",
+          "group": "application"
+        },
+        {
+          "id": "order",
+          "label": "Order Aggregate",
+          "kind": "component",
+          "group": "domain"
+        },
+        {
+          "id": "stock",
+          "label": "InventoryPort",
+          "kind": "interface",
+          "group": "domain",
+          "operations": [
+            "+ reserve(sku, quantity)"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "PaymentPort",
+          "kind": "interface",
+          "group": "domain",
+          "operations": [
+            "+ charge(orderId, amount)"
+          ]
+        },
+        {
+          "id": "repo",
+          "label": "OrderRepository",
+          "kind": "interface",
+          "group": "domain",
+          "operations": [
+            "+ save(order)"
+          ]
+        },
+        {
+          "id": "stock-adapter",
+          "label": "库存 RPC 适配器",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "bank-adapter",
+          "label": "支付渠道适配器",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "sql",
+          "label": "PostgreSQL 适配器",
+          "kind": "component",
+          "group": "adapters"
+        },
+        {
+          "id": "db",
+          "label": "交易数据库",
+          "kind": "database",
+          "group": "adapters"
+        }
+      ],
+      "edges": [
+        {
+          "from": "api",
+          "to": "service",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "order",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "stock",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "payment",
+          "kind": "dependency"
+        },
+        {
+          "from": "service",
+          "to": "repo",
+          "kind": "dependency"
+        },
+        {
+          "from": "stock-adapter",
+          "to": "stock",
+          "kind": "realization"
+        },
+        {
+          "from": "bank-adapter",
+          "to": "payment",
+          "kind": "realization"
+        },
+        {
+          "from": "sql",
+          "to": "repo",
+          "kind": "realization"
+        },
+        {
+          "from": "sql",
+          "to": "db",
+          "label": "SQL"
+        }
+      ],
+      "layout": {
+        "mode": "grid",
+        "maxPerColumn": 2,
+        "regionGap": 88
+      }
+    },
+    {
+      "version": 1,
+      "id": "import-typography",
+      "type": "flowchart",
+      "title": "数据导入 · 透明背景与尺寸限制",
+      "theme": "paper",
+      "direction": "TB",
+      "description": "宽松布局、20px 字号、透明背景、节点宽度上限及整图等比尺寸限制；图片导出保留全部节点，PNG / WebP 透明，JPEG 白底。",
+      "layout": {
+        "mode": "spacious",
+        "showTitle": true,
+        "nodeMaxWidth": 240,
+        "maxWidth": 1600,
+        "maxHeight": 1800,
+        "maxPerColumn": 4
+      },
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "upload",
+          "label": "上传 CSV / JSON 数据文件"
+        },
+        {
+          "id": "encoding",
+          "label": "编码与分隔符可识别？",
+          "kind": "decision"
+        },
+        {
+          "id": "repair",
+          "label": "选择 UTF-8 编码并修正分隔符"
+        },
+        {
+          "id": "mapping",
+          "label": "配置字段映射：customer_id → 客户编号"
+        },
+        {
+          "id": "preview",
+          "label": "预览前 100 行并检查必填字段、重复编号与金额范围"
+        },
+        {
+          "id": "valid",
+          "label": "错误数 < 10 且完整率 > 99%？",
+          "kind": "decision"
+        },
+        {
+          "id": "manual",
+          "label": "人工复核异常记录 & 确认修正"
+        },
+        {
+          "id": "import",
+          "label": "分批导入并保存检查点"
+        },
+        {
+          "id": "success",
+          "label": "全部批次成功？",
+          "kind": "decision"
+        },
+        {
+          "id": "retry",
+          "label": "从最近检查点恢复失败批次"
+        },
+        {
+          "id": "report",
+          "label": "输出导入报告与失败明细"
+        },
+        {
+          "id": "end",
+          "label": "完成",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "upload"
+        },
+        {
+          "from": "upload",
+          "to": "encoding"
+        },
+        {
+          "from": "encoding",
+          "to": "mapping",
+          "label": "可识别"
+        },
+        {
+          "from": "encoding",
+          "to": "repair",
+          "label": "需修正"
+        },
+        {
+          "from": "repair",
+          "to": "upload"
+        },
+        {
+          "from": "mapping",
+          "to": "preview"
+        },
+        {
+          "from": "preview",
+          "to": "valid"
+        },
+        {
+          "from": "valid",
+          "to": "import",
+          "label": "满足阈值"
+        },
+        {
+          "from": "valid",
+          "to": "manual",
+          "label": "人工确认"
+        },
+        {
+          "from": "manual",
+          "to": "mapping",
+          "label": "修改映射后重检"
+        },
+        {
+          "from": "import",
+          "to": "success"
+        },
+        {
+          "from": "success",
+          "to": "report",
+          "label": "成功"
+        },
+        {
+          "from": "success",
+          "to": "retry",
+          "label": "失败"
+        },
+        {
+          "from": "retry",
+          "to": "import"
+        },
+        {
+          "from": "report",
+          "to": "end"
+        }
+      ],
+      "style": {
+        "background": "transparent",
+        "fontSize": 20,
+        "fontWeight": 500
+      }
+    },
+    {
+      "version": 1,
+      "id": "delivery-causes",
+      "type": "fishbone",
+      "title": "交付延期 · 原因分析",
+      "theme": "ocean",
+      "style": {
+        "fontSize": 18
+      },
+      "fishbone": {
+        "effect": "软件交付延期",
+        "categories": [
+          {
+            "id": "people",
+            "label": "团队协作",
+            "causes": [
+              {
+                "label": "跨团队交接滞后",
+                "children": [
+                  {
+                    "label": "责任边界不明确"
+                  }
+                ]
+              },
+              {
+                "label": "关键人员排期冲突"
+              }
+            ]
+          },
+          {
+            "id": "scope",
+            "label": "需求管理",
+            "causes": [
+              {
+                "label": "变更缺少影响评估"
+              },
+              {
+                "label": "验收标准不明确"
+              }
+            ]
+          },
+          {
+            "id": "engineering",
+            "label": "工程能力",
+            "causes": [
+              {
+                "label": "构建部署依赖人工"
+              },
+              {
+                "label": "核心模块耦合较高"
+              }
+            ]
+          },
+          {
+            "id": "quality",
+            "label": "质量保障",
+            "causes": [
+              {
+                "label": "回归覆盖不足"
+              },
+              {
+                "label": "联调验证安排靠后"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "version": 1,
+      "id": "review-ocean",
+      "type": "activity",
+      "title": "需求评审 · 海蓝主题",
+      "theme": "ocean",
+      "layout": {
+        "showTitle": false,
+        "elementGap": 48,
+        "regionGap": 72,
+        "maxPerColumn": 3
+      },
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "submit",
+          "label": "提交评审材料",
+          "kind": "action"
+        },
+        {
+          "id": "review",
+          "label": "评审是否通过？",
+          "kind": "decision"
+        },
+        {
+          "id": "revise",
+          "label": "完善需求说明",
+          "kind": "action"
+        },
+        {
+          "id": "schedule",
+          "label": "安排实施计划",
+          "kind": "action"
+        },
+        {
+          "id": "end",
+          "label": "完成",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "submit"
+        },
+        {
+          "from": "submit",
+          "to": "review"
+        },
+        {
+          "from": "review",
+          "to": "revise",
+          "label": "需完善"
+        },
+        {
+          "from": "revise",
+          "to": "review"
+        },
+        {
+          "from": "review",
+          "to": "schedule",
+          "label": "通过"
+        },
+        {
+          "from": "schedule",
+          "to": "end"
+        }
+      ]
+    },
+    {
+      "version": 1,
+      "id": "release-rose",
+      "type": "activity",
+      "title": "发布审批 · 玫瑰主题",
+      "theme": "rose",
+      "layout": {
+        "showTitle": true,
+        "maxWidth": 1000,
+        "maxHeight": 900,
+        "elementGap": 52
+      },
+      "nodes": [
+        {
+          "id": "start",
+          "label": "开始",
+          "kind": "start"
+        },
+        {
+          "id": "build",
+          "label": "构建与自动化检查",
+          "kind": "action"
+        },
+        {
+          "id": "approve",
+          "label": "发布负责人确认",
+          "kind": "action"
+        },
+        {
+          "id": "deploy",
+          "label": "灰度发布与验证",
+          "kind": "action"
+        },
+        {
+          "id": "end",
+          "label": "结束",
+          "kind": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "start",
+          "to": "build"
+        },
+        {
+          "from": "build",
+          "to": "approve"
+        },
+        {
+          "from": "approve",
+          "to": "deploy"
+        },
+        {
+          "from": "deploy",
+          "to": "end"
+        }
+      ]
     }
   ]
 }

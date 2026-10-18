@@ -1,0 +1,22 @@
+{
+  "version":1,"id":"unbalanced-regions","type":"component","title":"文档处理 · 不均衡区域自动折列","theme":"rose",
+  "description":"主区域有 12 个连续步骤，旁路仅两个节点；不显式设置每列上限，观察自动折列与同行交接。提示节点没有连线，仍应保留。",
+  "groups":[{"id":"pipeline","label":"文档处理流水线","kind":"boundary"},{"id":"archive","label":"归档旁路","kind":"boundary"}],
+  "nodes":[
+    {"id":"receive","label":"接收源文件","group":"pipeline"},{"id":"detect","label":"识别文件格式","group":"pipeline"},
+    {"id":"extract","label":"提取文字与图片","group":"pipeline"},{"id":"normalize","label":"标准化文本编码","group":"pipeline"},
+    {"id":"segment","label":"段落与标题分段","group":"pipeline"},{"id":"tables","label":"识别表格结构","group":"pipeline"},
+    {"id":"validate","label":"验证结构完整性","group":"pipeline"},{"id":"classify","label":"分类与元数据提取","group":"pipeline"},
+    {"id":"redact","label":"执行敏感字段脱敏","group":"pipeline"},{"id":"index","label":"生成搜索索引","group":"pipeline"},
+    {"id":"preview","label":"生成浏览预览","group":"pipeline"},{"id":"publish","label":"发布处理结果","group":"pipeline"},
+    {"id":"store","label":"归档原始文件","kind":"database","group":"archive"},{"id":"checksum","label":"校验归档摘要","group":"archive"},
+    {"id":"note","label":"提示：原始文件和处理结果分开保留","kind":"note"}
+  ],
+  "edges":[
+    {"from":"receive","to":"detect"},{"from":"detect","to":"extract"},{"from":"extract","to":"normalize"},
+    {"from":"normalize","to":"segment"},{"from":"segment","to":"tables"},{"from":"tables","to":"validate"},
+    {"from":"validate","to":"classify"},{"from":"classify","to":"redact"},{"from":"redact","to":"index"},
+    {"from":"index","to":"preview"},{"from":"preview","to":"publish"},{"from":"receive","to":"store","label":"保留源文件"},
+    {"from":"store","to":"checksum"}
+  ]
+}

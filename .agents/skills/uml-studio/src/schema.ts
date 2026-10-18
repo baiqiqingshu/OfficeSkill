@@ -17,7 +17,7 @@ const style = object({
   lineWidth: num(0.5, 8), radius: num(0, 32), nodeWidth: num(80, 600), nodeHeight: num(32, 300), gap: num(24, 240),
 })
 const layout = object({
-  mode: { ...en(...layoutModes.map(mode => mode.value)), default: 'compact' },
+  mode: { ...en(...layoutModes.map(mode => mode.value)), default: 'balanced' },
   showTitle: { type: 'boolean', default: false }, maxWidth: num(0, 100000), maxHeight: num(0, 100000),
   regionGap: num(0, 600), elementGap: num(8, 400), maxPerColumn: integer(0, 30),
   nodeMaxWidth: num(0, 100000), nodeMaxHeight: num(0, 100000),

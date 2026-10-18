@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "type": "activity",
+  "title": "用户登录",
+  "nodes": [
+    { "id": "start", "label": "开始", "kind": "start" },
+    { "id": "input", "label": "输入账号和密码" },
+    { "id": "submit", "label": "点击登录" },
+    { "id": "valid", "label": "参数格式正确？", "kind": "decision" },
+    { "id": "invalid", "label": "提示参数格式错误" },
+    { "id": "query", "label": "查询账号与密码哈希" },
+    { "id": "exists", "label": "用户存在？", "kind": "decision" },
+    { "id": "notfound", "label": "提示账号或密码错误" },
+    { "id": "locked", "label": "账号已锁定？", "kind": "decision" },
+    { "id": "block", "label": "提示账号已锁定" },
+    { "id": "check", "label": "密码正确？", "kind": "decision" },
+    { "id": "gen", "label": "生成访问令牌" },
+    { "id": "home", "label": "登录成功，进入首页" },
+    { "id": "end", "label": "结束", "kind": "end" }
+  ],
+  "edges": [
+    { "from": "start", "to": "input" },
+    { "from": "input", "to": "submit" },
+    { "from": "submit", "to": "valid" },
+    { "from": "valid", "to": "query", "label": "是" },
+    { "from": "valid", "to": "invalid", "label": "否" },
+    { "from": "invalid", "to": "input" },
+    { "from": "query", "to": "exists" },
+    { "from": "exists", "to": "locked", "label": "是" },
+    { "from": "exists", "to": "notfound", "label": "否" },
+    { "from": "locked", "to": "block", "label": "是" },
+    { "from": "locked", "to": "check", "label": "否" },
+    { "from": "block", "to": "input" },
+    { "from": "check", "to": "gen", "label": "是" },
+    { "from": "check", "to": "notfound", "label": "否" },
+    { "from": "gen", "to": "home" },
+    { "from": "home", "to": "end" }
+  ]
+}
