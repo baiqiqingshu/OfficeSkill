@@ -1,6 +1,6 @@
 export declare const diagramTypes: readonly ["activity", "sequence", "swimlane", "flowchart", "usecase", "class", "state", "component", "package", "architecture", "module", "deployment", "logical", "development", "process", "physical", "scenario", "fishbone"];
 export type DiagramType = typeof diagramTypes[number];
-export type ThemeName = 'paper' | 'ocean' | 'forest' | 'blueprint' | 'midnight';
+export type ThemeName = 'paper' | 'ocean' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint';
 export interface Theme {
     background: string;
     surface: string;
@@ -16,6 +16,9 @@ export interface Theme {
     nodeWidth: number;
     nodeHeight: number;
     gap: number;
+    fontWeight: number;
+    fontStyle: 'normal' | 'italic';
+    textDecoration: 'none' | 'underline';
 }
 export interface DiagramNode {
     id: string;
@@ -82,14 +85,27 @@ export interface FishboneData {
         causes: FishboneCause[];
     }[];
 }
+export interface DiagramLayoutOptions {
+    mode?: 'compact' | 'balanced' | 'spacious' | 'grid';
+    showTitle?: boolean;
+    maxWidth?: number;
+    maxHeight?: number;
+    regionGap?: number;
+    elementGap?: number;
+    maxPerColumn?: number;
+    nodeMaxWidth?: number;
+    nodeMaxHeight?: number;
+}
 export interface DiagramSpec {
     version: 1;
+    id?: string;
     type: DiagramType;
     title: string;
     description?: string;
     theme?: ThemeName;
     style?: Partial<Theme>;
     direction?: 'TB' | 'LR';
+    layout?: DiagramLayoutOptions;
     nodes?: DiagramNode[];
     edges?: DiagramEdge[];
     groups?: DiagramGroup[];
@@ -99,6 +115,12 @@ export interface DiagramSpec {
     fragments?: Fragment[];
     fishbone?: FishboneData;
 }
+export interface DiagramDocument {
+    version: 1;
+    title: string;
+    diagrams: DiagramSpec[];
+}
+export type DiagramInput = DiagramSpec | DiagramDocument;
 export interface RenderedDiagram {
     svg: string;
     width: number;

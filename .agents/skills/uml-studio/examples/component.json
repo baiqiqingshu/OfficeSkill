@@ -3,7 +3,7 @@
   "type": "component",
   "title": "订单服务 · 组件图",
   "description": "端口角色通过接口节点表达，异步事件与持久化依赖明确分离。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "groups": [
     {

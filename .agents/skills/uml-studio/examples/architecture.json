@@ -3,7 +3,7 @@
   "type": "architecture",
   "title": "数字书店 · 系统架构",
   "description": "访问层、业务域与基础设施形成清晰的系统边界。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "TB",
   "groups": [
     {

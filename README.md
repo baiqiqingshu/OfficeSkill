@@ -4,9 +4,9 @@
 
 ## 直接体验
 
-双击打开：**[离线鱼骨图 Demo](.agents/skills/uml-studio/demo-dist/index.html)**。
+双击打开：**[离线多图 Demo](.agents/skills/uml-studio/demo-dist/index.html)**，包含鱼骨图与两张不同主题的活动图。
 
-初始为鱼骨图，可切换 18 类示例。点击“编辑 JSON”修改数据并“应用到画布”；左侧可切换主题、自定义颜色、字体、字号、线宽、圆角、节点尺寸、间距和布局方向。随后导出图片或保存包含当前数据、样式的 HTML。较宽的图可使用预览缩放；预览缩放不改变图片导出倍率。
+默认海蓝视觉风格、紧凑布局，不显示图内标题。左侧管理图表；导出 / 复制工具栏在“编辑图表”附近、预览上方，样式设置位于预览下方，默认收起，可展开后调整配色、字体与布局。编辑区支持表单与 JSON 源码切换，按钮增删节点、连线、参与者、消息、鱼骨分类和递归原因。每张图独立保存数据与设置。预览可滚轮定点缩放、按住拖拽平移、用滚动条浏览、恢复原始大小 / 适应画布，不改变导出内容。
 
 HTML 内联 Vue 运行时、布局库、CSS、JSON，无 CDN、无远程字体，离线也能继续编辑和导出。网页不会自动覆盖磁盘上的原文件，修改后须点击“保存 HTML”下载新文件。
 
@@ -16,12 +16,11 @@ HTML 内联 Vue 运行时、布局库、CSS、JSON，无 CDN、无远程字体�
 
 ```bash
 npm install
-npx playwright install chromium
 npm run build
 npm run dev
 ```
 
-`npm run dev` 启动 Vite 演示项目，地址由终端输出。仅浏览已生成的 HTML 不需要 Node.js；生成 HTML/SVG 不需要浏览器，agent 直接导出位图需要本机 Playwright Chromium。
+`npm run dev` 启动 Vite 演示项目。仅浏览生成的 HTML 不需要 Node；CLI 生成 SVG / PNG / JPEG / WebP 均不需要浏览器。Node 使用 resvg 渲染、sharp 编码，原生依赖由 npm 安装；Playwright 只供开发验证使用。
 
 ## Agent 生成文件
 
@@ -35,6 +34,15 @@ npm run diagram -- .agents/skills/uml-studio/examples/usecase.json --image temp/
 # JPEG / WebP：支持倍率、质量和主题参数
 npm run diagram -- .agents/skills/uml-studio/examples/sequence.json --out temp/sequence.html --image temp/sequence.jpeg --scale 1 --quality 0.92
 npm run diagram -- .agents/skills/uml-studio/examples/physical.json --image temp/physical.webp --theme blueprint --scale 1
+
+# 从已经保存的 HTML 直接导出第 2 张图；不启动浏览器
+npm run diagram -- .agents/skills/uml-studio/demo-dist/index.html --diagram 2 --image temp/from-html.png
+
+# 单个 HTML 的全部图形批量导出；同类图也不会被覆盖
+npm run diagram -- .agents/skills/uml-studio/demo-dist/index.html --all --out-dir temp/images --format webp --scale 1
+
+# 从多图 JSON 生成设计册
+npm run diagram -- .agents/skills/uml-studio/examples/documents/gallery.json --out temp/design-book.html
 
 # 仅校验 / 查看支持类型
 npm run diagram -- .agents/skills/uml-studio/examples/activity.json --validate
@@ -52,18 +60,38 @@ npm run diagram -- --list
 | 4+1 架构视图 | 逻辑、开发、进程、物理、场景；五个示例分别表达结构、代码组织、运行协作、部署位置与业务交互 |
 | 原因分析 | 鱼骨图，支持递归原因 |
 | 图片 | SVG、PNG、JPEG（含 `.jpg`）、WebP |
-| 主题 | 暖纸、海蓝、苔绿、蓝图、夜色，以及 JSON / 页面样式覆盖 |
+| 主题 | 默认海蓝；暖纸、森林绿、工程蓝图、午夜、薰衣草、玫瑰、琥珀、岩灰、薄荷；支持独立样式覆盖 |
 
-这是自动布局与数据 / 样式编辑器，不是自由拖拽画布，也不执行 UML 模型或逆向生成代码。大图可按视角拆分，或使用 SVG / 预览缩放；位图超过 4,000 万像素或单边 32,767 px 会明确拒绝，避免浏览器分配过大画布。
+这是自动布局编辑器，不执行 UML 模型或逆向生成代码。拖拽仅平移预览，不手动改变节点坐标。位图超过 4,000 万像素或单边 32,767 px 会明确拒绝；可降低倍率或改为 SVG。
+
+## 布局、文字与配色
+
+- 布局模式：紧凑（默认）、均衡、宽松、分栏网格。紧凑的默认元素 / 区域间距为 24 / 40，均衡为 48 / 72，宽松为 80 / 112；网格默认每列 3 个节点。
+- `layout.showTitle`：默认 `false`，只隐藏图片内标题 / 说明，图表名称仍保留在工作台和无障碍信息中。
+- `layout.maxWidth/maxHeight`：整图等比尺寸上限，保留完整 viewBox，不裁掉节点。`nodeMaxWidth/nodeMaxHeight` 限制节点，文字会换行并在必要时缩放。
+- `layout.elementGap/regionGap/maxPerColumn`：元素间距、区域间距、区域内每列最大节点数。上限 / 数量为 0 表示不限；节点和分栏参数仅用于节点图。
+- `style.fontFamily/fontSize/fontWeight/fontStyle/textDecoration`：字体预设 / 自定义回退列表、字号、字重、斜体、下划线。颜色支持文本粘贴、系统拾色器、31 个精选实色和透明背景。
+- 显式布局间距优先于原有 `style.gap`，后者优先于模式默认值；网页切换模式会清除这些间距覆盖，使新模式立即生效。
+
+PNG / WebP / SVG 支持透明，JPEG 铺白底。跨机器的字体安装可能不同；CLI 可用 `--font-file path.ttf`（可重复）加载本地字体，不承诺原生导出与浏览器逐像素一致。
+
+下载按钮下提供 **复制图片（PNG）**：把当前图直接写入图片剪贴板，不弹下载框、不保存本地文件、不用链接替代图片。浏览器需支持 ClipboardItem，并允许安全页面写入剪贴板；不支持 / 拒绝时明确报错。
+
+## 多图与 HTML 再导出
+
+多图格式为 `{ "version": 1, "title": "设计册", "diagrams": [...] }`，参见 [完整多图示例](.agents/skills/uml-studio/examples/documents/gallery.json)。数组可包含多张相同 `type`，各自保留主题和布局；可选图形 `id` 在文档中唯一。
+
+HTML 始终包含全部已应用图形；保存时有未应用草稿会明确提示，不静默丢弃。CLI 只读取 `#diagram-data` JSON，不执行 HTML 脚本，也不加载网页资源。多图图片输出需用 `--diagram`（从 1 开始的序号或图形 id）选择，或 `--all --out-dir` 批量输出。批次中途出错会非零退出并报告已完成数量；已导出的图片不会冒充整个批次成功。
 
 ## 组件库与数据契约
 
-技术栈：**Vue 3 + TypeScript + SVG + ELK.js**。普通图使用分层正交布局；时序图和鱼骨图使用专用布局。JSON Schema 与 Ajv 检查结构，额外检查 ID、关系引用、分组循环和时序片段索引。
+技术栈：**Vue 3 + TypeScript + SVG + ELK.js**，Node 图片后端为 **resvg + sharp**，HTML 数据解析使用 parse5。普通图支持分层正交布局 / 区域分栏布局；时序和鱼骨使用专用布局。JSON Schema 与 Ajv 检查结构，并检查 ID、引用、分组循环和消息索引。
 
 | 路径 | 用途 |
 |---|---|
 | [SKILL.md](.agents/skills/uml-studio/SKILL.md) | Agent 路由、生成步骤、完整使用约定 |
 | [schemas/diagram.schema.json](.agents/skills/uml-studio/schemas/diagram.schema.json) | 可供模型和编辑器使用的 JSON Schema |
+| [schemas/document.schema.json](.agents/skills/uml-studio/schemas/document.schema.json) | 多图文档 Schema，可包含同类多图 |
 | [examples/](.agents/skills/uml-studio/examples/) | 18 类 JSON 示例 |
 | `.agents/skills/uml-studio/src/` | Vue 组件、类型、校验器、布局与导出源码 |
 | `.agents/skills/uml-studio/dist/` | Node 渲染器、Vue 组件模块、组件 CSS 与类型声明 |
@@ -82,7 +110,7 @@ import '@office/uml-studio/style.css'
 
 Headless Node API 为 `import { renderDiagram, validateSpec } from '@office/uml-studio'`。`renderDiagram(input)` 返回 `{ svg, width, height }`，可直接写为 SVG。独立 HTML 的生成使用 CLI；自行调用 `createHtml` / 组件 `saveHtml` 时需提供构建出的 `{ js, css }` 运行资源，不能只保存一个无法离线工作的空壳。
 
-浏览器输出还暴露相同职责的 `window.UmlStudio`，可用于 agent 自动化；原始数据位于 `<script id="diagram-data" type="application/json">`。
+`window.UmlStudio` 的 `getDocument/setDocument/selectDiagram` 管理完整集合，选择序号从 0 开始；`getSpec/setSpec/getSvg/exportImage` 操作当前图，`saveHtml` 保存整个集合。数据位于 `#diagram-data`。Node API 为 `import { readDiagramFile, documentFromHtml, renderNativeImage } from '@office/uml-studio/node'`，接受 JSON / 已保存 HTML，不依赖 DOM、Canvas 或 Chromium。
 
 ## 修改源码后
 
@@ -96,11 +124,14 @@ npm test
 
 ## 本次交付验证
 
-- TypeScript / Vue 类型检查、完整构建、7 项校验回归测试通过。
-- 18 类示例实际生成 SVG，并在浏览器检查 XML、文字画布边界、节点 / 关系完整性、分组与泳道；55 组字号边界、方向及长条件文字场景通过。
-- 网页编辑 JSON、错误输入保留上次结果、5 套主题、自定义样式、复制 / 下载 JSON 均已实际操作；四种图片经过文件签名与浏览器解码验证。
-- 保存的 HTML 在断网、`file://` 环境下重开，再修改数据和配色、重新导出 PNG、再次保存 HTML 后重开；数据与样式保留，未发出 HTTP 请求。
-- 1440×960、1920×1080、390×844 页面无水平溢出；移动端可切换图类型；编译后的 Vue 组件在同页挂载两种主题，SVG ID 与箭头引用不冲突。
-- 根目录 agent 命令实际生成 HTML / PNG，另生成用例 SVG、时序 JPEG、物理视图 WebP；同时验证 UTF-8 BOM、相对输出路径和无效模型不覆盖已有文件。
+- TypeScript / Vue 检查、完整构建与 10 项回归测试通过，覆盖引用校验、多图边界、透明 PNG、JPEG 白底与惰性 HTML 数据解析。
+- 18 类图的四种布局模式，加上尺寸约束 / 分栏 / 多图场景共 79 个渲染场景通过：检查 XML、文字边界、节点与关系完整性；每列上限 2 的七节点图实际排为 2 / 2 / 2 / 1。
+- 简单链式图在紧凑 / 均衡 / 宽松模式下的高度为 716 / 860 / 1052，证明预设实际改变布局，而不是仅保存设置。
+- 实际操作表单 / 源码切换、递归鱼骨原因、活动图节点增删、独立主题、十六进制粘贴、精选色板、透明背景、字体及布局参数；无效源码保留成功画布。
+- 实际滚轮改变缩放、指针拖动改变画布滚动位置。复制图片后从系统剪贴板读回 PNG，确认没有触发下载。
+- 三图 HTML 包含两张不同主题活动图，保存后断网重开仍保留全部图形与独立设置；1440px 和 390px 宽度无页面水平溢出。
+- 对已保存 HTML 导出 SVG / PNG / JPEG / WebP，并批量导出全部图形；验证时禁止浏览器模块与 Node 子进程，指定不存在的浏览器路径，原生导出仍成功。
+- 导出工具栏在预览上方且首屏可见；样式设置位于预览下方，默认收起，实际展开 / 折叠操作通过。类图属性与时序消息表单编辑通过；删除仍被引用的参与者会明确拒绝。
+- 另从网页编辑后保存的 HTML，按图形 id 导出 720 × 323 的原生 PNG，仍禁止浏览器包与子进程，保留修改后的内容、字体和透明背景。
 
-本机回执、图片和桌面 / 移动端截图保留在 `temp/uml-studio-evidence/`，按项目规则不纳入版本控制。上述自动功能与几何检查不等同于人工审美评审。
+本次回执、图片和截图保留在 `temp/uml-enhancement-evidence/`；前一版证据仍位于 `temp/uml-studio-evidence/`。临时验证脚本完成后移除，不纳入版本控制。自动功能和几何检查不等同于人工审美评审。

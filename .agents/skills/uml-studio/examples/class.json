@@ -3,7 +3,7 @@
   "type": "class",
   "title": "订单领域 · 类图",
   "description": "接口实现、继承与聚合关系保留 UML 端点语义。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "nodes": [
     {

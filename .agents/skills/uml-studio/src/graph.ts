@@ -2,6 +2,7 @@ import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ElkExtendedEdge, ElkLabel, ElkNode } from 'elkjs/lib/elk-api';
 import type { DiagramEdge, DiagramGroup, DiagramNode, DiagramSpec, RenderedDiagram, Theme } from './types';
 import { esc, frame, text } from './svg';
+import { resolveLayout } from './themes';
 
 type Kind = NonNullable<DiagramNode['kind']>;
 type Side = 'left' | 'right' | 'top' | 'bottom';
@@ -10,10 +11,15 @@ interface Rect { x: number; y: number; width: number; height: number }
 interface NodeRef {
   id: string;
   node: DiagramNode;
+  sourceNode: DiagramNode;
   theme: Theme;
   kind: Kind;
   width: number;
   height: number;
+  renderWidth: number;
+  renderHeight: number;
+  symbol?: Rect;
+  internalCaption?: LabelBox;
   header: number;
   attributes: string;
   operations: string;
@@ -73,8 +79,29 @@ function measure(label: string, size: number): { width: number; height: number; 
   return { width: Math.ceil(width), height: lines.length * size * 1.4, lines: lines.length };
 }
 
+function wrapNodeText(value: string, width: number, size: number): string {
+  return value.replace(/\r\n?/g, '\n').split('\n').flatMap(paragraph => {
+    const lines: string[] = [];
+    let current = '';
+    for (const character of paragraph) {
+      if (current && measure(current + character, size).width > width) { lines.push(current); current = ''; }
+      current += character;
+    }
+    lines.push(current);
+    return lines;
+  }).join('\n');
+}
+
 function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: Theme): NodeRef {
   const theme = cleanTheme({ ...base, ...node.style });
+  const sourceNode = node;
+  if (spec.layout?.nodeMaxWidth) {
+    const contentWidth = Math.max(64, spec.layout.nodeMaxWidth - 44);
+    const wrap = (value: string) => wrapNodeText(value, contentWidth, theme.fontSize);
+    node = { ...node, label: wrap(node.label), detail: node.detail ? wrap(node.detail) : undefined,
+      stereotype: node.stereotype ? wrap(node.stereotype) : undefined,
+      attributes: node.attributes?.map(wrap), operations: node.operations?.map(wrap) };
+  }
   const defaults: Partial<Record<DiagramSpec['type'], Kind>> = {
     class: 'class', state: 'state', usecase: 'usecase', component: 'component', package: 'package',
     architecture: 'component', module: 'component', deployment: 'server', logical: 'component',
@@ -133,7 +160,20 @@ function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: T
     width += 12;
     height += 8;
   }
-  return { id: `n${index}`, node, kind, theme, width: Math.ceil(width / 4) * 4, height: Math.ceil(height / 4) * 4, header, attributes, operations, attributeHeight, operationHeight };
+  let symbol: Rect | undefined, internalCaption: LabelBox | undefined;
+  if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ['start', 'end', 'fork', 'join'].includes(kind)) {
+    const value = [node.stereotype ? `«${node.stereotype}»` : '', node.label, node.detail].filter(Boolean).join('\n');
+    const captionSize = Math.max(10, theme.fontSize - 2), metrics = measure(value, captionSize);
+    symbol = { x: 0, y: 0, width, height };
+    internalCaption = { x: spec.direction === 'LR' ? 0 : width + 10, y: spec.direction === 'LR' ? height + 10 : 0, width: metrics.width + 4, height: metrics.height + 4, value, size: captionSize };
+    width = Math.max(width, internalCaption.x + internalCaption.width);
+    height = Math.max(height, internalCaption.y + internalCaption.height);
+    if (spec.direction === 'LR') symbol.x = (width - symbol.width) / 2;
+    else symbol.y = (height - symbol.height) / 2;
+  }
+  const renderWidth = Math.ceil(width / 4) * 4, renderHeight = Math.ceil(height / 4) * 4;
+  const fit = Math.min(1, spec.layout?.nodeMaxWidth ? spec.layout.nodeMaxWidth / renderWidth : 1, spec.layout?.nodeMaxHeight ? spec.layout.nodeMaxHeight / renderHeight : 1);
+  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight };
 }
 
 function edgeKind(edge: DiagramEdge, type: DiagramSpec['type']): NonNullable<DiagramEdge['kind']> {
@@ -158,18 +198,18 @@ function createEdge(edge: DiagramEdge, index: number, theme: Theme, type: Diagra
   return { id, edge, labels };
 }
 
-function layoutOptions(theme: Theme, direction: 'TB' | 'LR', padding: string): Record<string, string> {
+function layoutOptions(direction: 'TB' | 'LR', padding: string, spec: DiagramSpec): Record<string, string> {
   return {
     'elk.algorithm': 'layered', 'elk.direction': direction === 'LR' ? 'RIGHT' : 'DOWN',
     'elk.edgeRouting': 'ORTHOGONAL', 'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-    'elk.padding': padding, 'elk.spacing.nodeNode': String(Math.max(28, theme.gap)),
-    'elk.layered.spacing.nodeNodeBetweenLayers': String(Math.max(52, theme.gap * 1.6)),
+    'elk.padding': padding, 'elk.spacing.nodeNode': String(spec.layout?.elementGap ?? 24),
+    'elk.layered.spacing.nodeNodeBetweenLayers': String(spec.layout?.elementGap ?? 24),
     'elk.spacing.edgeNode': '18', 'elk.spacing.edgeEdge': '14', 'elk.spacing.edgeLabel': '10',
     'elk.spacing.labelNode': '12', 'elk.spacing.labelLabel': '8',
     'elk.layered.spacing.edgeNodeBetweenLayers': '20', 'elk.layered.spacing.edgeEdgeBetweenLayers': '14',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
     'elk.layered.mergeEdges': 'false', 'elk.separateConnectedComponents': 'true',
-    'elk.spacing.componentComponent': String(Math.max(48, theme.gap * 1.5)),
+    'elk.spacing.componentComponent': String(spec.layout?.regionGap ?? 40),
     'elk.edgeLabels.inline': 'false', 'elk.layered.edgeLabels.sideSelection': 'SMART_DOWN',
   };
 }
@@ -197,7 +237,7 @@ function buildGraph(
   const padding = lane
     ? (direction === 'TB' ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]`)
     : '[top=24,left=24,bottom=24,right=24]';
-  root.layoutOptions = layoutOptions(theme, direction, padding);
+  root.layoutOptions = layoutOptions(direction, padding, spec);
   if (lane) {
     root.width = direction === 'TB' ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
     root.height = direction === 'TB' ? 180 + header : Math.max(180, measure(lane.label, theme.fontSize).height + 28);
@@ -213,7 +253,7 @@ function buildGraph(
     const groupHeader = labelSize.height + (group.kind === 'node' ? 40 : 22);
     const width = Math.max(180, labelSize.width + 48);
     const height = groupHeader + 64;
-    const options = layoutOptions(theme, direction, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`);
+    const options = layoutOptions(direction, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`, spec);
     options['elk.nodeSize.constraints'] = '[MINIMUM_SIZE]';
     options['elk.nodeSize.minimum'] = `(${width},${height})`;
     groupNodes.set(group.id, { id, width, height, layoutOptions: options, children: [] });
@@ -229,7 +269,7 @@ function buildGraph(
   for (const ref of refs) {
     nodeIds.set(ref.node.id, ref.id);
     const child: ElkNode = { id: ref.id, width: ref.width, height: ref.height };
-    if (['start', 'end', 'fork', 'join'].includes(ref.kind)) {
+    if (!ref.internalCaption && ['start', 'end', 'fork', 'join'].includes(ref.kind)) {
       const caption = [ref.node.stereotype ? `«${ref.node.stereotype}»` : '', ref.node.label, ref.node.detail].filter(Boolean).join('\n');
       const size = Math.max(10, ref.theme.fontSize - 2);
       const metrics = measure(caption, size);
@@ -250,6 +290,53 @@ function buildGraph(
     }));
     root.edges!.push({ id: ref.id, sources: [source], targets: [target], labels });
   }
+  return root;
+}
+
+/** Explicit column/region layout retains each nested container and every node. */
+function packRegions(root: ElkNode, spec: DiagramSpec, theme: Theme): ElkNode {
+  const limit = spec.layout?.maxPerColumn ?? 0;
+  const elementGap = spec.layout?.elementGap ?? theme.gap;
+  const regionGap = spec.layout?.regionGap ?? theme.gap;
+  const vertical = limit > 0 || spec.direction !== 'LR';
+  function place(region: ElkNode): void {
+    const padding = region.layoutOptions?.['elk.padding'] ?? '';
+    const inset = { top: 24, left: 24, bottom: 24, right: 24 };
+    for (const side of ['top', 'left', 'bottom', 'right'] as const) {
+      const match = padding.match(new RegExp(`${side}=([\\d.]+)`));
+      if (match) inset[side] = Number(match[1]);
+    }
+    const leaves = (region.children ?? []).filter(child => !child.children);
+    const nested = (region.children ?? []).filter(child => child.children);
+    let right = inset.left, bottom = inset.top;
+    let columnX = inset.left, rowY = inset.top, columnWidth = 0;
+    leaves.forEach((child, index) => {
+      if (vertical && limit && index && index % limit === 0) {
+        columnX += columnWidth + elementGap; rowY = inset.top; columnWidth = 0;
+      }
+      child.x = columnX; child.y = rowY;
+      let occupiedWidth = child.width ?? 0, occupiedHeight = child.height ?? 0;
+      for (const label of child.labels ?? []) {
+        label.x = vertical ? occupiedWidth + 10 : Math.max(0, ((child.width ?? 0) - (label.width ?? 0)) / 2);
+        label.y = vertical ? Math.max(0, ((child.height ?? 0) - (label.height ?? 0)) / 2) : occupiedHeight + 10;
+        occupiedWidth = Math.max(occupiedWidth, label.x + (label.width ?? 0));
+        occupiedHeight = Math.max(occupiedHeight, label.y + (label.height ?? 0));
+      }
+      right = Math.max(right, child.x + occupiedWidth); bottom = Math.max(bottom, child.y + occupiedHeight);
+      columnWidth = Math.max(columnWidth, occupiedWidth);
+      if (vertical) rowY += occupiedHeight + elementGap;
+      else columnX += occupiedWidth + elementGap;
+    });
+    for (const child of nested) {
+      place(child);
+      child.x = vertical ? right + (right > inset.left ? regionGap : 0) : inset.left;
+      child.y = vertical ? inset.top : bottom + (bottom > inset.top ? regionGap : 0);
+      right = Math.max(right, child.x + (child.width ?? 0)); bottom = Math.max(bottom, child.y + (child.height ?? 0));
+    }
+    region.width = Math.max(region.width ?? 0, right + inset.right);
+    region.height = Math.max(region.height ?? 0, bottom + inset.bottom);
+  }
+  place(root);
   return root;
 }
 
@@ -421,8 +508,9 @@ function simplify(points: Point[]): Point[] {
 
 function routeBetweenLanes(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme): void {
   const byId = new Map(result.nodes.map(box => [box.ref.node.id, box]));
-  const obstacles: Rect[] = result.nodes.map(box => ({ x: box.x - 12, y: box.y - 12, width: box.width + 24, height: box.height + 24 }));
-  for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 6, y: box.y + box.caption.y - 6, width: box.caption.width + 12, height: box.caption.height + 12 });
+  const clearance = Math.min(12, theme.gap / 4);
+  const obstacles: Rect[] = result.nodes.map(box => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
+  for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 2, y: box.y + box.caption.y - 2, width: box.caption.width + 4, height: box.caption.height + 4 });
   for (const box of result.containers) {
     if (box.ref.kind === 'lane' && direction === 'LR') obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.ref.header - 3, height: box.height - 6 });
     else obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.width - 6, height: box.ref.header - 3 });
@@ -431,7 +519,8 @@ function routeBetweenLanes(edges: EdgeRef[], result: LayoutResult, direction: 'T
   const assignments = edges.map(ref => {
     const source = byId.get(ref.edge.from)!;
     const target = byId.get(ref.edge.to)!;
-    const side: Side = direction === 'TB' ? (source.x < target.x ? 'right' : 'left') : (source.y < target.y ? 'bottom' : 'top');
+    const side: Side = Math.abs(target.x - source.x) > Math.abs(target.y - source.y)
+      ? (source.x < target.x ? 'right' : 'left') : (source.y < target.y ? 'bottom' : 'top');
     const targetSide: Side = side === 'right' ? 'left' : side === 'left' ? 'right' : side === 'bottom' ? 'top' : 'bottom';
     const sourceKey = `${source.ref.id}-${side}`, targetKey = `${target.ref.id}-${targetSide}`;
     counts.set(sourceKey, (counts.get(sourceKey) ?? 0) + 1); counts.set(targetKey, (counts.get(targetKey) ?? 0) + 1);
@@ -453,14 +542,14 @@ function routeBetweenLanes(edges: EdgeRef[], result: LayoutResult, direction: 'T
         const anchors = endpoints.map(([box, attach, fraction]) => {
           const x = attach === 'left' ? box.x : attach === 'right' ? box.x + box.width : box.x + box.width * fraction;
           const y = attach === 'top' ? box.y : attach === 'bottom' ? box.y + box.height : box.y + box.height * fraction;
-          const distance = Math.max(28, theme.lineWidth * 10);
+          const distance = Math.max(clearance + 1, Math.min(28, theme.gap / 2));
           return { port: { x, y }, stub: { x: x + (attach === 'right' ? distance : attach === 'left' ? -distance : 0), y: y + (attach === 'bottom' ? distance : attach === 'top' ? -distance : 0) } };
         });
         // A stub may cross only its own endpoint's expanded obstacle.
         const clear = anchors.every((anchor, index) => {
           const box = index ? item.target : item.source;
           return !obstacles.some(obstacle => {
-            if (Math.abs(obstacle.x - (box.x - 12)) < 0.01 && Math.abs(obstacle.y - (box.y - 12)) < 0.01) return false;
+            if (Math.abs(obstacle.x - (box.x - clearance)) < 0.01 && Math.abs(obstacle.y - (box.y - clearance)) < 0.01) return false;
             return anchor.port.y === anchor.stub.y
               ? anchor.port.y > obstacle.y && anchor.port.y < obstacle.y + obstacle.height && Math.max(anchor.port.x, anchor.stub.x) > obstacle.x && Math.min(anchor.port.x, anchor.stub.x) < obstacle.x + obstacle.width
               : anchor.port.x > obstacle.x && anchor.port.x < obstacle.x + obstacle.width && Math.max(anchor.port.y, anchor.stub.y) > obstacle.y && Math.min(anchor.port.y, anchor.stub.y) < obstacle.y + obstacle.height;
@@ -474,13 +563,29 @@ function routeBetweenLanes(edges: EdgeRef[], result: LayoutResult, direction: 'T
       }
       if (route) break;
     }
-    if (!route) throw new Error(`Unable to route swimlane relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
+    if (!route) throw new Error(`Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
     used.push(route);
     result.routes.push({ ref: item.ref, paths: [route], labels: new Map() });
   }
 }
 
 function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
+  if (box.width !== box.ref.renderWidth || box.height !== box.ref.renderHeight) {
+    const scaleX = box.width / box.ref.renderWidth, scaleY = box.height / box.ref.renderHeight;
+    const local = { x: (point.x - box.x) / scaleX, y: (point.y - box.y) / scaleY };
+    const localNeighbor = { x: (neighbor.x - box.x) / scaleX, y: (neighbor.y - box.y) / scaleY };
+    clipEndpoint(local, localNeighbor, { ...box, x: 0, y: 0, width: box.ref.renderWidth, height: box.ref.renderHeight });
+    point.x = box.x + local.x * scaleX; point.y = box.y + local.y * scaleY;
+    neighbor.x = box.x + localNeighbor.x * scaleX; neighbor.y = box.y + localNeighbor.y * scaleY;
+    return;
+  }
+  if (box.ref.symbol) {
+    const symbol = box.ref.symbol;
+    if (Math.abs(point.y - neighbor.y) < .01) point.y = neighbor.y = box.y + symbol.y + symbol.height / 2;
+    else point.x = neighbor.x = box.x + symbol.x + symbol.width / 2;
+    clipEndpoint(point, neighbor, { ...box, x: box.x + symbol.x, y: box.y + symbol.y, width: symbol.width, height: symbol.height, ref: { ...box.ref, symbol: undefined, renderWidth: symbol.width, renderHeight: symbol.height } });
+    return;
+  }
   const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
   const rx = box.width / 2, ry = box.height / 2;
   const horizontal = Math.abs(point.y - neighbor.y) < 0.01;
@@ -524,7 +629,7 @@ function roundedPath(points: Point[]): string {
 }
 
 function markerDefinitions(prefix: string, theme: Theme): string {
-  const stroke = esc(theme.primary), background = esc(theme.background), solid = esc(theme.primary);
+  const stroke = esc(theme.primary), background = esc(theme.background === 'transparent' ? theme.surface : theme.background), solid = esc(theme.primary);
   return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
 }
 
@@ -572,15 +677,23 @@ function centeredContent(ref: NodeRef, x: number, y: number, width: number, heig
 function renderNode(box: NodeBox, spec: DiagramSpec): string {
   const { x, y, width: w, height: h, ref } = box;
   const { theme, kind, node } = ref;
+  if (w !== ref.renderWidth || h !== ref.renderHeight) {
+    const scaleX = w / ref.renderWidth, scaleY = h / ref.renderHeight;
+    const virtual = { ...box, x: 0, y: 0, width: ref.renderWidth, height: ref.renderHeight, caption: undefined };
+    const caption = box.caption ? text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted }) : '';
+    return `<g transform="translate(${numeric(x)} ${numeric(y)}) scale(${scaleX} ${scaleY})">${renderNode(virtual, spec)}</g>${caption}`;
+  }
   const stroke = esc(node.style?.primary && !node.style.border ? theme.primary : theme.border), surface = esc(theme.surface), ink = esc(theme.primary);
   const common = `fill="${surface}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"`;
   const rect = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}"`;
   let shape = '', content = '';
+  const symbol = ref.symbol ?? { x: 0, y: 0, width: w, height: h };
+  const symbolX = x + symbol.x, symbolY = y + symbol.y;
   if (kind === 'start' || kind === 'end') {
-    shape = `<circle cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" r="${numeric(w / 2 - theme.lineWidth / 2)}" fill="${kind === 'start' ? ink : surface}" stroke="${ink}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (kind === 'end') shape += `<circle cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" r="${numeric(w / 2 - 6)}" fill="${ink}"/>`;
+    shape = `<circle cx="${numeric(symbolX + symbol.width / 2)}" cy="${numeric(symbolY + symbol.height / 2)}" r="${numeric(symbol.width / 2 - theme.lineWidth / 2)}" fill="${kind === 'start' ? ink : surface}" stroke="${ink}" stroke-width="${numeric(theme.lineWidth)}"/>`;
+    if (kind === 'end') shape += `<circle cx="${numeric(symbolX + symbol.width / 2)}" cy="${numeric(symbolY + symbol.height / 2)}" r="${numeric(symbol.width / 2 - 6)}" fill="${ink}"/>`;
   } else if (kind === 'fork' || kind === 'join') {
-    shape = `${rect} rx="2" fill="${ink}"/>`;
+    shape = `<rect x="${numeric(symbolX)}" y="${numeric(symbolY)}" width="${numeric(symbol.width)}" height="${numeric(symbol.height)}" rx="2" fill="${ink}"/>`;
   } else if (kind === 'decision') {
     shape = `<path d="M${numeric(x + w / 2)} ${numeric(y)} L${numeric(x + w)} ${numeric(y + h / 2)} L${numeric(x + w / 2)} ${numeric(y + h)} L${numeric(x)} ${numeric(y + h / 2)} Z" ${common}/>`;
     content = centeredContent(ref, x + w * 0.16, y + h * 0.16, w * 0.68, h * 0.68);
@@ -632,8 +745,12 @@ function renderNode(box: NodeBox, spec: DiagramSpec): string {
       content += text(x + 12, y + ref.header + 10 + size, node.detail, theme, { anchor: 'start', size, fill: theme.muted });
     } else content = centeredContent(ref, x + (kind === 'component' ? -8 : 0), y, w, h);
   }
+  if (ref.internalCaption) {
+    const caption = ref.internalCaption;
+    content += text(x + caption.x + caption.width / 2, y + caption.y + 2 + caption.size, caption.value, theme, { size: caption.size, fill: theme.muted });
+  }
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
-  return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([node.label, node.detail].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
+  return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([ref.sourceNode.label, ref.sourceNode.detail, ...(ref.sourceNode.attributes ?? []), ...(ref.sourceNode.operations ?? [])].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
 }
 
 function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox[], direction: 'TB' | 'LR'): LabelBox[] {
@@ -691,6 +808,8 @@ function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox
 
 /** Layout every graph family with bundled ELK; sequence and fishbone have dedicated renderers. */
 export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Promise<RenderedDiagram> {
+  const explicitRegions = Boolean(spec.layout?.maxPerColumn) || spec.layout?.regionGap !== undefined || spec.layout?.mode === 'grid';
+  spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
   const direction = spec.direction ?? 'TB';
   const nodes = (spec.nodes ?? []).map((node, index) => createNode(node, index, spec, theme));
@@ -721,7 +840,7 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
       const input = buildGraph(`lane${index}`, laneNodes, spec.groups ?? [], localEdges, spec, theme, containers, lane,
         lane.id === unassignedId ? emptyGroups.map(group => group.id) : undefined);
       const minimumWidth = input.width ?? 240, minimumHeight = input.height ?? 180;
-      const output = await elk.layout(input);
+      const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
       // An empty ELK root has no content-derived size; it still represents a real lane.
       output.width = Math.max(minimumWidth, output.width ?? 0);
       output.height = Math.max(minimumHeight, output.height ?? 0);
@@ -735,17 +854,19 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
       for (const box of layout.nodes) result.nodes.push({ ...box, x: box.x + dx, y: box.y + dy });
       for (const box of layout.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === 'lane' && direction === 'LR' ? crossSize : box.width, height: box.ref.kind === 'lane' && direction === 'TB' ? crossSize : box.height });
       for (const route of layout.routes) result.routes.push({ ...route, paths: route.paths.map(path => path.map(point => ({ x: point.x + dx, y: point.y + dy }))), labels: new Map([...route.labels].map(([id, point]) => [id, { x: point.x + dx, y: point.y + dy }])) });
-      offset += direction === 'TB' ? layout.width : layout.height;
+      offset += (direction === 'TB' ? layout.width : layout.height) + (spec.layout?.regionGap ?? 0);
     }
-    result.width = direction === 'TB' ? offset : crossSize;
-    result.height = direction === 'TB' ? crossSize : offset;
+    const extent = offset - (spec.layout?.regionGap ?? 0);
+    result.width = direction === 'TB' ? extent : crossSize;
+    result.height = direction === 'TB' ? crossSize : extent;
     const nodeLanes = new Map(nodes.map(node => [node.node.id, node.node.lane ?? unassignedId]));
-    routeBetweenLanes(edges.filter(edge => nodeLanes.get(edge.edge.from) !== nodeLanes.get(edge.edge.to)), result, direction, theme);
+    if (!explicitRegions) routeBetweenLanes(edges.filter(edge => nodeLanes.get(edge.edge.from) !== nodeLanes.get(edge.edge.to)), result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 });
   } else {
     const input = buildGraph('root', nodes, spec.groups ?? [], edges, spec, theme, containers);
-    const output = await elk.layout(input);
+    const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
     result = collectLayout(output, { x: 0, y: 0 }, refs, containers, edgeRefs);
   }
+  if (explicitRegions) routeBetweenLanes(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? theme.gap });
   const nodeById = new Map(result.nodes.map(box => [box.ref.node.id, box]));
   for (const route of result.routes) {
     const first = route.paths[0], last = route.paths[route.paths.length - 1];
@@ -767,7 +888,7 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   }
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map(box => renderContainer(box, theme, direction)).join('');
   const nodeShapes = result.nodes.map(box => renderNode(box, spec)).join('');
-  const labelShapes = labels.map(label => `<g class="uml-edge-label"><rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`).join('');
+  const labelShapes = labels.map(label => `<g class="uml-edge-label"><rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`).join('');
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) { minX = Math.min(minX, box.x - theme.lineWidth); minY = Math.min(minY, box.y - theme.lineWidth); maxX = Math.max(maxX, box.x + box.width + theme.lineWidth); maxY = Math.max(maxY, box.y + box.height + theme.lineWidth); }
   for (const box of result.nodes) if (box.caption) {
@@ -775,13 +896,14 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
     maxX = Math.max(maxX, box.x + box.caption.x + box.caption.width); maxY = Math.max(maxY, box.y + box.caption.y + box.caption.height);
   }
   for (const route of result.routes) for (const path of route.paths) for (const point of path) { minX = Math.min(minX, point.x - 14); minY = Math.min(minY, point.y - 14); maxX = Math.max(maxX, point.x + 14); maxY = Math.max(maxY, point.y + 14); }
-  const titleMetrics = measure(spec.title, 24);
+  const showTitle = spec.layout?.showTitle === true;
+  const titleMetrics = showTitle ? measure(spec.title, 24) : { width: 0, lines: 0 };
   const titleBottom = 42 + (titleMetrics.lines - 1) * 33.6;
-  const descriptionMetrics = spec.description ? measure(spec.description, 13) : undefined;
-  const contentY = Math.max(88, descriptionMetrics ? titleBottom + 24 + (descriptionMetrics.lines - 1) * 18.2 + 32 : titleBottom + 36);
-  const heading = text(32, 42, spec.title, theme, { size: 24, anchor: 'start', weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: 'start', fill: theme.muted }) : '');
-  const width = Math.max(320, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
-  const height = Math.max(contentY + 48, maxY - minY + contentY + 32);
+  const descriptionMetrics = showTitle && spec.description ? measure(spec.description, 13) : undefined;
+  const contentY = showTitle ? Math.max(88, descriptionMetrics ? titleBottom + 24 + (descriptionMetrics.lines - 1) * 18.2 + 32 : titleBottom + 36) : 24;
+  const heading = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: 'start', weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: 'start', fill: theme.muted }) : '') : '';
+  const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
+  const height = Math.max(1, maxY - minY + contentY + 24);
   const body = `${markerDefinitions(prefix, theme)}${heading}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }

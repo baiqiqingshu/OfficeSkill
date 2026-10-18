@@ -3,7 +3,7 @@
   "type": "physical",
   "title": "4+1 · 物理视图",
   "description": "面向运维：跨可用区部署、流量分配与数据复制关系。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "TB",
   "groups": [
     {

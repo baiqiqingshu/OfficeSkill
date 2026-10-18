@@ -1,4 +1,4 @@
-import type { DiagramSpec, ExportOptions } from './types';
+import type { DiagramInput, ExportOptions } from './types';
 
 export interface StudioRuntime { js: string; css: string }
 const MAX_PIXELS = 40_000_000;
@@ -21,12 +21,12 @@ export function readStudioRuntime(): StudioRuntime | undefined {
 }
 
 /** A self-contained, editable document. Runtime is bundled locally, never loaded from a CDN. */
-export function createHtml(spec: DiagramSpec, runtime?: StudioRuntime): string {
+export function createHtml(input: DiagramInput, runtime?: StudioRuntime): string {
   const bundled = runtime ?? readStudioRuntime();
   if (!bundled || typeof bundled.js !== 'string' || !bundled.js.trim() || typeof bundled.css !== 'string') {
     throw new Error('尚未加载独立 HTML 运行时，请先构建本地 viewer.js 与 viewer.css。');
   }
-  const title = String(spec.title || 'UML Studio').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
+  const title = String(input.title || 'UML Studio').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]!));
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -38,7 +38,7 @@ export function createHtml(spec: DiagramSpec, runtime?: StudioRuntime): string {
 </head>
 <body>
 <div id="app"></div>
-<script id="diagram-data" type="application/json">${serialize(spec)}</script>
+<script id="diagram-data" type="application/json">${serialize(input)}</script>
 <script id="studio-runtime" type="application/json">${serialize(bundled)}</script>
 <script type="module">${bundled.js.replace(/<\/script/gi, '<\\/script')}</script>
 </body>
@@ -125,8 +125,13 @@ export async function exportSvgImage(svg: string, options: ExportOptions = {}): 
     canvas.height = targetHeight;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('当前浏览器无法创建 Canvas 画布。');
-    if (options.background || format === 'jpeg') {
-      const background = options.background ?? '#ffffff';
+    // JPEG has no alpha channel: always flatten transparency onto white first.
+    if (format === 'jpeg') {
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, targetWidth, targetHeight);
+    }
+    if (options.background) {
+      const background = options.background;
       if (!CSS.supports('color', background)) throw new Error('导出背景必须为有效颜色。');
       context.fillStyle = background;
       context.fillRect(0, 0, targetWidth, targetHeight);

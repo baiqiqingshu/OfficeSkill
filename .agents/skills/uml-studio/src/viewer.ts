@@ -1,14 +1,18 @@
 import { createApp } from 'vue';
 import Studio from './Studio.vue';
+import gallery from '../examples/documents/gallery.json';
 import { readStudioRuntime } from './export';
 import type { StudioRuntime } from './export';
-import type { DiagramSpec, ExportOptions } from './types';
+import type { DiagramDocument, DiagramInput, DiagramSpec, ExportOptions } from './types';
 import './studio.css';
 
 export interface UmlStudioHandle {
   ready: Promise<void>;
   getSpec(): DiagramSpec;
   setSpec(spec: DiagramSpec): Promise<void>;
+  getDocument(): DiagramDocument;
+  setDocument(input: DiagramInput): Promise<void>;
+  selectDiagram(indexOrId: number | string): Promise<void>;
   getSvg(): string;
   exportImage(options?: ExportOptions): Promise<Blob>;
   saveHtml(): string;
@@ -23,7 +27,7 @@ for (const [path, example] of Object.entries(files)) {
   const name = path.split('/').pop()?.replace(/\.json$/, '');
   if (name) examples[name] = example;
 }
-let initialSpec: unknown = examples.fishbone;
+let initialSpec: unknown = gallery;
 let startupError = '';
 const data = document.getElementById('diagram-data');
 if (data?.textContent?.trim()) {
@@ -60,6 +64,9 @@ window.UmlStudio = {
   ready: instance.ready,
   getSpec: () => instance.getSpec(),
   setSpec: spec => instance.setSpec(spec),
+  getDocument: () => instance.getDocument(),
+  setDocument: input => instance.setDocument(input),
+  selectDiagram: indexOrId => instance.selectDiagram(indexOrId),
   getSvg: () => instance.getSvg(),
   exportImage: options => instance.exportImage(options),
   saveHtml: () => instance.saveHtml(),

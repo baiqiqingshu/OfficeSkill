@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "title": "UML Studio · 多图设计册",
+  "diagrams": [
+    {
+      "version": 1, "id": "delivery-causes", "type": "fishbone", "title": "交付延期 · 原因分析", "theme": "ocean", "style": {"fontSize":18},
+      "fishbone": {"effect":"软件交付延期","categories":[
+        {"id":"people","label":"团队协作","causes":[{"label":"跨团队交接滞后","children":[{"label":"责任边界不明确"}]},{"label":"关键人员排期冲突"}]},
+        {"id":"scope","label":"需求管理","causes":[{"label":"变更缺少影响评估"},{"label":"验收标准不明确"}]},
+        {"id":"engineering","label":"工程能力","causes":[{"label":"构建部署依赖人工"},{"label":"核心模块耦合较高"}]},
+        {"id":"quality","label":"质量保障","causes":[{"label":"回归覆盖不足"},{"label":"联调验证安排靠后"}]}
+      ]}
+    },
+    {
+      "version": 1, "id": "review-ocean", "type": "activity", "title": "需求评审 · 海蓝主题", "theme":"ocean",
+      "layout":{"showTitle":false,"elementGap":48,"regionGap":72,"maxPerColumn":3},
+      "nodes":[{"id":"start","label":"开始","kind":"start"},{"id":"submit","label":"提交评审材料","kind":"action"},{"id":"review","label":"评审是否通过？","kind":"decision"},{"id":"revise","label":"完善需求说明","kind":"action"},{"id":"schedule","label":"安排实施计划","kind":"action"},{"id":"end","label":"完成","kind":"end"}],
+      "edges":[{"from":"start","to":"submit"},{"from":"submit","to":"review"},{"from":"review","to":"revise","label":"需完善"},{"from":"revise","to":"review"},{"from":"review","to":"schedule","label":"通过"},{"from":"schedule","to":"end"}]
+    },
+    {
+      "version": 1, "id": "release-rose", "type":"activity", "title":"发布审批 · 玫瑰主题", "theme":"rose",
+      "layout":{"showTitle":true,"maxWidth":1000,"maxHeight":900,"elementGap":52},
+      "nodes":[{"id":"start","label":"开始","kind":"start"},{"id":"build","label":"构建与自动化检查","kind":"action"},{"id":"approve","label":"发布负责人确认","kind":"action"},{"id":"deploy","label":"灰度发布与验证","kind":"action"},{"id":"end","label":"结束","kind":"end"}],
+      "edges":[{"from":"start","to":"build"},{"from":"build","to":"approve"},{"from":"approve","to":"deploy"},{"from":"deploy","to":"end"}]
+    }
+  ]
+}

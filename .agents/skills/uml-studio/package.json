@@ -1,9 +1,20 @@
 {
-  "name": "@office/uml-studio", "version": "1.0.0", "private": true, "type": "module",
-  "main": "./dist/core.mjs", "types": "./dist/types/src/core.d.ts",
+  "name": "@office/uml-studio",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/core.mjs",
+  "types": "./dist/types/src/core.d.ts",
   "exports": {
-    ".": {"types":"./dist/types/src/core.d.ts","import":"./dist/core.mjs"},
-    "./vue": {"types":"./dist/types/src/index.d.ts","import":"./dist/vue.mjs"},
+    ".": {
+      "types": "./dist/types/src/core.d.ts",
+      "import": "./dist/core.mjs"
+    },
+    "./vue": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/vue.mjs"
+    },
+    "./node": {"types":"./dist/types/src/native.d.ts","import":"./dist/native.mjs"},
     "./style.css": "./dist/diagram.css"
   },
   "scripts": {
@@ -12,6 +23,21 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "node --test tests/*.test.mjs"
   },
-  "dependencies": {"ajv": "^8.17.1", "elkjs": "^0.10.0", "vue": "^3.5.22"},
-  "devDependencies": {"@vitejs/plugin-vue": "^6.0.0", "@types/node": "^24.0.0", "esbuild": "^0.25.0", "playwright": "^1.56.0", "typescript": "^5.9.3", "vite": "^7.3.7", "vue-tsc": "^3.1.0"}
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "ajv": "^8.17.1",
+    "elkjs": "^0.10.0",
+    "parse5": "^8.0.1",
+    "sharp": "^0.35.5",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.56.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vue-tsc": "^3.1.0"
+  }
 }

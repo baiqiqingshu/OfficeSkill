@@ -6,6 +6,11 @@
     "version": {
       "const": 1
     },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_\\-:.]+$"
+    },
     "type": {
       "type": "string",
       "enum": [
@@ -39,11 +44,16 @@
     "theme": {
       "type": "string",
       "enum": [
-        "paper",
         "ocean",
+        "paper",
         "forest",
         "blueprint",
-        "midnight"
+        "midnight",
+        "lavender",
+        "rose",
+        "amber",
+        "slate",
+        "mint"
       ]
     },
     "style": {
@@ -51,31 +61,31 @@
       "properties": {
         "background": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "surface": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "text": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "muted": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "primary": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "secondary": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "border": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+          "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
         },
         "fontFamily": {
           "type": "string",
@@ -86,6 +96,25 @@
           "type": "number",
           "minimum": 8,
           "maximum": 48
+        },
+        "fontWeight": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 900
+        },
+        "fontStyle": {
+          "type": "string",
+          "enum": [
+            "normal",
+            "italic"
+          ]
+        },
+        "textDecoration": {
+          "type": "string",
+          "enum": [
+            "none",
+            "underline"
+          ]
         },
         "lineWidth": {
           "type": "number",
@@ -111,6 +140,62 @@
           "type": "number",
           "minimum": 24,
           "maximum": 240
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "compact",
+            "balanced",
+            "spacious",
+            "grid"
+          ],
+          "default": "compact"
+        },
+        "showTitle": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxWidth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "maxHeight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "regionGap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600
+        },
+        "elementGap": {
+          "type": "number",
+          "minimum": 8,
+          "maximum": 400
+        },
+        "maxPerColumn": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "nodeMaxWidth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "nodeMaxHeight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
         }
       },
       "required": [],
@@ -192,31 +277,31 @@
             "properties": {
               "background": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "surface": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "text": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "muted": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "primary": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "secondary": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "border": {
                 "type": "string",
-                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+                "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
               },
               "fontFamily": {
                 "type": "string",
@@ -227,6 +312,25 @@
                 "type": "number",
                 "minimum": 8,
                 "maximum": 48
+              },
+              "fontWeight": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 900
+              },
+              "fontStyle": {
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "italic"
+                ]
+              },
+              "textDecoration": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "underline"
+                ]
               },
               "lineWidth": {
                 "type": "number",
@@ -550,28 +654,6 @@
     "title"
   ],
   "additionalProperties": false,
-  "definitions": {
-    "cause": {
-      "type": "object",
-      "properties": {
-        "label": {
-          "type": "string",
-          "minLength": 1
-        },
-        "children": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cause"
-          },
-          "minItems": 0
-        }
-      },
-      "required": [
-        "label"
-      ],
-      "additionalProperties": false
-    }
-  },
   "allOf": [
     {
       "if": {
@@ -653,5 +735,27 @@
         }
       }
     }
-  ]
+  ],
+  "definitions": {
+    "cause": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cause"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  }
 }

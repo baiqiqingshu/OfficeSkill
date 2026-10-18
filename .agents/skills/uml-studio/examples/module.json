@@ -3,7 +3,7 @@
   "type": "module",
   "title": "支付域 · 模块划分",
   "description": "按职责拆分支付模块，并通过抽象隔离渠道变化。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "TB",
   "nodes": [
     {

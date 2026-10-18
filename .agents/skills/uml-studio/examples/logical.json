@@ -3,7 +3,7 @@
   "type": "logical",
   "title": "4+1 · 逻辑视图",
   "description": "面向业务分析：订单、库存与支付领域的核心职责和协作。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "nodes": [
     {

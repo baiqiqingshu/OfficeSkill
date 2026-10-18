@@ -3,7 +3,7 @@
   "type": "state",
   "title": "工单生命周期 · 状态图",
   "description": "从新建到关闭，异常路径通过退回与取消显式表达。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "nodes": [
     {

@@ -3,7 +3,7 @@
   "type": "development",
   "title": "4+1 · 开发视图",
   "description": "面向研发组织：源代码模块与可替换的基础设施适配器。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "TB",
   "groups": [
     {

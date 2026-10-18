@@ -1,4 +1,4 @@
-import { defineComponent, shallowRef, ref as ref$1, computed, watch, onMounted, onBeforeUnmount, openBlock, createElementBlock, createElementVNode, normalizeClass, createTextVNode, toDisplayString, createCommentVNode, normalizeStyle, toRaw } from "vue";
+import { defineComponent, shallowRef, ref as ref$1, computed, watch, onMounted, onBeforeUnmount, openBlock, createElementBlock, createElementVNode, normalizeClass, createTextVNode, toDisplayString, createCommentVNode, normalizeStyle, toRaw, nextTick } from "vue";
 const diagramTypes = ["activity", "sequence", "swimlane", "flowchart", "usecase", "class", "state", "component", "package", "architecture", "module", "deployment", "logical", "development", "process", "physical", "scenario", "fishbone"];
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
 function getDefaultExportFromCjs(x) {
@@ -6721,6 +6721,117 @@ function requireAjv() {
 }
 var ajvExports = /* @__PURE__ */ requireAjv();
 const Ajv = /* @__PURE__ */ getDefaultExportFromCjs(ajvExports);
+const base = {
+  background: "#f1f7fb",
+  surface: "#ffffff",
+  text: "#193b56",
+  muted: "#58758a",
+  primary: "#2167a8",
+  secondary: "#138e94",
+  border: "#b4ccd9",
+  fontFamily: "Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif",
+  fontSize: 15,
+  fontWeight: 400,
+  fontStyle: "normal",
+  textDecoration: "none",
+  lineWidth: 1.6,
+  radius: 8,
+  nodeWidth: 180,
+  nodeHeight: 68,
+  gap: 64
+};
+const themes = {
+  ocean: { ...base },
+  paper: { ...base, background: "#faf8f3", text: "#253248", muted: "#667286", primary: "#b35231", secondary: "#327781", border: "#cbd2d9" },
+  forest: { ...base, background: "#f4f7ef", text: "#283b31", muted: "#67765d", primary: "#3b7153", secondary: "#99713b", border: "#c3d0bc" },
+  blueprint: { ...base, background: "#edf3fc", surface: "#f9fbff", text: "#183f74", muted: "#567296", primary: "#245ba3", secondary: "#557ab4", border: "#9bb7d6", radius: 0, lineWidth: 1.3 },
+  midnight: { ...base, background: "#17202c", surface: "#222f40", text: "#e5ebf2", muted: "#a5b4c8", primary: "#efa47b", secondary: "#80bec3", border: "#52627a" },
+  lavender: { ...base, background: "#f6f2fc", surface: "#fefcff", text: "#42345f", muted: "#7b6c94", primary: "#7954ad", secondary: "#b075a4", border: "#d1c3e5", radius: 12 },
+  rose: { ...base, background: "#fff4f5", surface: "#fffdfd", text: "#653c49", muted: "#987180", primary: "#b94868", secondary: "#b57a43", border: "#e8bdc9", radius: 10 },
+  amber: { ...base, background: "#fff9eb", surface: "#fffef9", text: "#62451e", muted: "#927b56", primary: "#b87513", secondary: "#737f3c", border: "#e3c994", radius: 6 },
+  slate: { ...base, background: "#f3f5f7", surface: "#ffffff", text: "#293544", muted: "#687687", primary: "#50647d", secondary: "#648a97", border: "#c4cdd7", radius: 4 },
+  mint: { ...base, background: "#eefbf6", surface: "#fbfffd", text: "#254e46", muted: "#60877b", primary: "#19866c", secondary: "#438fa6", border: "#b3ddcf", radius: 14 }
+};
+const themeLabels = {
+  ocean: "海洋蓝",
+  paper: "暖纸",
+  forest: "森林绿",
+  blueprint: "工程蓝图",
+  midnight: "午夜",
+  lavender: "薰衣草",
+  rose: "玫瑰",
+  amber: "琥珀",
+  slate: "岩灰",
+  mint: "薄荷"
+};
+const fontPresets = [
+  { label: "中文无衬线", value: base.fontFamily },
+  { label: "系统无衬线", value: "Segoe UI, Microsoft YaHei, PingFang SC, Arial, sans-serif" },
+  { label: "思源黑体", value: "Noto Sans CJK SC, Source Han Sans SC, Microsoft YaHei, sans-serif" },
+  { label: "中文宋体", value: "Noto Serif CJK SC, Source Han Serif SC, SimSun, serif" },
+  { label: "经典衬线", value: "Georgia, Times New Roman, SimSun, serif" },
+  { label: "等宽代码", value: "Cascadia Code, Consolas, Noto Sans Mono CJK SC, monospace" }
+];
+const colorPresets = [
+  ["透明", "transparent"],
+  ["纯白", "#ffffff"],
+  ["暖纸", "#faf8f3"],
+  ["雾蓝", "#f1f7fb"],
+  ["薄荷白", "#eefbf6"],
+  ["薰衣草白", "#f6f2fc"],
+  ["玫瑰白", "#fff4f5"],
+  ["琥珀白", "#fff9eb"],
+  ["墨黑", "#202830"],
+  ["岩灰", "#50647d"],
+  ["银灰", "#c4cdd7"],
+  ["午夜", "#17202c"],
+  ["海洋蓝", "#2167a8"],
+  ["宝石蓝", "#245ba3"],
+  ["天空蓝", "#438fa6"],
+  ["青绿", "#138e94"],
+  ["薄荷绿", "#19866c"],
+  ["森林绿", "#3b7153"],
+  ["橄榄绿", "#737f3c"],
+  ["琥珀", "#b87513"],
+  ["金黄", "#e5b641"],
+  ["陶土", "#b35231"],
+  ["珊瑚", "#efa47b"],
+  ["玫瑰", "#b94868"],
+  ["莓红", "#943c64"],
+  ["藕紫", "#b075a4"],
+  ["薰衣草", "#7954ad"],
+  ["深紫", "#574287"],
+  ["冰青", "#80bec3"],
+  ["浅绿", "#b3ddcf"],
+  ["浅蓝", "#b4ccd9"],
+  ["浅紫", "#d1c3e5"]
+].map(([label2, value]) => ({ label: label2, value }));
+function resolveTheme(spec) {
+  return { ...themes[spec.theme ?? "ocean"], ...spec.style };
+}
+const layoutModes = [
+  { label: "紧凑", value: "compact" },
+  { label: "均衡", value: "balanced" },
+  { label: "宽松", value: "spacious" },
+  { label: "分栏网格", value: "grid" }
+];
+const layoutDefaults = {
+  compact: { elementGap: 24, regionGap: 40, maxPerColumn: 0 },
+  balanced: { elementGap: 48, regionGap: 72, maxPerColumn: 0 },
+  spacious: { elementGap: 80, regionGap: 112, maxPerColumn: 0 },
+  grid: { elementGap: 24, regionGap: 40, maxPerColumn: 3 }
+};
+function resolveLayout(spec) {
+  const mode = spec.layout?.mode ?? "compact";
+  const defaults2 = layoutDefaults[mode];
+  return {
+    ...spec.layout,
+    mode,
+    elementGap: spec.layout?.elementGap ?? spec.style?.gap ?? defaults2.elementGap,
+    regionGap: spec.layout?.regionGap ?? spec.style?.gap ?? defaults2.regionGap,
+    maxPerColumn: spec.layout?.maxPerColumn ?? defaults2.maxPerColumn
+  };
+}
 const str = { type: "string" };
 const label = { type: "string", minLength: 1 };
 const id = { type: "string", minLength: 1, pattern: "^[A-Za-z0-9_\\-:.]+$" };
@@ -6728,27 +6839,44 @@ const strings = { type: "array", items: str };
 const object = (properties2, required2 = []) => ({ type: "object", properties: properties2, required: required2, additionalProperties: false });
 const array = (items2, minItems = 0) => ({ type: "array", items: items2, minItems });
 const num = (minimum, maximum) => ({ type: "number", minimum, maximum });
+const integer = (minimum, maximum) => ({ type: "integer", minimum, maximum });
 const en = (...values) => ({ type: "string", enum: values });
+const color = { type: "string", pattern: "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$" };
 const style = object({
-  ...Object.fromEntries(["background", "surface", "text", "muted", "primary", "secondary", "border"].map((key) => [key, { type: "string", pattern: "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$" }])),
+  ...Object.fromEntries(["background", "surface", "text", "muted", "primary", "secondary", "border"].map((key) => [key, color])),
   fontFamily: { type: "string", minLength: 1, pattern: "^[^<>;{}\\\\]+$" },
   fontSize: num(8, 48),
+  fontWeight: integer(100, 900),
+  fontStyle: en("normal", "italic"),
+  textDecoration: en("none", "underline"),
   lineWidth: num(0.5, 8),
   radius: num(0, 32),
   nodeWidth: num(80, 600),
   nodeHeight: num(32, 300),
   gap: num(24, 240)
 });
-const diagramSchema = {
-  $schema: "http://json-schema.org/draft-07/schema#",
-  $id: "https://office-skill.local/uml-studio/diagram.schema.json",
+const layout = object({
+  mode: { ...en(...layoutModes.map((mode) => mode.value)), default: "compact" },
+  showTitle: { type: "boolean", default: false },
+  maxWidth: num(0, 1e5),
+  maxHeight: num(0, 1e5),
+  regionGap: num(0, 600),
+  elementGap: num(8, 400),
+  maxPerColumn: integer(0, 30),
+  nodeMaxWidth: num(0, 1e5),
+  nodeMaxHeight: num(0, 1e5)
+});
+const cause = object({ label, children: array({ $ref: "#/definitions/cause" }) }, ["label"]);
+const specSchema = {
   ...object({
     version: { const: 1 },
+    id,
     type: { type: "string", enum: diagramTypes },
     title: label,
     description: str,
-    theme: en("paper", "ocean", "forest", "blueprint", "midnight"),
+    theme: en(...Object.keys(themes)),
     style,
+    layout,
     direction: en("TB", "LR"),
     nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note"), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
     edges: array(object({ id, from: id, to: id, label: str, kind: en("flow", "association", "dependency", "include", "extend", "inheritance", "realization", "aggregation", "composition"), dashed: { type: "boolean" }, fromLabel: str, toLabel: str }, ["from", "to"])),
@@ -6759,13 +6887,24 @@ const diagramSchema = {
     fragments: array(object({ kind: en("alt", "opt", "loop", "par"), label: str, from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 }, elseAt: { type: "integer", minimum: 0 }, elseLabel: str }, ["kind", "label", "from", "to"])),
     fishbone: object({ effect: label, categories: array(object({ id, label, causes: array({ $ref: "#/definitions/cause" }, 1) }, ["id", "label", "causes"]), 1) }, ["effect", "categories"])
   }, ["version", "type", "title"]),
-  definitions: { cause: object({ label, children: array({ $ref: "#/definitions/cause" }) }, ["label"]) },
   allOf: [
     { if: { properties: { type: { const: "sequence" } } }, then: { required: ["participants", "messages"], properties: { participants: { minItems: 1 }, messages: { minItems: 1 } } } },
     { if: { properties: { type: { const: "fishbone" } } }, then: { required: ["fishbone"] } },
     { if: { properties: { type: { not: { enum: ["sequence", "fishbone"] } } } }, then: { required: ["nodes"], properties: { nodes: { minItems: 1 } } } },
     { if: { properties: { type: { const: "swimlane" } } }, then: { required: ["lanes"], properties: { lanes: { minItems: 1 } } } }
   ]
+};
+const diagramSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  $id: "https://office-skill.local/uml-studio/diagram.schema.json",
+  ...specSchema,
+  definitions: { cause }
+};
+const documentSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  $id: "https://office-skill.local/uml-studio/document.schema.json",
+  ...object({ version: { const: 1 }, title: label, diagrams: array({ $ref: "#/definitions/diagram" }, 1) }, ["version", "title", "diagrams"]),
+  definitions: { cause, diagram: specSchema }
 };
 const check = new Ajv({ allErrors: true, strict: false }).compile(diagramSchema);
 function unique(items2, name) {
@@ -6815,32 +6954,6 @@ function validateSpec(value) {
     if (spec.nodes || spec.edges || spec.groups || spec.lanes) throw new Error(`${spec.type} 不能包含图节点、连线或分组字段`);
   }
   return spec;
-}
-const base = {
-  background: "#faf8f3",
-  surface: "#ffffff",
-  text: "#253248",
-  muted: "#667286",
-  primary: "#b35231",
-  secondary: "#327781",
-  border: "#cbd2d9",
-  fontFamily: "Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif",
-  fontSize: 15,
-  lineWidth: 1.6,
-  radius: 8,
-  nodeWidth: 180,
-  nodeHeight: 68,
-  gap: 64
-};
-const themes = {
-  paper: { ...base },
-  ocean: { ...base, background: "#f1f7fb", text: "#193b56", primary: "#2167a8", secondary: "#138e94", border: "#b4ccd9" },
-  forest: { ...base, background: "#f4f7ef", text: "#283b31", primary: "#3b7153", secondary: "#99713b", border: "#c3d0bc" },
-  blueprint: { ...base, background: "#edf3fc", surface: "#f9fbff", text: "#183f74", muted: "#567296", primary: "#245ba3", secondary: "#557ab4", border: "#9bb7d6", radius: 0, lineWidth: 1.3 },
-  midnight: { ...base, background: "#17202c", surface: "#222f40", text: "#e5ebf2", muted: "#a5b4c8", primary: "#efa47b", secondary: "#80bec3", border: "#52627a" }
-};
-function resolveTheme(spec) {
-  return { ...themes[spec.theme ?? "paper"], ...spec.style };
 }
 function commonjsRequire(path) {
   throw new Error('Could not dynamically require "' + path + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.');
@@ -6948,7 +7061,7 @@ function requireElk_bundled() {
           }
           return _createClass(ELK2, [{
             key: "layout",
-            value: function layout(graph) {
+            value: function layout2(graph) {
               var _ref2 = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}, _ref2$layoutOptions = _ref2.layoutOptions, layoutOptions2 = _ref2$layoutOptions === void 0 ? this.defaultLayoutOptions : _ref2$layoutOptions, _ref2$logging = _ref2.logging, logging = _ref2$logging === void 0 ? false : _ref2$logging, _ref2$measureExecutio = _ref2.measureExecutionTime, measureExecutionTime = _ref2$measureExecutio === void 0 ? false : _ref2$measureExecutio;
               if (!graph) {
                 return Promise.reject(new Error("Missing mandatory parameter 'graph'."));
@@ -97847,12 +97960,15 @@ function text(x, y, label2, theme, options = {}) {
   const anchor = options.anchor === "start" || options.anchor === "end" ? options.anchor : "middle";
   const fill = paint$1(options.fill ?? theme.text, "#202830");
   const lines = label2.replace(/\r\n?/g, "\n").split("\n");
+  const weight = Math.max(100, Math.min(900, (options.weight ?? 400) + (theme.fontWeight - 400)));
   const spans = lines.map((line2, index) => `<tspan x="${number(x)}" dy="${index ? number(size * 1.4) : "0"}">${esc(line2)}</tspan>`).join("");
-  return `<text x="${number(x)}" y="${number(y)}" fill="${esc(fill)}" font-family="${esc(theme.fontFamily)}" font-size="${number(size)}" font-weight="${number(options.weight ?? 400)}" text-anchor="${anchor}" xml:space="preserve">${spans}</text>`;
+  return `<text x="${number(x)}" y="${number(y)}" fill="${esc(fill)}" font-family="${esc(theme.fontFamily)}" font-size="${number(size)}" font-weight="${number(weight)}" font-style="${theme.fontStyle === "italic" ? "italic" : "normal"}" text-decoration="${theme.textDecoration === "underline" ? "underline" : "none"}" text-anchor="${anchor}" xml:space="preserve">${spans}</text>`;
 }
 function frame(spec, theme, width, height, body) {
   const w = Math.max(1, Math.ceil(width));
   const h = Math.max(1, Math.ceil(height));
+  const scale = Math.min(1, spec.layout?.maxWidth ? spec.layout.maxWidth / w : 1, spec.layout?.maxHeight ? spec.layout.maxHeight / h : 1);
+  const physicalWidth = w * scale, physicalHeight = h * scale;
   const prefix = `uml-figure-${++figureNumber}`;
   const summary = spec.type === "sequence" ? `${spec.title}，包含 ${(spec.participants ?? []).length} 位参与者、${(spec.messages ?? []).length} 条消息的时序图。` : spec.type === "fishbone" ? `${spec.title}，以“${spec.fishbone?.effect ?? spec.title}”为结果，包含 ${(spec.fishbone?.categories ?? []).length} 个原因类别的鱼骨图。` : `${spec.title}，包含 ${(spec.nodes ?? []).length} 个节点、${(spec.edges ?? []).length} 条关系的 ${spec.type} 图。`;
   const description2 = spec.description || summary;
@@ -97867,8 +97983,8 @@ function frame(spec, theme, width, height, body) {
     });
     return `${attribute}${quote}${references}${quote}`;
   }).replace(/(\s(?:xlink:)?href=)(["'])#([^"']+)\2/g, (_match, attribute, quote, id2) => `${attribute}${quote}#${ids.get(id2) ?? `${prefix}-body-${id2}`}${quote}`).replace(/(\saria-(?:labelledby|describedby)=)(["'])([^"']+)\2/g, (_match, attribute, quote, references) => `${attribute}${quote}${references.split(/\s+/).map((id2) => ids.get(id2) ?? `${prefix}-body-${id2}`).join(" ")}${quote}`));
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="${prefix}-title ${prefix}-desc"><title id="${prefix}-title">${esc(spec.title)}</title><desc id="${prefix}-desc">${esc(description2)}</desc><rect width="${w}" height="${h}" fill="${esc(paint$1(theme.background, "#ffffff"))}"/>${isolatedBody}</svg>`;
-  return { svg, width: w, height: h };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${physicalWidth}" height="${physicalHeight}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="${prefix}-title ${prefix}-desc"><title id="${prefix}-title">${esc(spec.title)}</title><desc id="${prefix}-desc">${esc(description2)}</desc><rect width="${w}" height="${h}" fill="${esc(paint$1(theme.background, "#ffffff"))}"/>${isolatedBody}</svg>`;
+  return { svg, width: physicalWidth, height: physicalHeight };
 }
 let graphNumber = 0;
 let layoutEngine;
@@ -97906,8 +98022,36 @@ function measure$1(label2, size) {
   }
   return { width: Math.ceil(width), height: lines.length * size * 1.4, lines: lines.length };
 }
+function wrapNodeText(value, width, size) {
+  return value.replace(/\r\n?/g, "\n").split("\n").flatMap((paragraph) => {
+    const lines = [];
+    let current = "";
+    for (const character of paragraph) {
+      if (current && measure$1(current + character, size).width > width) {
+        lines.push(current);
+        current = "";
+      }
+      current += character;
+    }
+    lines.push(current);
+    return lines;
+  }).join("\n");
+}
 function createNode(node, index, spec, base2) {
   const theme = cleanTheme({ ...base2, ...node.style });
+  const sourceNode = node;
+  if (spec.layout?.nodeMaxWidth) {
+    const contentWidth2 = Math.max(64, spec.layout.nodeMaxWidth - 44);
+    const wrap2 = (value) => wrapNodeText(value, contentWidth2, theme.fontSize);
+    node = {
+      ...node,
+      label: wrap2(node.label),
+      detail: node.detail ? wrap2(node.detail) : void 0,
+      stereotype: node.stereotype ? wrap2(node.stereotype) : void 0,
+      attributes: node.attributes?.map(wrap2),
+      operations: node.operations?.map(wrap2)
+    };
+  }
   const defaults2 = {
     class: "class",
     state: "state",
@@ -97974,7 +98118,20 @@ function createNode(node, index, spec, base2) {
     width += 12;
     height += 8;
   }
-  return { id: `n${index}`, node, kind, theme, width: Math.ceil(width / 4) * 4, height: Math.ceil(height / 4) * 4, header, attributes, operations, attributeHeight, operationHeight };
+  let symbol, internalCaption;
+  if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ["start", "end", "fork", "join"].includes(kind)) {
+    const value = [node.stereotype ? `«${node.stereotype}»` : "", node.label, node.detail].filter(Boolean).join("\n");
+    const captionSize = Math.max(10, theme.fontSize - 2), metrics = measure$1(value, captionSize);
+    symbol = { x: 0, y: 0, width, height };
+    internalCaption = { x: spec.direction === "LR" ? 0 : width + 10, y: spec.direction === "LR" ? height + 10 : 0, width: metrics.width + 4, height: metrics.height + 4, value, size: captionSize };
+    width = Math.max(width, internalCaption.x + internalCaption.width);
+    height = Math.max(height, internalCaption.y + internalCaption.height);
+    if (spec.direction === "LR") symbol.x = (width - symbol.width) / 2;
+    else symbol.y = (height - symbol.height) / 2;
+  }
+  const renderWidth = Math.ceil(width / 4) * 4, renderHeight = Math.ceil(height / 4) * 4;
+  const fit = Math.min(1, spec.layout?.nodeMaxWidth ? spec.layout.nodeMaxWidth / renderWidth : 1, spec.layout?.nodeMaxHeight ? spec.layout.nodeMaxHeight / renderHeight : 1);
+  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight };
 }
 function edgeKind(edge, type2) {
   return edge.kind ?? (type2 === "class" || type2 === "usecase" ? "association" : "flow");
@@ -97997,15 +98154,15 @@ ${label2}` : tag;
   }
   return { id: id2, edge, labels };
 }
-function layoutOptions(theme, direction, padding) {
+function layoutOptions(direction, padding, spec) {
   return {
     "elk.algorithm": "layered",
     "elk.direction": direction === "LR" ? "RIGHT" : "DOWN",
     "elk.edgeRouting": "ORTHOGONAL",
     "elk.hierarchyHandling": "INCLUDE_CHILDREN",
     "elk.padding": padding,
-    "elk.spacing.nodeNode": String(Math.max(28, theme.gap)),
-    "elk.layered.spacing.nodeNodeBetweenLayers": String(Math.max(52, theme.gap * 1.6)),
+    "elk.spacing.nodeNode": String(spec.layout?.elementGap ?? 24),
+    "elk.layered.spacing.nodeNodeBetweenLayers": String(spec.layout?.elementGap ?? 24),
     "elk.spacing.edgeNode": "18",
     "elk.spacing.edgeEdge": "14",
     "elk.spacing.edgeLabel": "10",
@@ -98016,7 +98173,7 @@ function layoutOptions(theme, direction, padding) {
     "elk.layered.nodePlacement.favorStraightEdges": "true",
     "elk.layered.mergeEdges": "false",
     "elk.separateConnectedComponents": "true",
-    "elk.spacing.componentComponent": String(Math.max(48, theme.gap * 1.5)),
+    "elk.spacing.componentComponent": String(spec.layout?.regionGap ?? 40),
     "elk.edgeLabels.inline": "false",
     "elk.layered.edgeLabels.sideSelection": "SMART_DOWN"
   };
@@ -98037,7 +98194,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
   const root = { id: rootId, children: [], edges: [] };
   const header = lane ? direction === "TB" ? measure$1(lane.label, theme.fontSize).height + 24 : measure$1(lane.label, theme.fontSize).width + 32 : 0;
   const padding = lane ? direction === "TB" ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]` : "[top=24,left=24,bottom=24,right=24]";
-  root.layoutOptions = layoutOptions(theme, direction, padding);
+  root.layoutOptions = layoutOptions(direction, padding, spec);
   if (lane) {
     root.width = direction === "TB" ? Math.max(240, measure$1(lane.label, theme.fontSize).width + 36) : 260 + header;
     root.height = direction === "TB" ? 180 + header : Math.max(180, measure$1(lane.label, theme.fontSize).height + 28);
@@ -98053,7 +98210,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
     const groupHeader = labelSize.height + (group.kind === "node" ? 40 : 22);
     const width = Math.max(180, labelSize.width + 48);
     const height = groupHeader + 64;
-    const options = layoutOptions(theme, direction, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`);
+    const options = layoutOptions(direction, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`, spec);
     options["elk.nodeSize.constraints"] = "[MINIMUM_SIZE]";
     options["elk.nodeSize.minimum"] = `(${width},${height})`;
     groupNodes.set(group.id, { id: id2, width, height, layoutOptions: options, children: [] });
@@ -98069,7 +98226,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
   for (const ref2 of refs) {
     nodeIds.set(ref2.node.id, ref2.id);
     const child = { id: ref2.id, width: ref2.width, height: ref2.height };
-    if (["start", "end", "fork", "join"].includes(ref2.kind)) {
+    if (!ref2.internalCaption && ["start", "end", "fork", "join"].includes(ref2.kind)) {
       const caption = [ref2.node.stereotype ? `«${ref2.node.stereotype}»` : "", ref2.node.label, ref2.node.detail].filter(Boolean).join("\n");
       const size = Math.max(10, ref2.theme.fontSize - 2);
       const metrics = measure$1(caption, size);
@@ -98093,6 +98250,56 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
     }));
     root.edges.push({ id: ref2.id, sources: [source], targets: [target], labels });
   }
+  return root;
+}
+function packRegions(root, spec, theme) {
+  const limit = spec.layout?.maxPerColumn ?? 0;
+  const elementGap = spec.layout?.elementGap ?? theme.gap;
+  const regionGap = spec.layout?.regionGap ?? theme.gap;
+  const vertical = limit > 0 || spec.direction !== "LR";
+  function place(region) {
+    const padding = region.layoutOptions?.["elk.padding"] ?? "";
+    const inset = { top: 24, left: 24, bottom: 24, right: 24 };
+    for (const side of ["top", "left", "bottom", "right"]) {
+      const match = padding.match(new RegExp(`${side}=([\\d.]+)`));
+      if (match) inset[side] = Number(match[1]);
+    }
+    const leaves = (region.children ?? []).filter((child) => !child.children);
+    const nested = (region.children ?? []).filter((child) => child.children);
+    let right = inset.left, bottom = inset.top;
+    let columnX = inset.left, rowY = inset.top, columnWidth = 0;
+    leaves.forEach((child, index) => {
+      if (vertical && limit && index && index % limit === 0) {
+        columnX += columnWidth + elementGap;
+        rowY = inset.top;
+        columnWidth = 0;
+      }
+      child.x = columnX;
+      child.y = rowY;
+      let occupiedWidth = child.width ?? 0, occupiedHeight = child.height ?? 0;
+      for (const label2 of child.labels ?? []) {
+        label2.x = vertical ? occupiedWidth + 10 : Math.max(0, ((child.width ?? 0) - (label2.width ?? 0)) / 2);
+        label2.y = vertical ? Math.max(0, ((child.height ?? 0) - (label2.height ?? 0)) / 2) : occupiedHeight + 10;
+        occupiedWidth = Math.max(occupiedWidth, label2.x + (label2.width ?? 0));
+        occupiedHeight = Math.max(occupiedHeight, label2.y + (label2.height ?? 0));
+      }
+      right = Math.max(right, child.x + occupiedWidth);
+      bottom = Math.max(bottom, child.y + occupiedHeight);
+      columnWidth = Math.max(columnWidth, occupiedWidth);
+      if (vertical) rowY += occupiedHeight + elementGap;
+      else columnX += occupiedWidth + elementGap;
+    });
+    for (const child of nested) {
+      place(child);
+      child.x = vertical ? right + (right > inset.left ? regionGap : 0) : inset.left;
+      child.y = vertical ? inset.top : bottom + (bottom > inset.top ? regionGap : 0);
+      right = Math.max(right, child.x + (child.width ?? 0));
+      bottom = Math.max(bottom, child.y + (child.height ?? 0));
+    }
+    region.width = Math.max(region.width ?? 0, right + inset.right);
+    region.height = Math.max(region.height ?? 0, bottom + inset.bottom);
+  }
+  place(root);
   return root;
 }
 function collectLayout(root, origin, refs, containerRefs, edgeRefs) {
@@ -98277,8 +98484,9 @@ function simplify(points) {
 }
 function routeBetweenLanes(edges, result, direction, theme) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
-  const obstacles = result.nodes.map((box) => ({ x: box.x - 12, y: box.y - 12, width: box.width + 24, height: box.height + 24 }));
-  for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 6, y: box.y + box.caption.y - 6, width: box.caption.width + 12, height: box.caption.height + 12 });
+  const clearance = Math.min(12, theme.gap / 4);
+  const obstacles = result.nodes.map((box) => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
+  for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 2, y: box.y + box.caption.y - 2, width: box.caption.width + 4, height: box.caption.height + 4 });
   for (const box of result.containers) {
     if (box.ref.kind === "lane" && direction === "LR") obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.ref.header - 3, height: box.height - 6 });
     else obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.width - 6, height: box.ref.header - 3 });
@@ -98287,7 +98495,7 @@ function routeBetweenLanes(edges, result, direction, theme) {
   const assignments = edges.map((ref2) => {
     const source = byId.get(ref2.edge.from);
     const target = byId.get(ref2.edge.to);
-    const side = direction === "TB" ? source.x < target.x ? "right" : "left" : source.y < target.y ? "bottom" : "top";
+    const side = Math.abs(target.x - source.x) > Math.abs(target.y - source.y) ? source.x < target.x ? "right" : "left" : source.y < target.y ? "bottom" : "top";
     const targetSide = side === "right" ? "left" : side === "left" ? "right" : side === "bottom" ? "top" : "bottom";
     const sourceKey = `${source.ref.id}-${side}`, targetKey = `${target.ref.id}-${targetSide}`;
     counts.set(sourceKey, (counts.get(sourceKey) ?? 0) + 1);
@@ -98311,13 +98519,13 @@ function routeBetweenLanes(edges, result, direction, theme) {
         const anchors = endpoints.map(([box, attach, fraction]) => {
           const x = attach === "left" ? box.x : attach === "right" ? box.x + box.width : box.x + box.width * fraction;
           const y = attach === "top" ? box.y : attach === "bottom" ? box.y + box.height : box.y + box.height * fraction;
-          const distance = Math.max(28, theme.lineWidth * 10);
+          const distance = Math.max(clearance + 1, Math.min(28, theme.gap / 2));
           return { port: { x, y }, stub: { x: x + (attach === "right" ? distance : attach === "left" ? -distance : 0), y: y + (attach === "bottom" ? distance : attach === "top" ? -distance : 0) } };
         });
         const clear = anchors.every((anchor, index) => {
           const box = index ? item.target : item.source;
           return !obstacles.some((obstacle) => {
-            if (Math.abs(obstacle.x - (box.x - 12)) < 0.01 && Math.abs(obstacle.y - (box.y - 12)) < 0.01) return false;
+            if (Math.abs(obstacle.x - (box.x - clearance)) < 0.01 && Math.abs(obstacle.y - (box.y - clearance)) < 0.01) return false;
             return anchor.port.y === anchor.stub.y ? anchor.port.y > obstacle.y && anchor.port.y < obstacle.y + obstacle.height && Math.max(anchor.port.x, anchor.stub.x) > obstacle.x && Math.min(anchor.port.x, anchor.stub.x) < obstacle.x + obstacle.width : anchor.port.x > obstacle.x && anchor.port.x < obstacle.x + obstacle.width && Math.max(anchor.port.y, anchor.stub.y) > obstacle.y && Math.min(anchor.port.y, anchor.stub.y) < obstacle.y + obstacle.height;
           });
         });
@@ -98329,12 +98537,30 @@ function routeBetweenLanes(edges, result, direction, theme) {
       }
       if (route) break;
     }
-    if (!route) throw new Error(`Unable to route swimlane relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
+    if (!route) throw new Error(`Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
     used.push(route);
     result.routes.push({ ref: item.ref, paths: [route], labels: /* @__PURE__ */ new Map() });
   }
 }
 function clipEndpoint(point, neighbor, box) {
+  if (box.width !== box.ref.renderWidth || box.height !== box.ref.renderHeight) {
+    const scaleX = box.width / box.ref.renderWidth, scaleY = box.height / box.ref.renderHeight;
+    const local = { x: (point.x - box.x) / scaleX, y: (point.y - box.y) / scaleY };
+    const localNeighbor = { x: (neighbor.x - box.x) / scaleX, y: (neighbor.y - box.y) / scaleY };
+    clipEndpoint(local, localNeighbor, { ...box, x: 0, y: 0, width: box.ref.renderWidth, height: box.ref.renderHeight });
+    point.x = box.x + local.x * scaleX;
+    point.y = box.y + local.y * scaleY;
+    neighbor.x = box.x + localNeighbor.x * scaleX;
+    neighbor.y = box.y + localNeighbor.y * scaleY;
+    return;
+  }
+  if (box.ref.symbol) {
+    const symbol = box.ref.symbol;
+    if (Math.abs(point.y - neighbor.y) < 0.01) point.y = neighbor.y = box.y + symbol.y + symbol.height / 2;
+    else point.x = neighbor.x = box.x + symbol.x + symbol.width / 2;
+    clipEndpoint(point, neighbor, { ...box, x: box.x + symbol.x, y: box.y + symbol.y, width: symbol.width, height: symbol.height, ref: { ...box.ref, symbol: void 0, renderWidth: symbol.width, renderHeight: symbol.height } });
+    return;
+  }
   const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
   const rx = box.width / 2, ry = box.height / 2;
   const horizontal = Math.abs(point.y - neighbor.y) < 0.01;
@@ -98376,7 +98602,7 @@ function roundedPath(points) {
   return `${value} L${numeric(last.x)} ${numeric(last.y)}`;
 }
 function markerDefinitions(prefix, theme) {
-  const stroke = esc(theme.primary), background = esc(theme.background), solid = esc(theme.primary);
+  const stroke = esc(theme.primary), background = esc(theme.background === "transparent" ? theme.surface : theme.background), solid = esc(theme.primary);
   return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="20" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
 }
 function renderContainer(box, theme, direction) {
@@ -98421,15 +98647,23 @@ function centeredContent(ref2, x, y, width, height) {
 function renderNode(box, spec) {
   const { x, y, width: w, height: h, ref: ref2 } = box;
   const { theme, kind, node } = ref2;
+  if (w !== ref2.renderWidth || h !== ref2.renderHeight) {
+    const scaleX = w / ref2.renderWidth, scaleY = h / ref2.renderHeight;
+    const virtual = { ...box, x: 0, y: 0, width: ref2.renderWidth, height: ref2.renderHeight, caption: void 0 };
+    const caption = box.caption ? text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted }) : "";
+    return `<g transform="translate(${numeric(x)} ${numeric(y)}) scale(${scaleX} ${scaleY})">${renderNode(virtual, spec)}</g>${caption}`;
+  }
   const stroke = esc(node.style?.primary && !node.style.border ? theme.primary : theme.border), surface = esc(theme.surface), ink = esc(theme.primary);
   const common = `fill="${surface}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"`;
   const rect = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}"`;
   let shape = "", content = "";
+  const symbol = ref2.symbol ?? { x: 0, y: 0, width: w, height: h };
+  const symbolX = x + symbol.x, symbolY = y + symbol.y;
   if (kind === "start" || kind === "end") {
-    shape = `<circle cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" r="${numeric(w / 2 - theme.lineWidth / 2)}" fill="${kind === "start" ? ink : surface}" stroke="${ink}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (kind === "end") shape += `<circle cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" r="${numeric(w / 2 - 6)}" fill="${ink}"/>`;
+    shape = `<circle cx="${numeric(symbolX + symbol.width / 2)}" cy="${numeric(symbolY + symbol.height / 2)}" r="${numeric(symbol.width / 2 - theme.lineWidth / 2)}" fill="${kind === "start" ? ink : surface}" stroke="${ink}" stroke-width="${numeric(theme.lineWidth)}"/>`;
+    if (kind === "end") shape += `<circle cx="${numeric(symbolX + symbol.width / 2)}" cy="${numeric(symbolY + symbol.height / 2)}" r="${numeric(symbol.width / 2 - 6)}" fill="${ink}"/>`;
   } else if (kind === "fork" || kind === "join") {
-    shape = `${rect} rx="2" fill="${ink}"/>`;
+    shape = `<rect x="${numeric(symbolX)}" y="${numeric(symbolY)}" width="${numeric(symbol.width)}" height="${numeric(symbol.height)}" rx="2" fill="${ink}"/>`;
   } else if (kind === "decision") {
     shape = `<path d="M${numeric(x + w / 2)} ${numeric(y)} L${numeric(x + w)} ${numeric(y + h / 2)} L${numeric(x + w / 2)} ${numeric(y + h)} L${numeric(x)} ${numeric(y + h / 2)} Z" ${common}/>`;
     content = centeredContent(ref2, x + w * 0.16, y + h * 0.16, w * 0.68, h * 0.68);
@@ -98481,8 +98715,12 @@ function renderNode(box, spec) {
       content += text(x + 12, y + ref2.header + 10 + size, node.detail, theme, { anchor: "start", size, fill: theme.muted });
     } else content = centeredContent(ref2, x + (kind === "component" ? -8 : 0), y, w, h);
   }
+  if (ref2.internalCaption) {
+    const caption = ref2.internalCaption;
+    content += text(x + caption.x + caption.width / 2, y + caption.y + 2 + caption.size, caption.value, theme, { size: caption.size, fill: theme.muted });
+  }
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
-  return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([node.label, node.detail].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
+  return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([ref2.sourceNode.label, ref2.sourceNode.detail, ...ref2.sourceNode.attributes ?? [], ...ref2.sourceNode.operations ?? []].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
 }
 function placeLabels(routes, nodes, containers, direction) {
   const occupied = [...nodes];
@@ -98537,6 +98775,8 @@ function placeLabels(routes, nodes, containers, direction) {
   return placed;
 }
 async function renderGraph(spec, suppliedTheme) {
+  const explicitRegions = Boolean(spec.layout?.maxPerColumn) || spec.layout?.regionGap !== void 0 || spec.layout?.mode === "grid";
+  spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
   const direction = spec.direction ?? "TB";
   const nodes = (spec.nodes ?? []).map((node, index) => createNode(node, index, spec, theme));
@@ -98579,30 +98819,32 @@ async function renderGraph(spec, suppliedTheme) {
         lane.id === unassignedId ? emptyGroups.map((group) => group.id) : void 0
       );
       const minimumWidth = input.width ?? 240, minimumHeight = input.height ?? 180;
-      const output = await elk.layout(input);
+      const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
       output.width = Math.max(minimumWidth, output.width ?? 0);
       output.height = Math.max(minimumHeight, output.height ?? 0);
       layouts.push(collectLayout(output, { x: 0, y: 0 }, refs, containers, edgeRefs));
     }
-    const crossSize = Math.max(180, ...layouts.map((layout) => direction === "TB" ? layout.height : layout.width));
+    const crossSize = Math.max(180, ...layouts.map((layout2) => direction === "TB" ? layout2.height : layout2.width));
     let offset = 0;
     result = { nodes: [], containers: [], routes: [], width: 0, height: 0 };
-    for (const layout of layouts) {
+    for (const layout2 of layouts) {
       const dx = direction === "TB" ? offset : 0, dy = direction === "LR" ? offset : 0;
-      for (const box of layout.nodes) result.nodes.push({ ...box, x: box.x + dx, y: box.y + dy });
-      for (const box of layout.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === "lane" && direction === "LR" ? crossSize : box.width, height: box.ref.kind === "lane" && direction === "TB" ? crossSize : box.height });
-      for (const route of layout.routes) result.routes.push({ ...route, paths: route.paths.map((path) => path.map((point) => ({ x: point.x + dx, y: point.y + dy }))), labels: new Map([...route.labels].map(([id2, point]) => [id2, { x: point.x + dx, y: point.y + dy }])) });
-      offset += direction === "TB" ? layout.width : layout.height;
+      for (const box of layout2.nodes) result.nodes.push({ ...box, x: box.x + dx, y: box.y + dy });
+      for (const box of layout2.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === "lane" && direction === "LR" ? crossSize : box.width, height: box.ref.kind === "lane" && direction === "TB" ? crossSize : box.height });
+      for (const route of layout2.routes) result.routes.push({ ...route, paths: route.paths.map((path) => path.map((point) => ({ x: point.x + dx, y: point.y + dy }))), labels: new Map([...route.labels].map(([id2, point]) => [id2, { x: point.x + dx, y: point.y + dy }])) });
+      offset += (direction === "TB" ? layout2.width : layout2.height) + (spec.layout?.regionGap ?? 0);
     }
-    result.width = direction === "TB" ? offset : crossSize;
-    result.height = direction === "TB" ? crossSize : offset;
+    const extent = offset - (spec.layout?.regionGap ?? 0);
+    result.width = direction === "TB" ? extent : crossSize;
+    result.height = direction === "TB" ? crossSize : extent;
     const nodeLanes = new Map(nodes.map((node) => [node.node.id, node.node.lane ?? unassignedId]));
-    routeBetweenLanes(edges.filter((edge) => nodeLanes.get(edge.edge.from) !== nodeLanes.get(edge.edge.to)), result, direction, theme);
+    if (!explicitRegions) routeBetweenLanes(edges.filter((edge) => nodeLanes.get(edge.edge.from) !== nodeLanes.get(edge.edge.to)), result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 });
   } else {
     const input = buildGraph("root", nodes, spec.groups ?? [], edges, spec, theme, containers);
-    const output = await elk.layout(input);
+    const output = explicitRegions ? packRegions(input, spec, theme) : await elk.layout(input);
     result = collectLayout(output, { x: 0, y: 0 }, refs, containers, edgeRefs);
   }
+  if (explicitRegions) routeBetweenLanes(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? theme.gap });
   const nodeById = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   for (const route of result.routes) {
     const first = route.paths[0], last = route.paths[route.paths.length - 1];
@@ -98624,7 +98866,7 @@ async function renderGraph(spec, suppliedTheme) {
   }
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(box, theme, direction)).join("");
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
-  const labelShapes = labels.map((label2) => `<g class="uml-edge-label"><rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`).join("");
+  const labelShapes = labels.map((label2) => `<g class="uml-edge-label"><rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`).join("");
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) {
     minX = Math.min(minX, box.x - theme.lineWidth);
@@ -98644,13 +98886,14 @@ async function renderGraph(spec, suppliedTheme) {
     maxX = Math.max(maxX, point.x + 14);
     maxY = Math.max(maxY, point.y + 14);
   }
-  const titleMetrics = measure$1(spec.title, 24);
+  const showTitle = spec.layout?.showTitle === true;
+  const titleMetrics = showTitle ? measure$1(spec.title, 24) : { width: 0, lines: 0 };
   const titleBottom = 42 + (titleMetrics.lines - 1) * 33.6;
-  const descriptionMetrics = spec.description ? measure$1(spec.description, 13) : void 0;
-  const contentY = Math.max(88, descriptionMetrics ? titleBottom + 24 + (descriptionMetrics.lines - 1) * 18.2 + 32 : titleBottom + 36);
-  const heading2 = text(32, 42, spec.title, theme, { size: 24, anchor: "start", weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: "start", fill: theme.muted }) : "");
-  const width = Math.max(320, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
-  const height = Math.max(contentY + 48, maxY - minY + contentY + 32);
+  const descriptionMetrics = showTitle && spec.description ? measure$1(spec.description, 13) : void 0;
+  const contentY = showTitle ? Math.max(88, descriptionMetrics ? titleBottom + 24 + (descriptionMetrics.lines - 1) * 18.2 + 32 : titleBottom + 36) : 24;
+  const heading2 = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: "start", weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: "start", fill: theme.muted }) : "") : "";
+  const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
+  const height = Math.max(1, maxY - minY + contentY + 24);
   const body = `${markerDefinitions(prefix, theme)}${heading2}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }
@@ -98672,10 +98915,11 @@ function wrap(value, width, size) {
   }
   return result;
 }
-function line(x1, y1, x2, y2, color, width, dashed = false) {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${esc(color)}" stroke-width="${width}"${dashed ? ' stroke-dasharray="6 5"' : ""}/>`;
+function line(x1, y1, x2, y2, color2, width, dashed = false) {
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${esc(color2)}" stroke-width="${width}"${dashed ? ' stroke-dasharray="6 5"' : ""}/>`;
 }
 function heading(spec, theme, width, eyebrow) {
+  if (spec.layout?.showTitle !== true) return { svg: "", bottom: 24 };
   const titleSize = theme.fontSize + 10;
   const title2 = wrap(spec.title, width - 80, titleSize);
   const subtitle = spec.description ? wrap(spec.description, width - 80, theme.fontSize) : [];
@@ -98687,12 +98931,14 @@ function heading(spec, theme, width, eyebrow) {
   };
 }
 function renderSequence(spec, theme) {
+  spec = { ...spec, layout: resolveLayout(spec) };
   const participants = spec.participants ?? [];
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
   const size = theme.fontSize;
   const participantWidth = Math.max(128, theme.nodeWidth, ...participants.map((p) => Math.min(280, measure(p.label, size) + 30)));
-  const gap = Math.max(80, theme.gap);
+  const gap = spec.layout?.regionGap ?? 40;
+  const messageGap = spec.layout?.elementGap ?? 24;
   const labelWidth = Math.max(participantWidth + gap - 24, 190);
   const column = participantWidth + gap;
   const lastCenter = 70 + participantWidth / 2 + (participants.length - 1) * column;
@@ -98745,7 +98991,7 @@ function renderSequence(spec, theme) {
     ys.push(y);
     rowLines.push(lines);
     labelTops.push(y - labelHeight - 12);
-    cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === "create" ? Math.max(28, boxHeight / 2 + 20) : 28);
+    cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === "create" ? Math.max(messageGap, boxHeight / 2 + 20) : messageGap);
     const endBoxes = ends.get(i);
     if (endBoxes) {
       let boundary = cursor - 10;
@@ -98769,7 +99015,7 @@ function renderSequence(spec, theme) {
   let fragmentAnnotations = "";
   const guard = (left, top2, lines) => {
     const width2 = Math.max(...lines.map((value) => measure(value, guardSize))) + 8;
-    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${esc(theme.background)}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, { anchor: "start", size: guardSize, fill: theme.muted });
+    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, { anchor: "start", size: guardSize, fill: theme.muted });
   };
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
@@ -98847,7 +99093,7 @@ function renderSequence(spec, theme) {
     const lx = self2 ? sx + 18 : (start + end) / 2;
     const ly = labelTops[i] + size * 1.1;
     const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
-    body += `<rect x="${self2 ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background)}"/>`;
+    body += `<rect x="${self2 ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
     body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self2 ? "start" : "middle" });
     if (kind === "destroy") body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
   });
@@ -98855,36 +99101,42 @@ function renderSequence(spec, theme) {
   return frame(spec, theme, width, height, body);
 }
 function renderFishbone(spec, theme) {
+  spec = { ...spec, layout: resolveLayout(spec) };
   const data = spec.fishbone;
   const size = theme.fontSize;
   const leading = size * 1.4;
+  const elementGap = spec.layout?.elementGap ?? 24;
+  const regionGap = spec.layout?.regionGap ?? 40;
   const categories = data.categories.map((category, index) => {
     const rows = [];
     let offset = 0, maxDepth = 0;
-    const visit = (cause, depth, parent) => {
-      const lines = wrap(cause.label, 205, size);
+    const visit = (cause2, depth, parent) => {
+      const lines = wrap(cause2.label, 205, size);
       const rowIndex = rows.length;
-      const height2 = Math.max(36, lines.length * leading + 18);
-      rows.push({ cause, depth, parent, lines, offset, height: height2 });
+      const height2 = Math.max(18 + elementGap, lines.length * leading + elementGap);
+      rows.push({ cause: cause2, depth, parent, lines, offset, height: height2 });
       offset += height2;
       maxDepth = Math.max(maxDepth, depth);
-      cause.children?.forEach((child) => visit(child, depth + 1, rowIndex));
+      cause2.children?.forEach((child) => visit(child, depth + 1, rowIndex));
     };
-    category.causes.forEach((cause) => visit(cause, 0, -1));
+    category.causes.forEach((cause2) => visit(cause2, 0, -1));
     return { category, index, rows, span: Math.max(180, offset + 64), width: Math.max(400 + maxDepth * 26, measure(category.label, size + 1) + 50) };
   });
   const columns = [];
   for (let i = 0; i < categories.length; i += 2) columns.push(Math.max(categories[i].width, categories[i + 1]?.width ?? 0));
-  const headWidth = Math.max(220, theme.nodeWidth + 50);
-  const width = Math.max(920, 150 + columns.reduce((sum, w) => sum + w, 0) + headWidth + 80);
+  const headWidth = Math.max(300, theme.nodeWidth + 120);
+  const effectSize = size + 3;
+  const effectLines = wrap(data.effect, headWidth * 0.47, effectSize);
+  const effectHeight = effectLines.length * effectSize * 1.4;
+  const headHeight = Math.max(160, effectHeight * 1.8 + 48);
+  const width = Math.max(920, 150 + columns.reduce((sum, w) => sum + w, 0) + Math.max(0, columns.length - 1) * regionGap + headWidth + 80);
   const header = heading(spec, theme, width, "ROOT CAUSE / FISHBONE · 原因分析");
-  const topSpan = Math.max(180, ...categories.filter((c) => c.index % 2 === 0).map((c) => c.span));
-  const bottomSpan = Math.max(180, ...categories.filter((c) => c.index % 2 === 1).map((c) => c.span));
-  const spineY = header.bottom + topSpan + 62;
-  const height = spineY + bottomSpan + 110;
+  const topSpan = Math.max(180, headHeight / 2 + 24, ...categories.filter((c) => c.index % 2 === 0).map((c) => c.span));
+  const bottomSpan = Math.max(180, headHeight / 2 + 24, ...categories.filter((c) => c.index % 2 === 1).map((c) => c.span));
+  const categoryMargin = Math.max(62, ...categories.map((c) => wrap(c.category.label, Math.min(c.width - 36, Math.max(130, measure(c.category.label, size + 1) + 34)) - 24, size + 1).length * (size + 1) * 1.4 + 28));
+  const spineY = header.bottom + topSpan + categoryMargin;
+  const height = spineY + bottomSpan + Math.max(110, categoryMargin + 48);
   const headX = width - headWidth - 48;
-  const effectLines = wrap(data.effect, headWidth - 68, size + 4);
-  const headHeight = Math.max(120, effectLines.length * (size + 4) * 1.4 + 58);
   let body = header.svg;
   body += `<path d="M 96 ${spineY} L 42 ${spineY - 40} Q 52 ${spineY} 42 ${spineY + 40} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth + 1}"/>`;
   body += line(96, spineY, headX + 28, spineY, theme.primary, theme.lineWidth + 2);
@@ -98898,9 +99150,9 @@ function renderFishbone(spec, theme) {
       const direction = upper ? -1 : 1;
       const span = upper ? topSpan : bottomSpan;
       const outerY = spineY + direction * span;
-      const tipX = left + colWidth - 115;
       const attachX = left + colWidth - 20;
       const categoryWidth = Math.min(colWidth - 36, Math.max(130, measure(item.category.label, size + 1) + 34));
+      const tipX = left + colWidth - categoryWidth / 2 - 18;
       const categoryLines = wrap(item.category.label, categoryWidth - 24, size + 1);
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
       const categoryY = upper ? outerY - categoryHeight : outerY;
@@ -98926,12 +99178,13 @@ function renderFishbone(spec, theme) {
       body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
       body += text(tipX, categoryY + 12 + size + 1, categoryLines.join("\n"), theme, { size: size + 1, anchor: "middle", weight: 700 });
     }
-    left += colWidth;
+    left += colWidth + regionGap;
   }
-  body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
-  body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
-  body += `<circle cx="${headX + headWidth - 49}" cy="${spineY - headHeight * 0.25}" r="5" fill="${esc(theme.primary)}"/>`;
-  body += text(headX + headWidth / 2 + 8, spineY + 5 - (effectLines.length - 1) * (size + 4) * 0.7, effectLines.join("\n"), theme, { size: size + 4, anchor: "middle", weight: 700 });
+  body += `<g data-part="head"><path data-feature="silhouette" d="M ${headX + headWidth * 0.08} ${spineY} C ${headX + headWidth * 0.02} ${spineY - headHeight * 0.38} ${headX + headWidth * 0.28} ${spineY - headHeight * 0.56} ${headX + headWidth * 0.55} ${spineY - headHeight * 0.46} C ${headX + headWidth * 0.78} ${spineY - headHeight * 0.39} ${headX + headWidth * 0.97} ${spineY - headHeight * 0.15} ${headX + headWidth} ${spineY} C ${headX + headWidth * 0.97} ${spineY + headHeight * 0.15} ${headX + headWidth * 0.78} ${spineY + headHeight * 0.39} ${headX + headWidth * 0.55} ${spineY + headHeight * 0.46} C ${headX + headWidth * 0.28} ${spineY + headHeight * 0.56} ${headX + headWidth * 0.02} ${spineY + headHeight * 0.38} ${headX + headWidth * 0.08} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-opacity=".65" stroke-width="${Math.max(1, theme.lineWidth)}" stroke-linejoin="round"/>`;
+  body += `<path data-feature="gill" d="M ${headX + headWidth * 0.18} ${spineY - headHeight * 0.25} C ${headX + headWidth * 0.12} ${spineY - headHeight * 0.12} ${headX + headWidth * 0.12} ${spineY + headHeight * 0.12} ${headX + headWidth * 0.18} ${spineY + headHeight * 0.25}" fill="none" stroke="${esc(theme.primary)}" stroke-opacity=".3" stroke-width="${theme.lineWidth}" stroke-linecap="round"/>`;
+  body += `<circle data-feature="eye" cx="${headX + headWidth * 0.79}" cy="${spineY - headHeight * 0.2}" r="3.5" fill="${esc(theme.primary)}" fill-opacity=".8"/>`;
+  body += `<path data-feature="mouth" d="M ${headX + headWidth * 0.91} ${spineY + headHeight * 0.1} Q ${headX + headWidth * 0.955} ${spineY + headHeight * 0.12} ${headX + headWidth * 0.98} ${spineY + headHeight * 0.035}" fill="none" stroke="${esc(theme.primary)}" stroke-opacity=".55" stroke-width="${Math.max(1, theme.lineWidth * 0.75)}" stroke-linecap="round"/>`;
+  body += text(headX + headWidth * 0.49, spineY + effectSize * 0.35 - (effectLines.length - 1) * effectSize * 0.7, effectLines.join("\n"), theme, { size: effectSize, anchor: "middle", weight: 700 }) + "</g>";
   body += text(40, height - 24, `${data.categories.length} 个原因维度 · 分支逐级展开 · 鱼头表示观察到的结果`, theme, { anchor: "start", size: 11, fill: theme.muted });
   return frame(spec, theme, width, height, body);
 }
@@ -98940,6 +99193,37 @@ async function renderDiagram(input) {
   if (spec.type === "sequence") return renderSequence(spec, theme);
   if (spec.type === "fishbone") return renderFishbone(spec, theme);
   return renderGraph(spec, theme);
+}
+const checkDocument = new Ajv({
+  allErrors: true,
+  strict: false
+}).compile(documentSchema);
+function validateDocument(input) {
+  if (!checkDocument(input))
+    throw new Error(
+      `多图文档无效：${checkDocument.errors?.map((error) => `${error.instancePath || "/"} ${error.message}`).join("；")}`
+    );
+  const ids = /* @__PURE__ */ new Set();
+  for (const [index, spec] of input.diagrams.entries()) {
+    try {
+      validateSpec(spec);
+    } catch (error) {
+      throw new Error(
+        `第 ${index + 1} 张图：${error instanceof Error ? error.message : error}`
+      );
+    }
+    if (spec.id) {
+      if (ids.has(spec.id)) throw new Error(`图形存在重复 ID：${spec.id}`);
+      ids.add(spec.id);
+    }
+  }
+  return input;
+}
+function normalizeDocument(input) {
+  if (input && typeof input === "object" && "diagrams" in input)
+    return validateDocument(input);
+  const spec = validateSpec(input);
+  return { version: 1, title: spec.title, diagrams: [spec] };
 }
 const MAX_PIXELS = 4e7;
 const MAX_DIMENSION = 32767;
@@ -98957,12 +99241,12 @@ function readStudioRuntime() {
   }
   return { js: value.js, css: value.css };
 }
-function createHtml(spec, runtime) {
+function createHtml(input, runtime) {
   const bundled = runtime ?? readStudioRuntime();
   if (!bundled || typeof bundled.js !== "string" || !bundled.js.trim() || typeof bundled.css !== "string") {
     throw new Error("尚未加载独立 HTML 运行时，请先构建本地 viewer.js 与 viewer.css。");
   }
-  const title2 = String(spec.title || "UML Studio").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+  const title2 = String(input.title || "UML Studio").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -98974,7 +99258,7 @@ function createHtml(spec, runtime) {
 </head>
 <body>
 <div id="app"></div>
-<script id="diagram-data" type="application/json">${serialize(spec)}<\/script>
+<script id="diagram-data" type="application/json">${serialize(input)}<\/script>
 <script id="studio-runtime" type="application/json">${serialize(bundled)}<\/script>
 <script type="module">${bundled.js.replace(/<\/script/gi, "<\\/script")}<\/script>
 </body>
@@ -99052,8 +99336,12 @@ async function exportSvgImage(svg, options = {}) {
     canvas.height = targetHeight;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("当前浏览器无法创建 Canvas 画布。");
-    if (options.background || format2 === "jpeg") {
-      const background = options.background ?? "#ffffff";
+    if (format2 === "jpeg") {
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, targetWidth, targetHeight);
+    }
+    if (options.background) {
+      const background = options.background;
       if (!CSS.supports("color", background)) throw new Error("导出背景必须为有效颜色。");
       context.fillStyle = background;
       context.fillRect(0, 0, targetWidth, targetHeight);
@@ -99082,18 +99370,22 @@ const _hoisted_5 = {
   class: "zoom-tools",
   "aria-label": "缩放控制"
 };
-const _hoisted_6 = { class: "zoom-value" };
-const _hoisted_7 = ["innerHTML"];
-const _hoisted_8 = {
+const _hoisted_6 = ["disabled"];
+const _hoisted_7 = { class: "zoom-value" };
+const _hoisted_8 = ["disabled"];
+const _hoisted_9 = ["disabled"];
+const _hoisted_10 = ["disabled"];
+const _hoisted_11 = ["innerHTML"];
+const _hoisted_12 = {
   key: 1,
   class: "canvas-empty"
 };
-const _hoisted_9 = {
+const _hoisted_13 = {
   key: 0,
   class: "canvas-error",
   role: "status"
 };
-const _hoisted_10 = { class: "canvas-footer" };
+const _hoisted_14 = { class: "canvas-footer" };
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "DiagramCanvas",
   props: {
@@ -99109,10 +99401,16 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     const pending = ref$1(false);
     const failure = ref$1("");
     const stage = ref$1();
+    const artboard = ref$1();
     const availableWidth = ref$1(900);
+    const availableHeight = ref$1(600);
     const zoom = ref$1("fit");
-    const zoomValue = computed(() => zoom.value === "fit" ? Math.min(1, Math.max(0.05, availableWidth.value / (diagram.value?.width ?? 900))) : zoom.value);
+    const zoomValue = computed(() => zoom.value === "fit" ? Math.min(1, Math.max(0.05, Math.min(availableWidth.value / (diagram.value?.width ?? 900), availableHeight.value / (diagram.value?.height ?? 600)))) : zoom.value);
+    const transparent = computed(() => applied.value ? resolveTheme(applied.value).background === "transparent" : false);
+    const dragging = ref$1(false);
+    let pan;
     let request = 0;
+    let zoomRequest = 0;
     let observer;
     let firstRender = true;
     let resolveReady;
@@ -99165,32 +99463,97 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       return diagram.value.svg;
     }
     async function exportImage(options) {
+      const svg = diagram.value?.svg;
       await ready;
-      return exportSvgImage(getSvg(), options);
+      return exportSvgImage(svg ?? getSvg(), options);
     }
     function saveHtml() {
       return createHtml(getSpec(), props.runtime);
     }
+    async function setZoom(value, anchor) {
+      const viewport = stage.value;
+      const board = artboard.value;
+      if (!viewport || !board || !diagram.value) return;
+      const viewportRect = viewport.getBoundingClientRect();
+      const point = anchor ?? { x: viewportRect.left + viewport.clientWidth / 2, y: viewportRect.top + viewport.clientHeight / 2 };
+      const before = board.getBoundingClientRect();
+      const oldScale = before.width / diagram.value.width;
+      const localX = (point.x - before.left) / oldScale;
+      const localY = (point.y - before.top) / oldScale;
+      const ticket = ++zoomRequest;
+      zoom.value = Math.min(4, Math.max(0.05, value));
+      await nextTick();
+      if (ticket !== zoomRequest || !artboard.value || !stage.value) return;
+      const after = artboard.value.getBoundingClientRect();
+      stage.value.scrollLeft += after.left + localX * zoomValue.value - point.x;
+      stage.value.scrollTop += after.top + localY * zoomValue.value - point.y;
+    }
     function changeZoom(delta) {
-      zoom.value = Math.min(3, Math.max(0.1, Math.round((zoomValue.value + delta) * 100) / 100));
+      void setZoom(Math.round((zoomValue.value + delta) * 100) / 100);
+    }
+    async function fitCanvas() {
+      zoomRequest++;
+      zoom.value = "fit";
+      await nextTick();
+      if (stage.value) {
+        stage.value.scrollLeft = 0;
+        stage.value.scrollTop = 0;
+      }
+    }
+    function wheelZoom(event) {
+      if (!diagram.value || !artboard.value) return;
+      if (event.target instanceof Element && event.target.closest('input, textarea, select, button, [contenteditable="true"]')) return;
+      event.preventDefault();
+      const pixels = event.deltaY * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? availableHeight.value : 1);
+      void setZoom(zoomValue.value * Math.exp(-Math.max(-300, Math.min(300, pixels)) * 15e-4), { x: event.clientX, y: event.clientY });
+    }
+    function startPan(event) {
+      const viewport = stage.value;
+      if (!viewport || !diagram.value || pan || !event.isPrimary || event.button !== 0) return;
+      if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
+      const rect = viewport.getBoundingClientRect();
+      if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
+      viewport.setPointerCapture(event.pointerId);
+      pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+      dragging.value = true;
+      event.preventDefault();
+    }
+    function movePan(event) {
+      if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
+      stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
+      stage.value.scrollTop = pan.top - (event.clientY - pan.y);
+    }
+    function endPan(event) {
+      if (!pan || event && pan.pointerId !== event.pointerId) return;
+      const pointerId = pan.pointerId;
+      pan = void 0;
+      dragging.value = false;
+      if (stage.value?.hasPointerCapture(pointerId)) stage.value.releasePointerCapture(pointerId);
+    }
+    function measureStage() {
+      const viewport = stage.value;
+      if (!viewport) return;
+      const style2 = getComputedStyle(viewport);
+      availableWidth.value = Math.max(1, viewport.clientWidth - parseFloat(style2.paddingLeft) - parseFloat(style2.paddingRight));
+      availableHeight.value = Math.max(1, viewport.clientHeight - parseFloat(style2.paddingTop) - parseFloat(style2.paddingBottom));
     }
     watch(() => props.spec, (value) => {
       void setSpec(value).catch(() => {
       });
     }, { immediate: true, deep: true });
     onMounted(() => {
-      if (stage.value) {
-        const style2 = getComputedStyle(stage.value);
-        availableWidth.value = stage.value.clientWidth - parseFloat(style2.paddingLeft) - parseFloat(style2.paddingRight);
-        observer = new ResizeObserver((entries) => {
-          availableWidth.value = entries[0]?.contentRect.width ?? availableWidth.value;
-        });
-        observer.observe(stage.value);
-      }
+      if (!stage.value) return;
+      measureStage();
+      observer = new ResizeObserver(measureStage);
+      observer.observe(stage.value);
+      stage.value.addEventListener("wheel", wheelZoom, { passive: false });
     });
     onBeforeUnmount(() => {
       request++;
+      zoomRequest++;
+      endPan();
       observer?.disconnect();
+      stage.value?.removeEventListener("wheel", wheelZoom);
     });
     __expose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
     return (_ctx, _cache) => {
@@ -99218,7 +99581,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             diagram.value ? (openBlock(), createElementBlock(
               "span",
               _hoisted_4,
-              toDisplayString(diagram.value.width) + " × " + toDisplayString(diagram.value.height),
+              toDisplayString(Math.round(diagram.value.width)) + " × " + toDisplayString(Math.round(diagram.value.height)),
               1
               /* TEXT */
             )) : createCommentVNode("v-if", true)
@@ -99227,11 +99590,12 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             createElementVNode("button", {
               type: "button",
               "aria-label": "缩小",
+              disabled: !diagram.value || zoomValue.value <= 0.05,
               onClick: _cache[0] || (_cache[0] = ($event) => changeZoom(-0.1))
-            }, "−"),
+            }, "−", 8, _hoisted_6),
             createElementVNode(
               "span",
-              _hoisted_6,
+              _hoisted_7,
               toDisplayString(Math.round(zoomValue.value * 100)) + "%",
               1
               /* TEXT */
@@ -99239,8 +99603,9 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             createElementVNode("button", {
               type: "button",
               "aria-label": "放大",
+              disabled: !diagram.value || zoomValue.value >= 4,
               onClick: _cache[1] || (_cache[1] = ($event) => changeZoom(0.1))
-            }, "+"),
+            }, "+", 8, _hoisted_8),
             _cache[3] || (_cache[3] = createElementVNode(
               "span",
               { class: "toolbar-divider" },
@@ -99248,17 +99613,18 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               -1
               /* CACHED */
             )),
-            createElementVNode(
-              "button",
-              {
-                type: "button",
-                class: normalizeClass(["fit-button", { active: zoom.value === "fit" }]),
-                onClick: _cache[2] || (_cache[2] = ($event) => zoom.value = "fit")
-              },
-              "适应画布",
-              2
-              /* CLASS */
-            )
+            createElementVNode("button", {
+              type: "button",
+              class: normalizeClass(["fit-button", { active: zoom.value === 1 }]),
+              disabled: !diagram.value,
+              onClick: _cache[2] || (_cache[2] = ($event) => setZoom(1))
+            }, "原始大小", 10, _hoisted_9),
+            createElementVNode("button", {
+              type: "button",
+              class: normalizeClass(["fit-button", { active: zoom.value === "fit" }]),
+              disabled: !diagram.value,
+              onClick: fitCanvas
+            }, "适应画布", 10, _hoisted_10)
           ])
         ]),
         createElementVNode(
@@ -99266,14 +99632,23 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           {
             ref_key: "stage",
             ref: stage,
-            class: "canvas-stage"
+            class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value }]),
+            tabindex: "0",
+            "aria-label": "图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览",
+            onPointerdown: startPan,
+            onPointermove: movePan,
+            onPointerup: endPan,
+            onPointercancel: endPan,
+            onLostpointercapture: endPan
           },
           [
             diagram.value ? (openBlock(), createElementBlock(
               "div",
               {
                 key: 0,
-                class: "canvas-artboard",
+                ref_key: "artboard",
+                ref: artboard,
+                class: normalizeClass(["canvas-artboard", { "is-transparent": transparent.value }]),
                 style: normalizeStyle({ width: `${diagram.value.width * zoomValue.value}px`, height: `${diagram.value.height * zoomValue.value}px` })
               },
               [
@@ -99281,11 +99656,11 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
                   class: "canvas-svg",
                   style: normalizeStyle({ width: `${diagram.value.width}px`, height: `${diagram.value.height}px`, transform: `scale(${zoomValue.value})` }),
                   innerHTML: diagram.value.svg
-                }, null, 12, _hoisted_7)
+                }, null, 12, _hoisted_11)
               ],
-              4
-              /* STYLE */
-            )) : (openBlock(), createElementBlock("div", _hoisted_8, [
+              6
+              /* CLASS, STYLE */
+            )) : (openBlock(), createElementBlock("div", _hoisted_12, [
               _cache[4] || (_cache[4] = createElementVNode(
                 "span",
                 { class: "loading-ring" },
@@ -99309,21 +99684,21 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               )
             ]))
           ],
-          512
-          /* NEED_PATCH */
+          34
+          /* CLASS, NEED_HYDRATION */
         ),
         failure.value && diagram.value ? (openBlock(), createElementBlock(
           "div",
-          _hoisted_9,
+          _hoisted_13,
           "未替换当前图表：" + toDisplayString(failure.value),
           1
           /* TEXT */
         )) : createCommentVNode("v-if", true),
-        createElementVNode("div", _hoisted_10, [
+        createElementVNode("div", _hoisted_14, [
           _cache[5] || (_cache[5] = createElementVNode(
             "span",
             null,
-            "矢量绘制 · 本地运行 · 无外部字体",
+            "滚轮定位缩放 · 按住拖动画布 · 本地字体",
             -1
             /* CACHED */
           )),
@@ -99341,20 +99716,406 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
 });
 export {
   _sfc_main as DiagramCanvas,
+  colorPresets,
   createHtml,
   diagramSchema,
   diagramTypes,
+  documentSchema,
   downloadBlob,
   exportSvgImage,
+  fontPresets,
+  layoutModes,
+  normalizeDocument,
   renderDiagram,
+  resolveLayout,
   resolveTheme,
+  themeLabels,
   themes,
+  validateDocument,
   validateSpec
 };
 
 /*
 UML Studio third-party notices. Dependencies are used unmodified.
 ELK.js source: https://github.com/kieler/elkjs
+
+@resvg/resvg-js@2.6.2 — MPL-2.0
+Source: https://www.npmjs.com/package/@resvg/resvg-js/v/2.6.2
+Mozilla Public License Version 2.0
+==================================
+
+1. Definitions
+--------------
+
+1.1. "Contributor"
+    means each individual or legal entity that creates, contributes to
+    the creation of, or owns Covered Software.
+
+1.2. "Contributor Version"
+    means the combination of the Contributions of others (if any) used
+    by a Contributor and that particular Contributor's Contribution.
+
+1.3. "Contribution"
+    means Covered Software of a particular Contributor.
+
+1.4. "Covered Software"
+    means Source Code Form to which the initial Contributor has attached
+    the notice in Exhibit A, the Executable Form of such Source Code
+    Form, and Modifications of such Source Code Form, in each case
+    including portions thereof.
+
+1.5. "Incompatible With Secondary Licenses"
+    means
+
+    (a) that the initial Contributor has attached the notice described
+        in Exhibit B to the Covered Software; or
+
+    (b) that the Covered Software was made available under the terms of
+        version 1.1 or earlier of the License, but not also under the
+        terms of a Secondary License.
+
+1.6. "Executable Form"
+    means any form of the work other than Source Code Form.
+
+1.7. "Larger Work"
+    means a work that combines Covered Software with other material, in
+    a separate file or files, that is not Covered Software.
+
+1.8. "License"
+    means this document.
+
+1.9. "Licensable"
+    means having the right to grant, to the maximum extent possible,
+    whether at the time of the initial grant or subsequently, any and
+    all of the rights conveyed by this License.
+
+1.10. "Modifications"
+    means any of the following:
+
+    (a) any file in Source Code Form that results from an addition to,
+        deletion from, or modification of the contents of Covered
+        Software; or
+
+    (b) any new file in Source Code Form that contains any Covered
+        Software.
+
+1.11. "Patent Claims" of a Contributor
+    means any patent claim(s), including without limitation, method,
+    process, and apparatus claims, in any patent Licensable by such
+    Contributor that would be infringed, but for the grant of the
+    License, by the making, using, selling, offering for sale, having
+    made, import, or transfer of either its Contributions or its
+    Contributor Version.
+
+1.12. "Secondary License"
+    means either the GNU General Public License, Version 2.0, the GNU
+    Lesser General Public License, Version 2.1, the GNU Affero General
+    Public License, Version 3.0, or any later versions of those
+    licenses.
+
+1.13. "Source Code Form"
+    means the form of the work preferred for making modifications.
+
+1.14. "You" (or "Your")
+    means an individual or a legal entity exercising rights under this
+    License. For legal entities, "You" includes any entity that
+    controls, is controlled by, or is under common control with You. For
+    purposes of this definition, "control" means (a) the power, direct
+    or indirect, to cause the direction or management of such entity,
+    whether by contract or otherwise, or (b) ownership of more than
+    fifty percent (50%) of the outstanding shares or beneficial
+    ownership of such entity.
+
+2. License Grants and Conditions
+--------------------------------
+
+2.1. Grants
+
+Each Contributor hereby grants You a world-wide, royalty-free,
+non-exclusive license:
+
+(a) under intellectual property rights (other than patent or trademark)
+    Licensable by such Contributor to use, reproduce, make available,
+    modify, display, perform, distribute, and otherwise exploit its
+    Contributions, either on an unmodified basis, with Modifications, or
+    as part of a Larger Work; and
+
+(b) under Patent Claims of such Contributor to make, use, sell, offer
+    for sale, have made, import, and otherwise transfer either its
+    Contributions or its Contributor Version.
+
+2.2. Effective Date
+
+The licenses granted in Section 2.1 with respect to any Contribution
+become effective for each Contribution on the date the Contributor first
+distributes such Contribution.
+
+2.3. Limitations on Grant Scope
+
+The licenses granted in this Section 2 are the only rights granted under
+this License. No additional rights or licenses will be implied from the
+distribution or licensing of Covered Software under this License.
+Notwithstanding Section 2.1(b) above, no patent license is granted by a
+Contributor:
+
+(a) for any code that a Contributor has removed from Covered Software;
+    or
+
+(b) for infringements caused by: (i) Your and any other third party's
+    modifications of Covered Software, or (ii) the combination of its
+    Contributions with other software (except as part of its Contributor
+    Version); or
+
+(c) under Patent Claims infringed by Covered Software in the absence of
+    its Contributions.
+
+This License does not grant any rights in the trademarks, service marks,
+or logos of any Contributor (except as may be necessary to comply with
+the notice requirements in Section 3.4).
+
+2.4. Subsequent Licenses
+
+No Contributor makes additional grants as a result of Your choice to
+distribute the Covered Software under a subsequent version of this
+License (see Section 10.2) or under the terms of a Secondary License (if
+permitted under the terms of Section 3.3).
+
+2.5. Representation
+
+Each Contributor represents that the Contributor believes its
+Contributions are its original creation(s) or it has sufficient rights
+to grant the rights to its Contributions conveyed by this License.
+
+2.6. Fair Use
+
+This License is not intended to limit any rights You have under
+applicable copyright doctrines of fair use, fair dealing, or other
+equivalents.
+
+2.7. Conditions
+
+Sections 3.1, 3.2, 3.3, and 3.4 are conditions of the licenses granted
+in Section 2.1.
+
+3. Responsibilities
+-------------------
+
+3.1. Distribution of Source Form
+
+All distribution of Covered Software in Source Code Form, including any
+Modifications that You create or to which You contribute, must be under
+the terms of this License. You must inform recipients that the Source
+Code Form of the Covered Software is governed by the terms of this
+License, and how they can obtain a copy of this License. You may not
+attempt to alter or restrict the recipients' rights in the Source Code
+Form.
+
+3.2. Distribution of Executable Form
+
+If You distribute Covered Software in Executable Form then:
+
+(a) such Covered Software must also be made available in Source Code
+    Form, as described in Section 3.1, and You must inform recipients of
+    the Executable Form how they can obtain a copy of such Source Code
+    Form by reasonable means in a timely manner, at a charge no more
+    than the cost of distribution to the recipient; and
+
+(b) You may distribute such Executable Form under the terms of this
+    License, or sublicense it under different terms, provided that the
+    license for the Executable Form does not attempt to limit or alter
+    the recipients' rights in the Source Code Form under this License.
+
+3.3. Distribution of a Larger Work
+
+You may create and distribute a Larger Work under terms of Your choice,
+provided that You also comply with the requirements of this License for
+the Covered Software. If the Larger Work is a combination of Covered
+Software with a work governed by one or more Secondary Licenses, and the
+Covered Software is not Incompatible With Secondary Licenses, this
+License permits You to additionally distribute such Covered Software
+under the terms of such Secondary License(s), so that the recipient of
+the Larger Work may, at their option, further distribute the Covered
+Software under the terms of either this License or such Secondary
+License(s).
+
+3.4. Notices
+
+You may not remove or alter the substance of any license notices
+(including copyright notices, patent notices, disclaimers of warranty,
+or limitations of liability) contained within the Source Code Form of
+the Covered Software, except that You may alter any license notices to
+the extent required to remedy known factual inaccuracies.
+
+3.5. Application of Additional Terms
+
+You may choose to offer, and to charge a fee for, warranty, support,
+indemnity or liability obligations to one or more recipients of Covered
+Software. However, You may do so only on Your own behalf, and not on
+behalf of any Contributor. You must make it absolutely clear that any
+such warranty, support, indemnity, or liability obligation is offered by
+You alone, and You hereby agree to indemnify every Contributor for any
+liability incurred by such Contributor as a result of warranty, support,
+indemnity or liability terms You offer. You may include additional
+disclaimers of warranty and limitations of liability specific to any
+jurisdiction.
+
+4. Inability to Comply Due to Statute or Regulation
+---------------------------------------------------
+
+If it is impossible for You to comply with any of the terms of this
+License with respect to some or all of the Covered Software due to
+statute, judicial order, or regulation then You must: (a) comply with
+the terms of this License to the maximum extent possible; and (b)
+describe the limitations and the code they affect. Such description must
+be placed in a text file included with all distributions of the Covered
+Software under this License. Except to the extent prohibited by statute
+or regulation, such description must be sufficiently detailed for a
+recipient of ordinary skill to be able to understand it.
+
+5. Termination
+--------------
+
+5.1. The rights granted under this License will terminate automatically
+if You fail to comply with any of its terms. However, if You become
+compliant, then the rights granted under this License from a particular
+Contributor are reinstated (a) provisionally, unless and until such
+Contributor explicitly and finally terminates Your grants, and (b) on an
+ongoing basis, if such Contributor fails to notify You of the
+non-compliance by some reasonable means prior to 60 days after You have
+come back into compliance. Moreover, Your grants from a particular
+Contributor are reinstated on an ongoing basis if such Contributor
+notifies You of the non-compliance by some reasonable means, this is the
+first time You have received notice of non-compliance with this License
+from such Contributor, and You become compliant prior to 30 days after
+Your receipt of the notice.
+
+5.2. If You initiate litigation against any entity by asserting a patent
+infringement claim (excluding declaratory judgment actions,
+counter-claims, and cross-claims) alleging that a Contributor Version
+directly or indirectly infringes any patent, then the rights granted to
+You by any and all Contributors for the Covered Software under Section
+2.1 of this License shall terminate.
+
+5.3. In the event of termination under Sections 5.1 or 5.2 above, all
+end user license agreements (excluding distributors and resellers) which
+have been validly granted by You or Your distributors under this License
+prior to termination shall survive termination.
+
+************************************************************************
+*                                                                      *
+*  6. Disclaimer of Warranty                                           *
+*  -------------------------                                           *
+*                                                                      *
+*  Covered Software is provided under this License on an "as is"       *
+*  basis, without warranty of any kind, either expressed, implied, or  *
+*  statutory, including, without limitation, warranties that the       *
+*  Covered Software is free of defects, merchantable, fit for a        *
+*  particular purpose or non-infringing. The entire risk as to the     *
+*  quality and performance of the Covered Software is with You.        *
+*  Should any Covered Software prove defective in any respect, You     *
+*  (not any Contributor) assume the cost of any necessary servicing,   *
+*  repair, or correction. This disclaimer of warranty constitutes an   *
+*  essential part of this License. No use of any Covered Software is   *
+*  authorized under this License except under this disclaimer.         *
+*                                                                      *
+************************************************************************
+
+************************************************************************
+*                                                                      *
+*  7. Limitation of Liability                                          *
+*  --------------------------                                          *
+*                                                                      *
+*  Under no circumstances and under no legal theory, whether tort      *
+*  (including negligence), contract, or otherwise, shall any           *
+*  Contributor, or anyone who distributes Covered Software as          *
+*  permitted above, be liable to You for any direct, indirect,         *
+*  special, incidental, or consequential damages of any character      *
+*  including, without limitation, damages for lost profits, loss of    *
+*  goodwill, work stoppage, computer failure or malfunction, or any    *
+*  and all other commercial damages or losses, even if such party      *
+*  shall have been informed of the possibility of such damages. This   *
+*  limitation of liability shall not apply to liability for death or   *
+*  personal injury resulting from such party's negligence to the       *
+*  extent applicable law prohibits such limitation. Some               *
+*  jurisdictions do not allow the exclusion or limitation of           *
+*  incidental or consequential damages, so this exclusion and          *
+*  limitation may not apply to You.                                    *
+*                                                                      *
+************************************************************************
+
+8. Litigation
+-------------
+
+Any litigation relating to this License may be brought only in the
+courts of a jurisdiction where the defendant maintains its principal
+place of business and such litigation shall be governed by laws of that
+jurisdiction, without reference to its conflict-of-law provisions.
+Nothing in this Section shall prevent a party's ability to bring
+cross-claims or counter-claims.
+
+9. Miscellaneous
+----------------
+
+This License represents the complete agreement concerning the subject
+matter hereof. If any provision of this License is held to be
+unenforceable, such provision shall be reformed only to the extent
+necessary to make it enforceable. Any law or regulation which provides
+that the language of a contract shall be construed against the drafter
+shall not be used to construe this License against a Contributor.
+
+10. Versions of the License
+---------------------------
+
+10.1. New Versions
+
+Mozilla Foundation is the license steward. Except as provided in Section
+10.3, no one other than the license steward has the right to modify or
+publish new versions of this License. Each version will be given a
+distinguishing version number.
+
+10.2. Effect of New Versions
+
+You may distribute the Covered Software under the terms of the version
+of the License under which You originally received the Covered Software,
+or under the terms of any subsequent version published by the license
+steward.
+
+10.3. Modified Versions
+
+If you create software not governed by this License, and you want to
+create a new license for such software, you may create and use a
+modified version of this License if you rename the license and remove
+any references to the name of the license steward (except to note that
+such modified license differs from this License).
+
+10.4. Distributing Source Code Form that is Incompatible With Secondary
+Licenses
+
+If You choose to distribute Source Code Form that is Incompatible With
+Secondary Licenses under the terms of this version of the License, the
+notice described in Exhibit B of this License must be attached.
+
+Exhibit A - Source Code Form License Notice
+-------------------------------------------
+
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular
+file, then You may include the notice in a location (such as a LICENSE
+file in a relevant directory) where a recipient would be likely to look
+for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+Exhibit B - "Incompatible With Secondary Licenses" Notice
+---------------------------------------------------------
+
+  This Source Code Form is "Incompatible With Secondary Licenses", as
+  defined by the Mozilla Public License, v. 2.0.
+
+========================================================================
 
 ajv@8.20.0 — MIT
 Source: https://www.npmjs.com/package/ajv/v/8.20.0
@@ -99766,6 +100527,561 @@ version(s), and exceptions or additional permissions here}.”
 > look for such a notice.
 >
 > You may add additional accurate notices of copyright ownership.
+
+
+========================================================================
+
+parse5@8.0.1 — MIT
+Source: https://www.npmjs.com/package/parse5/v/8.0.1
+Copyright (c) 2013-2019 Ivan Nikulin (ifaaan@gmail.com, https://github.com/inikulin)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+========================================================================
+
+entities@8.1.0 — BSD-2-Clause
+Source: https://www.npmjs.com/package/entities/v/8.1.0
+Copyright (c) Felix Böhm
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+========================================================================
+
+sharp@0.35.5 — Apache-2.0
+Source: https://www.npmjs.com/package/sharp/v/0.35.5
+Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+
+"License" shall mean the terms and conditions for use, reproduction, and
+distribution as defined by Sections 1 through 9 of this document.
+
+"Licensor" shall mean the copyright owner or entity authorized by the copyright
+owner that is granting the License.
+
+"Legal Entity" shall mean the union of the acting entity and all other entities
+that control, are controlled by, or are under common control with that entity.
+For the purposes of this definition, "control" means (i) the power, direct or
+indirect, to cause the direction or management of such entity, whether by
+contract or otherwise, or (ii) ownership of fifty percent (50%) or more of the
+outstanding shares, or (iii) beneficial ownership of such entity.
+
+"You" (or "Your") shall mean an individual or Legal Entity exercising
+permissions granted by this License.
+
+"Source" form shall mean the preferred form for making modifications, including
+but not limited to software source code, documentation source, and configuration
+files.
+
+"Object" form shall mean any form resulting from mechanical transformation or
+translation of a Source form, including but not limited to compiled object code,
+generated documentation, and conversions to other media types.
+
+"Work" shall mean the work of authorship, whether in Source or Object form, made
+available under the License, as indicated by a copyright notice that is included
+in or attached to the work (an example is provided in the Appendix below).
+
+"Derivative Works" shall mean any work, whether in Source or Object form, that
+is based on (or derived from) the Work and for which the editorial revisions,
+annotations, elaborations, or other modifications represent, as a whole, an
+original work of authorship. For the purposes of this License, Derivative Works
+shall not include works that remain separable from, or merely link (or bind by
+name) to the interfaces of, the Work and Derivative Works thereof.
+
+"Contribution" shall mean any work of authorship, including the original version
+of the Work and any modifications or additions to that Work or Derivative Works
+thereof, that is intentionally submitted to Licensor for inclusion in the Work
+by the copyright owner or by an individual or Legal Entity authorized to submit
+on behalf of the copyright owner. For the purposes of this definition,
+"submitted" means any form of electronic, verbal, or written communication sent
+to the Licensor or its representatives, including but not limited to
+communication on electronic mailing lists, source code control systems, and
+issue tracking systems that are managed by, or on behalf of, the Licensor for
+the purpose of discussing and improving the Work, but excluding communication
+that is conspicuously marked or otherwise designated in writing by the copyright
+owner as "Not a Contribution."
+
+"Contributor" shall mean Licensor and any individual or Legal Entity on behalf
+of whom a Contribution has been received by Licensor and subsequently
+incorporated within the Work.
+
+2. Grant of Copyright License.
+
+Subject to the terms and conditions of this License, each Contributor hereby
+grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free,
+irrevocable copyright license to reproduce, prepare Derivative Works of,
+publicly display, publicly perform, sublicense, and distribute the Work and such
+Derivative Works in Source or Object form.
+
+3. Grant of Patent License.
+
+Subject to the terms and conditions of this License, each Contributor hereby
+grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free,
+irrevocable (except as stated in this section) patent license to make, have
+made, use, offer to sell, sell, import, and otherwise transfer the Work, where
+such license applies only to those patent claims licensable by such Contributor
+that are necessarily infringed by their Contribution(s) alone or by combination
+of their Contribution(s) with the Work to which such Contribution(s) was
+submitted. If You institute patent litigation against any entity (including a
+cross-claim or counterclaim in a lawsuit) alleging that the Work or a
+Contribution incorporated within the Work constitutes direct or contributory
+patent infringement, then any patent licenses granted to You under this License
+for that Work shall terminate as of the date such litigation is filed.
+
+4. Redistribution.
+
+You may reproduce and distribute copies of the Work or Derivative Works thereof
+in any medium, with or without modifications, and in Source or Object form,
+provided that You meet the following conditions:
+
+You must give any other recipients of the Work or Derivative Works a copy of
+this License; and
+You must cause any modified files to carry prominent notices stating that You
+changed the files; and
+You must retain, in the Source form of any Derivative Works that You distribute,
+all copyright, patent, trademark, and attribution notices from the Source form
+of the Work, excluding those notices that do not pertain to any part of the
+Derivative Works; and
+If the Work includes a "NOTICE" text file as part of its distribution, then any
+Derivative Works that You distribute must include a readable copy of the
+attribution notices contained within such NOTICE file, excluding those notices
+that do not pertain to any part of the Derivative Works, in at least one of the
+following places: within a NOTICE text file distributed as part of the
+Derivative Works; within the Source form or documentation, if provided along
+with the Derivative Works; or, within a display generated by the Derivative
+Works, if and wherever such third-party notices normally appear. The contents of
+the NOTICE file are for informational purposes only and do not modify the
+License. You may add Your own attribution notices within Derivative Works that
+You distribute, alongside or as an addendum to the NOTICE text from the Work,
+provided that such additional attribution notices cannot be construed as
+modifying the License.
+You may add Your own copyright statement to Your modifications and may provide
+additional or different license terms and conditions for use, reproduction, or
+distribution of Your modifications, or for any such Derivative Works as a whole,
+provided Your use, reproduction, and distribution of the Work otherwise complies
+with the conditions stated in this License.
+
+5. Submission of Contributions.
+
+Unless You explicitly state otherwise, any Contribution intentionally submitted
+for inclusion in the Work by You to the Licensor shall be under the terms and
+conditions of this License, without any additional terms or conditions.
+Notwithstanding the above, nothing herein shall supersede or modify the terms of
+any separate license agreement you may have executed with Licensor regarding
+such Contributions.
+
+6. Trademarks.
+
+This License does not grant permission to use the trade names, trademarks,
+service marks, or product names of the Licensor, except as required for
+reasonable and customary use in describing the origin of the Work and
+reproducing the content of the NOTICE file.
+
+7. Disclaimer of Warranty.
+
+Unless required by applicable law or agreed to in writing, Licensor provides the
+Work (and each Contributor provides its Contributions) on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied,
+including, without limitation, any warranties or conditions of TITLE,
+NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You are
+solely responsible for determining the appropriateness of using or
+redistributing the Work and assume any risks associated with Your exercise of
+permissions under this License.
+
+8. Limitation of Liability.
+
+In no event and under no legal theory, whether in tort (including negligence),
+contract, or otherwise, unless required by applicable law (such as deliberate
+and grossly negligent acts) or agreed to in writing, shall any Contributor be
+liable to You for damages, including any direct, indirect, special, incidental,
+or consequential damages of any character arising as a result of this License or
+out of the use or inability to use the Work (including but not limited to
+damages for loss of goodwill, work stoppage, computer failure or malfunction, or
+any and all other commercial damages or losses), even if such Contributor has
+been advised of the possibility of such damages.
+
+9. Accepting Warranty or Additional Liability.
+
+While redistributing the Work or Derivative Works thereof, You may choose to
+offer, and charge a fee for, acceptance of support, warranty, indemnity, or
+other liability obligations and/or rights consistent with this License. However,
+in accepting such obligations, You may act only on Your own behalf and on Your
+sole responsibility, not on behalf of any other Contributor, and only if You
+agree to indemnify, defend, and hold each Contributor harmless for any liability
+incurred by, or claims asserted against, such Contributor by reason of your
+accepting any such warranty or additional liability.
+
+END OF TERMS AND CONDITIONS
+
+APPENDIX: How to apply the Apache License to your work
+
+To apply the Apache License to your work, attach the following boilerplate
+notice, with the fields enclosed by brackets "[]" replaced with your own
+identifying information. (Don't include the brackets!) The text should be
+enclosed in the appropriate comment syntax for the file format. We also
+recommend that a file or class name and description of purpose be included on
+the same "printed page" as the copyright notice for easier identification within
+third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+========================================================================
+
+@img/colour@1.1.0 — MIT
+Source: https://www.npmjs.com/package/@img/colour/v/1.1.0
+# Licensing
+
+## color
+
+Copyright (c) 2012 Heather Arthur
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## color-convert
+
+Copyright (c) 2011-2016 Heather Arthur <fayearthur@gmail.com>.
+Copyright (c) 2016-2021 Josh Junon <josh@junon.me>.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## color-string
+
+Copyright (c) 2011 Heather Arthur <fayearthur@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## color-name
+
+The MIT License (MIT)
+Copyright (c) 2015 Dmitry Ivanov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+========================================================================
+
+detect-libc@2.1.2 — Apache-2.0
+Source: https://www.npmjs.com/package/detect-libc/v/2.1.2
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "{}"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright {yyyy} {name of copyright owner}
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+
+========================================================================
+
+semver@7.8.5 — ISC
+Source: https://www.npmjs.com/package/semver/v/7.8.5
+The ISC License
+
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 ========================================================================

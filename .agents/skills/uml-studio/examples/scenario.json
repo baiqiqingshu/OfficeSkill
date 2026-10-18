@@ -3,7 +3,7 @@
   "type": "scenario",
   "title": "4+1 · 场景视图",
   "description": "以“读者成功下单”为关键场景，串联业务需求与各架构视图。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "groups": [
     {

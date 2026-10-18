@@ -3,7 +3,7 @@
   "type": "sequence",
   "title": "下单协作 · 时序图",
   "description": "展示同步、异步、返回、对象创建与销毁，以及条件和并行片段。",
-  "theme": "paper",
+  "theme": "ocean",
   "participants": [
     {
       "id": "user",

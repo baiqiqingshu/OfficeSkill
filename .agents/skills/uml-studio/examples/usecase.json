@@ -3,7 +3,7 @@
   "type": "usecase",
   "title": "在线书店 · 用例图",
   "description": "系统边界内的核心能力与读者、管理员的交互。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "groups": [
     {

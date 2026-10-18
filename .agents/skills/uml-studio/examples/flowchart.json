@@ -3,7 +3,7 @@
   "type": "flowchart",
   "title": "发布准入 · 流程图",
   "description": "以自动化检查和人工决策控制生产发布风险。",
-  "theme": "paper",
+  "theme": "ocean",
   "nodes": [
     {
       "id": "start",

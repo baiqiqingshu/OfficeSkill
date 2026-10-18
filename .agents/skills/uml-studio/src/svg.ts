@@ -36,14 +36,17 @@ export function text(
   const anchor = options.anchor === 'start' || options.anchor === 'end' ? options.anchor : 'middle';
   const fill = paint(options.fill ?? theme.text, '#202830');
   const lines = label.replace(/\r\n?/g, '\n').split('\n');
+  const weight = Math.max(100, Math.min(900, (options.weight ?? 400) + (theme.fontWeight - 400)));
   const spans = lines.map((line, index) => `<tspan x="${number(x)}" dy="${index ? number(size * 1.4) : '0'}">${esc(line)}</tspan>`).join('');
-  return `<text x="${number(x)}" y="${number(y)}" fill="${esc(fill)}" font-family="${esc(theme.fontFamily)}" font-size="${number(size)}" font-weight="${number(options.weight ?? 400)}" text-anchor="${anchor}" xml:space="preserve">${spans}</text>`;
+  return `<text x="${number(x)}" y="${number(y)}" fill="${esc(fill)}" font-family="${esc(theme.fontFamily)}" font-size="${number(size)}" font-weight="${number(weight)}" font-style="${theme.fontStyle === 'italic' ? 'italic' : 'normal'}" text-decoration="${theme.textDecoration === 'underline' ? 'underline' : 'none'}" text-anchor="${anchor}" xml:space="preserve">${spans}</text>`;
 }
 
 /** Wrap already-positioned SVG primitives; the body is not translated. */
 export function frame(spec: DiagramSpec, theme: Theme, width: number, height: number, body: string): RenderedDiagram {
   const w = Math.max(1, Math.ceil(width));
   const h = Math.max(1, Math.ceil(height));
+  const scale = Math.min(1, spec.layout?.maxWidth ? spec.layout.maxWidth / w : 1, spec.layout?.maxHeight ? spec.layout.maxHeight / h : 1);
+  const physicalWidth = w * scale, physicalHeight = h * scale;
   const prefix = `uml-figure-${++figureNumber}`;
   const summary = spec.type === 'sequence'
     ? `${spec.title}，包含 ${(spec.participants ?? []).length} 位参与者、${(spec.messages ?? []).length} 条消息的时序图。`
@@ -67,6 +70,6 @@ export function frame(spec: DiagramSpec, theme: Theme, width: number, height: nu
     })
     .replace(/(\s(?:xlink:)?href=)(["'])#([^"']+)\2/g, (_match: string, attribute: string, quote: string, id: string) => `${attribute}${quote}#${ids.get(id) ?? `${prefix}-body-${id}`}${quote}`)
     .replace(/(\saria-(?:labelledby|describedby)=)(["'])([^"']+)\2/g, (_match: string, attribute: string, quote: string, references: string) => `${attribute}${quote}${references.split(/\s+/).map(id => ids.get(id) ?? `${prefix}-body-${id}`).join(' ')}${quote}`));
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="${prefix}-title ${prefix}-desc"><title id="${prefix}-title">${esc(spec.title)}</title><desc id="${prefix}-desc">${esc(description)}</desc><rect width="${w}" height="${h}" fill="${esc(paint(theme.background, '#ffffff'))}"/>${isolatedBody}</svg>`;
-  return { svg, width: w, height: h };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${physicalWidth}" height="${physicalHeight}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="${prefix}-title ${prefix}-desc"><title id="${prefix}-title">${esc(spec.title)}</title><desc id="${prefix}-desc">${esc(description)}</desc><rect width="${w}" height="${h}" fill="${esc(paint(theme.background, '#ffffff'))}"/>${isolatedBody}</svg>`;
+  return { svg, width: physicalWidth, height: physicalHeight };
 }

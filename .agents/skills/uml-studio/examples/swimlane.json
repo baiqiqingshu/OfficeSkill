@@ -3,7 +3,7 @@
   "type": "swimlane",
   "title": "需求交付 · 跨职能泳道",
   "description": "明确产品、研发与质量团队之间的责任交接。",
-  "theme": "paper",
+  "theme": "ocean",
   "direction": "LR",
   "lanes": [
     {

@@ -3,7 +3,7 @@
   "type": "activity",
   "title": "订单履约 · 活动图",
   "description": "从接单到发货，呈现库存判断与并行准备。",
-  "theme": "paper",
+  "theme": "ocean",
   "nodes": [
     {
       "id": "start",

@@ -1,5 +1,6 @@
 import type { DiagramSpec, Theme, RenderedDiagram, Participant, FishboneCause } from './types'
 import { esc, text, frame } from './svg'
+import { resolveLayout } from './themes'
 
 // Character-aware sizing keeps CJK labels legible without requiring browser font metrics.
 function measure(value: string, size: number): number {
@@ -21,6 +22,7 @@ function line(x1: number, y1: number, x2: number, y2: number, color: string, wid
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${esc(color)}" stroke-width="${width}"${dashed ? ' stroke-dasharray="6 5"' : ''}/>`
 }
 function heading(spec: DiagramSpec, theme: Theme, width: number, eyebrow: string): { svg: string; bottom: number } {
+  if (spec.layout?.showTitle !== true) return { svg: '', bottom: 24 }
   const titleSize = theme.fontSize + 10
   const title = wrap(spec.title, width - 80, titleSize)
   const subtitle = spec.description ? wrap(spec.description, width - 80, theme.fontSize) : []
@@ -36,12 +38,14 @@ function heading(spec: DiagramSpec, theme: Theme, width: number, eyebrow: string
 
 /** Time-ordered UML interactions, including lifetime and nested activation semantics. */
 export function renderSequence(spec: DiagramSpec, theme: Theme): RenderedDiagram {
+  spec = { ...spec, layout: resolveLayout(spec) }
   const participants = spec.participants ?? []
   const messages = spec.messages ?? []
   const fragments = spec.fragments ?? []
   const size = theme.fontSize
   const participantWidth = Math.max(128, theme.nodeWidth, ...participants.map(p => Math.min(280, measure(p.label, size) + 30)))
-  const gap = Math.max(80, theme.gap)
+  const gap = spec.layout?.regionGap ?? 40
+  const messageGap = spec.layout?.elementGap ?? 24
   const labelWidth = Math.max(participantWidth + gap - 24, 190)
   const column = participantWidth + gap
   const lastCenter = 70 + participantWidth / 2 + (participants.length - 1) * column
@@ -87,7 +91,7 @@ export function renderSequence(spec: DiagramSpec, theme: Theme): RenderedDiagram
     const before = msg.kind === 'create' ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12
     const y = cursor + before
     ys.push(y); rowLines.push(lines); labelTops.push(y - labelHeight - 12)
-    cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === 'create' ? Math.max(28, boxHeight / 2 + 20) : 28)
+    cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === 'create' ? Math.max(messageGap, boxHeight / 2 + 20) : messageGap)
     const endBoxes = ends.get(i)
     if (endBoxes) {
       let boundary = cursor - 10
@@ -108,7 +112,7 @@ export function renderSequence(spec: DiagramSpec, theme: Theme): RenderedDiagram
   let fragmentAnnotations = ''
   const guard = (left: number, top: number, lines: string[]): string => {
     const width = Math.max(...lines.map(value => measure(value, guardSize))) + 8
-    return `<rect x="${left - 4}" y="${top}" width="${width}" height="${lines.length * guardLeading}" fill="${esc(theme.background)}"/>` + text(left, top + guardSize * 1.1, lines.join('\n'), theme, { anchor: 'start', size: guardSize, fill: theme.muted })
+    return `<rect x="${left - 4}" y="${top}" width="${width}" height="${lines.length * guardLeading}" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>` + text(left, top + guardSize * 1.1, lines.join('\n'), theme, { anchor: 'start', size: guardSize, fill: theme.muted })
   }
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box
@@ -185,7 +189,7 @@ export function renderSequence(spec: DiagramSpec, theme: Theme): RenderedDiagram
     const lx = self ? sx + 18 : (start + end) / 2
     const ly = labelTops[i]! + size * 1.1
     const lw = Math.max(...labelLines.map(l => measure(l, size))) + 12
-    body += `<rect x="${self ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background)}"/>`
+    body += `<rect x="${self ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>`
     body += text(lx, ly, labelLines.join('\n'), theme, { anchor: self ? 'start' : 'middle' })
     if (kind === 'destroy') body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`
   })
@@ -195,9 +199,12 @@ export function renderSequence(spec: DiagramSpec, theme: Theme): RenderedDiagram
 
 /** Original anatomy and tree layout; no FishboneStudio source is copied. */
 export function renderFishbone(spec: DiagramSpec, theme: Theme): RenderedDiagram {
+  spec = { ...spec, layout: resolveLayout(spec) }
   const data = spec.fishbone!
   const size = theme.fontSize
   const leading = size * 1.4
+  const elementGap = spec.layout?.elementGap ?? 24
+  const regionGap = spec.layout?.regionGap ?? 40
   type CauseRow = { cause: FishboneCause; depth: number; parent: number; lines: string[]; offset: number; height: number }
   const categories = data.categories.map((category, index) => {
     const rows: CauseRow[] = []
@@ -205,7 +212,7 @@ export function renderFishbone(spec: DiagramSpec, theme: Theme): RenderedDiagram
     const visit = (cause: FishboneCause, depth: number, parent: number): void => {
       const lines = wrap(cause.label, 205, size)
       const rowIndex = rows.length
-      const height = Math.max(36, lines.length * leading + 18)
+      const height = Math.max(18 + elementGap, lines.length * leading + elementGap)
       rows.push({ cause, depth, parent, lines, offset, height })
       offset += height
       maxDepth = Math.max(maxDepth, depth)
@@ -216,16 +223,19 @@ export function renderFishbone(spec: DiagramSpec, theme: Theme): RenderedDiagram
   })
   const columns: number[] = []
   for (let i = 0; i < categories.length; i += 2) columns.push(Math.max(categories[i]!.width, categories[i + 1]?.width ?? 0))
-  const headWidth = Math.max(220, theme.nodeWidth + 50)
-  const width = Math.max(920, 150 + columns.reduce((sum, w) => sum + w, 0) + headWidth + 80)
+  const headWidth = Math.max(300, theme.nodeWidth + 120)
+  const effectSize = size + 3
+  const effectLines = wrap(data.effect, headWidth * .47, effectSize)
+  const effectHeight = effectLines.length * effectSize * 1.4
+  const headHeight = Math.max(160, effectHeight * 1.8 + 48)
+  const width = Math.max(920, 150 + columns.reduce((sum, w) => sum + w, 0) + Math.max(0, columns.length - 1) * regionGap + headWidth + 80)
   const header = heading(spec, theme, width, 'ROOT CAUSE / FISHBONE · 原因分析')
-  const topSpan = Math.max(180, ...categories.filter(c => c.index % 2 === 0).map(c => c.span))
-  const bottomSpan = Math.max(180, ...categories.filter(c => c.index % 2 === 1).map(c => c.span))
-  const spineY = header.bottom + topSpan + 62
-  const height = spineY + bottomSpan + 110
+  const topSpan = Math.max(180, headHeight / 2 + 24, ...categories.filter(c => c.index % 2 === 0).map(c => c.span))
+  const bottomSpan = Math.max(180, headHeight / 2 + 24, ...categories.filter(c => c.index % 2 === 1).map(c => c.span))
+  const categoryMargin = Math.max(62, ...categories.map(c => wrap(c.category.label, Math.min(c.width - 36, Math.max(130, measure(c.category.label, size + 1) + 34)) - 24, size + 1).length * (size + 1) * 1.4 + 28))
+  const spineY = header.bottom + topSpan + categoryMargin
+  const height = spineY + bottomSpan + Math.max(110, categoryMargin + 48)
   const headX = width - headWidth - 48
-  const effectLines = wrap(data.effect, headWidth - 68, size + 4)
-  const headHeight = Math.max(120, effectLines.length * (size + 4) * 1.4 + 58)
   let body = header.svg
   body += `<path d="M 96 ${spineY} L 42 ${spineY - 40} Q 52 ${spineY} 42 ${spineY + 40} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth + 1}"/>`
   body += line(96, spineY, headX + 28, spineY, theme.primary, theme.lineWidth + 2)
@@ -240,9 +250,9 @@ export function renderFishbone(spec: DiagramSpec, theme: Theme): RenderedDiagram
       const direction = upper ? -1 : 1
       const span = upper ? topSpan : bottomSpan
       const outerY = spineY + direction * span
-      const tipX = left + colWidth - 115
       const attachX = left + colWidth - 20
       const categoryWidth = Math.min(colWidth - 36, Math.max(130, measure(item.category.label, size + 1) + 34))
+      const tipX = left + colWidth - categoryWidth / 2 - 18
       const categoryLines = wrap(item.category.label, categoryWidth - 24, size + 1)
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20
       const categoryY = upper ? outerY - categoryHeight : outerY
@@ -268,13 +278,14 @@ export function renderFishbone(spec: DiagramSpec, theme: Theme): RenderedDiagram
       body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
       body += text(tipX, categoryY + 12 + size + 1, categoryLines.join('\n'), theme, { size: size + 1, anchor: 'middle', weight: 700 })
     }
-    left += colWidth
+    left += colWidth + regionGap
   }
-  // A pointed snout, eye and curved gill are genuine vector geometry, not a font icon.
-  body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * .46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * .76} ${spineY - headHeight * .63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * .76} ${spineY + headHeight * .63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * .46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`
-  body += `<path d="M ${headX + 43} ${spineY - headHeight * .3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * .3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
-  body += `<circle cx="${headX + headWidth - 49}" cy="${spineY - headHeight * .25}" r="5" fill="${esc(theme.primary)}"/>`
-  body += text(headX + headWidth / 2 + 8, spineY + 5 - (effectLines.length - 1) * (size + 4) * .7, effectLines.join('\n'), theme, { size: size + 4, anchor: 'middle', weight: 700 })
+  // Soft, continuous head contour; eye, gill and mouth stay outside the label's safe area.
+  body += `<g data-part="head"><path data-feature="silhouette" d="M ${headX + headWidth * .08} ${spineY} C ${headX + headWidth * .02} ${spineY - headHeight * .38} ${headX + headWidth * .28} ${spineY - headHeight * .56} ${headX + headWidth * .55} ${spineY - headHeight * .46} C ${headX + headWidth * .78} ${spineY - headHeight * .39} ${headX + headWidth * .97} ${spineY - headHeight * .15} ${headX + headWidth} ${spineY} C ${headX + headWidth * .97} ${spineY + headHeight * .15} ${headX + headWidth * .78} ${spineY + headHeight * .39} ${headX + headWidth * .55} ${spineY + headHeight * .46} C ${headX + headWidth * .28} ${spineY + headHeight * .56} ${headX + headWidth * .02} ${spineY + headHeight * .38} ${headX + headWidth * .08} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-opacity=".65" stroke-width="${Math.max(1, theme.lineWidth)}" stroke-linejoin="round"/>`
+  body += `<path data-feature="gill" d="M ${headX + headWidth * .18} ${spineY - headHeight * .25} C ${headX + headWidth * .12} ${spineY - headHeight * .12} ${headX + headWidth * .12} ${spineY + headHeight * .12} ${headX + headWidth * .18} ${spineY + headHeight * .25}" fill="none" stroke="${esc(theme.primary)}" stroke-opacity=".3" stroke-width="${theme.lineWidth}" stroke-linecap="round"/>`
+  body += `<circle data-feature="eye" cx="${headX + headWidth * .79}" cy="${spineY - headHeight * .2}" r="3.5" fill="${esc(theme.primary)}" fill-opacity=".8"/>`
+  body += `<path data-feature="mouth" d="M ${headX + headWidth * .91} ${spineY + headHeight * .1} Q ${headX + headWidth * .955} ${spineY + headHeight * .12} ${headX + headWidth * .98} ${spineY + headHeight * .035}" fill="none" stroke="${esc(theme.primary)}" stroke-opacity=".55" stroke-width="${Math.max(1, theme.lineWidth * .75)}" stroke-linecap="round"/>`
+  body += text(headX + headWidth * .49, spineY + effectSize * .35 - (effectLines.length - 1) * effectSize * .7, effectLines.join('\n'), theme, { size: effectSize, anchor: 'middle', weight: 700 }) + '</g>'
   body += text(40, height - 24, `${data.categories.length} 个原因维度 · 分支逐级展开 · 鱼头表示观察到的结果`, theme, { anchor: 'start', size: 11, fill: theme.muted })
   return frame(spec, theme, width, height, body)
 }
