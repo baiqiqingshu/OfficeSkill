@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "type": "sequence",
+  "title": "下单协作 · 时序图",
+  "description": "展示同步、异步、返回、对象创建与销毁，以及条件和并行片段。",
+  "theme": "paper",
+  "participants": [
+    {
+      "id": "user",
+      "label": "读者",
+      "kind": "actor"
+    },
+    {
+      "id": "api",
+      "label": "订单 API"
+    },
+    {
+      "id": "db",
+      "label": "订单数据库",
+      "kind": "database"
+    },
+    {
+      "id": "job",
+      "label": "通知任务"
+    }
+  ],
+  "messages": [
+    {
+      "from": "user",
+      "to": "api",
+      "label": "提交订单",
+      "kind": "sync",
+      "activate": true
+    },
+    {
+      "from": "api",
+      "to": "api",
+      "label": "校验金额与商品",
+      "kind": "sync",
+      "activate": true
+    },
+    {
+      "from": "api",
+      "to": "api",
+      "label": "校验完成",
+      "kind": "return",
+      "deactivate": true
+    },
+    {
+      "from": "api",
+      "to": "db",
+      "label": "写入订单",
+      "kind": "sync",
+      "activate": true
+    },
+    {
+      "from": "db",
+      "to": "api",
+      "label": "持久化成功",
+      "kind": "return",
+      "deactivate": true
+    },
+    {
+      "from": "api",
+      "to": "user",
+      "label": "返回订单编号",
+      "kind": "return"
+    },
+    {
+      "from": "api",
+      "to": "user",
+      "label": "返回库存不足",
+      "kind": "return"
+    },
+    {
+      "from": "api",
+      "to": "job",
+      "label": "创建通知任务",
+      "kind": "create"
+    },
+    {
+      "from": "api",
+      "to": "job",
+      "label": "发送订单事件",
+      "kind": "async",
+      "activate": true
+    },
+    {
+      "from": "job",
+      "to": "job",
+      "label": "尝试投递通知",
+      "kind": "sync",
+      "activate": true
+    },
+    {
+      "from": "job",
+      "to": "job",
+      "label": "本次投递结束",
+      "kind": "return",
+      "deactivate": true
+    },
+    {
+      "from": "job",
+      "to": "user",
+      "label": "邮件确认",
+      "kind": "async"
+    },
+    {
+      "from": "job",
+      "to": "db",
+      "label": "记录投递状态",
+      "kind": "async"
+    },
+    {
+      "from": "api",
+      "to": "job",
+      "label": "释放临时任务",
+      "kind": "destroy",
+      "deactivate": true
+    },
+    {
+      "from": "api",
+      "to": "user",
+      "label": "请求处理结束",
+      "kind": "return",
+      "deactivate": true
+    }
+  ],
+  "fragments": [
+    {
+      "kind": "alt",
+      "label": "库存充足",
+      "from": 3,
+      "to": 6,
+      "elseAt": 6,
+      "elseLabel": "库存不足"
+    },
+    {
+      "kind": "opt",
+      "label": "启用订单通知",
+      "from": 7,
+      "to": 13
+    },
+    {
+      "kind": "loop",
+      "label": "最多 3 次尝试",
+      "from": 9,
+      "to": 10
+    },
+    {
+      "kind": "par",
+      "label": "通知读者 / 记录审计",
+      "from": 11,
+      "to": 12,
+      "elseAt": 12,
+      "elseLabel": "记录投递审计"
+    }
+  ]
+}

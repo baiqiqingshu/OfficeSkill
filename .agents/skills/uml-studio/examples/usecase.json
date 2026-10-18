@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "type": "usecase",
+  "title": "在线书店 · 用例图",
+  "description": "系统边界内的核心能力与读者、管理员的交互。",
+  "theme": "paper",
+  "direction": "LR",
+  "groups": [
+    {
+      "id": "store",
+      "label": "在线书店系统",
+      "kind": "boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "reader",
+      "label": "读者",
+      "kind": "actor"
+    },
+    {
+      "id": "admin",
+      "label": "管理员",
+      "kind": "actor"
+    },
+    {
+      "id": "search",
+      "label": "搜索图书",
+      "kind": "usecase",
+      "group": "store"
+    },
+    {
+      "id": "order",
+      "label": "购买图书",
+      "kind": "usecase",
+      "group": "store"
+    },
+    {
+      "id": "payment",
+      "label": "完成支付",
+      "kind": "usecase",
+      "group": "store"
+    },
+    {
+      "id": "coupon",
+      "label": "使用优惠券",
+      "kind": "usecase",
+      "group": "store"
+    },
+    {
+      "id": "catalog",
+      "label": "维护书目",
+      "kind": "usecase",
+      "group": "store"
+    }
+  ],
+  "edges": [
+    {
+      "from": "reader",
+      "to": "search",
+      "kind": "association"
+    },
+    {
+      "from": "reader",
+      "to": "order",
+      "kind": "association"
+    },
+    {
+      "from": "order",
+      "to": "payment",
+      "kind": "include"
+    },
+    {
+      "from": "coupon",
+      "to": "order",
+      "kind": "extend"
+    },
+    {
+      "from": "admin",
+      "to": "catalog",
+      "kind": "association"
+    }
+  ]
+}

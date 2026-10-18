@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "type": "activity",
+  "title": "订单履约 · 活动图",
+  "description": "从接单到发货，呈现库存判断与并行准备。",
+  "theme": "paper",
+  "nodes": [
+    {
+      "id": "start",
+      "label": "开始",
+      "kind": "start"
+    },
+    {
+      "id": "receive",
+      "label": "接收订单",
+      "kind": "action"
+    },
+    {
+      "id": "stock",
+      "label": "库存充足？",
+      "kind": "decision"
+    },
+    {
+      "id": "split",
+      "label": "并行准备",
+      "kind": "fork"
+    },
+    {
+      "id": "pack",
+      "label": "拣货打包",
+      "kind": "action"
+    },
+    {
+      "id": "invoice",
+      "label": "生成发票",
+      "kind": "action"
+    },
+    {
+      "id": "merge",
+      "label": "汇合",
+      "kind": "join"
+    },
+    {
+      "id": "ship",
+      "label": "发货 / 缺货通知",
+      "kind": "action"
+    },
+    {
+      "id": "end",
+      "label": "完成",
+      "kind": "end"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "receive"
+    },
+    {
+      "from": "receive",
+      "to": "stock"
+    },
+    {
+      "from": "stock",
+      "to": "split",
+      "label": "是"
+    },
+    {
+      "from": "stock",
+      "to": "ship",
+      "label": "否：通知等待"
+    },
+    {
+      "from": "split",
+      "to": "pack"
+    },
+    {
+      "from": "split",
+      "to": "invoice"
+    },
+    {
+      "from": "pack",
+      "to": "merge"
+    },
+    {
+      "from": "invoice",
+      "to": "merge"
+    },
+    {
+      "from": "merge",
+      "to": "ship"
+    },
+    {
+      "from": "ship",
+      "to": "end"
+    }
+  ]
+}

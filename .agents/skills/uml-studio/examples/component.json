@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "type": "component",
+  "title": "订单服务 · 组件图",
+  "description": "端口角色通过接口节点表达，异步事件与持久化依赖明确分离。",
+  "theme": "paper",
+  "direction": "LR",
+  "groups": [
+    {
+      "id": "backend",
+      "label": "订单域",
+      "kind": "boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "web",
+      "label": "Web 应用",
+      "kind": "component"
+    },
+    {
+      "id": "api",
+      "label": "订单 API",
+      "kind": "interface"
+    },
+    {
+      "id": "order",
+      "label": "订单服务",
+      "kind": "component",
+      "group": "backend",
+      "stereotype": "service"
+    },
+    {
+      "id": "payment",
+      "label": "支付适配器",
+      "kind": "component",
+      "group": "backend"
+    },
+    {
+      "id": "events",
+      "label": "领域事件",
+      "kind": "queue"
+    },
+    {
+      "id": "db",
+      "label": "订单数据",
+      "kind": "database"
+    }
+  ],
+  "edges": [
+    {
+      "from": "web",
+      "to": "api",
+      "label": "HTTPS"
+    },
+    {
+      "from": "api",
+      "to": "order"
+    },
+    {
+      "from": "order",
+      "to": "payment",
+      "kind": "dependency",
+      "label": "扣款"
+    },
+    {
+      "from": "order",
+      "to": "events",
+      "kind": "dependency",
+      "label": "OrderPlaced",
+      "dashed": true
+    },
+    {
+      "from": "order",
+      "to": "db",
+      "label": "读写"
+    }
+  ]
+}

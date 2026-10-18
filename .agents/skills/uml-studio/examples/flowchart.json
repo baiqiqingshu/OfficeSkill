@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "type": "flowchart",
+  "title": "发布准入 · 流程图",
+  "description": "以自动化检查和人工决策控制生产发布风险。",
+  "theme": "paper",
+  "nodes": [
+    {
+      "id": "start",
+      "label": "提交发布申请",
+      "kind": "start"
+    },
+    {
+      "id": "check",
+      "label": "运行自动化检查",
+      "kind": "action"
+    },
+    {
+      "id": "pass",
+      "label": "检查通过？",
+      "kind": "decision"
+    },
+    {
+      "id": "fix",
+      "label": "修复问题",
+      "kind": "action"
+    },
+    {
+      "id": "approve",
+      "label": "发布负责人审批",
+      "kind": "action"
+    },
+    {
+      "id": "release",
+      "label": "灰度发布",
+      "kind": "action"
+    },
+    {
+      "id": "end",
+      "label": "完成发布",
+      "kind": "end"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "check"
+    },
+    {
+      "from": "check",
+      "to": "pass"
+    },
+    {
+      "from": "pass",
+      "to": "fix",
+      "label": "否"
+    },
+    {
+      "from": "fix",
+      "to": "check",
+      "label": "重新提交"
+    },
+    {
+      "from": "pass",
+      "to": "approve",
+      "label": "是"
+    },
+    {
+      "from": "approve",
+      "to": "release"
+    },
+    {
+      "from": "release",
+      "to": "end"
+    }
+  ]
+}

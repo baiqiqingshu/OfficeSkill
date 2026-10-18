@@ -10,3 +10,9 @@ temp/
 # Python 缓存
 __pycache__/
 *.pyc
+
+# UML Studio dependencies and development caches
+node_modules/
+.vite/
+test-results/
+playwright-report/

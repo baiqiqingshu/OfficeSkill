@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "type": "state",
+  "title": "工单生命周期 · 状态图",
+  "description": "从新建到关闭，异常路径通过退回与取消显式表达。",
+  "theme": "paper",
+  "direction": "LR",
+  "nodes": [
+    {
+      "id": "start",
+      "label": "初始",
+      "kind": "start"
+    },
+    {
+      "id": "new",
+      "label": "待受理",
+      "kind": "state"
+    },
+    {
+      "id": "working",
+      "label": "处理中",
+      "kind": "state"
+    },
+    {
+      "id": "verify",
+      "label": "待确认",
+      "kind": "state"
+    },
+    {
+      "id": "closed",
+      "label": "已关闭",
+      "kind": "state"
+    },
+    {
+      "id": "cancelled",
+      "label": "已取消",
+      "kind": "state"
+    },
+    {
+      "id": "end",
+      "label": "终止",
+      "kind": "end"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "new"
+    },
+    {
+      "from": "new",
+      "to": "working",
+      "label": "assign / 分配负责人"
+    },
+    {
+      "from": "working",
+      "to": "verify",
+      "label": "resolve / 提交结果"
+    },
+    {
+      "from": "verify",
+      "to": "working",
+      "label": "reject [未解决]"
+    },
+    {
+      "from": "verify",
+      "to": "closed",
+      "label": "confirm [满意]"
+    },
+    {
+      "from": "new",
+      "to": "cancelled",
+      "label": "cancel"
+    },
+    {
+      "from": "closed",
+      "to": "end"
+    },
+    {
+      "from": "cancelled",
+      "to": "end"
+    }
+  ]
+}

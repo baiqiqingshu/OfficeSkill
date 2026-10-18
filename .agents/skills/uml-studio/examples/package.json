@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "type": "package",
+  "title": "模块依赖 · 包图",
+  "description": "表现业务层、领域层与基础设施之间的依赖方向。",
+  "theme": "paper",
+  "direction": "TB",
+  "groups": [
+    {
+      "id": "business",
+      "label": "业务实现",
+      "kind": "package"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ui",
+      "label": "presentation",
+      "kind": "package",
+      "detail": "页面与接口适配"
+    },
+    {
+      "id": "application",
+      "label": "application",
+      "kind": "package",
+      "detail": "用例编排",
+      "group": "business"
+    },
+    {
+      "id": "domain",
+      "label": "domain",
+      "kind": "package",
+      "detail": "聚合与领域规则",
+      "group": "business"
+    },
+    {
+      "id": "ports",
+      "label": "ports",
+      "kind": "package",
+      "detail": "存储与消息抽象",
+      "group": "business"
+    },
+    {
+      "id": "infra",
+      "label": "infrastructure",
+      "kind": "package",
+      "detail": "数据库 / 消息适配"
+    }
+  ],
+  "edges": [
+    {
+      "from": "ui",
+      "to": "application",
+      "kind": "dependency"
+    },
+    {
+      "from": "application",
+      "to": "domain",
+      "kind": "dependency"
+    },
+    {
+      "from": "application",
+      "to": "ports",
+      "kind": "dependency"
+    },
+    {
+      "from": "infra",
+      "to": "ports",
+      "kind": "dependency",
+      "label": "实现"
+    },
+    {
+      "from": "infra",
+      "to": "domain",
+      "kind": "dependency"
+    }
+  ]
+}

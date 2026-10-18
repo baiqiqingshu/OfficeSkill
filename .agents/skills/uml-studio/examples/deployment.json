@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "type": "deployment",
+  "title": "书店平台 · 部署图",
+  "description": "生产环境中的运行节点、部署制品和网络协议。",
+  "theme": "ocean",
+  "direction": "LR",
+  "groups": [
+    {
+      "id": "edge",
+      "label": "接入区",
+      "kind": "node"
+    },
+    {
+      "id": "cluster",
+      "label": "应用集群 / Kubernetes",
+      "kind": "node"
+    },
+    {
+      "id": "storage",
+      "label": "数据区",
+      "kind": "node"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "browser",
+      "label": "用户浏览器",
+      "kind": "component"
+    },
+    {
+      "id": "ingress",
+      "label": "Ingress",
+      "kind": "server",
+      "group": "edge",
+      "detail": "TLS :443"
+    },
+    {
+      "id": "pod1",
+      "label": "订单实例 A",
+      "kind": "server",
+      "group": "cluster",
+      "stereotype": "pod"
+    },
+    {
+      "id": "pod2",
+      "label": "订单实例 B",
+      "kind": "server",
+      "group": "cluster",
+      "stereotype": "pod"
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL 主库",
+      "kind": "database",
+      "group": "storage",
+      "detail": ":5432"
+    },
+    {
+      "id": "redis",
+      "label": "Redis 缓存",
+      "kind": "database",
+      "group": "storage",
+      "detail": ":6379"
+    }
+  ],
+  "edges": [
+    {
+      "from": "browser",
+      "to": "ingress",
+      "label": "HTTPS :443"
+    },
+    {
+      "from": "ingress",
+      "to": "pod1",
+      "label": "HTTP :8080"
+    },
+    {
+      "from": "ingress",
+      "to": "pod2",
+      "label": "HTTP :8080"
+    },
+    {
+      "from": "pod1",
+      "to": "postgres",
+      "label": "SQL"
+    },
+    {
+      "from": "pod2",
+      "to": "postgres",
+      "label": "SQL"
+    },
+    {
+      "from": "pod1",
+      "to": "redis",
+      "label": "缓存"
+    },
+    {
+      "from": "pod2",
+      "to": "redis",
+      "label": "缓存"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "type": "class",
+  "title": "订单领域 · 类图",
+  "description": "接口实现、继承与聚合关系保留 UML 端点语义。",
+  "theme": "paper",
+  "direction": "LR",
+  "nodes": [
+    {
+      "id": "entity",
+      "label": "Entity",
+      "kind": "class",
+      "attributes": [
+        "+ id: UUID"
+      ],
+      "operations": [
+        "+ equals(other): boolean"
+      ]
+    },
+    {
+      "id": "order",
+      "label": "Order",
+      "kind": "class",
+      "attributes": [
+        "+ number: string",
+        "- status: OrderStatus"
+      ],
+      "operations": [
+        "+ submit(): void",
+        "+ total(): Money"
+      ]
+    },
+    {
+      "id": "item",
+      "label": "OrderItem",
+      "kind": "class",
+      "attributes": [
+        "+ quantity: number",
+        "+ unitPrice: Money"
+      ],
+      "operations": [
+        "+ subtotal(): Money"
+      ]
+    },
+    {
+      "id": "customer",
+      "label": "Customer",
+      "kind": "class",
+      "attributes": [
+        "+ name: string"
+      ],
+      "operations": [
+        "+ placeOrder(): Order"
+      ]
+    },
+    {
+      "id": "payment",
+      "label": "PaymentGateway",
+      "kind": "interface",
+      "operations": [
+        "+ charge(amount: Money): Receipt"
+      ]
+    },
+    {
+      "id": "adapter",
+      "label": "BankAdapter",
+      "kind": "class",
+      "operations": [
+        "+ charge(amount: Money): Receipt"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "order",
+      "to": "entity",
+      "kind": "inheritance"
+    },
+    {
+      "from": "order",
+      "to": "item",
+      "kind": "composition",
+      "fromLabel": "1",
+      "toLabel": "1..*"
+    },
+    {
+      "from": "customer",
+      "to": "order",
+      "kind": "aggregation",
+      "fromLabel": "1",
+      "toLabel": "0..*"
+    },
+    {
+      "from": "order",
+      "to": "payment",
+      "kind": "dependency",
+      "label": "使用"
+    },
+    {
+      "from": "adapter",
+      "to": "payment",
+      "kind": "realization"
+    }
+  ]
+}

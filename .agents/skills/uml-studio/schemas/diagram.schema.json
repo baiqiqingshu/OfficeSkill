@@ -1,0 +1,657 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://office-skill.local/uml-studio/diagram.schema.json",
+  "type": "object",
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "activity",
+        "sequence",
+        "swimlane",
+        "flowchart",
+        "usecase",
+        "class",
+        "state",
+        "component",
+        "package",
+        "architecture",
+        "module",
+        "deployment",
+        "logical",
+        "development",
+        "process",
+        "physical",
+        "scenario",
+        "fishbone"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "paper",
+        "ocean",
+        "forest",
+        "blueprint",
+        "midnight"
+      ]
+    },
+    "style": {
+      "type": "object",
+      "properties": {
+        "background": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "surface": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "text": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "muted": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "primary": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "secondary": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "border": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+        },
+        "fontFamily": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^<>;{}\\\\]+$"
+        },
+        "fontSize": {
+          "type": "number",
+          "minimum": 8,
+          "maximum": 48
+        },
+        "lineWidth": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 8
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 32
+        },
+        "nodeWidth": {
+          "type": "number",
+          "minimum": 80,
+          "maximum": 600
+        },
+        "nodeHeight": {
+          "type": "number",
+          "minimum": 32,
+          "maximum": 300
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 24,
+          "maximum": 240
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "TB",
+        "LR"
+      ]
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "action",
+              "decision",
+              "start",
+              "end",
+              "fork",
+              "join",
+              "actor",
+              "usecase",
+              "class",
+              "interface",
+              "component",
+              "package",
+              "database",
+              "server",
+              "queue",
+              "state",
+              "note"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "stereotype": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "group": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "lane": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "style": {
+            "type": "object",
+            "properties": {
+              "background": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "surface": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "text": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "muted": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "primary": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "secondary": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "border": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$"
+              },
+              "fontFamily": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[^<>;{}\\\\]+$"
+              },
+              "fontSize": {
+                "type": "number",
+                "minimum": 8,
+                "maximum": 48
+              },
+              "lineWidth": {
+                "type": "number",
+                "minimum": 0.5,
+                "maximum": 8
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 32
+              },
+              "nodeWidth": {
+                "type": "number",
+                "minimum": 80,
+                "maximum": 600
+              },
+              "nodeHeight": {
+                "type": "number",
+                "minimum": 32,
+                "maximum": 300
+              },
+              "gap": {
+                "type": "number",
+                "minimum": 24,
+                "maximum": 240
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "from": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "flow",
+              "association",
+              "dependency",
+              "include",
+              "extend",
+              "inheritance",
+              "realization",
+              "aggregation",
+              "composition"
+            ]
+          },
+          "dashed": {
+            "type": "boolean"
+          },
+          "fromLabel": {
+            "type": "string"
+          },
+          "toLabel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parent": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "boundary",
+              "package",
+              "node"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "lanes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "actor",
+              "participant",
+              "database"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_\\-:.]+$"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sync",
+              "async",
+              "return",
+              "create",
+              "destroy"
+            ]
+          },
+          "activate": {
+            "type": "boolean"
+          },
+          "deactivate": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "fragments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "alt",
+              "opt",
+              "loop",
+              "par"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "from": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "to": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "elseAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "elseLabel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "fishbone": {
+      "type": "object",
+      "properties": {
+        "effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_\\-:.]+$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "causes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/cause"
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "causes"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "effect",
+        "categories"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "type",
+    "title"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "cause": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cause"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "sequence"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "participants",
+          "messages"
+        ],
+        "properties": {
+          "participants": {
+            "minItems": 1
+          },
+          "messages": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "fishbone"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "fishbone"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "not": {
+              "enum": [
+                "sequence",
+                "fishbone"
+              ]
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "nodes"
+        ],
+        "properties": {
+          "nodes": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "swimlane"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "lanes"
+        ],
+        "properties": {
+          "lanes": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

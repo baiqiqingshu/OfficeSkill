@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "type": "swimlane",
+  "title": "需求交付 · 跨职能泳道",
+  "description": "明确产品、研发与质量团队之间的责任交接。",
+  "theme": "paper",
+  "direction": "LR",
+  "lanes": [
+    {
+      "id": "product",
+      "label": "产品团队"
+    },
+    {
+      "id": "engineering",
+      "label": "研发团队"
+    },
+    {
+      "id": "quality",
+      "label": "质量团队"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "brief",
+      "label": "整理用户需求",
+      "lane": "product"
+    },
+    {
+      "id": "review",
+      "label": "验收标准评审",
+      "lane": "product"
+    },
+    {
+      "id": "design",
+      "label": "技术方案设计",
+      "lane": "engineering"
+    },
+    {
+      "id": "implement",
+      "label": "实现与单元测试",
+      "lane": "engineering"
+    },
+    {
+      "id": "test",
+      "label": "集成验证",
+      "lane": "quality"
+    },
+    {
+      "id": "accept",
+      "label": "业务验收",
+      "lane": "product"
+    },
+    {
+      "id": "publish",
+      "label": "批准发布",
+      "lane": "quality"
+    }
+  ],
+  "edges": [
+    {
+      "from": "brief",
+      "to": "review"
+    },
+    {
+      "from": "review",
+      "to": "design"
+    },
+    {
+      "from": "design",
+      "to": "implement"
+    },
+    {
+      "from": "implement",
+      "to": "test"
+    },
+    {
+      "from": "test",
+      "to": "accept",
+      "label": "通过"
+    },
+    {
+      "from": "accept",
+      "to": "publish"
+    },
+    {
+      "from": "test",
+      "to": "implement",
+      "label": "缺陷反馈",
+      "dashed": true
+    }
+  ]
+}

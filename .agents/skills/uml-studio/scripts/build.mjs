@@ -1,0 +1,59 @@
+import { build as viteBuild } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { build as bundle } from 'esbuild'
+import { mkdir, readFile, writeFile, readdir, appendFile } from 'node:fs/promises'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { dirname, resolve } from 'node:path'
+import { createRequire } from 'node:module'
+import { spawnSync } from 'node:child_process'
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const require = createRequire(import.meta.url)
+// Keep redistribution notices with the runtime, including standalone HTML exports.
+async function collectLicenses() {
+  const seen = new Set()
+  const sections = []
+  async function visit(name, from) {
+    let manifestPath, manifest
+    for (const directory of createRequire(from).resolve.paths(name) ?? []) {
+      const candidate = resolve(directory, name, 'package.json')
+      try { manifest = JSON.parse(await readFile(candidate, 'utf8')); manifestPath = candidate; break }
+      catch (error) { if (error.code !== 'ENOENT') throw error }
+    }
+    if (!manifestPath) throw new Error(`Cannot locate license manifest for ${name}`)
+    if (seen.has(manifestPath)) return
+    seen.add(manifestPath)
+    const files = (await readdir(dirname(manifestPath))).filter(file => /^(license|copying)(\.[^.]+)?$/i.test(file)).sort()
+    const licenses = await Promise.all(files.map(file => readFile(resolve(dirname(manifestPath), file), 'utf8')))
+    sections.push(`${manifest.name}@${manifest.version} — ${manifest.license ?? 'See license below'}\nSource: https://www.npmjs.com/package/${manifest.name}/v/${manifest.version}\n${licenses.join('\n') || 'License declaration: ' + JSON.stringify(manifest.license)}`)
+    for (const dependency of Object.keys(manifest.dependencies ?? {}).sort()) await visit(dependency, manifestPath)
+  }
+  const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'))
+  for (const name of Object.keys(manifest.dependencies).sort()) await visit(name, resolve(root, 'package.json'))
+  return 'UML Studio third-party notices. Dependencies are used unmodified.\nELK.js source: https://github.com/kieler/elkjs\n\n' + sections.join('\n\n' + '='.repeat(72) + '\n\n')
+}
+const production = { 'process.env.NODE_ENV': JSON.stringify('production') }
+const tsc = spawnSync(process.execPath, [require.resolve('vue-tsc/bin/vue-tsc.js'), '--declaration', '--emitDeclarationOnly', '--noEmit', 'false', '--outDir', 'dist/types', '-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' })
+if (tsc.status !== 0) process.exit(tsc.status ?? 1)
+const notices = await collectLicenses()
+await viteBuild({ configFile: false, root, plugins: [vue()], define: production,
+  build: { outDir: resolve(root, 'assets'), emptyOutDir: true, lib: { entry: resolve(root, 'src/viewer.ts'), name: 'UmlStudioViewer', formats: ['iife'], fileName: () => 'viewer.js', cssFileName: 'viewer' }, rollupOptions: { output: { inlineDynamicImports: true } }, minify: true },
+})
+await mkdir(resolve(root, 'dist'), { recursive: true })
+await bundle({ entryPoints: [resolve(root, 'src/core.ts')], outfile: resolve(root, 'dist/core.mjs'), bundle: true, platform: 'node', format: 'esm', target: 'node20', banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" } })
+await bundle({ entryPoints: [resolve(root, 'src/export.ts')], outfile: resolve(root, 'dist/export.mjs'), bundle: true, platform: 'neutral', format: 'esm', target: 'es2022' })
+await viteBuild({ configFile: false, root, plugins: [vue()], define: production,
+  build: { outDir: resolve(root, 'dist'), emptyOutDir: false, lib: { entry: resolve(root, 'src/index.ts'), formats: ['es'], fileName: () => 'vue.mjs', cssFileName: 'diagram' }, rollupOptions: { external: ['vue'] }, minify: false },
+})
+const { diagramSchema } = await import(pathToFileURL(resolve(root, 'dist/core.mjs')).href)
+const { createHtml } = await import(pathToFileURL(resolve(root, 'dist/export.mjs')).href)
+await mkdir(resolve(root, 'schemas'), { recursive: true })
+await writeFile(resolve(root, 'schemas/diagram.schema.json'), JSON.stringify(diagramSchema, null, 2) + '\n')
+await writeFile(resolve(root, 'THIRD_PARTY_NOTICES.txt'), notices)
+for (const target of ['assets/viewer.js', 'dist/core.mjs', 'dist/export.mjs', 'dist/vue.mjs']) {
+  await appendFile(resolve(root, target), `\n/*\n${notices.replace(/\*\//g, '* /')}\n*/\n`)
+}
+const runtime = { js: await readFile(resolve(root, 'assets/viewer.js'), 'utf8'), css: await readFile(resolve(root, 'assets/viewer.css'), 'utf8') }
+const spec = JSON.parse(await readFile(resolve(root, 'examples/fishbone.json'), 'utf8'))
+await mkdir(resolve(root, 'demo-dist'), { recursive: true })
+await writeFile(resolve(root, 'demo-dist/index.html'), createHtml(spec, runtime))
+console.log('Built: reusable Vue library, headless renderer, offline runtime, JSON Schema, demo-dist/index.html')

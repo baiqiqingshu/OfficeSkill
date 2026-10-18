@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "type": "fishbone",
+  "title": "软件交付延期 · 根因分析",
+  "description": "从协作、需求、工程、质量、资源与外部依赖逐层定位交付阻力。",
+  "theme": "paper",
+  "style": {
+    "fontFamily": "\"Microsoft YaHei\", \"PingFang SC\", \"Noto Sans CJK SC\", sans-serif",
+    "fontSize": 18,
+    "lineWidth": 1.5,
+    "primary": "#a94f35",
+    "secondary": "#52796f",
+    "background": "#fbf8f2",
+    "surface": "#ffffff",
+    "border": "#d8d3c8",
+    "text": "#293b38",
+    "muted": "#65746c"
+  },
+  "fishbone": {
+    "effect": "软件交付延期",
+    "categories": [
+      {
+        "id": "people",
+        "label": "团队协作",
+        "causes": [
+          {
+            "label": "跨团队交接滞后",
+            "children": [
+              {
+                "label": "责任边界不清晰"
+              },
+              {
+                "label": "关键决策缺少负责人"
+              }
+            ]
+          },
+          {
+            "label": "核心成员排期冲突"
+          }
+        ]
+      },
+      {
+        "id": "requirements",
+        "label": "需求管理",
+        "causes": [
+          {
+            "label": "迭代范围持续扩大",
+            "children": [
+              {
+                "label": "变更未评估交付影响",
+                "children": [
+                  {
+                    "label": "缺少统一的变更入口"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "验收标准不明确"
+          }
+        ]
+      },
+      {
+        "id": "engineering",
+        "label": "工程能力",
+        "causes": [
+          {
+            "label": "技术债累积",
+            "children": [
+              {
+                "label": "核心模块耦合度高"
+              },
+              {
+                "label": "构建与部署依赖人工"
+              }
+            ]
+          },
+          {
+            "label": "开发环境不一致"
+          }
+        ]
+      },
+      {
+        "id": "quality",
+        "label": "质量保障",
+        "causes": [
+          {
+            "label": "缺陷发现过晚",
+            "children": [
+              {
+                "label": "回归测试覆盖不足"
+              },
+              {
+                "label": "测试环境数据缺失"
+              }
+            ]
+          },
+          {
+            "label": "性能验证安排靠后"
+          }
+        ]
+      },
+      {
+        "id": "planning",
+        "label": "计划与资源",
+        "causes": [
+          {
+            "label": "工作量估算偏乐观",
+            "children": [
+              {
+                "label": "未计入联调与返工"
+              }
+            ]
+          },
+          {
+            "label": "并行任务超过团队容量"
+          }
+        ]
+      },
+      {
+        "id": "dependencies",
+        "label": "外部依赖",
+        "causes": [
+          {
+            "label": "第三方接口交付延迟",
+            "children": [
+              {
+                "label": "接口契约确认不及时"
+              }
+            ]
+          },
+          {
+            "label": "采购与合规审批周期长"
+          }
+        ]
+      }
+    ]
+  }
+}

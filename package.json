@@ -1,0 +1,11 @@
+{
+  "name": "office-skill", "private": true, "type": "module",
+  "workspaces": [".agents/skills/uml-studio"],
+  "scripts": {
+    "dev": "npm run dev -w @office/uml-studio",
+    "build": "npm run build -w @office/uml-studio",
+    "typecheck": "npm run typecheck -w @office/uml-studio",
+    "test": "npm run test -w @office/uml-studio",
+    "diagram": "node .agents/skills/uml-studio/scripts/diagram.mjs"
+  }
+}

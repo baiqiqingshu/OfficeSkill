@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "type": "module",
+  "title": "支付域 · 模块划分",
+  "description": "按职责拆分支付模块，并通过抽象隔离渠道变化。",
+  "theme": "paper",
+  "direction": "TB",
+  "nodes": [
+    {
+      "id": "payment",
+      "label": "支付域",
+      "kind": "package"
+    },
+    {
+      "id": "app",
+      "label": "支付用例",
+      "kind": "component",
+      "detail": "扣款 / 退款编排"
+    },
+    {
+      "id": "rules",
+      "label": "支付规则",
+      "kind": "component",
+      "detail": "金额 / 风控 / 幂等"
+    },
+    {
+      "id": "port",
+      "label": "渠道接口",
+      "kind": "interface"
+    },
+    {
+      "id": "bank",
+      "label": "银行渠道",
+      "kind": "component"
+    },
+    {
+      "id": "wallet",
+      "label": "钱包渠道",
+      "kind": "component"
+    }
+  ],
+  "edges": [
+    {
+      "from": "payment",
+      "to": "app"
+    },
+    {
+      "from": "app",
+      "to": "rules",
+      "kind": "dependency"
+    },
+    {
+      "from": "app",
+      "to": "port",
+      "kind": "dependency"
+    },
+    {
+      "from": "bank",
+      "to": "port",
+      "kind": "realization"
+    },
+    {
+      "from": "wallet",
+      "to": "port",
+      "kind": "realization"
+    }
+  ]
+}

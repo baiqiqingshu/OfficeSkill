@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "type": "architecture",
+  "title": "数字书店 · 系统架构",
+  "description": "访问层、业务域与基础设施形成清晰的系统边界。",
+  "theme": "paper",
+  "direction": "TB",
+  "groups": [
+    {
+      "id": "clients",
+      "label": "访问层",
+      "kind": "boundary"
+    },
+    {
+      "id": "services",
+      "label": "业务服务",
+      "kind": "boundary"
+    },
+    {
+      "id": "data",
+      "label": "数据与集成",
+      "kind": "boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "web",
+      "label": "读者 Web",
+      "kind": "component",
+      "group": "clients"
+    },
+    {
+      "id": "admin",
+      "label": "运营工作台",
+      "kind": "component",
+      "group": "clients"
+    },
+    {
+      "id": "gateway",
+      "label": "API 网关",
+      "kind": "component",
+      "group": "services",
+      "detail": "路由 / 认证 / 限流"
+    },
+    {
+      "id": "catalog",
+      "label": "书目服务",
+      "kind": "component",
+      "group": "services"
+    },
+    {
+      "id": "order",
+      "label": "订单服务",
+      "kind": "component",
+      "group": "services",
+      "style": {
+        "primary": "#ad4d32"
+      }
+    },
+    {
+      "id": "db",
+      "label": "业务数据库",
+      "kind": "database",
+      "group": "data"
+    },
+    {
+      "id": "bus",
+      "label": "事件总线",
+      "kind": "queue",
+      "group": "data"
+    }
+  ],
+  "edges": [
+    {
+      "from": "web",
+      "to": "gateway",
+      "label": "HTTPS"
+    },
+    {
+      "from": "admin",
+      "to": "gateway",
+      "label": "HTTPS"
+    },
+    {
+      "from": "gateway",
+      "to": "catalog"
+    },
+    {
+      "from": "gateway",
+      "to": "order"
+    },
+    {
+      "from": "catalog",
+      "to": "db"
+    },
+    {
+      "from": "order",
+      "to": "db"
+    },
+    {
+      "from": "order",
+      "to": "bus",
+      "label": "领域事件",
+      "dashed": true
+    }
+  ]
+}
