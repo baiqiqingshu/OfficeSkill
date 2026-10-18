@@ -1652,10 +1652,13 @@ input[type="range"] {
 }
 .export-toolbar .export-image-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 7px;
-  flex: 0 1 160px;
-  min-width: 140px;
+  flex: 1 1 320px;
+  min-width: 280px;
+}
+.export-toolbar .export-image-actions .export-button {
+  flex: 1 1 0;
 }
 .export-toolbar > .export-button {
   width: auto;

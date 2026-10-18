@@ -98898,7 +98898,10 @@ async function renderGraph(spec, suppliedTheme) {
   return frame(spec, theme, width, height, body);
 }
 function measure(value, size) {
-  return Array.from(value).reduce((width, char) => width + (/[^\u0000-\u00ff]/.test(char) ? 1 : /[MW@%]/.test(char) ? 0.9 : 0.58) * size, 0);
+  return Array.from(value).reduce(
+    (width, char) => width + (/[^\u0000-\u00ff]/.test(char) ? 1 : /[MW@%]/.test(char) ? 0.9 : 0.58) * size,
+    0
+  );
 }
 function wrap(value, width, size) {
   const result = [];
@@ -98926,7 +98929,19 @@ function heading(spec, theme, width, eyebrow) {
   const titleY = 66;
   const descriptionY = titleY + title2.length * titleSize * 1.4 + 5;
   return {
-    svg: text(40, 30, eyebrow, theme, { anchor: "start", size: 11, fill: theme.muted, weight: 700 }) + text(40, titleY, title2.join("\n"), theme, { anchor: "start", size: titleSize, weight: 700 }) + (subtitle.length ? text(40, descriptionY, subtitle.join("\n"), theme, { anchor: "start", fill: theme.muted }) : ""),
+    svg: text(40, 30, eyebrow, theme, {
+      anchor: "start",
+      size: 11,
+      fill: theme.muted,
+      weight: 700
+    }) + text(40, titleY, title2.join("\n"), theme, {
+      anchor: "start",
+      size: titleSize,
+      weight: 700
+    }) + (subtitle.length ? text(40, descriptionY, subtitle.join("\n"), theme, {
+      anchor: "start",
+      fill: theme.muted
+    }) : ""),
     bottom: (subtitle.length ? descriptionY + subtitle.length * theme.fontSize * 1.4 : titleY + title2.length * titleSize * 1.4) + 30
   };
 }
@@ -98936,27 +98951,66 @@ function renderSequence(spec, theme) {
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
   const size = theme.fontSize;
-  const participantWidth = Math.max(128, theme.nodeWidth, ...participants.map((p) => Math.min(280, measure(p.label, size) + 30)));
+  const participantWidth = Math.max(
+    128,
+    theme.nodeWidth,
+    ...participants.map((p) => Math.min(280, measure(p.label, size) + 30))
+  );
   const gap = spec.layout?.regionGap ?? 40;
   const messageGap = spec.layout?.elementGap ?? 24;
   const labelWidth = Math.max(participantWidth + gap - 24, 190);
   const column = participantWidth + gap;
   const lastCenter = 70 + participantWidth / 2 + (participants.length - 1) * column;
-  const width = Math.max(720, participants.length * column + 100, lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40);
+  const width = Math.max(
+    720,
+    participants.length * column + 100,
+    lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40
+  );
   const header = heading(spec, theme, width, "UML / SEQUENCE · 时间向下");
   const top = header.bottom;
-  const boxHeight = Math.max(76, size * 4, ...participants.map((p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (p.kind === "actor" ? 76 : 28)));
-  const x = new Map(participants.map((p, i) => [p.id, 70 + participantWidth / 2 + i * column]));
+  const boxHeight = Math.max(
+    76,
+    size * 4,
+    ...participants.map(
+      (p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (p.kind === "actor" ? 76 : 28)
+    )
+  );
+  const x = new Map(
+    participants.map((p, i) => [p.id, 70 + participantWidth / 2 + i * column])
+  );
   const ys = [];
   const rowLines = [], labelTops = [];
   const guardSize = Math.max(11, size - 1), guardLeading = guardSize * 1.4;
-  const orderedFragments = [...fragments].sort((a, b) => b.to - b.from - (a.to - a.from));
+  const orderedFragments = [...fragments].sort(
+    (a, b) => b.to - b.from - (a.to - a.from)
+  );
   const frames = orderedFragments.map((fragment, index) => {
-    const nested = orderedFragments.slice(0, index).filter((other) => other.from <= fragment.from && other.to >= fragment.to).length;
+    const nested = orderedFragments.slice(0, index).filter(
+      (other) => other.from <= fragment.from && other.to >= fragment.to
+    ).length;
     const left = 36 + nested * 12, right = width - 36 - nested * 12;
-    const guardLines = wrap(`[${fragment.label}]`, Math.max(48, right - left - 96), guardSize);
-    const elseLines = wrap(`[${fragment.elseLabel ?? (fragment.kind === "par" ? "并行分支" : "else")}]`, Math.max(48, right - left - 32), guardSize);
-    return { fragment, left, right, guardLines, elseLines, headerHeight: Math.max(44, guardLines.length * guardLeading + 20) + 12, elseHeight: elseLines.length * guardLeading + 36, top: 0, bottom: 0, divider: 0 };
+    const guardLines = wrap(
+      `[${fragment.label}]`,
+      Math.max(48, right - left - 96),
+      guardSize
+    );
+    const elseLines = wrap(
+      `[${fragment.elseLabel ?? (fragment.kind === "par" ? "并行分支" : "else")}]`,
+      Math.max(48, right - left - 32),
+      guardSize
+    );
+    return {
+      fragment,
+      left,
+      right,
+      guardLines,
+      elseLines,
+      headerHeight: Math.max(44, guardLines.length * guardLeading + 20) + 12,
+      elseHeight: elseLines.length * guardLeading + 36,
+      top: 0,
+      bottom: 0,
+      divider: 0
+    };
   });
   const starts = /* @__PURE__ */ new Map(), alternatives = /* @__PURE__ */ new Map(), ends = /* @__PURE__ */ new Map();
   const addEvent = (events, index, box) => {
@@ -98967,24 +99021,31 @@ function renderSequence(spec, theme) {
   for (const box of frames) {
     addEvent(starts, box.fragment.from, box);
     addEvent(ends, box.fragment.to, box);
-    if (box.fragment.elseAt !== void 0) addEvent(alternatives, box.fragment.elseAt, box);
+    if (box.fragment.elseAt !== void 0)
+      addEvent(alternatives, box.fragment.elseAt, box);
   }
   for (const boxes of ends.values()) boxes.reverse();
   let cursor = top + boxHeight + 40;
   for (let i = 0; i < messages.length; i++) {
     const elseBoxes = alternatives.get(i), startBoxes = starts.get(i);
-    if (elseBoxes) for (const box of elseBoxes) {
-      box.divider = cursor;
-      cursor += box.elseHeight;
-    }
-    if (startBoxes) for (const box of startBoxes) {
-      box.top = cursor;
-      cursor += box.headerHeight;
-    }
+    if (elseBoxes)
+      for (const box of elseBoxes) {
+        box.divider = cursor;
+        cursor += box.elseHeight;
+      }
+    if (startBoxes)
+      for (const box of startBoxes) {
+        box.top = cursor;
+        cursor += box.headerHeight;
+      }
     const msg = messages[i];
     const label2 = `${i + 1}  ${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
     const available = msg.from === msg.to ? labelWidth - 56 : Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 48;
-    const lines = wrap(label2, Math.max(48, Math.min(labelWidth, available)), size);
+    const lines = wrap(
+      label2,
+      Math.max(48, Math.min(labelWidth, available)),
+      size
+    );
     const labelHeight = lines.length * size * 1.4;
     const before = msg.kind === "create" ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12;
     const y = cursor + before;
@@ -99015,16 +99076,34 @@ function renderSequence(spec, theme) {
   let fragmentAnnotations = "";
   const guard = (left, top2, lines) => {
     const width2 = Math.max(...lines.map((value) => measure(value, guardSize))) + 8;
-    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, { anchor: "start", size: guardSize, fill: theme.muted });
+    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, {
+      anchor: "start",
+      size: guardSize,
+      fill: theme.muted
+    });
   };
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
     body += `<rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
     fragmentAnnotations += `<path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
-    fragmentAnnotations += text(left + 10, frameTop + 18, fragment.kind, theme, { anchor: "start", size: 12, weight: 700 });
+    fragmentAnnotations += text(
+      left + 10,
+      frameTop + 18,
+      fragment.kind,
+      theme,
+      { anchor: "start", size: 12, weight: 700 }
+    );
     fragmentAnnotations += guard(left + 76, frameTop + 8, box.guardLines);
     if (fragment.elseAt !== void 0) {
-      body += line(left, box.divider, right, box.divider, theme.border, theme.lineWidth, true);
+      body += line(
+        left,
+        box.divider,
+        right,
+        box.divider,
+        theme.border,
+        theme.lineWidth,
+        true
+      );
       fragmentAnnotations += guard(left + 12, box.divider + 10, box.elseLines);
     }
   }
@@ -99032,13 +99111,23 @@ function renderSequence(spec, theme) {
     const cx = x.get(p.id);
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)] : bottom;
-    body += line(cx, start, cx, Math.max(start, end), theme.border, theme.lineWidth, true);
+    body += line(
+      cx,
+      start,
+      cx,
+      Math.max(start, end),
+      theme.border,
+      theme.lineWidth,
+      true
+    );
   }
   const stacks = /* @__PURE__ */ new Map();
   const activationShapes = [];
   const drawActivation = (id2, activation, end) => {
     const ax = x.get(id2) - 6 + activation.depth * 5;
-    activationShapes.push(`<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`);
+    activationShapes.push(
+      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
+    );
   };
   const sourceOffsets = [], targetOffsets = [];
   messages.forEach((m, i) => {
@@ -99054,14 +99143,16 @@ function renderSequence(spec, theme) {
     if (m.deactivate) {
       const stack = stacks.get(closeId);
       const active = stack?.pop();
-      if (active) drawActivation(closeId, active, ys[i] + (m.from === m.to ? 30 : 0));
+      if (active)
+        drawActivation(closeId, active, ys[i] + (m.from === m.to ? 30 : 0));
     }
     if (m.kind === "destroy") {
       const stack = stacks.get(m.to) ?? [];
       while (stack.length) drawActivation(m.to, stack.pop(), ys[i]);
     }
   });
-  for (const [id2, stack] of stacks) while (stack.length) drawActivation(id2, stack.pop(), bottom);
+  for (const [id2, stack] of stacks)
+    while (stack.length) drawActivation(id2, stack.pop(), bottom);
   body += activationShapes.join("");
   for (const p of participants) {
     const cx = x.get(p.id), py = headerY(p);
@@ -99070,11 +99161,21 @@ function renderSequence(spec, theme) {
       const cy = py + 13;
       body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
       body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, { anchor: "middle", weight: 600 });
+      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, {
+        anchor: "middle",
+        weight: 600
+      });
     } else {
       body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${p.kind === "database" ? 0 : theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      if (p.kind === "database") body += `<ellipse cx="${cx}" cy="${py + 8}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += text(cx, py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7, labelLines.join("\n"), theme, { anchor: "middle", weight: 600 });
+      if (p.kind === "database")
+        body += `<ellipse cx="${cx}" cy="${py + 8}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+      body += text(
+        cx,
+        py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
+        labelLines.join("\n"),
+        theme,
+        { anchor: "middle", weight: 600 }
+      );
     }
   }
   body += fragmentAnnotations;
@@ -99094,10 +99195,19 @@ function renderSequence(spec, theme) {
     const ly = labelTops[i] + size * 1.1;
     const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
     body += `<rect x="${self2 ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
-    body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self2 ? "start" : "middle" });
-    if (kind === "destroy") body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+    body += text(lx, ly, labelLines.join("\n"), theme, {
+      anchor: self2 ? "start" : "middle"
+    });
+    if (kind === "destroy")
+      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
   });
-  body += text(40, height - 18, "实心箭头 同步 / 返回　空心箭头 异步 / 创建　× 生命周期结束", theme, { anchor: "start", size: 11, fill: theme.muted });
+  body += text(
+    40,
+    height - 18,
+    "实心箭头 同步 / 返回　空心箭头 异步 / 创建　× 生命周期结束",
+    theme,
+    { anchor: "start", size: 11, fill: theme.muted }
+  );
   return frame(spec, theme, width, height, body);
 }
 function renderFishbone(spec, theme) {
@@ -99113,51 +99223,117 @@ function renderFishbone(spec, theme) {
     const visit = (cause2, depth, parent) => {
       const lines = wrap(cause2.label, 205, size);
       const rowIndex = rows.length;
-      const height2 = Math.max(18 + elementGap, lines.length * leading + elementGap);
+      const height2 = Math.max(
+        18 + elementGap,
+        lines.length * leading + elementGap
+      );
       rows.push({ cause: cause2, depth, parent, lines, offset, height: height2 });
       offset += height2;
       maxDepth = Math.max(maxDepth, depth);
       cause2.children?.forEach((child) => visit(child, depth + 1, rowIndex));
     };
     category.causes.forEach((cause2) => visit(cause2, 0, -1));
-    return { category, index, rows, span: Math.max(180, offset + 64), width: Math.max(400 + maxDepth * 26, measure(category.label, size + 1) + 50) };
+    return {
+      category,
+      index,
+      rows,
+      span: Math.max(180, offset + 64),
+      width: Math.max(
+        400 + maxDepth * 26,
+        measure(category.label, size + 1) + 50
+      )
+    };
   });
   const columns = [];
-  for (let i = 0; i < categories.length; i += 2) columns.push(Math.max(categories[i].width, categories[i + 1]?.width ?? 0));
+  for (let i = 0; i < categories.length; i += 2)
+    columns.push(Math.max(categories[i].width, categories[i + 1]?.width ?? 0));
   const headWidth = Math.max(300, theme.nodeWidth + 120);
   const effectSize = size + 3;
   const effectLines = wrap(data.effect, headWidth * 0.47, effectSize);
   const effectHeight = effectLines.length * effectSize * 1.4;
   const headHeight = Math.max(160, effectHeight * 1.8 + 48);
-  const width = Math.max(920, 150 + columns.reduce((sum, w) => sum + w, 0) + Math.max(0, columns.length - 1) * regionGap + headWidth + 80);
-  const header = heading(spec, theme, width, "ROOT CAUSE / FISHBONE · 原因分析");
-  const topSpan = Math.max(180, headHeight / 2 + 24, ...categories.filter((c) => c.index % 2 === 0).map((c) => c.span));
-  const bottomSpan = Math.max(180, headHeight / 2 + 24, ...categories.filter((c) => c.index % 2 === 1).map((c) => c.span));
-  const categoryMargin = Math.max(62, ...categories.map((c) => wrap(c.category.label, Math.min(c.width - 36, Math.max(130, measure(c.category.label, size + 1) + 34)) - 24, size + 1).length * (size + 1) * 1.4 + 28));
+  const width = Math.max(
+    920,
+    150 + columns.reduce((sum, w) => sum + w, 0) + Math.max(0, columns.length - 1) * regionGap + headWidth + 80
+  );
+  const header = heading(
+    spec,
+    theme,
+    width,
+    "ROOT CAUSE / FISHBONE · 原因分析"
+  );
+  const topSpan = Math.max(
+    180,
+    headHeight / 2 + 24,
+    ...categories.filter((c) => c.index % 2 === 0).map((c) => c.span)
+  );
+  const bottomSpan = Math.max(
+    180,
+    headHeight / 2 + 24,
+    ...categories.filter((c) => c.index % 2 === 1).map((c) => c.span)
+  );
+  const categoryMargin = Math.max(
+    62,
+    ...categories.map(
+      (c) => wrap(
+        c.category.label,
+        Math.min(
+          c.width - 36,
+          Math.max(130, measure(c.category.label, size + 1) + 34)
+        ) - 24,
+        size + 1
+      ).length * (size + 1) * 1.4 + 28
+    )
+  );
   const spineY = header.bottom + topSpan + categoryMargin;
   const height = spineY + bottomSpan + Math.max(110, categoryMargin + 48);
   const headX = width - headWidth - 48;
   let body = header.svg;
   body += `<path d="M 96 ${spineY} L 42 ${spineY - 40} Q 52 ${spineY} 42 ${spineY + 40} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth + 1}"/>`;
-  body += line(96, spineY, headX + 28, spineY, theme.primary, theme.lineWidth + 2);
+  body += line(
+    96,
+    spineY,
+    headX + 28,
+    spineY,
+    theme.primary,
+    theme.lineWidth + 2
+  );
   const finX = headX - 65;
   body += `<path d="M ${finX - 42} ${spineY} l 18 -30 l 28 30 M ${finX - 42} ${spineY} l 18 30 l 28 -30" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
   let left = 125;
   for (let ci = 0; ci < columns.length; ci++) {
     const colWidth = columns[ci];
-    for (const item of categories.filter((c) => Math.floor(c.index / 2) === ci)) {
+    for (const item of categories.filter(
+      (c) => Math.floor(c.index / 2) === ci
+    )) {
       const upper = item.index % 2 === 0;
       const direction = upper ? -1 : 1;
       const span = upper ? topSpan : bottomSpan;
       const outerY = spineY + direction * span;
       const attachX = left + colWidth - 20;
-      const categoryWidth = Math.min(colWidth - 36, Math.max(130, measure(item.category.label, size + 1) + 34));
+      const categoryWidth = Math.min(
+        colWidth - 36,
+        Math.max(130, measure(item.category.label, size + 1) + 34)
+      );
       const tipX = left + colWidth - categoryWidth / 2 - 18;
-      const categoryLines = wrap(item.category.label, categoryWidth - 24, size + 1);
+      const categoryLines = wrap(
+        item.category.label,
+        categoryWidth - 24,
+        size + 1
+      );
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
       const categoryY = upper ? outerY - categoryHeight : outerY;
-      body += line(attachX, spineY, tipX, outerY, theme.secondary, theme.lineWidth + 0.5);
-      const centers = item.rows.map((row) => (upper ? outerY : spineY) + 35 + row.offset + row.height / 2);
+      body += line(
+        attachX,
+        spineY,
+        tipX,
+        outerY,
+        theme.secondary,
+        theme.lineWidth + 0.5
+      );
+      const centers = item.rows.map(
+        (row) => (upper ? outerY : spineY) + 35 + row.offset + row.height / 2
+      );
       item.rows.forEach((row, ri) => {
         const ry = centers[ri];
         const labelX = left + 12 + row.depth * 26;
@@ -99165,7 +99341,14 @@ function renderFishbone(spec, theme) {
         if (row.parent < 0) {
           const ratio = Math.abs(lineY - spineY) / span;
           const boneX = attachX + (tipX - attachX) * ratio;
-          body += line(labelX, lineY, boneX, lineY, theme.border, theme.lineWidth);
+          body += line(
+            labelX,
+            lineY,
+            boneX,
+            lineY,
+            theme.border,
+            theme.lineWidth
+          );
         } else {
           const parentRow = item.rows[row.parent];
           const parentX = left + 12 + parentRow.depth * 26;
@@ -99173,19 +99356,47 @@ function renderFishbone(spec, theme) {
           body += `<path d="M ${parentX + 8} ${parentY} V ${lineY} H ${labelX}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
         }
         body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? theme.secondary : theme.muted)}"/>`;
-        body += text(labelX + 5, ry - (row.lines.length - 1) * leading / 2, row.lines.join("\n"), theme, { anchor: "start", size, fill: row.depth === 0 ? theme.text : theme.muted, weight: row.depth === 0 ? 600 : 400 });
+        body += text(
+          labelX + 5,
+          ry - (row.lines.length - 1) * leading / 2,
+          row.lines.join("\n"),
+          theme,
+          {
+            anchor: "start",
+            size,
+            fill: row.depth === 0 ? theme.text : theme.muted,
+            weight: row.depth === 0 ? 600 : 400
+          }
+        );
       });
       body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += text(tipX, categoryY + 12 + size + 1, categoryLines.join("\n"), theme, { size: size + 1, anchor: "middle", weight: 700 });
+      body += text(
+        tipX,
+        categoryY + 12 + size + 1,
+        categoryLines.join("\n"),
+        theme,
+        { size: size + 1, anchor: "middle", weight: 700 }
+      );
     }
     left += colWidth + regionGap;
   }
-  body += `<g data-part="head"><path data-feature="silhouette" d="M ${headX + headWidth * 0.08} ${spineY} C ${headX + headWidth * 0.02} ${spineY - headHeight * 0.38} ${headX + headWidth * 0.28} ${spineY - headHeight * 0.56} ${headX + headWidth * 0.55} ${spineY - headHeight * 0.46} C ${headX + headWidth * 0.78} ${spineY - headHeight * 0.39} ${headX + headWidth * 0.97} ${spineY - headHeight * 0.15} ${headX + headWidth} ${spineY} C ${headX + headWidth * 0.97} ${spineY + headHeight * 0.15} ${headX + headWidth * 0.78} ${spineY + headHeight * 0.39} ${headX + headWidth * 0.55} ${spineY + headHeight * 0.46} C ${headX + headWidth * 0.28} ${spineY + headHeight * 0.56} ${headX + headWidth * 0.02} ${spineY + headHeight * 0.38} ${headX + headWidth * 0.08} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-opacity=".65" stroke-width="${Math.max(1, theme.lineWidth)}" stroke-linejoin="round"/>`;
-  body += `<path data-feature="gill" d="M ${headX + headWidth * 0.18} ${spineY - headHeight * 0.25} C ${headX + headWidth * 0.12} ${spineY - headHeight * 0.12} ${headX + headWidth * 0.12} ${spineY + headHeight * 0.12} ${headX + headWidth * 0.18} ${spineY + headHeight * 0.25}" fill="none" stroke="${esc(theme.primary)}" stroke-opacity=".3" stroke-width="${theme.lineWidth}" stroke-linecap="round"/>`;
-  body += `<circle data-feature="eye" cx="${headX + headWidth * 0.79}" cy="${spineY - headHeight * 0.2}" r="3.5" fill="${esc(theme.primary)}" fill-opacity=".8"/>`;
-  body += `<path data-feature="mouth" d="M ${headX + headWidth * 0.91} ${spineY + headHeight * 0.1} Q ${headX + headWidth * 0.955} ${spineY + headHeight * 0.12} ${headX + headWidth * 0.98} ${spineY + headHeight * 0.035}" fill="none" stroke="${esc(theme.primary)}" stroke-opacity=".55" stroke-width="${Math.max(1, theme.lineWidth * 0.75)}" stroke-linecap="round"/>`;
-  body += text(headX + headWidth * 0.49, spineY + effectSize * 0.35 - (effectLines.length - 1) * effectSize * 0.7, effectLines.join("\n"), theme, { size: effectSize, anchor: "middle", weight: 700 }) + "</g>";
-  body += text(40, height - 24, `${data.categories.length} 个原因维度 · 分支逐级展开 · 鱼头表示观察到的结果`, theme, { anchor: "start", size: 11, fill: theme.muted });
+  body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+  body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
+  body += `<circle cx="${headX + headWidth - 49}" cy="${spineY - headHeight * 0.25}" r="5" fill="${esc(theme.primary)}"/>`;
+  body += text(
+    headX + headWidth / 2 + 8,
+    spineY + 5 - (effectLines.length - 1) * effectSize * 0.7,
+    effectLines.join("\n"),
+    theme,
+    { size: effectSize, anchor: "middle", weight: 700 }
+  );
+  body += text(
+    40,
+    height - 24,
+    `${data.categories.length} 个原因维度 · 分支逐级展开 · 鱼头表示观察到的结果`,
+    theme,
+    { anchor: "start", size: 11, fill: theme.muted }
+  );
   return frame(spec, theme, width, height, body);
 }
 async function renderDiagram(input) {
