@@ -99253,6 +99253,7 @@ function alignConnectedNodes(result, edges, columns, spec) {
   for (const edge of edges) {
     const a = index.get(edge.edge.from), b = index.get(edge.edge.to);
     if (a === void 0 || b === void 0 || columns.get(nodes[a].ref.id) !== columns.get(nodes[b].ref.id) || Math.abs(center(a) - center(b)) < 0.01) continue;
+    if (!horizontal && spec.direction === "LR" && !/-column\d+$/.test(columns.get(nodes[a].ref.id))) continue;
     const [from, to] = center(a) < center(b) ? [a, b] : [b, a];
     constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to) });
   }
@@ -99281,7 +99282,7 @@ function alignConnectedNodes(result, edges, columns, spec) {
   };
   const candidates = edges.flatMap((ref2) => {
     const from = index.get(ref2.edge.from), to = index.get(ref2.edge.to);
-    return from === void 0 || to === void 0 || columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id) ? [] : [{ from, to, difference: Math.abs(center(from) - center(to)) }];
+    return from === void 0 || to === void 0 || columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id) && Math.abs(center(from) - center(to)) >= 0.01 ? [] : [{ from, to, difference: Math.abs(center(from) - center(to)) }];
   }).sort((a, b) => a.difference - b.difference);
   const related = /* @__PURE__ */ new Map();
   for (const edge of edges) {

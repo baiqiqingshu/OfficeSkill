@@ -1183,6 +1183,9 @@ function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Ma
   for (const edge of edges) {
     const a = index.get(edge.edge.from), b = index.get(edge.edge.to);
     if (a === undefined || b === undefined || columns.get(nodes[a].ref.id) !== columns.get(nodes[b].ref.id) || Math.abs(center(a) - center(b)) < 0.01) continue;
+    // In a natural LR layout, different y centres describe branches, not flow precedence.
+    // Folded columns still run vertically, including when the original direction was LR.
+    if (!horizontal && spec.direction === 'LR' && !/-column\d+$/.test(columns.get(nodes[a].ref.id)!)) continue;
     const [from, to] = center(a) < center(b) ? [a, b] : [b, a];
     constraints.push({ from, to, distance: bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to) });
   }
@@ -1204,9 +1207,10 @@ function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Ma
     }
     return false;
   };
+  // Preserve neighbours that ELK already placed on one centre line, even within one region.
   const candidates = edges.flatMap(ref => {
     const from = index.get(ref.edge.from), to = index.get(ref.edge.to);
-    return from === undefined || to === undefined || columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id)
+    return from === undefined || to === undefined || (columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id) && Math.abs(center(from) - center(to)) >= 0.01)
       ? [] : [{ from, to, difference: Math.abs(center(from) - center(to)) }];
   }).sort((a, b) => a.difference - b.difference);
   const related = new Map<string, Set<number>>();

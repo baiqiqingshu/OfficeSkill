@@ -145,6 +145,26 @@ test('balanced is the default and same-side fan-out reuses one source port', asy
   assert.deepEqual(graph.routes[0].paths[0][0], graph.routes[1].paths[0][0])
 })
 
+test('mixed-height LR chains retain straight connections through branching and feedback', async () => {
+  const source = JSON.parse(await readFile(new URL('../examples/scenarios/process.json', import.meta.url), 'utf8'))
+  for (const mode of ['compact', 'balanced', 'spacious', 'grid']) {
+    const spec = { ...source, layout: { mode, maxPerColumn: 0, edgeCrossing: 'plain' } }
+    const graph = geometry((await renderDiagram(spec)).svg)
+    const chain = ['client', 'api', 'db', 'relay', 'queue']
+    let baseline
+    for (let index = 1; index < chain.length; index++) {
+      const path = graph.routes.find(route => route.from === chain[index - 1] && route.to === chain[index]).paths[0]
+      assert.equal(path.length, 2, `${mode}: ${chain[index - 1]} → ${chain[index]} has an unnecessary bend`)
+      assert.ok(Math.abs(path[0].y - path[1].y) < .01, `${mode}: chain leaves its horizontal baseline`)
+      baseline ??= path[0].y
+      assert.ok(Math.abs(path[0].y - baseline) < .01, `${mode}: consecutive links must share a baseline`)
+    }
+    for (const [from, to] of [['queue', 'fulfill'], ['queue', 'notify'], ['fulfill', 'fulfill'], ['replay', 'queue']]) {
+      assert.ok(graph.routes.find(route => route.from === from && route.to === to).paths[0].length > 2, `${mode}: branch or feedback route must remain visible`)
+    }
+  }
+})
+
 test('usecase relationships are direct lines and sequence databases use cylinder outlines', async () => {
   const usecase = { version: 1, type: 'usecase', title: '直线', direction: 'LR',
     nodes: [{ id: 'actor', label: '用户', kind: 'actor' }, { id: 'one', label: '用例一', kind: 'usecase' }, { id: 'two', label: '用例二', kind: 'usecase' }],
