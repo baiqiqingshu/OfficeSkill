@@ -3,6 +3,7 @@ import type { ElkLabel, ElkNode } from 'elkjs/lib/elk-api';
 import type { DiagramEdge, DiagramGroup, DiagramNode, DiagramSpec, RenderedDiagram, Theme } from './types';
 import { esc, frame, text } from './svg';
 import { resolveLayout } from './themes';
+import { crossingPaths } from './crossings';
 
 type Kind = NonNullable<DiagramNode['kind']>;
 type Side = 'left' | 'right' | 'top' | 'bottom';
@@ -1377,6 +1378,17 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   }
   const labels = placeLabels(result.routes, result.nodes, result.containers, direction);
   const prefix = `uml-graph-${++graphNumber}`;
+  const displayed = result.routes.flatMap((route, owner) => route.paths.map(points => ({ points: simplify(points), owner })));
+  const crossings = crossingPaths(displayed, spec.layout?.edgeCrossing ?? 'bridge', theme.lineWidth,
+    [...result.nodes.map(occupiedNode), ...labels]);
+  const maskDefinitions = crossings.masks.map((arcs, index) => {
+    if (!arcs.length) return '';
+    const points = displayed[index].points;
+    const x = Math.min(...points.map(p => p.x)) - 24, y = Math.min(...points.map(p => p.y)) - 24;
+    const width = Math.max(...points.map(p => p.x)) - x + 24, height = Math.max(...points.map(p => p.y)) - y + 24;
+    return `<mask id="${prefix}-crossing-${index}" maskUnits="userSpaceOnUse" x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width)}" height="${numeric(height)}"><rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width)}" height="${numeric(height)}" fill="white"/>${arcs.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="${numeric(theme.lineWidth + 3)}"/>`).join('')}</mask>`;
+  }).join('');
+  let displayIndex = 0;
   let paths = '';
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
@@ -1385,8 +1397,9 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
     const start = kind === 'aggregation' || kind === 'composition' ? kind : '';
     paths += `<g class="uml-edge uml-edge-${kind}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
-      const data = simplify(route.paths[index]).map((point, i) => `${i ? 'L' : 'M'}${numeric(point.x)} ${numeric(point.y)}`).join(' ');
-      paths += `<path d="${data}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ''}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ''}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ''}/>`;
+      const current = displayIndex++, data = crossings.data[current];
+      const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : '';
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ''}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ''}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ''}/>`;
     }
     paths += '</g>';
   }
@@ -1411,6 +1424,6 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   const heading = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: 'start', weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: 'start', fill: theme.muted }) : '') : '';
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}${heading}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }

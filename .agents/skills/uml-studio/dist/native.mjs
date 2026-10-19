@@ -137,6 +137,7 @@ var style = object({
 });
 var layout = object({
   mode: { ...en(...layoutModes.map((mode) => mode.value)), default: "balanced" },
+  edgeCrossing: { ...en("bridge", "plain"), default: "bridge", description: "\u8282\u70B9\u56FE\u8FDE\u7EBF\u4EA4\u53C9\u8868\u793A\uFF1Abridge \u4E3A\u62F1\u6865\u5F62\u8DF3\u7EBF\uFF0Cplain \u4E3A\u65E0\u5706\u70B9\u76F4\u63A5\u4EA4\u53C9\uFF1B\u4E24\u8005\u90FD\u8868\u793A\u4E0D\u76F8\u8FDE\u3002" },
   showTitle: { type: "boolean", default: false },
   maxWidth: num(0, 1e5),
   maxHeight: num(0, 1e5),
@@ -316,6 +317,73 @@ function frame(spec, theme, width, height, body) {
   }).replace(/(\s(?:xlink:)?href=)(["'])#([^"']+)\2/g, (_match, attribute, quote, id2) => `${attribute}${quote}#${ids.get(id2) ?? `${prefix}-body-${id2}`}${quote}`).replace(/(\saria-(?:labelledby|describedby)=)(["'])([^"']+)\2/g, (_match, attribute, quote, references) => `${attribute}${quote}${references.split(/\s+/).map((id2) => ids.get(id2) ?? `${prefix}-body-${id2}`).join(" ")}${quote}`));
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${physicalWidth}" height="${physicalHeight}" viewBox="0 0 ${w} ${h}" role="img" aria-labelledby="${prefix}-title ${prefix}-desc"><title id="${prefix}-title">${esc(spec.title)}</title><desc id="${prefix}-desc">${esc(description)}</desc><rect width="${w}" height="${h}" fill="${esc(paint(theme.background, "#ffffff"))}"/>${isolatedBody}</svg>`;
   return { svg, width: physicalWidth, height: physicalHeight };
+}
+
+// src/crossings.ts
+var n = (value) => String(Math.round(value * 1e3) / 1e3);
+var xy = (point) => `${n(point.x)} ${n(point.y)}`;
+var cross = (ax, ay, bx, by) => ax * by - ay * bx;
+function crossingPaths(paths, mode, lineWidth, obstacles = []) {
+  const data = paths.map((path) => path.points.map((p, i) => `${i ? "L" : "M"}${xy(p)}`).join(" "));
+  const masks = paths.map(() => []);
+  if (mode === "plain") return { data, masks };
+  const segments = [];
+  paths.forEach((path, index) => {
+    for (let i = 1; i < path.points.length; i++) {
+      const a = path.points[i - 1], b = path.points[i], length = Math.hypot(b.x - a.x, b.y - a.y);
+      if (length > 1e-3) segments.push({ path: index, index: i, a, b, length, ux: (b.x - a.x) / length, uy: (b.y - a.y) / length });
+    }
+  });
+  const hits = /* @__PURE__ */ new Map();
+  for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
+    const lower = segments[i], upper = segments[j];
+    if (paths[lower.path].owner === paths[upper.path].owner) continue;
+    const denominator = cross(upper.ux, upper.uy, lower.ux, lower.uy);
+    if (Math.abs(denominator) < 1e-3) continue;
+    const dx = lower.a.x - upper.a.x, dy = lower.a.y - upper.a.y;
+    const t = cross(dx, dy, lower.ux, lower.uy) / denominator;
+    const u = cross(dx, dy, upper.ux, upper.uy) / denominator;
+    if (t <= 0.01 || t >= upper.length - 0.01 || u <= 0.01 || u >= lower.length - 0.01) continue;
+    const list = hits.get(upper) ?? [];
+    list.push({ distance: t, under: lower.path });
+    hits.set(upper, list);
+  }
+  const pieces = paths.map((path) => path.points.length ? [`M${xy(path.points[0])}`] : []);
+  for (const segment of segments) {
+    const list = (hits.get(segment) ?? []).sort((a, b) => a.distance - b.distance);
+    const at = (distance) => ({ x: segment.a.x + segment.ux * distance, y: segment.a.y + segment.uy * distance });
+    const radius = Math.max(6, lineWidth + 2), clusters = [];
+    for (const hit of list) {
+      const last = clusters.at(-1);
+      if (last && hit.distance - last.at(-1).distance < radius * 2 + 2) last.push(hit);
+      else clusters.push([hit]);
+    }
+    for (const cluster of clusters) {
+      const first = cluster[0].distance, last = cluster.at(-1).distance;
+      const r = Math.min(radius, first - 1, segment.length - last - 1);
+      if (r < lineWidth / 2 + 1) continue;
+      const begin = at(first - r), end = at(last + r), rx = (last - first) / 2 + r;
+      const rotation = Math.atan2(segment.uy, segment.ux) * 180 / Math.PI;
+      let arc = "";
+      for (const sweep of [1, 0]) {
+        const sign = sweep ? -1 : 1;
+        const points = Array.from({ length: 17 }, (_, i) => {
+          const angle = Math.PI * i / 16;
+          const base2 = at((first + last) / 2 - rx * Math.cos(angle));
+          return { x: base2.x - segment.uy * sign * r * Math.sin(angle), y: base2.y + segment.ux * sign * r * Math.sin(angle) };
+        });
+        const pad = lineWidth / 2 + 1;
+        if (points.some((p) => obstacles.some((box) => p.x > box.x - pad && p.x < box.x + box.width + pad && p.y > box.y - pad && p.y < box.y + box.height + pad))) continue;
+        arc = `A${n(rx)} ${n(r)} ${n(rotation)} 0 ${sweep} ${xy(end)}`;
+        break;
+      }
+      if (!arc) continue;
+      pieces[segment.path].push(`L${xy(begin)} ${arc}`);
+      for (const under of new Set(cluster.map((hit) => hit.under))) masks[under].push(`M${xy(begin)} ${arc}`);
+    }
+    pieces[segment.path].push(`L${xy(segment.b)}`);
+  }
+  return { data: pieces.map((parts) => parts.join(" ")), masks };
 }
 
 // src/graph.ts
@@ -1000,8 +1068,8 @@ function layoutUsecases(refs, edges, spec, theme) {
   const related = (actor) => edges.flatMap((ref) => ref.edge.from === actor.ref.node.id ? [byId.get(ref.edge.to)] : ref.edge.to === actor.ref.node.id ? [byId.get(ref.edge.from)] : []).filter((box) => box !== actor);
   const arm = (box) => horizontal ? 35 * box.height / box.ref.renderHeight : box.width / 2;
   const center = (box) => box[axis] + box[size] / 2;
-  const positionActor = (actor, cross, far) => {
-    actor[axis] = cross - arm(actor);
+  const positionActor = (actor, cross2, far) => {
+    actor[axis] = cross2 - arm(actor);
     if (horizontal) actor.x = far ? maxAlong + regionGap : minAlong - regionGap - actor.width;
     else actor.y = far ? maxAlong + regionGap : minAlong - regionGap - actor.height;
   };
@@ -1071,8 +1139,8 @@ function layoutUsecases(refs, edges, spec, theme) {
       const lower = Math.min(0, ...cases.map(center)), upper = Math.max(placed.height, placed.width, ...cases.map(center));
       const step = Math.max(actor[size] / 2 + 8, gap);
       for (let value = lower; value <= upper && positions.length < 80; value += step) positions.push(value);
-      for (const cross of positions) for (const far of [false, true]) {
-        positionActor(actor, cross, far);
+      for (const cross2 of positions) for (const far of [false, true]) {
+        positionActor(actor, cross2, far);
         if (actors.some((other) => other !== actor && intersects(actor, other, 16))) continue;
         const candidate = score();
         if (candidate < best - 0.01) {
@@ -1419,8 +1487,8 @@ function placeLabels(routes, nodes, containers, direction) {
       const { a, b, length, offset } = segment;
       const ux = (b.x - a.x) / length, uy = (b.y - a.y) / length;
       const overlaps = others.flatMap((other) => {
-        const cross = (point) => Math.abs((point.x - a.x) * uy - (point.y - a.y) * ux);
-        if (cross(other.a) > 0.01 || cross(other.b) > 0.01) return [];
+        const cross2 = (point) => Math.abs((point.x - a.x) * uy - (point.y - a.y) * ux);
+        if (cross2(other.a) > 0.01 || cross2(other.b) > 0.01) return [];
         const first = (other.a.x - a.x) * ux + (other.a.y - a.y) * uy;
         const last = (other.b.x - a.x) * ux + (other.b.y - a.y) * uy;
         const start = Math.max(0, Math.min(first, last)), end = Math.min(length, Math.max(first, last));
@@ -1494,7 +1562,7 @@ function occupiedNode(box) {
 }
 function alignConnectedNodes(result, edges, columns, spec) {
   const horizontal = Boolean(spec.lanes?.length) && spec.direction === "LR";
-  const axis = horizontal ? "x" : "y", cross = horizontal ? "y" : "x";
+  const axis = horizontal ? "x" : "y", cross2 = horizontal ? "y" : "x";
   const size = horizontal ? "width" : "height", crossSize = horizontal ? "height" : "width";
   const nodes = result.nodes.filter((box) => !["start", "end"].includes(box.ref.kind));
   const index = new Map(nodes.map((box, i) => [box.ref.node.id, i]));
@@ -1512,7 +1580,7 @@ function alignConnectedNodes(result, edges, columns, spec) {
   const center = (i) => nodes[i][axis] + nodes[i][size] / 2;
   const constraints = [];
   for (let a = 0; a < nodes.length; a++) for (let b = a + 1; b < nodes.length; b++) {
-    if (bounds[a][cross] >= bounds[b][cross] + bounds[b][crossSize] + gap / 2 || bounds[b][cross] >= bounds[a][cross] + bounds[a][crossSize] + gap / 2) continue;
+    if (bounds[a][cross2] >= bounds[b][cross2] + bounds[b][crossSize] + gap / 2 || bounds[b][cross2] >= bounds[a][cross2] + bounds[a][crossSize] + gap / 2) continue;
     const [from, to] = center(a) <= center(b) ? [a, b] : [b, a];
     const distance = bounds[from][axis] + bounds[from][size] - center(from) + center(to) - bounds[to][axis] + separation(from, to);
     constraints.push({ from, to, distance });
@@ -1628,16 +1696,16 @@ function alignConnectedNodes(result, edges, columns, spec) {
 function placeFlowTerminals(result, edges, direction, gap) {
   const starts = result.nodes.filter((box) => box.ref.kind === "start"), ends = result.nodes.filter((box) => box.ref.kind === "end");
   if (!starts.length && !ends.length) return;
-  const horizontal = direction === "LR", axis = horizontal ? "x" : "y", cross = horizontal ? "y" : "x";
+  const horizontal = direction === "LR", axis = horizontal ? "x" : "y", cross2 = horizontal ? "y" : "x";
   const size = horizontal ? "width" : "height", crossSize = horizontal ? "height" : "width";
   const body = result.nodes.filter((box) => !["start", "end"].includes(box.ref.kind));
   const bounds = [...body.map(occupiedNode), ...result.containers];
   const first = Math.min(24, ...bounds.map((box) => box[axis]));
-  const crossMin = Math.min(24, ...bounds.map((box) => box[cross]));
-  const crossMax = Math.max(crossMin + 32, ...bounds.map((box) => box[cross] + box[crossSize]));
+  const crossMin = Math.min(24, ...bounds.map((box) => box[cross2]));
+  const crossMax = Math.max(crossMin + 32, ...bounds.map((box) => box[cross2] + box[crossSize]));
   const successor = edges.find((edge) => edge.edge.from === starts[0]?.ref.node.id);
   const anchor = body.find((box) => box.ref.node.id === successor?.edge.to);
-  const center = anchor ? anchor[cross] + anchor[crossSize] / 2 : (crossMin + crossMax) / 2;
+  const center = anchor ? anchor[cross2] + anchor[crossSize] / 2 : (crossMin + crossMax) / 2;
   const reserve = starts.length ? Math.max(...starts.map((box) => occupiedNode(box)[size])) + gap : 0;
   for (const box of [...body, ...result.containers]) box[axis] += reserve;
   const last = Math.max(first + reserve, ...body.map((box) => {
@@ -1648,11 +1716,11 @@ function placeFlowTerminals(result, edges, direction, gap) {
     const span = terminals.reduce((total, box) => total + occupiedNode(box)[crossSize] + gap, -gap);
     let cursor = center - span / 2;
     for (const box of terminals) {
-      const occupied = occupiedNode(box), offset = occupied[cross] - box[cross];
+      const occupied = occupiedNode(box), offset = occupied[cross2] - box[cross2];
       box[axis] = position;
       const renderCross = horizontal ? box.ref.renderHeight : box.ref.renderWidth;
-      const symbolCenter = box.ref.symbol ? (box.ref.symbol[cross] + box.ref.symbol[crossSize] / 2) * box[crossSize] / renderCross : box[crossSize] / 2;
-      box[cross] = terminals.length === 1 ? center - symbolCenter : cursor - offset;
+      const symbolCenter = box.ref.symbol ? (box.ref.symbol[cross2] + box.ref.symbol[crossSize] / 2) * box[crossSize] / renderCross : box[crossSize] / 2;
+      box[cross2] = terminals.length === 1 ? center - symbolCenter : cursor - offset;
       cursor += occupied[crossSize] + gap;
     }
   }
@@ -1748,6 +1816,21 @@ async function renderGraph(spec, suppliedTheme) {
   }
   const labels = placeLabels(result.routes, result.nodes, result.containers, direction);
   const prefix = `uml-graph-${++graphNumber}`;
+  const displayed = result.routes.flatMap((route, owner) => route.paths.map((points) => ({ points: simplify(points), owner })));
+  const crossings = crossingPaths(
+    displayed,
+    spec.layout?.edgeCrossing ?? "bridge",
+    theme.lineWidth,
+    [...result.nodes.map(occupiedNode), ...labels]
+  );
+  const maskDefinitions = crossings.masks.map((arcs, index) => {
+    if (!arcs.length) return "";
+    const points = displayed[index].points;
+    const x = Math.min(...points.map((p) => p.x)) - 24, y = Math.min(...points.map((p) => p.y)) - 24;
+    const width2 = Math.max(...points.map((p) => p.x)) - x + 24, height2 = Math.max(...points.map((p) => p.y)) - y + 24;
+    return `<mask id="${prefix}-crossing-${index}" maskUnits="userSpaceOnUse" x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width2)}" height="${numeric(height2)}"><rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width2)}" height="${numeric(height2)}" fill="white"/>${arcs.map((d) => `<path d="${d}" fill="none" stroke="black" stroke-width="${numeric(theme.lineWidth + 3)}"/>`).join("")}</mask>`;
+  }).join("");
+  let displayIndex = 0;
   let paths = "";
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
@@ -1756,8 +1839,9 @@ async function renderGraph(spec, suppliedTheme) {
     const start = kind === "aggregation" || kind === "composition" ? kind : "";
     paths += `<g class="uml-edge uml-edge-${kind}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" \u2192 "))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
-      const data = simplify(route.paths[index]).map((point, i) => `${i ? "L" : "M"}${numeric(point.x)} ${numeric(point.y)}`).join(" ");
-      paths += `<path d="${data}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
+      const current = displayIndex++, data = crossings.data[current];
+      const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : "";
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
     }
     paths += "</g>";
   }
@@ -1794,7 +1878,7 @@ async function renderGraph(spec, suppliedTheme) {
   const heading2 = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: "start", weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: "start", fill: theme.muted }) : "") : "";
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}${heading2}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading2}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }
 

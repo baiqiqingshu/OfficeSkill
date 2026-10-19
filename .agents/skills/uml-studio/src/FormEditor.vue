@@ -658,6 +658,16 @@ function updateCause(
           <h3>连线（{{ draft.edges?.length ?? 0 }}）</h3>
           <button type="button" @click="addEdge">＋ 连线</button>
         </div>
+        <label>连线交叉表示（当前图）
+          <select
+            :value="draft.layout?.edgeCrossing ?? 'bridge'"
+            @change="draft.layout = { ...draft.layout, edgeCrossing: ($event.target as HTMLSelectElement).value as 'bridge' | 'plain' }"
+          >
+            <option value="bridge">拱桥形跳线（默认）</option>
+            <option value="plain">直接交叉（无圆点）</option>
+          </select>
+        </label>
+        <p class="uml-editor-hint">拱桥或无圆点交叉均表示不相连。</p>
         <details
           v-for="(edge, index) in draft.edges"
           :key="edge.id ?? index"

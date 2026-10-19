@@ -87,6 +87,7 @@ export interface FishboneData {
 }
 export interface DiagramLayoutOptions {
     mode?: 'compact' | 'balanced' | 'spacious' | 'grid';
+    edgeCrossing?: 'bridge' | 'plain';
     showTitle?: boolean;
     maxWidth?: number;
     maxHeight?: number;

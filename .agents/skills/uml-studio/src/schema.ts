@@ -18,6 +18,7 @@ const style = object({
 })
 const layout = object({
   mode: { ...en(...layoutModes.map(mode => mode.value)), default: 'balanced' },
+  edgeCrossing: { ...en('bridge', 'plain'), default: 'bridge', description: '节点图连线交叉表示：bridge 为拱桥形跳线，plain 为无圆点直接交叉；两者都表示不相连。' },
   showTitle: { type: 'boolean', default: false }, maxWidth: num(0, 100000), maxHeight: num(0, 100000),
   regionGap: num(0, 600), elementGap: num(8, 400), maxPerColumn: integer(0, 30),
   nodeMaxWidth: num(0, 100000), nodeMaxHeight: num(0, 100000),

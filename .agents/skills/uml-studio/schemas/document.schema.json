@@ -203,6 +203,15 @@
               ],
               "default": "balanced"
             },
+            "edgeCrossing": {
+              "type": "string",
+              "enum": [
+                "bridge",
+                "plain"
+              ],
+              "default": "bridge",
+              "description": "节点图连线交叉表示：bridge 为拱桥形跳线，plain 为无圆点直接交叉；两者都表示不相连。"
+            },
             "showTitle": {
               "type": "boolean",
               "default": false

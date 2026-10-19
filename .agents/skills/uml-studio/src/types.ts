@@ -25,6 +25,7 @@ export interface FishboneCause { label: string; children?: FishboneCause[] }
 export interface FishboneData { effect: string; categories: { id: string; label: string; causes: FishboneCause[] }[] }
 export interface DiagramLayoutOptions {
   mode?: 'compact' | 'balanced' | 'spacious' | 'grid'
+  edgeCrossing?: 'bridge' | 'plain'
   showTitle?: boolean; maxWidth?: number; maxHeight?: number
   regionGap?: number; elementGap?: number; maxPerColumn?: number
   nodeMaxWidth?: number; nodeMaxHeight?: number

@@ -37,6 +37,37 @@ function worldBox(node, box) {
   return box
 }
 
+// Bridge arcs only deflect the display locally; their endpoints still follow the routed line.
+function routePoints(data, spec, context) {
+  const commands = [...data.matchAll(/([A-Za-z])([^A-Za-z]*)/g)]
+  assert.equal(commands[0]?.[1], 'M', `${context}: missing route start`)
+  const points = []
+  for (const [index, [, command, raw]] of commands.entries()) {
+    assert.ok(command === (index ? 'L' : 'M') || (index > 0 && command === 'A'), `${context}: disconnected relationship`)
+    const values = raw.trim().split(/[ ,]+/).map(Number)
+    assert.ok(values.every(Number.isFinite), `${context}: invalid route coordinates`)
+    assert.equal(values.length, command === 'A' ? 7 : 2, `${context}: invalid route command`)
+    const point = values.slice(-2)
+    if (command === 'A') {
+      assert.notEqual(spec.layout?.edgeCrossing, 'plain', `${context}: bridge in plain crossing mode`)
+      const [rx, ry, rotation, large, sweep] = values, previous = points.at(-1)
+      assert.ok(rx > 0 && ry > 0 && large === 0 && [0, 1].includes(sweep), `${context}: invalid bridge arc`)
+      const angle = rotation * Math.PI / 180, dx = point[0] - previous[0], dy = point[1] - previous[1]
+      assert.ok(Math.abs(dx * Math.sin(angle) - dy * Math.cos(angle)) < .02, `${context}: bridge leaves routed axis`)
+      assert.ok(Math.abs(Math.hypot(dx, dy) - 2 * rx) < .02, `${context}: expected half-ellipse bridge`)
+    }
+    points.push(point)
+  }
+  assert.ok(points.length >= 2, context)
+  if (spec.type === 'usecase') {
+    const start = points[0], end = points.at(-1), dx = end[0] - start[0], dy = end[1] - start[1], length = Math.hypot(dx, dy)
+    for (const point of points) assert.ok(Math.abs((point[0] - start[0]) * dy - (point[1] - start[1]) * dx) / length < .02, `${context}: usecase bends`)
+  } else for (let index = 1; index < points.length; index++) {
+    assert.ok(Math.abs(points[index][0] - points[index - 1][0]) < .01 || Math.abs(points[index][1] - points[index - 1][1]) < .01, `${context}: diagonal segment`)
+  }
+  return points
+}
+
 export function inspectDiagram(spec, rendered) {
   const context = `${spec.id ?? spec.title}/${spec.direction ?? 'TB'}/${spec.layout?.mode ?? 'balanced'}`
   assert.ok(Number.isFinite(rendered.width) && rendered.width > 0 && Number.isFinite(rendered.height) && rendered.height > 0, context)
@@ -76,12 +107,7 @@ export function inspectDiagram(spec, rendered) {
   for (const route of routes) {
     const paths = route.childNodes.filter(node => node.tagName === 'path')
     assert.equal(paths.length, 1, `${context}: disconnected relationship`)
-    const data = props(paths[0]).d
-    assert.doesNotMatch(data, /[CQAHV]/i, `${context}: expected continuous M/L polyline`)
-    const points = [...data.matchAll(/[ML]([\d.-]+) ([\d.-]+)/g)].map(([, horizontal, vertical]) => [+horizontal, +vertical])
-    assert.ok(points.length >= 2, context)
-    if (spec.type === 'usecase') assert.equal(points.length, 2, `${context}: usecase bends`)
-    else for (let index = 1; index < points.length; index++) assert.ok(Math.abs(points[index][0] - points[index - 1][0]) < .01 || Math.abs(points[index][1] - points[index - 1][1]) < .01, `${context}: diagonal segment`)
+    routePoints(props(paths[0]).d, spec, context)
   }
   const expectedLabels = (spec.edges ?? []).reduce((count, edge) => count + Number(!!edge.label || ['include', 'extend'].includes(edge.kind)) + Number(!!edge.fromLabel) + Number(!!edge.toLabel), 0)
   assert.equal(labels.length, expectedLabels, `${context}: lost annotations`)

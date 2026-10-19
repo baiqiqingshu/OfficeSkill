@@ -557,7 +557,7 @@ function updateStyle(key: keyof Theme, value: string | number): void {
 }
 function updateLayout(
   key: keyof DiagramLayoutOptions,
-  value: number | boolean,
+  value: number | boolean | 'bridge' | 'plain',
 ): void {
   void updateSpec((spec) => {
     spec.layout = { ...spec.layout, [key]: value };
@@ -1381,6 +1381,16 @@ defineExpose({
                       布局与尺寸<span aria-hidden="true">＋</span>
                     </summary>
                     <div class="advanced-inner">
+                      <template v-if="graphDiagram">
+                        <label class="field-label" for="edge-crossing">连线交叉表示</label>
+                        <select id="edge-crossing" class="select-input"
+                          :value="applied.layout?.edgeCrossing ?? 'bridge'"
+                          @change="updateLayout('edgeCrossing', ($event.target as HTMLSelectElement).value as 'bridge' | 'plain')">
+                          <option value="bridge">拱桥形跳线（默认）</option>
+                          <option value="plain">直接交叉（无圆点）</option>
+                        </select>
+                        <p class="field-hint">拱桥或无圆点交叉均表示不相连。</p>
+                      </template>
                       <label class="field-label" for="layout-mode"
                         >布局模式</label
                       ><select
