@@ -3,6 +3,10 @@ import "./editor.css";
 type __VLS_Props = {
     modelValue: FishboneCause;
     path?: string;
+    editorKey?: string;
+    query?: string;
+    expanded?: boolean;
+    keyFor?: (cause: FishboneCause) => string | undefined;
 };
 declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {}, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     "update:modelValue": (value: FishboneCause) => any;

@@ -23,7 +23,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/build.mjs",
     "typecheck": "vue-tsc --noEmit",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:editor": "node --test tests/editor.browser.mjs"
   },
   "dependencies": {
     "@resvg/resvg-js": "^2.6.2",

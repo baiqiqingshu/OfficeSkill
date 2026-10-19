@@ -44,6 +44,7 @@ interface CanvasHandle {
 interface FormHandle {
   hasChanges(): boolean;
   resetDraft(): void;
+  focusElement(key: string): Promise<void>;
 }
 const props = defineProps<{
   initialSpec: unknown;
@@ -1188,6 +1189,8 @@ defineExpose({
               ref="canvas"
               :spec="initialSpec"
               :runtime="runtime"
+              :element-selection="editorOpen && editorMode === 'form'"
+              @select-element="formEditor?.focusElement($event)"
               @loading="loading = $event"
               @error="reportError"
             />

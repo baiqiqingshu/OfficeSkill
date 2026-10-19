@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { useId } from "vue";
+import { computed, useId } from "vue";
+import { matchesContent } from "./editor-search";
 import type { FishboneCause } from "./types";
 import "./editor.css";
 
 const props = withDefaults(
-  defineProps<{ modelValue: FishboneCause; path?: string }>(),
+  defineProps<{ modelValue: FishboneCause; path?: string; editorKey?: string; query?: string; expanded?: boolean; keyFor?: (cause: FishboneCause) => string | undefined }>(),
   { path: "原因" },
 );
 const emit = defineEmits<{
   "update:modelValue": [value: FishboneCause];
   remove: [];
 }>();
+const visible = computed(() => matchesContent(props.modelValue, props.query ?? ""));
 const inputId = `uml-cause-${useId()}`;
 function rename(label: string): void {
   emit("update:modelValue", { ...props.modelValue, label });
@@ -34,7 +36,8 @@ function removeChild(index: number): void {
 </script>
 
 <template>
-  <div class="uml-cause-editor">
+  <details v-show="visible" class="uml-cause-editor" :data-editor-key="editorKey" :open="expanded ?? true">
+    <summary>{{ path }} · {{ modelValue.label || '未命名原因' }}</summary>
     <div class="uml-cause-editor__row">
       <label :for="inputId">{{ path }}</label>
       <input
@@ -64,10 +67,14 @@ function removeChild(index: number): void {
         v-for="(child, index) in modelValue.children"
         :key="index"
         :model-value="child"
+        :query="query"
+        :expanded="expanded"
+        :editor-key="keyFor?.(child)"
+        :key-for="keyFor"
         :path="`${path}.${index + 1}`"
         @update:model-value="updateChild(index, $event)"
         @remove="removeChild(index)"
       />
     </div>
-  </div>
+  </details>
 </template>

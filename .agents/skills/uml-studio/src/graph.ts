@@ -1024,7 +1024,7 @@ function renderNode(box: NodeBox, spec: DiagramSpec): string {
     content += text(x + caption.x + caption.width / 2, y + caption.y + 2 + caption.size, caption.value, theme, { size: caption.size, fill: theme.muted });
   }
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
-  return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([ref.sourceNode.label, ref.sourceNode.detail, ...(ref.sourceNode.attributes ?? []), ...(ref.sourceNode.operations ?? [])].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
+  return `<g class="uml-node uml-node-${kind}" data-editor-key="nodes/${spec.nodes!.indexOf(ref.sourceNode)}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([ref.sourceNode.label, ref.sourceNode.detail, ...(ref.sourceNode.attributes ?? []), ...(ref.sourceNode.operations ?? [])].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
 }
 
 function segmentIntersectsRect(a: Point, b: Point, box: Rect, margin = 0): boolean {
@@ -1399,7 +1399,7 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
     const dashed = route.ref.edge.dashed || ['dependency', 'include', 'extend', 'realization'].includes(kind);
     const end = kind === 'flow' ? 'arrow' : ['dependency', 'include', 'extend'].includes(kind) ? 'open' : ['inheritance', 'realization'].includes(kind) ? 'triangle' : '';
     const start = kind === 'aggregation' || kind === 'composition' ? kind : '';
-    paths += `<g class="uml-edge uml-edge-${kind}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
+    paths += `<g class="uml-edge uml-edge-${kind}" data-editor-key="edges/${spec.edges!.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : '';
@@ -1411,7 +1411,7 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
   const nodeShapes = result.nodes.map(box => renderNode(box, spec)).join('');
   const labelShapes = labels.map(label => {
     const leader = label.leader ? `<path class="uml-label-leader" d="M${numeric(label.anchor.x)} ${numeric(label.anchor.y)} L${numeric(Math.max(label.x, Math.min(label.x + label.width, label.anchor.x)))} ${numeric(Math.max(label.y, Math.min(label.y + label.height, label.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : '';
-    return `<g class="uml-edge-label" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`;
+    return `<g class="uml-edge-label" data-editor-key="edges/${spec.edges!.indexOf(label.ref.edge)}" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`;
   }).join('');
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) { minX = Math.min(minX, box.x - theme.lineWidth); minY = Math.min(minY, box.y - theme.lineWidth); maxX = Math.max(maxX, box.x + box.width + theme.lineWidth); maxY = Math.max(maxY, box.y + box.height + theme.lineWidth); }

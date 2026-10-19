@@ -161,6 +161,10 @@
 .canvas-stage.is-dragging {
   cursor: grabbing;
 }
+.canvas-stage.can-select-elements:not(.is-dragging) [data-editor-key],
+.canvas-stage.can-select-elements:not(.is-dragging) .uml-container {
+  cursor: pointer;
+}
 .canvas-stage:focus-visible {
   outline: 2px solid #6492b1;
   outline-offset: -3px;

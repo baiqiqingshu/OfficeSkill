@@ -3,6 +3,7 @@ import type { DiagramSpec, ExportOptions, RenderedDiagram } from './types';
 type __VLS_Props = {
     spec: DiagramSpec;
     runtime?: StudioRuntime;
+    elementSelection?: boolean;
 };
 declare function setSpec(input: DiagramSpec): Promise<void>;
 declare function getSpec(): DiagramSpec;
@@ -20,10 +21,12 @@ declare const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
     rendered: (diagram: RenderedDiagram, spec: DiagramSpec) => any;
     error: (error: Error) => any;
     loading: (loading: boolean) => any;
+    selectElement: (key: string) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onRendered?: ((diagram: RenderedDiagram, spec: DiagramSpec) => any) | undefined;
     onError?: ((error: Error) => any) | undefined;
     onLoading?: ((loading: boolean) => any) | undefined;
+    onSelectElement?: ((key: string) => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 declare const _default: typeof __VLS_export;
 export default _default;

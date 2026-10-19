@@ -19,7 +19,21 @@
 .uml-form-editor {
   display: grid;
   gap: 14px;
-  padding: 2px;
+  padding: 18px 20px;
+}
+.uml-editor-tools {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  gap: 10px;
+  padding: 12px 0;
+  background: #fcfcf8;
+  border-bottom: 1px solid var(--uml-edit-line);
+}
+.uml-editor-selected {
+  outline: 3px solid #6ba9d8;
+  outline-offset: 3px;
 }
 .uml-form-editor h3 {
   margin: 0;
@@ -128,7 +142,7 @@
 }
 .uml-editor-card > summary,
 .uml-editor-subsection > summary {
-  padding: 10px;
+  padding: 12px 16px;
   cursor: pointer;
   font-size: 12px;
   font-weight: 650;
@@ -155,7 +169,7 @@
 .uml-editor-card__body {
   display: grid;
   gap: 10px;
-  padding: 11px;
+  padding: 16px;
   min-width: 0;
 }
 .uml-editor-grid {
@@ -346,9 +360,18 @@
   outline-offset: 1px;
 }
 .uml-cause-editor {
-  display: grid;
-  gap: 7px;
   min-width: 0;
+  border: 1px solid var(--uml-edit-line);
+  border-radius: 7px;
+  padding: 10px;
+}
+.uml-cause-editor > summary {
+  cursor: pointer;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.uml-cause-editor[open] > :not(summary) {
+  margin-top: 10px;
 }
 .uml-cause-editor__row {
   display: grid;
@@ -373,8 +396,11 @@
   border-inline-start: 2px solid #c6ddec;
 }
 @media (max-width: 420px) {
+  .uml-form-editor {
+    padding: 14px;
+  }
   .uml-editor-card__body {
-    padding: 9px;
+    padding: 12px;
   }
   .uml-cause-editor__row {
     grid-template-columns: minmax(0, 1fr) auto;

@@ -154,6 +154,7 @@ npm run demo:verify
 - `#diagram-data` application/json 数据块保存单图或完整多图文档。多图用 `diagrams` 数组，不能以 `type` 为字典键，否则会丢失同类图。
 - 全部 Vue / 布局 JS、CSS、数据内联，无 CDN 与远程字体，断网后仍可打开；只保存当前已应用的数据，未应用草稿会明确提示。
 - 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。导出工具栏在编辑按钮附近、预览上方；样式位于预览下方，默认折叠，可展开调整。拖动的是预览画布，不改变结构化模型中的节点位置。
+- 表单支持全部展开 / 全部折叠、按内容检索（仅显示命中元素及必要上级）和清空检索。表单编辑器打开时，点击预览中的元素会展开并滚动定位相应表单，突出显示目标；检索隐藏目标时会清空检索。拖动画布不会触发定位。此功能不更改图表数据或布局。旧 HTML 需用更新后的运行时重新生成才能获得这些功能。
 - 下载按钮下的“复制图片（PNG）”写入图片剪贴板，不下载、不复制 URL。需要支持 ClipboardItem 的安全页面环境与权限；不支持或权限被拒绝时明确报错。
 - `window.UmlStudio` 提供 `ready,getDocument,setDocument,selectDiagram,getSpec,setSpec,getSvg,exportImage,saveHtml`。选择序号在浏览器 API 中从 0 开始；`getSpec/setSpec/getSvg/exportImage` 只操作当前图，`saveHtml` 保存全部图。等待 `ready` 与异步编辑 / 导出方法。
 - Node API `@office/uml-studio/node` 提供 `readDiagramFile,documentFromHtml,renderNativeImage`，可直接从保存的 HTML 导出图片；不依赖浏览器，但需要本地 SKILL / Node 及 npm 原生依赖。跨机器字体可能不同，不承诺浏览器 / 原生导出逐像素相同。

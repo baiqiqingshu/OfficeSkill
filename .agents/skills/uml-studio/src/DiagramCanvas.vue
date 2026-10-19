@@ -7,11 +7,12 @@ import { createHtml, exportSvgImage } from './export';
 import type { StudioRuntime } from './export';
 import type { DiagramSpec, ExportOptions, RenderedDiagram } from './types';
 
-const props = defineProps<{ spec: DiagramSpec; runtime?: StudioRuntime }>();
+const props = defineProps<{ spec: DiagramSpec; runtime?: StudioRuntime; elementSelection?: boolean }>();
 const emit = defineEmits<{
   rendered: [diagram: RenderedDiagram, spec: DiagramSpec];
   error: [error: Error];
   loading: [loading: boolean];
+  selectElement: [key: string];
 }>();
 const diagram = shallowRef<RenderedDiagram>();
 const applied = shallowRef<DiagramSpec>();
@@ -25,7 +26,7 @@ const zoom = ref<number | 'fit'>('fit');
 const zoomValue = computed(() => zoom.value === 'fit' ? Math.min(1, Math.max(0.05, Math.min(availableWidth.value / (diagram.value?.width ?? 900), availableHeight.value / (diagram.value?.height ?? 600)))) : zoom.value);
 const transparent = computed(() => applied.value ? resolveTheme(applied.value).background === 'transparent' : false);
 const dragging = ref(false);
-let pan: { pointerId: number; x: number; y: number; left: number; top: number } | undefined;
+let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean } | undefined;
 let request = 0;
 let zoomRequest = 0;
 let observer: ResizeObserver | undefined;
@@ -113,18 +114,33 @@ function startPan(event: PointerEvent): void {
   // Leave the native scrollbars draggable rather than capturing their pointer.
   if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
   viewport.setPointerCapture(event.pointerId);
-  pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+  pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : undefined, moved: false };
   dragging.value = true;
   event.preventDefault();
 }
 function movePan(event: PointerEvent): void {
   if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
+  if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
   stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
   stage.value.scrollTop = pan.top - (event.clientY - pan.y);
 }
 function endPan(event?: PointerEvent): void {
   if (!pan || (event && pan.pointerId !== event.pointerId)) return;
   const pointerId = pan.pointerId;
+  const target = pan.target;
+  const selected = event?.type === 'pointerup' && !pan.moved && props.elementSelection && !pending.value;
+  if (selected && target) {
+    const element = target.closest('[data-editor-key], .uml-container');
+    let key = element?.getAttribute('data-editor-key');
+    if (!key && element) {
+      const lane = element.getAttribute('data-lane-id');
+      const group = element.getAttribute('data-group-id');
+      const field = group ? 'groups' : 'lanes';
+      const index = applied.value?.[field]?.findIndex(item => item.id === (group ?? lane));
+      if (index !== undefined && index >= 0) key = `${field}/${index}`;
+    }
+    if (key) emit('selectElement', key);
+  }
   pan = undefined;
   dragging.value = false;
   if (stage.value?.hasPointerCapture(pointerId)) stage.value.releasePointerCapture(pointerId);
@@ -166,7 +182,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
         <button type="button" class="fit-button" :class="{ active: zoom === 'fit' }" :disabled="!diagram" @click="fitCanvas">适应画布</button>
       </div>
     </div>
-    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging }" tabindex="0" aria-label="图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan">
+    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': elementSelection }" tabindex="0" aria-label="图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan">
       <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${diagram.width * zoomValue}px`, height: `${diagram.height * zoomValue}px` }">
         <div class="canvas-svg" :style="{ width: `${diagram.width}px`, height: `${diagram.height}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>

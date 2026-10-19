@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, toRaw, watch } from "vue";
+import { matchesContent } from "./editor-search";
 import CauseEditor from "./CauseEditor.vue";
 import ColorInput from "./ColorInput.vue";
 import { resolveTheme } from "./themes";
@@ -22,6 +23,60 @@ function clone<T>(value: T): T {
 }
 const draft = ref<DiagramSpec>(clone(props.modelValue));
 const error = ref("");
+const root = ref<HTMLElement>();
+const query = ref("");
+const expanded = ref<boolean>();
+let elementKeys = new WeakMap<object, string>();
+function indexElements(): void {
+  elementKeys = new WeakMap();
+  for (const field of ["nodes", "edges", "groups", "lanes", "participants", "messages", "fragments"] as const)
+    draft.value[field]?.forEach((item, index) => elementKeys.set(toRaw(item), `${field}/${index}`));
+  function visit(cause: FishboneCause, key: string): void {
+    elementKeys.set(toRaw(cause), key);
+    cause.children?.forEach((child, index) => visit(child, `${key}/children/${index}`));
+  }
+  draft.value.fishbone?.categories.forEach((category, index) => {
+    elementKeys.set(toRaw(category), `categories/${index}`);
+    category.causes.forEach((cause, i) => visit(cause, `categories/${index}/causes/${i}`));
+  });
+}
+indexElements();
+function elementKey(item: object): string | undefined { return elementKeys.get(toRaw(item)); }
+function matches(item: unknown): boolean {
+  return matchesContent(item, query.value, kindLabels);
+}
+function sectionMatches(items: unknown[] | undefined): boolean { return !query.value.trim() || !!items?.some(matches); }
+const hasResults = computed(() => matches({ title: draft.value.title, description: draft.value.description }) ||
+  [draft.value.nodes, draft.value.edges, draft.value.groups, draft.value.lanes, draft.value.participants, draft.value.messages, draft.value.fragments].some(sectionMatches) ||
+  matches(draft.value.fishbone ?? {}));
+function setExpanded(open: boolean): void {
+  expanded.value = open;
+  root.value?.querySelectorAll<HTMLDetailsElement>("details").forEach(item => { item.open = open; });
+}
+watch(query, async () => {
+  await nextTick();
+  if (query.value.trim()) root.value?.querySelectorAll<HTMLDetailsElement>("details").forEach(item => { item.open = true; });
+});
+async function focusElement(key: string): Promise<void> {
+  // Compare attribute values directly: IDs/content never become CSS selectors.
+  const find = () => [...(root.value?.querySelectorAll<HTMLElement>("[data-editor-key]") ?? [])].find(item => item.dataset.editorKey === key);
+  if (!find()) return; // The applied element may have been removed in this draft.
+  query.value = "";
+  await nextTick();
+  const target = find();
+  if (!target) return;
+  root.value?.querySelectorAll(".uml-editor-selected").forEach(item => item.classList.remove("uml-editor-selected"));
+  target.classList.add("uml-editor-selected");
+  for (let item: HTMLElement | null = target; item && item !== root.value; item = item.parentElement)
+    if (item instanceof HTMLDetailsElement) item.open = true;
+  const viewport = root.value?.closest<HTMLElement>(".form-panel");
+  if (viewport) {
+    const toolbar = root.value?.querySelector<HTMLElement>(".uml-editor-tools");
+    const top = target.getBoundingClientRect().top - viewport.getBoundingClientRect().top + viewport.scrollTop - (toolbar?.offsetHeight ?? 0) - 16;
+    viewport.scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  } else target.scrollIntoView({ block: "nearest" });
+  (target.querySelector("summary") ?? target).focus({ preventScroll: true });
+}
 const appliedSource = computed(() => JSON.stringify(props.modelValue));
 watch(appliedSource, () => resetDraft());
 const inheritedTheme = computed(() => resolveTheme(draft.value));
@@ -117,9 +172,12 @@ function hasChanges(): boolean {
 }
 function resetDraft(): void {
   draft.value = clone(props.modelValue);
+  indexElements();
+  query.value = "";
+  root.value?.querySelectorAll(".uml-editor-selected").forEach(item => item.classList.remove("uml-editor-selected"));
   error.value = "";
 }
-defineExpose({ hasChanges, resetDraft });
+defineExpose({ hasChanges, resetDraft, focusElement });
 function apply(): void {
   error.value = "";
   try {
@@ -405,12 +463,22 @@ function updateCause(
   index: number,
   cause: FishboneCause,
 ): void {
+  // Immutable recursive edits keep the identity of the last applied element.
+  // Deleting an earlier sibling must not redirect clicks to a different cause.
+  function retainKeys(previous: FishboneCause, next: FishboneCause): void {
+    const key = elementKeys.get(toRaw(previous));
+    if (key && !elementKeys.has(toRaw(next))) elementKeys.set(toRaw(next), key);
+    next.children?.forEach((child, i) => {
+      if (!elementKeys.has(toRaw(child)) && previous.children?.[i]) retainKeys(previous.children[i], child);
+    });
+  }
+  retainKeys(draft.value.fishbone!.categories[categoryIndex].causes[index], cause);
   draft.value.fishbone!.categories[categoryIndex].causes[index] = cause;
 }
 </script>
 
 <template>
-  <div class="uml-form-editor">
+  <div ref="root" class="uml-form-editor">
     <header class="uml-editor-heading">
       <strong>图表数据表单</strong
       ><span class="uml-editor-badge">{{
@@ -421,7 +489,16 @@ function updateCause(
       修改仅保留在表单草稿中。点击“应用表单”后更新图表；ID
       固定，避免破坏引用。其他可选数据会完整保留。
     </p>
-    <section class="uml-editor-section" aria-label="图表基本信息">
+    <div class="uml-editor-tools">
+      <label>检索元素<input v-model="query" type="search" placeholder="名称、ID、详情或其他内容" /></label>
+      <div class="uml-editor-heading">
+        <button type="button" @click="setExpanded(true)">全部展开</button>
+        <button type="button" @click="setExpanded(false)">全部折叠</button>
+        <button v-if="query" type="button" @click="query = ''">清空检索</button>
+      </div>
+      <p v-if="query" class="uml-editor-hint" role="status">{{ hasResults ? "仅展示内容匹配的元素及其上级。" : "没有匹配的元素。" }}</p>
+    </div>
+    <section v-show="matches({ title: draft.title, description: draft.description })" class="uml-editor-section" aria-label="图表基本信息">
       <h3>基本信息</h3>
       <label>标题<input v-model="draft.title" type="text" /></label>
       <label
@@ -447,16 +524,18 @@ function updateCause(
     </section>
 
     <template v-if="isGraph">
-      <section class="uml-editor-section" aria-label="节点编辑">
+      <section v-show="sectionMatches(draft.nodes)" class="uml-editor-section" aria-label="节点编辑">
         <div class="uml-editor-heading">
           <h3>节点（{{ draft.nodes?.length ?? 0 }}）</h3>
           <button type="button" @click="addNode">＋ 节点</button>
         </div>
         <details
           v-for="(node, index) in draft.nodes"
+          v-show="matches(node)"
+          :data-editor-key="elementKey(node)"
           :key="node.id"
           class="uml-editor-card"
-          open
+          :open="expanded ?? true"
         >
           <summary>
             {{ index + 1 }}. {{ node.label || "未命名节点" }}
@@ -526,9 +605,9 @@ function updateCause(
             <details
               class="uml-editor-subsection"
               :open="
-                node.kind === 'class' ||
+                expanded ?? (node.kind === 'class' ||
                 node.kind === 'interface' ||
-                draft.type === 'class'
+                draft.type === 'class')
               "
             >
               <summary>属性与操作</summary>
@@ -581,7 +660,7 @@ function updateCause(
                 </button>
               </div>
             </details>
-            <details class="uml-editor-subsection">
+            <details class="uml-editor-subsection" :open="expanded ?? false">
               <summary>单节点样式覆盖</summary>
               <p class="uml-editor-hint">
                 未设置的值继承图表主题。清空数值可恢复继承。
@@ -653,7 +732,7 @@ function updateCause(
           </div>
         </details>
       </section>
-      <section class="uml-editor-section" aria-label="连线编辑">
+      <section v-show="sectionMatches(draft.edges)" class="uml-editor-section" aria-label="连线编辑">
         <div class="uml-editor-heading">
           <h3>连线（{{ draft.edges?.length ?? 0 }}）</h3>
           <button type="button" @click="addEdge">＋ 连线</button>
@@ -670,9 +749,11 @@ function updateCause(
         <p class="uml-editor-hint">拱桥或无圆点交叉均表示不相连。</p>
         <details
           v-for="(edge, index) in draft.edges"
+          v-show="matches(edge)"
+          :data-editor-key="elementKey(edge)"
           :key="edge.id ?? index"
           class="uml-editor-card"
-          open
+          :open="expanded ?? true"
         >
           <summary>
             {{ index + 1 }}. {{ edge.label || `${edge.from} → ${edge.to}` }}
@@ -752,126 +833,146 @@ function updateCause(
           </div>
         </details>
       </section>
-      <section class="uml-editor-section" aria-label="分组编辑">
+      <section v-show="sectionMatches(draft.groups)" class="uml-editor-section" aria-label="分组编辑">
         <div class="uml-editor-heading">
           <h3>分组（{{ draft.groups?.length ?? 0 }}）</h3>
           <button type="button" @click="addGroup">＋ 分组</button>
         </div>
-        <div
+        <details
           v-for="(group, index) in draft.groups"
+          v-show="matches(group)"
+          :data-editor-key="elementKey(group)"
           :key="group.id"
-          class="uml-editor-card uml-editor-card__body"
+          class="uml-editor-card"
+          :open="expanded ?? true"
         >
-          <code>{{ group.id }}</code
-          ><label>分组名称<input v-model="group.label" type="text" /></label>
-          <label
-            >分组类型<select
-              :value="group.kind ?? ''"
-              @change="optionalText(group, 'kind', valueOf($event))"
-            >
-              <option value="">默认</option>
-              <option
-                v-for="kind in ['boundary', 'package', 'node']"
-                :key="kind"
-                :value="kind"
+          <summary>{{ index + 1 }}. {{ group.label || "未命名分组" }}</summary>
+          <div class="uml-editor-card__body">
+            <code>{{ group.id }}</code
+            ><label>分组名称<input v-model="group.label" type="text" /></label>
+            <label
+              >分组类型<select
+                :value="group.kind ?? ''"
+                @change="optionalText(group, 'kind', valueOf($event))"
               >
-                {{ kindLabels[kind] }} · {{ kind }}
-              </option>
-            </select></label
-          >
-          <label
-            >父分组<select
-              :value="group.parent ?? ''"
-              @change="optionalText(group, 'parent', valueOf($event))"
+                <option value="">默认</option>
+                <option
+                  v-for="kind in ['boundary', 'package', 'node']"
+                  :key="kind"
+                  :value="kind"
+                >
+                  {{ kindLabels[kind] }} · {{ kind }}
+                </option>
+              </select></label
             >
-              <option value="">顶层分组</option>
-              <option
-                v-for="parent in parentGroups(group)"
-                :key="parent.id"
-                :value="parent.id"
+            <label
+              >父分组<select
+                :value="group.parent ?? ''"
+                @change="optionalText(group, 'parent', valueOf($event))"
               >
-                {{ parent.label }} ({{ parent.id }})
-              </option>
-            </select></label
-          >
-          <button
-            type="button"
-            class="uml-editor-danger"
-            @click="removeGroup(index)"
-          >
-            删除分组
-          </button>
-        </div>
+                <option value="">顶层分组</option>
+                <option
+                  v-for="parent in parentGroups(group)"
+                  :key="parent.id"
+                  :value="parent.id"
+                >
+                  {{ parent.label }} ({{ parent.id }})
+                </option>
+              </select></label
+            >
+            <button
+              type="button"
+              class="uml-editor-danger"
+              @click="removeGroup(index)"
+            >
+              删除分组
+            </button>
+          </div>
+        </details>
       </section>
-      <section class="uml-editor-section" aria-label="泳道编辑">
+      <section v-show="sectionMatches(draft.lanes)" class="uml-editor-section" aria-label="泳道编辑">
         <div class="uml-editor-heading">
           <h3>泳道（{{ draft.lanes?.length ?? 0 }}）</h3>
           <button type="button" @click="addLane">＋ 泳道</button>
         </div>
-        <div
+        <details
           v-for="(lane, index) in draft.lanes"
+          v-show="matches(lane)"
+          :data-editor-key="elementKey(lane)"
           :key="lane.id"
-          class="uml-editor-card uml-editor-card__body"
+          class="uml-editor-card"
+          :open="expanded ?? true"
         >
-          <code>{{ lane.id }}</code
-          ><label>泳道名称<input v-model="lane.label" type="text" /></label
-          ><button
-            type="button"
-            class="uml-editor-danger"
-            @click="removeLane(index)"
-          >
-            删除泳道
-          </button>
-        </div>
+          <summary>{{ index + 1 }}. {{ lane.label || "未命名泳道" }}</summary>
+          <div class="uml-editor-card__body">
+            <code>{{ lane.id }}</code
+            ><label>泳道名称<input v-model="lane.label" type="text" /></label
+            ><button
+              type="button"
+              class="uml-editor-danger"
+              @click="removeLane(index)"
+            >
+              删除泳道
+            </button>
+          </div>
+        </details>
       </section>
     </template>
 
     <template v-else-if="draft.type === 'sequence'">
-      <section class="uml-editor-section" aria-label="参与者编辑">
+      <section v-show="sectionMatches(draft.participants)" class="uml-editor-section" aria-label="参与者编辑">
         <div class="uml-editor-heading">
           <h3>参与者（{{ draft.participants?.length ?? 0 }}）</h3>
           <button type="button" @click="addParticipant">＋ 参与者</button>
         </div>
-        <div
+        <details
           v-for="(participant, index) in draft.participants"
+          v-show="matches(participant)"
+          :data-editor-key="elementKey(participant)"
           :key="participant.id"
-          class="uml-editor-card uml-editor-card__body"
+          class="uml-editor-card"
+          :open="expanded ?? true"
         >
-          <code>{{ participant.id }}</code
-          ><label>名称<input v-model="participant.label" type="text" /></label
-          ><label
-            >类型<select
-              :value="participant.kind ?? ''"
-              @change="optionalText(participant, 'kind', valueOf($event))"
-            >
-              <option value="">默认</option>
-              <option
-                v-for="kind in ['participant', 'actor', 'database']"
-                :key="kind"
-                :value="kind"
+          <summary>{{ index + 1 }}. {{ participant.label || "未命名参与者" }}</summary>
+          <div class="uml-editor-card__body">
+            <code>{{ participant.id }}</code
+            ><label>名称<input v-model="participant.label" type="text" /></label
+            ><label
+              >类型<select
+                :value="participant.kind ?? ''"
+                @change="optionalText(participant, 'kind', valueOf($event))"
               >
-                {{ kindLabels[kind] }} · {{ kind }}
-              </option>
-            </select></label
-          ><button
-            type="button"
-            class="uml-editor-danger"
-            @click="removeParticipant(index)"
-          >
-            删除参与者
-          </button>
-        </div>
+                <option value="">默认</option>
+                <option
+                  v-for="kind in ['participant', 'actor', 'database']"
+                  :key="kind"
+                  :value="kind"
+                >
+                  {{ kindLabels[kind] }} · {{ kind }}
+                </option>
+              </select></label
+            ><button
+              type="button"
+              class="uml-editor-danger"
+              @click="removeParticipant(index)"
+            >
+              删除参与者
+            </button>
+          </div>
+        </details>
       </section>
-      <section class="uml-editor-section" aria-label="消息编辑">
+      <section v-show="sectionMatches(draft.messages)" class="uml-editor-section" aria-label="消息编辑">
         <div class="uml-editor-heading">
           <h3>消息（{{ draft.messages?.length ?? 0 }}）</h3>
           <button type="button" @click="addMessage">＋ 消息</button>
         </div>
         <details
           v-for="(message, index) in draft.messages"
+          v-show="matches(message)"
+          :data-editor-key="elementKey(message)"
           :key="index"
           class="uml-editor-card"
-          open
+          :open="expanded ?? true"
         >
           <summary>
             第 {{ index + 1 }} 条 · {{ message.label || "未命名消息" }}
@@ -945,7 +1046,7 @@ function updateCause(
           </div>
         </details>
       </section>
-      <section class="uml-editor-section" aria-label="组合片段编辑">
+      <section v-show="sectionMatches(draft.fragments)" class="uml-editor-section" aria-label="组合片段编辑">
         <div class="uml-editor-heading">
           <h3>组合片段（{{ draft.fragments?.length ?? 0 }}）</h3>
           <button type="button" @click="addFragment">＋ 片段</button>
@@ -953,94 +1054,100 @@ function updateCause(
         <p class="uml-editor-hint">
           范围包含首尾消息。删除范围内消息前需先调整片段；删除范围前消息会自动平移片段索引。
         </p>
-        <div
+        <details
           v-for="(fragment, index) in draft.fragments"
+          v-show="matches(fragment)"
+          :data-editor-key="elementKey(fragment)"
           :key="index"
-          class="uml-editor-card uml-editor-card__body"
+          class="uml-editor-card"
+          :open="expanded ?? true"
         >
-          <label
-            >片段类型<select
-              :value="fragment.kind"
-              @change="fragmentKind(fragment, valueOf($event))"
-            >
-              <option value="alt">alt · 条件分支</option>
-              <option value="opt">opt · 可选</option>
-              <option value="loop">loop · 循环</option>
-              <option value="par">par · 并行</option>
-            </select></label
-          >
-          <label
-            >条件 / 标题<input v-model="fragment.label" type="text"
-          /></label>
-          <div class="uml-editor-grid">
+          <summary>{{ index + 1 }}. {{ fragment.label || "未命名片段" }}</summary>
+          <div class="uml-editor-card__body">
             <label
-              >起始消息<select v-model.number="fragment.from">
-                <option
-                  v-for="(message, messageIndex) in draft.messages"
-                  :key="messageIndex"
-                  :value="messageIndex"
-                >
-                  {{ messageIndex + 1 }} · {{ message.label }}
-                </option>
-              </select></label
-            ><label
-              >结束消息<select v-model.number="fragment.to">
-                <option
-                  v-for="(message, messageIndex) in draft.messages"
-                  :key="messageIndex"
-                  :value="messageIndex"
-                >
-                  {{ messageIndex + 1 }} · {{ message.label }}
-                </option>
+              >片段类型<select
+                :value="fragment.kind"
+                @change="fragmentKind(fragment, valueOf($event))"
+              >
+                <option value="alt">alt · 条件分支</option>
+                <option value="opt">opt · 可选</option>
+                <option value="loop">loop · 循环</option>
+                <option value="par">par · 并行</option>
               </select></label
             >
-          </div>
-          <template v-if="fragment.kind === 'alt' || fragment.kind === 'par'"
-            ><label
-              >第二分支起始消息<select
-                :value="fragment.elseAt ?? ''"
-                @change="fragmentElse(fragment, valueOf($event))"
-              >
-                <option value="">不划分第二分支</option>
-                <template
-                  v-for="(message, messageIndex) in draft.messages"
-                  :key="messageIndex"
-                  ><option
-                    v-if="
-                      messageIndex > fragment.from &&
-                      messageIndex <= fragment.to
-                    "
+            <label
+              >条件 / 标题<input v-model="fragment.label" type="text"
+            /></label>
+            <div class="uml-editor-grid">
+              <label
+                >起始消息<select v-model.number="fragment.from">
+                  <option
+                    v-for="(message, messageIndex) in draft.messages"
+                    :key="messageIndex"
                     :value="messageIndex"
                   >
                     {{ messageIndex + 1 }} · {{ message.label }}
-                  </option></template
+                  </option>
+                </select></label
+              ><label
+                >结束消息<select v-model.number="fragment.to">
+                  <option
+                    v-for="(message, messageIndex) in draft.messages"
+                    :key="messageIndex"
+                    :value="messageIndex"
+                  >
+                    {{ messageIndex + 1 }} · {{ message.label }}
+                  </option>
+                </select></label
+              >
+            </div>
+            <template v-if="fragment.kind === 'alt' || fragment.kind === 'par'"
+              ><label
+                >第二分支起始消息<select
+                  :value="fragment.elseAt ?? ''"
+                  @change="fragmentElse(fragment, valueOf($event))"
                 >
-              </select></label
-            ><label
-              >第二分支条件<input
-                :value="fragment.elseLabel ?? ''"
-                type="text"
-                @input="
-                  optionalText(fragment, 'elseLabel', valueOf($event))
-                " /></label
-          ></template>
-          <button
-            type="button"
-            class="uml-editor-danger"
-            @click="
-              draft.fragments!.splice(index, 1);
-              error = '';
-            "
-          >
-            删除片段
-          </button>
-        </div>
+                  <option value="">不划分第二分支</option>
+                  <template
+                    v-for="(message, messageIndex) in draft.messages"
+                    :key="messageIndex"
+                    ><option
+                      v-if="
+                        messageIndex > fragment.from &&
+                        messageIndex <= fragment.to
+                      "
+                      :value="messageIndex"
+                    >
+                      {{ messageIndex + 1 }} · {{ message.label }}
+                    </option></template
+                  >
+                </select></label
+              ><label
+                >第二分支条件<input
+                  :value="fragment.elseLabel ?? ''"
+                  type="text"
+                  @input="
+                    optionalText(fragment, 'elseLabel', valueOf($event))
+                  " /></label
+            ></template>
+            <button
+              type="button"
+              class="uml-editor-danger"
+              @click="
+                draft.fragments!.splice(index, 1);
+                error = '';
+              "
+            >
+              删除片段
+            </button>
+          </div>
+        </details>
       </section>
     </template>
 
     <template v-else-if="draft.type === 'fishbone'">
-      <section class="uml-editor-section" aria-label="鱼骨分析">
-        <label
+      <section v-show="matches(draft.fishbone)" class="uml-editor-section" aria-label="鱼骨分析">
+        <label v-show="matches(draft.fishbone?.effect)" data-editor-key="effect" tabindex="-1"
           >结果 / 问题<input
             v-if="draft.fishbone"
             v-model="draft.fishbone.effect"
@@ -1052,9 +1159,11 @@ function updateCause(
         </div>
         <details
           v-for="(category, categoryIndex) in draft.fishbone?.categories"
+          v-show="matches(category)"
+          :data-editor-key="elementKey(category)"
           :key="category.id"
           class="uml-editor-card"
-          open
+          :open="expanded ?? true"
         >
           <summary>
             {{ categoryIndex + 1 }}. {{ category.label || "未命名分类" }}
@@ -1068,6 +1177,10 @@ function updateCause(
               v-for="(cause, causeIndex) in category.causes"
               :key="causeIndex"
               :model-value="cause"
+              :query="query"
+              :expanded="expanded"
+              :editor-key="elementKey(cause)"
+              :key-for="elementKey"
               :path="`原因 ${categoryIndex + 1}.${causeIndex + 1}`"
               @update:model-value="
                 updateCause(categoryIndex, causeIndex, $event)

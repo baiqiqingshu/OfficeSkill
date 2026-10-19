@@ -263,8 +263,8 @@ export function renderSequence(
   };
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
-    body += `<rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    body += `<g data-editor-key="fragments/${spec.fragments!.indexOf(fragment)}"><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    fragmentAnnotations += `<g data-editor-key="fragments/${spec.fragments!.indexOf(fragment)}"><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
     fragmentAnnotations += text(
       left + 10,
       frameTop + 18,
@@ -285,9 +285,12 @@ export function renderSequence(
       );
       fragmentAnnotations += guard(left + 12, box.divider + 10, box.elseLines);
     }
+    body += `</g>`;
+    fragmentAnnotations += `</g>`;
   }
   for (const p of participants) {
     const cx = x.get(p.id)!;
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)!]! : bottom;
     body += line(
@@ -299,6 +302,7 @@ export function renderSequence(
       theme.lineWidth,
       true,
     );
+    body += `</g>`;
   }
   type Activation = { start: number; depth: number };
   const stacks = new Map<string, Activation[]>();
@@ -343,6 +347,7 @@ export function renderSequence(
   for (const p of participants) {
     const cx = x.get(p.id)!,
       py = headerY(p);
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
     if (p.kind === "actor") {
       const cy = py + 13;
@@ -371,9 +376,11 @@ export function renderSequence(
         { anchor: "middle", weight: 600 },
       );
     }
+    body += `</g>`;
   }
   body += fragmentAnnotations;
   messages.forEach((m, i) => {
+    body += `<g data-editor-key="messages/${i}">`;
     const sx = x.get(m.from)!,
       tx = x.get(m.to)!,
       y = ys[i]!;
@@ -401,6 +408,7 @@ export function renderSequence(
     });
     if (kind === "destroy")
       body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+    body += `</g>`;
   });
   body += text(
     40,
@@ -425,6 +433,7 @@ export function renderFishbone(
   const regionGap = spec.layout?.regionGap ?? 40;
   type CauseRow = {
     cause: FishboneCause;
+    path: string;
     depth: number;
     parent: number;
     lines: string[];
@@ -439,6 +448,7 @@ export function renderFishbone(
       cause: FishboneCause,
       depth: number,
       parent: number,
+      path: string,
     ): void => {
       const lines = wrap(cause.label, 205, size);
       const rowIndex = rows.length;
@@ -446,12 +456,12 @@ export function renderFishbone(
         18 + elementGap,
         lines.length * leading + elementGap,
       );
-      rows.push({ cause, depth, parent, lines, offset, height });
+      rows.push({ cause, depth, parent, lines, offset, height, path });
       offset += height;
       maxDepth = Math.max(maxDepth, depth);
-      cause.children?.forEach((child) => visit(child, depth + 1, rowIndex));
+      cause.children?.forEach((child, i) => visit(child, depth + 1, rowIndex, `${path}/children/${i}`));
     };
-    category.causes.forEach((cause) => visit(cause, 0, -1));
+    category.causes.forEach((cause, i) => visit(cause, 0, -1, `categories/${index}/causes/${i}`));
     return {
       category,
       index,
@@ -551,6 +561,7 @@ export function renderFishbone(
       );
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
       const categoryY = upper ? outerY - categoryHeight : outerY;
+      body += `<g data-editor-key="categories/${item.index}">`;
       body += line(
         attachX,
         spineY,
@@ -563,6 +574,7 @@ export function renderFishbone(
         (row) => (upper ? outerY : spineY) + 35 + row.offset + row.height / 2,
       );
       item.rows.forEach((row, ri) => {
+        body += `<g data-editor-key="${row.path}">`;
         const ry = centers[ri]!;
         const labelX = left + 12 + row.depth * 26;
         const lineY = ry + (row.lines.length * leading) / 2 + 6;
@@ -597,6 +609,7 @@ export function renderFishbone(
             weight: row.depth === 0 ? 600 : 400,
           },
         );
+        body += `</g>`;
       });
       body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
       body += text(
@@ -606,9 +619,11 @@ export function renderFishbone(
         theme,
         { size: size + 1, anchor: "middle", weight: 700 },
       );
+      body += `</g>`;
     }
     left += colWidth + regionGap;
   }
+  body += `<g data-editor-key="effect">`;
   // Restored pointed snout, eye and curved gill from the previous fish-head version.
   body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
   body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
@@ -620,6 +635,7 @@ export function renderFishbone(
     theme,
     { size: effectSize, anchor: "middle", weight: 700 },
   );
+  body += `</g>`;
   body += text(
     40,
     height - 24,

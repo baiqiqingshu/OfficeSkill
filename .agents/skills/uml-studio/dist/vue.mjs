@@ -99084,7 +99084,7 @@ function renderNode(box, spec) {
     content += text(x + caption.x + caption.width / 2, y + caption.y + 2 + caption.size, caption.value, theme, { size: caption.size, fill: theme.muted });
   }
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
-  return `<g class="uml-node uml-node-${kind}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([ref2.sourceNode.label, ref2.sourceNode.detail, ...ref2.sourceNode.attributes ?? [], ...ref2.sourceNode.operations ?? []].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
+  return `<g class="uml-node uml-node-${kind}" data-editor-key="nodes/${spec.nodes.indexOf(ref2.sourceNode)}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([ref2.sourceNode.label, ref2.sourceNode.detail, ...ref2.sourceNode.attributes ?? [], ...ref2.sourceNode.operations ?? []].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
 }
 function segmentIntersectsRect(a, b, box, margin = 0) {
   let low = 0, high = 1;
@@ -99503,7 +99503,7 @@ async function renderGraph(spec, suppliedTheme) {
     const dashed = route.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
     const end = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
     const start = kind === "aggregation" || kind === "composition" ? kind : "";
-    paths += `<g class="uml-edge uml-edge-${kind}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" → "))}</title>`;
+    paths += `<g class="uml-edge uml-edge-${kind}" data-editor-key="edges/${spec.edges.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" → "))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : "";
@@ -99515,7 +99515,7 @@ async function renderGraph(spec, suppliedTheme) {
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
   const labelShapes = labels.map((label2) => {
     const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
-    return `<g class="uml-edge-label" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`;
+    return `<g class="uml-edge-label" data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`;
   }).join("");
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) {
@@ -99734,8 +99734,8 @@ function renderSequence(spec, theme) {
   };
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
-    body += `<rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    body += `<g data-editor-key="fragments/${spec.fragments.indexOf(fragment)}"><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    fragmentAnnotations += `<g data-editor-key="fragments/${spec.fragments.indexOf(fragment)}"><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
     fragmentAnnotations += text(
       left + 10,
       frameTop + 18,
@@ -99756,9 +99756,12 @@ function renderSequence(spec, theme) {
       );
       fragmentAnnotations += guard(left + 12, box.divider + 10, box.elseLines);
     }
+    body += `</g>`;
+    fragmentAnnotations += `</g>`;
   }
   for (const p of participants) {
     const cx = x.get(p.id);
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)] : bottom;
     body += line(
@@ -99770,6 +99773,7 @@ function renderSequence(spec, theme) {
       theme.lineWidth,
       true
     );
+    body += `</g>`;
   }
   const stacks = /* @__PURE__ */ new Map();
   const activationShapes = [];
@@ -99806,6 +99810,7 @@ function renderSequence(spec, theme) {
   body += activationShapes.join("");
   for (const p of participants) {
     const cx = x.get(p.id), py = headerY(p);
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
     if (p.kind === "actor") {
       const cy = py + 13;
@@ -99834,9 +99839,11 @@ function renderSequence(spec, theme) {
         { anchor: "middle", weight: 600 }
       );
     }
+    body += `</g>`;
   }
   body += fragmentAnnotations;
   messages.forEach((m, i) => {
+    body += `<g data-editor-key="messages/${i}">`;
     const sx = x.get(m.from), tx = x.get(m.to), y = ys[i];
     const self2 = m.from === m.to;
     const sign = tx >= sx ? 1 : -1;
@@ -99857,6 +99864,7 @@ function renderSequence(spec, theme) {
     });
     if (kind === "destroy")
       body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+    body += `</g>`;
   });
   body += text(
     40,
@@ -99877,19 +99885,19 @@ function renderFishbone(spec, theme) {
   const categories = data.categories.map((category, index) => {
     const rows = [];
     let offset = 0, maxDepth = 0;
-    const visit = (cause2, depth, parent) => {
+    const visit = (cause2, depth, parent, path) => {
       const lines = wrap(cause2.label, 205, size);
       const rowIndex = rows.length;
       const height2 = Math.max(
         18 + elementGap,
         lines.length * leading + elementGap
       );
-      rows.push({ cause: cause2, depth, parent, lines, offset, height: height2 });
+      rows.push({ cause: cause2, depth, parent, lines, offset, height: height2, path });
       offset += height2;
       maxDepth = Math.max(maxDepth, depth);
-      cause2.children?.forEach((child) => visit(child, depth + 1, rowIndex));
+      cause2.children?.forEach((child, i) => visit(child, depth + 1, rowIndex, `${path}/children/${i}`));
     };
-    category.causes.forEach((cause2) => visit(cause2, 0, -1));
+    category.causes.forEach((cause2, i) => visit(cause2, 0, -1, `categories/${index}/causes/${i}`));
     return {
       category,
       index,
@@ -99980,6 +99988,7 @@ function renderFishbone(spec, theme) {
       );
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
       const categoryY = upper ? outerY - categoryHeight : outerY;
+      body += `<g data-editor-key="categories/${item.index}">`;
       body += line(
         attachX,
         spineY,
@@ -99992,6 +100001,7 @@ function renderFishbone(spec, theme) {
         (row) => (upper ? outerY : spineY) + 35 + row.offset + row.height / 2
       );
       item.rows.forEach((row, ri) => {
+        body += `<g data-editor-key="${row.path}">`;
         const ry = centers[ri];
         const labelX = left + 12 + row.depth * 26;
         const lineY = ry + row.lines.length * leading / 2 + 6;
@@ -100025,6 +100035,7 @@ function renderFishbone(spec, theme) {
             weight: row.depth === 0 ? 600 : 400
           }
         );
+        body += `</g>`;
       });
       body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
       body += text(
@@ -100034,9 +100045,11 @@ function renderFishbone(spec, theme) {
         theme,
         { size: size + 1, anchor: "middle", weight: 700 }
       );
+      body += `</g>`;
     }
     left += colWidth + regionGap;
   }
+  body += `<g data-editor-key="effect">`;
   body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
   body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
   body += `<circle cx="${headX + headWidth - 49}" cy="${spineY - headHeight * 0.25}" r="5" fill="${esc(theme.primary)}"/>`;
@@ -100047,6 +100060,7 @@ function renderFishbone(spec, theme) {
     theme,
     { size: effectSize, anchor: "middle", weight: 700 }
   );
+  body += `</g>`;
   body += text(
     40,
     height - 24,
@@ -100258,9 +100272,10 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "DiagramCanvas",
   props: {
     spec: {},
-    runtime: {}
+    runtime: {},
+    elementSelection: { type: Boolean }
   },
-  emits: ["rendered", "error", "loading"],
+  emits: ["rendered", "error", "loading", "selectElement"],
   setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const emit = __emit;
@@ -100382,18 +100397,33 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       const rect = viewport.getBoundingClientRect();
       if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
       viewport.setPointerCapture(event.pointerId);
-      pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+      pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : void 0, moved: false };
       dragging.value = true;
       event.preventDefault();
     }
     function movePan(event) {
       if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
+      if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
       stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
       stage.value.scrollTop = pan.top - (event.clientY - pan.y);
     }
     function endPan(event) {
       if (!pan || event && pan.pointerId !== event.pointerId) return;
       const pointerId = pan.pointerId;
+      const target = pan.target;
+      const selected = event?.type === "pointerup" && !pan.moved && props.elementSelection && !pending.value;
+      if (selected && target) {
+        const element = target.closest("[data-editor-key], .uml-container");
+        let key = element?.getAttribute("data-editor-key");
+        if (!key && element) {
+          const lane = element.getAttribute("data-lane-id");
+          const group = element.getAttribute("data-group-id");
+          const field = group ? "groups" : "lanes";
+          const index = applied.value?.[field]?.findIndex((item) => item.id === (group ?? lane));
+          if (index !== void 0 && index >= 0) key = `${field}/${index}`;
+        }
+        if (key) emit("selectElement", key);
+      }
       pan = void 0;
       dragging.value = false;
       if (stage.value?.hasPointerCapture(pointerId)) stage.value.releasePointerCapture(pointerId);
@@ -100500,7 +100530,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           {
             ref_key: "stage",
             ref: stage,
-            class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value }]),
+            class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "can-select-elements": __props.elementSelection }]),
             tabindex: "0",
             "aria-label": "图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览",
             onPointerdown: startPan,
