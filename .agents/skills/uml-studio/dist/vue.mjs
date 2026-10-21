@@ -99137,7 +99137,7 @@ function labelIntersectsNode(label2, node) {
   if (["usecase", "start", "end"].includes(node.ref.kind)) return dx * dx + dy * dy < 1;
   return true;
 }
-function placeLabels(routes, nodes, containers, direction) {
+function placeLabels(routes, nodes, containers, direction, finalPass = false) {
   const occupied = [];
   for (const box of nodes) if (box.caption) occupied.push({ x: box.x + box.caption.x, y: box.y + box.caption.y, width: box.caption.width, height: box.caption.height });
   for (const box of containers) occupied.push(box.ref.kind === "lane" && direction === "LR" ? { x: box.x, y: box.y, width: box.ref.header, height: box.height } : { x: box.x, y: box.y, width: box.width, height: box.ref.header });
@@ -99177,12 +99177,26 @@ function placeLabels(routes, nodes, containers, direction) {
           middle,
           start + (end - start) / 4,
           end - (end - start) / 4,
-          Math.max(start, Math.min(end, desired - offset))
+          Math.max(start, Math.min(end, desired - offset)),
+          start + Math.min(1, (end - start) / 2),
+          end - Math.min(1, (end - start) / 2)
         ]);
+        const half = (Math.abs(ux) * label2.width + Math.abs(uy) * label2.height) / 2;
+        for (const box of [...nodes, ...occupied]) {
+          const projections = [
+            (box.x - a.x) * ux + (box.y - a.y) * uy,
+            (box.x + box.width - a.x) * ux + (box.y - a.y) * uy,
+            (box.x - a.x) * ux + (box.y + box.height - a.y) * uy,
+            (box.x + box.width - a.x) * ux + (box.y + box.height - a.y) * uy
+          ];
+          for (const position of [Math.min(...projections) - half - 6, Math.max(...projections) + half + 6]) {
+            if (position > start && position < end) positions.add(position);
+          }
+        }
         const steps = Math.min(60, Math.ceil((end - start) / 12));
         for (let step = 0; step <= steps; step++) positions.add(start + (end - start) * step / Math.max(1, steps));
         const shifts = end - start < Math.abs(ux) * label2.width + Math.abs(uy) * label2.height + 16 ? [0, -12, 12, -24, 24] : [0];
-        for (const position of positions) for (const gap of [8, 12, 18, 28, 44, 68, 100]) for (const sign of [1, -1]) for (const shift of shifts) {
+        for (const position of positions) for (const gap of finalPass ? [8, 12, 18, 28, 44, 68, 100, 160, 256, 512] : [8, 12, 18, 28, 44]) for (const sign of [1, -1]) for (const shift of shifts) {
           const anchor = { x: a.x + ux * position, y: a.y + uy * position };
           const normalX = -uy * sign, normalY = ux * sign;
           const distance = gap + Math.abs(normalX) * label2.width / 2 + Math.abs(normalY) * label2.height / 2;
@@ -99198,7 +99212,8 @@ function placeLabels(routes, nodes, containers, direction) {
             anchor
           };
           const nearest = Math.min(...others.map((other) => segmentRectDistance(other.a, other.b, box)));
-          const own = segmentRectDistance(a, b, box), ambiguous = shared || nearest < own + 3;
+          const own = Math.min(...segments.map((segment2) => segmentRectDistance(segment2.a, segment2.b, box)));
+          const ambiguous = shared || nearest < own + 3;
           box.leader = ambiguous || own > 18;
           candidates.push({ box, score: Math.abs(offset + position - desired) * (branch || label2.role !== "main" ? 0.3 : 0.1) + gap * 2 + Math.abs(shift) + (shared ? 4e3 : ambiguous ? 1e3 : 0) + (gap > 18 ? 500 : 0) });
         }
@@ -99211,14 +99226,21 @@ function placeLabels(routes, nodes, containers, direction) {
       if (nodes.some((node) => labelIntersectsNode(candidate.box, node))) continue;
       if (occupied.some((box) => intersects(candidate.box, box, 5))) continue;
       if (allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, candidate.box, 4))) continue;
-      if (candidate.box.leader && sharedAnchor(candidate.box.anchor)) continue;
+      if (candidate.box.leader) {
+        const anchor = candidate.box.anchor;
+        const end = {
+          x: Math.max(candidate.box.x, Math.min(candidate.box.x + candidate.box.width, anchor.x)),
+          y: Math.max(candidate.box.y, Math.min(candidate.box.y + candidate.box.height, anchor.y))
+        };
+        if (!finalPass && (sharedAnchor(anchor) || Math.hypot(end.x - anchor.x, end.y - anchor.y) > 48)) continue;
+        if (nodes.some((node) => segmentIntersectsRect(anchor, end, node, 1)) || occupied.some((box) => segmentIntersectsRect(anchor, end, box, 2))) continue;
+      }
       chosen = candidate.box;
       break;
     }
     if (!chosen) {
-      const candidate = (candidates.find((candidate2) => !sharedAnchor(candidate2.box.anchor)) ?? candidates[0]).box;
-      chosen = { ...candidate, leader: true };
-      while (nodes.some((node) => labelIntersectsNode(chosen, node)) || occupied.some((box) => intersects(chosen, box, 5)) || allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, chosen, 4))) chosen.y -= label2.height + 12;
+      if (!finalPass) return void 0;
+      throw new Error(`Unable to place annotation beside relationship ${route.ref.edge.from} → ${route.ref.edge.to}.`);
     }
     placed.push(chosen);
     occupied.push(chosen);
@@ -99507,6 +99529,10 @@ function placeFlowTerminals(result, edges, direction, gap) {
   }
 }
 async function renderGraph(spec, suppliedTheme) {
+  return renderGraphWithSpacing(spec, suppliedTheme, 0);
+}
+async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
+  const requestedSpec = spec;
   const automaticColumns = spec.layout?.maxPerColumn === void 0;
   spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
@@ -99595,7 +99621,14 @@ async function renderGraph(spec, suppliedTheme) {
       if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
     }
   }
-  const labels = placeLabels(result.routes, result.nodes, result.containers, direction);
+  const labels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
+  if (!labels) {
+    return renderGraphWithSpacing({ ...requestedSpec, layout: {
+      ...requestedSpec.layout,
+      elementGap: Math.ceil((spec.layout?.elementGap ?? 48) * 1.5),
+      regionGap: Math.ceil((spec.layout?.regionGap ?? 72) * 1.5)
+    } }, suppliedTheme, labelPass + 1);
+  }
   const prefix = `uml-graph-${++graphNumber}`;
   const displayed = result.routes.flatMap((route, owner) => route.paths.map((points) => ({ points: simplify(points), owner })));
   const crossings = crossingPaths(

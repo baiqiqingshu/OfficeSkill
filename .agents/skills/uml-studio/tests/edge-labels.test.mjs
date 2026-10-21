@@ -80,6 +80,40 @@ test('cardinality labels stay near their respective ends', async () => {
   }
 })
 
+test('payment lifecycle annotations reflow instead of drifting above the diagram', async () => {
+  const spec = JSON.parse(await readFile(new URL('../examples/scenarios/state.json', import.meta.url), 'utf8'))
+  for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious']) for (const reverse of [false, true]) {
+    const input = { ...spec, direction, layout: { mode }, edges: reverse ? [...spec.edges].reverse() : spec.edges }
+    const original = JSON.stringify(input)
+    const { svg } = await renderDiagram(input)
+    assert.equal(JSON.stringify(input), original, 'spacing retries must not modify the editable document')
+    const { routes, labels } = annotations(svg)
+    assert.equal(routes.size, spec.edges.length)
+    assert.equal(labels.length, spec.edges.filter(edge => edge.label).length)
+    const states = [...svg.matchAll(/<g class="uml-node uml-node-state"[^>]*>[\s\S]*?<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.-]+)" height="([\d.-]+)"/g)]
+      .map(([, x, y, width, height]) => ({ x: +x, y: +y, width: +width, height: +height }))
+    for (const label of labels) {
+      const context = `${direction}/${mode}/${reverse}/${label.value}`
+      assert.ok(orthogonalDistance(label, routes.get(label.edge)) <= 48.01, `${context}: detached annotation`)
+      for (const box of states) assert.ok(label.x >= box.x + box.width || box.x >= label.x + label.width
+        || label.y >= box.y + box.height || box.y >= label.y + label.height, `${context}: annotation covers a state`)
+      if (direction === 'TB' && !reverse) assert.ok(!label.leader, `${context}: should fit beside its transition`)
+      if (!label.leader) continue
+      const [x1, y1, x2, y2] = label.leader
+      assert.ok(Math.hypot(x2 - x1, y2 - y1) <= 48.01, `${context}: long leader`)
+      for (const box of states) {
+        // Clip the leader against the state rectangle to detect hidden crossings.
+        let enter = 0, leave = 1
+        for (const [start, delta, low, high] of [[x1, x2 - x1, box.x, box.x + box.width], [y1, y2 - y1, box.y, box.y + box.height]]) {
+          if (Math.abs(delta) < .001) { if (start < low || start > high) leave = -1 }
+          else { enter = Math.max(enter, Math.min((low - start) / delta, (high - start) / delta)); leave = Math.min(leave, Math.max((low - start) / delta, (high - start) / delta)) }
+        }
+        assert.ok(enter > leave, `${context}: leader crosses a state`)
+      }
+    }
+  }
+})
+
 test('usecase annotations stay close to straight and diagonal relationships without covering them', async () => {
   const spec = { version: 1, type: 'usecase', title: '认证', direction: 'LR',
     nodes: [{ id: 'login', label: '登录' }, { id: 'verify', label: '校验' }, { id: 'audit', label: '审计' }],
