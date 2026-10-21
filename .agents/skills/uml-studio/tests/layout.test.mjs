@@ -126,6 +126,52 @@ test('swimlane cross-links share rows and remain visible in grid mode', async ()
   assert.equal(graph.nodes.get('b').y, graph.nodes.get('c').y)
 })
 
+test('lanes touch and share their full flow extent in either direction and every layout mode', async () => {
+  const source = JSON.parse(await readFile(new URL('../examples/scenarios/swimlane.json', import.meta.url), 'utf8'))
+  for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious', 'grid']) {
+    const spec = { ...source, direction, layout: { mode, regionGap: 180, edgeCrossing: 'plain' } }
+    const graph = geometry((await renderDiagram(spec)).svg)
+    assertRoutes(graph, spec.edges)
+    const axis = direction === 'TB' ? 'x' : 'y', size = direction === 'TB' ? 'width' : 'height'
+    const flow = direction === 'TB' ? 'y' : 'x', extent = direction === 'TB' ? 'height' : 'width'
+    const lanes = source.lanes.map(lane => graph.containers.get(lane.id))
+    for (let index = 1; index < lanes.length; index++) {
+      assert.ok(Math.abs(lanes[index][axis] - lanes[index - 1][axis] - lanes[index - 1][size]) < .01, `${direction}/${mode}: lane gap`)
+      assert.equal(lanes[index][flow], lanes[0][flow])
+      assert.equal(lanes[index][extent], lanes[0][extent])
+    }
+  }
+})
+
+test('swimlane fragments follow one lane axis and global flow order through feedback', async () => {
+  const source = JSON.parse(await readFile(new URL('../examples/scenarios/swimlane.json', import.meta.url), 'utf8'))
+  for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious']) {
+    const spec = { ...source, direction, layout: { mode, edgeCrossing: 'plain' } }
+    const graph = geometry((await renderDiagram(spec)).svg)
+    const axis = direction === 'TB' ? 'y' : 'x', cross = direction === 'TB' ? 'x' : 'y'
+    const size = direction === 'TB' ? 'height' : 'width', crossSize = direction === 'TB' ? 'width' : 'height'
+    const terminal = new Set(['start', 'end'])
+    for (const lane of source.lanes) {
+      const region = graph.containers.get(lane.id)
+      const members = source.nodes.filter(node => node.lane === lane.id && !terminal.has(node.id)).map(node => graph.nodes.get(node.id))
+      for (const box of members) {
+        assert.ok(Math.abs(box[cross] + box[crossSize] / 2 - region[cross] - region[crossSize] / 2) < .01, `${direction}/${mode}: node leaves lane axis`)
+        assert.ok(box.x >= region.x && box.y >= region.y && box.x + box.width <= region.x + region.width && box.y + box.height <= region.y + region.height)
+      }
+    }
+    for (const ids of [['submit', 'revise', 'notify'], ['invoice', 'valid', 'record'], ['pay', 'paid', 'retry']]) {
+      for (let index = 1; index < ids.length; index++) {
+        const from = graph.nodes.get(ids[index - 1]), to = graph.nodes.get(ids[index])
+        assert.ok(to[axis] >= from[axis] + from[size], `${direction}/${mode}: ${ids[index - 1]} precedes ${ids[index]}`)
+      }
+    }
+    for (const [from, to] of [['invoice', 'valid'], ['pay', 'paid'], ['paid', 'retry']]) {
+      const path = graph.routes.find(route => route.from === from && route.to === to).paths[0]
+      assert.equal(path.length, 2, `${direction}/${mode}: unnecessary lateral detour ${from} to ${to}`)
+    }
+  }
+})
+
 test('self relationships keep distinct ports and do not collapse into invisible paths', async () => {
   const spec = { version: 1, type: 'flowchart', title: '重试', nodes: [{ id: 'a', label: '处理' }], edges: [{ from: 'a', to: 'a', label: '重试' }] }
   const graph = geometry((await renderDiagram(validateSpec(spec))).svg)

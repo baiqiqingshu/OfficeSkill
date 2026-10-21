@@ -153,7 +153,7 @@ const layoutControls = [
     min: 0,
     max: 600,
     step: 1,
-    hint: "分组、泳道或分析维度间距",
+    hint: "分组或分析维度间距；泳道连续相接",
   },
   {
     key: "elementGap",

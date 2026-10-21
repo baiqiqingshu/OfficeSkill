@@ -280,7 +280,10 @@ function buildGraph(
       const metrics = measure(caption, size);
       const placement = direction === 'TB' ? '[H_RIGHT,V_CENTER,OUTSIDE]' : '[H_CENTER,V_BOTTOM,OUTSIDE]';
       child.layoutOptions = { 'elk.layered.nodePlacement.favorStraightEdges': 'true', 'elk.spacing.labelNode': '10', 'elk.nodeLabels.placement': placement };
-      child.labels = [{ id: `${ref.id}-caption`, text: caption, width: metrics.width + 4, height: metrics.height + 4 }];
+      const width = metrics.width + 4, height = metrics.height + 4;
+      child.labels = [{ id: `${ref.id}-caption`, text: caption, width, height,
+        x: direction === 'LR' ? (ref.width - width) / 2 : ref.width + 10,
+        y: direction === 'LR' ? ref.height + 10 : (ref.height - height) / 2 }];
     }
     const parent = ref.node.group ? groupNodes.get(ref.node.group) : undefined;
     (parent?.children ?? root.children)!.push(child);
@@ -763,7 +766,11 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
   const obstacles: Rect[] = result.nodes.map(box => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
   for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 2, y: box.y + box.caption.y - 2, width: box.caption.width + 4, height: box.caption.height + 4 });
   for (const box of result.containers) {
-    if (box.ref.kind === 'lane' && direction === 'LR') obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.ref.header - 3, height: box.height - 6 });
+    // Lane entry may cross the header's empty area, while still avoiding its title.
+    if (box.ref.kind === 'lane') {
+      const label = measure(box.ref.label, theme.fontSize);
+      obstacles.push({ x: box.x + 12, y: box.y + 6, width: label.width + 8, height: label.height + 8 });
+    }
     else obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.width - 6, height: box.ref.header - 3 });
   }
   const counts = new Map<string, number>();
@@ -1152,6 +1159,100 @@ function occupiedNode(box: NodeBox): Rect {
     height: Math.max(box.height, caption ? caption.y + caption.height : 0) - top };
 }
 
+/** A lane is one flow axis; disconnected local fragments still share its centre line. */
+function alignLaneFlow(result: LayoutResult, edges: EdgeRef[], spec: DiagramSpec, theme: Theme): boolean {
+  if (!spec.lanes?.length || result.containers.some(box => box.ref.kind !== 'lane') || (spec.layout?.maxPerColumn ?? 0) > 0) return false;
+  const horizontal = spec.direction === 'LR', axis = horizontal ? 'x' : 'y', cross = horizontal ? 'y' : 'x';
+  const size = horizontal ? 'width' : 'height', crossSize = horizontal ? 'height' : 'width';
+  const nodes = result.nodes.filter(box => !['start', 'end'].includes(box.ref.kind));
+  const byId = new Map(nodes.map(box => [box.ref.node.id, box]));
+  const outgoing = new Map<string, EdgeRef[]>(), incoming = new Set<string>();
+  for (const edge of edges) {
+    const list = outgoing.get(edge.edge.from) ?? [];
+    list.push(edge); outgoing.set(edge.edge.from, list); incoming.add(edge.edge.to);
+  }
+  const feedback = new Set<EdgeRef>(), active = new Set<string>(), visited = new Set<string>();
+  const visit = (id: string): void => {
+    if (visited.has(id)) return;
+    visited.add(id); active.add(id);
+    for (const edge of outgoing.get(id) ?? []) {
+      if (active.has(edge.edge.to)) feedback.add(edge);
+      else visit(edge.edge.to);
+    }
+    active.delete(id);
+  };
+  // Find feedback against the complete graph, including hand-offs and terminal entry points.
+  for (const node of spec.nodes ?? []) if (node.kind === 'start' || !incoming.has(node.id)) visit(node.id);
+  for (const node of spec.nodes ?? []) visit(node.id);
+  const forward = edges.filter(edge => !feedback.has(edge) && byId.has(edge.edge.from) && byId.has(edge.edge.to));
+  const indegrees = new Map(nodes.map(box => [box.ref.node.id, 0]));
+  for (const edge of forward) indegrees.set(edge.edge.to, indegrees.get(edge.edge.to)! + 1);
+  const inputOrder = new Map((spec.nodes ?? []).map((node, index) => [node.id, index]));
+  const pending = nodes.filter(box => !indegrees.get(box.ref.node.id)).map(box => box.ref.node.id);
+  const ordered: NodeBox[] = [];
+  while (pending.length) {
+    pending.sort((a, b) => inputOrder.get(a)! - inputOrder.get(b)!);
+    const id = pending.shift()!;
+    ordered.push(byId.get(id)!);
+    for (const edge of outgoing.get(id) ?? []) {
+      if (!indegrees.has(edge.edge.to) || feedback.has(edge)) continue;
+      const degree = indegrees.get(edge.edge.to)! - 1;
+      indegrees.set(edge.edge.to, degree);
+      if (!degree) pending.push(edge.edge.to);
+    }
+  }
+  const lanes = result.containers;
+  const laneOf = (box: NodeBox) => box.ref.node.lane ?? lanes.find(lane => lane.ref.originalId.startsWith('__uml_unassigned_lane__'))?.ref.originalId;
+  const header = Math.max(0, ...lanes.map(lane => lane.ref.header));
+  const start = header + 24, gap = spec.layout?.elementGap ?? 48;
+  const centers = new Map(nodes.map(box => [box.ref.node.id, start + box[size] / 2]));
+  const constraints = new Map<string, { target: NodeBox; distance: number }[]>();
+  const constrain = (from: NodeBox, target: NodeBox, distance: number) => {
+    const list = constraints.get(from.ref.node.id) ?? [];
+    list.push({ target, distance }); constraints.set(from.ref.node.id, list);
+  };
+  const separation = (from: NodeBox, to: NodeBox, labelGap = 0) => {
+    const a = occupiedNode(from), b = occupiedNode(to);
+    return a[axis] + a[size] - from[axis] - from[size] / 2
+      + to[axis] + to[size] / 2 - b[axis] + Math.max(gap, labelGap);
+  };
+  for (const edge of forward) {
+    const from = byId.get(edge.edge.from)!, to = byId.get(edge.edge.to)!;
+    constrain(from, to, laneOf(from) === laneOf(to) ? separation(from, to, Math.max(0, ...edge.labels.map(label => label[size] + 16))) : 0);
+  }
+  const previous = new Map<string, NodeBox>();
+  for (const node of ordered) {
+    const lane = laneOf(node)!;
+    if (previous.has(lane)) constrain(previous.get(lane)!, node, separation(previous.get(lane)!, node));
+    previous.set(lane, node);
+  }
+  for (const node of ordered) for (const constraint of constraints.get(node.ref.node.id) ?? []) {
+    centers.set(constraint.target.ref.node.id, Math.max(centers.get(constraint.target.ref.node.id)!, centers.get(node.ref.node.id)! + constraint.distance));
+  }
+  let offset = 0;
+  for (const lane of lanes) {
+    const members = nodes.filter(node => laneOf(node) === lane.ref.originalId);
+    const span = Math.max(horizontal ? 180 : 240, horizontal ? 0 : measure(lane.ref.label, theme.fontSize).width + 36,
+      ...members.map(node => occupiedNode(node)[crossSize] + 48));
+    lane[cross] = offset; lane[crossSize] = span; lane[axis] = 0; lane.ref.header = header;
+    for (const node of members) {
+      const bounds = occupiedNode(node);
+      node[cross] += offset + span / 2 - bounds[cross] - bounds[crossSize] / 2;
+      node[axis] = centers.get(node.ref.node.id)! - node[size] / 2;
+    }
+    offset += span;
+  }
+  return true;
+}
+
+function equalizeLaneExtents(result: LayoutResult, direction: 'TB' | 'LR'): void {
+  const size = direction === 'LR' ? 'width' : 'height', axis = direction === 'LR' ? 'x' : 'y';
+  const lanes = result.containers.filter(box => box.ref.kind === 'lane');
+  const end = Math.max(0, ...lanes.map(box => box[axis] + box[size]),
+    ...result.nodes.filter(box => !['start', 'end'].includes(box.ref.kind)).map(box => { const bounds = occupiedNode(box); return bounds[axis] + bounds[size] + 24; }));
+  for (const lane of lanes) lane[size] = end - lane[axis];
+}
+
 /** Same-row constraints are accepted only when they preserve every column's node order. */
 function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Map<string, string>, spec: DiagramSpec): void {
   const horizontal = Boolean(spec.lanes?.length) && spec.direction === 'LR';
@@ -1356,17 +1457,17 @@ export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Prom
       const dx = direction === 'TB' ? offset : 0, dy = direction === 'LR' ? offset : 0;
       for (const box of layout.nodes) result.nodes.push({ ...box, x: box.x + dx, y: box.y + dy });
       for (const box of layout.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === 'lane' && direction === 'LR' ? crossSize : box.width, height: box.ref.kind === 'lane' && direction === 'TB' ? crossSize : box.height });
-      offset += (direction === 'TB' ? layout.width : layout.height) + (spec.layout?.regionGap ?? 0);
+      offset += direction === 'TB' ? layout.width : layout.height;
     }
-    const extent = offset - (spec.layout?.regionGap ?? 0);
-    result.width = direction === 'TB' ? extent : crossSize;
-    result.height = direction === 'TB' ? crossSize : extent;
+    result.width = direction === 'TB' ? offset : crossSize;
+    result.height = direction === 'TB' ? crossSize : offset;
   } else {
     const input = buildGraph('root', nodes, spec.groups ?? [], edges, spec, theme, containers);
     const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
     result = collectLayout(output, refs, containers);
   }
-  if (spec.type !== 'usecase') alignConnectedNodes(result, edges, columns, spec);
+  if (spec.type !== 'usecase' && !alignLaneFlow(result, edges, spec, theme)) alignConnectedNodes(result, edges, columns, spec);
+  if (spec.lanes?.length) equalizeLaneExtents(result, direction);
   placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
   result.width = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.x + occupied.width; }), ...result.containers.map(box => box.x + box.width));
   result.height = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.y + occupied.height; }), ...result.containers.map(box => box.y + box.height));
