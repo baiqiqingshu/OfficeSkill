@@ -1,0 +1,1506 @@
+{
+  "schema_version": 1,
+  "name": "本地简约演示模板",
+  "template_file": "template.pptx",
+  "slide_size_cm": {
+    "width": 33.867,
+    "height": 19.05
+  },
+  "layouts": [
+    {
+      "id": "cover",
+      "name": "封面页",
+      "description": "演示开场：大标题 + 副标题 + 底部横带上的日期/署名，右侧可配图",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 6,
+          "type": "text",
+          "description": "演示主题，最多两行",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 2,
+            "max_font_pt": 40,
+            "max_width_cm": 17.6,
+            "max_height_cm": 4.3
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 6.0,
+            "width_cm": 17.6,
+            "height_cm": 4.3
+          },
+          "default_font_pt": 40.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 7,
+          "type": "text",
+          "description": "一句话副标题，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 32,
+            "max_lines": 1,
+            "max_font_pt": 17,
+            "max_width_cm": 17,
+            "max_height_cm": 1.1
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 10.9,
+            "width_cm": 17.0,
+            "height_cm": 1.1
+          },
+          "default_font_pt": 17.0
+        },
+        {
+          "id": "meta",
+          "shape_id": 8,
+          "type": "text",
+          "description": "横带上的日期/署名，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 32,
+            "max_lines": 1,
+            "max_font_pt": 12,
+            "max_width_cm": 15,
+            "max_height_cm": 0.95
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 17.05,
+            "width_cm": 15.0,
+            "height_cm": 0.95
+          },
+          "default_font_pt": 12.0
+        },
+        {
+          "id": "image",
+          "shape_id": 9,
+          "type": "image",
+          "description": "右侧配图，可省略",
+          "required": false,
+          "limits": {
+            "max_width_cm": 11.4,
+            "max_height_cm": 11.0,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 20.4,
+            "y_cm": 2.3,
+            "width_cm": 11.4,
+            "height_cm": 11.0
+          },
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 1
+    },
+    {
+      "id": "agenda",
+      "name": "目录页",
+      "description": "左侧配图与说明，右侧编号目录项（数组条目：序号 || 名称，纵向排列，最多 6 项）",
+      "inputs": [
+        {
+          "id": "image",
+          "shape_id": 8,
+          "type": "image",
+          "description": "左侧配图，可省略",
+          "required": false,
+          "limits": {
+            "max_width_cm": 10.4,
+            "max_height_cm": 10.8,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 3.6,
+            "width_cm": 10.4,
+            "height_cm": 10.8
+          },
+          "default_font_pt": 20.0
+        },
+        {
+          "id": "caption",
+          "shape_id": 9,
+          "type": "text",
+          "description": "图片下方说明（如 Agenda.），可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 14,
+            "max_lines": 1,
+            "max_font_pt": 15,
+            "max_width_cm": 10.4,
+            "max_height_cm": 1.1
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 14.8,
+            "width_cm": 10.4,
+            "height_cm": 1.1
+          },
+          "default_font_pt": 15.0
+        },
+        {
+          "id": "title",
+          "shape_id": 10,
+          "type": "text",
+          "description": "栏题，如「目录」",
+          "required": true,
+          "limits": {
+            "max_chars": 14,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 16,
+            "max_height_cm": 1.6
+          },
+          "box_cm": {
+            "x_cm": 15.0,
+            "y_cm": 3.6,
+            "width_cm": 16.0,
+            "height_cm": 1.6
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            2,
+            5
+          ],
+          "type": "array",
+          "description": "目录条目：- 序号 || 名称",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 6,
+            "max_item_chars": 24,
+            "max_item_lines": 1,
+            "max_item_font_pt": 17
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 15.0,
+            "y_cm": 5.8,
+            "width_cm": 16.2,
+            "height_cm": 1.15
+          },
+          "step_cm": {
+            "x_cm": 0.0,
+            "y_cm": 2.0
+          },
+          "field_indexes": [
+            0,
+            1
+          ],
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 2
+    },
+    {
+      "id": "section",
+      "name": "章节过渡页",
+      "description": "章节分隔：胶囊标签 + 章节标题 + 说明，右上角可选配图",
+      "inputs": [
+        {
+          "id": "tag",
+          "shape_id": 3,
+          "type": "text",
+          "description": "胶囊标签，如 PART 01，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 12,
+            "max_lines": 1,
+            "max_font_pt": 14,
+            "max_width_cm": 4.8,
+            "max_height_cm": 1.15
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 6.4,
+            "width_cm": 4.8,
+            "height_cm": 1.15
+          },
+          "default_font_pt": 14.0
+        },
+        {
+          "id": "title",
+          "shape_id": 4,
+          "type": "text",
+          "description": "章节标题",
+          "required": true,
+          "limits": {
+            "max_chars": 16,
+            "max_lines": 1,
+            "max_font_pt": 34,
+            "max_width_cm": 19.5,
+            "max_height_cm": 2.4
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 8.1,
+            "width_cm": 19.5,
+            "height_cm": 2.4
+          },
+          "default_font_pt": 34.0
+        },
+        {
+          "id": "desc",
+          "shape_id": 5,
+          "type": "text",
+          "description": "章节导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 70,
+            "max_lines": 3,
+            "max_font_pt": 15,
+            "max_width_cm": 18,
+            "max_height_cm": 2.2
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 10.9,
+            "width_cm": 18.0,
+            "height_cm": 2.2
+          },
+          "default_font_pt": 15.0
+        },
+        {
+          "id": "image",
+          "shape_id": 6,
+          "type": "image",
+          "description": "右上角配图，可省略",
+          "required": false,
+          "limits": {
+            "max_width_cm": 9.9,
+            "max_height_cm": 6.2,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 21.5,
+            "y_cm": 1.7,
+            "width_cm": 9.9,
+            "height_cm": 6.2
+          },
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 3
+    },
+    {
+      "id": "title_body",
+      "name": "标题正文页",
+      "description": "标题 + 副标题 + 大段正文，支持三种分点与局部样式",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "body",
+          "shape_id": 7,
+          "type": "text",
+          "description": "正文：普通段落、- 符号分点、1. 数字分点、- [图标] 图标分点",
+          "required": true,
+          "limits": {
+            "max_chars": 430,
+            "max_lines": 13,
+            "max_font_pt": 17,
+            "max_width_cm": 29.8,
+            "max_height_cm": 13.3
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 3.9,
+            "width_cm": 29.8,
+            "height_cm": 13.3
+          },
+          "default_font_pt": 17.0
+        }
+      ],
+      "template_slide": 4
+    },
+    {
+      "id": "two_column",
+      "name": "双栏卡片页",
+      "description": "标题 + 左右两块浅灰卡片文字，适合并列的两组内容",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "left",
+          "shape_id": 11,
+          "type": "text",
+          "description": "左栏内容（可用分点）",
+          "required": true,
+          "limits": {
+            "max_chars": 260,
+            "max_lines": 11,
+            "max_font_pt": 15,
+            "max_width_cm": 13.0,
+            "max_height_cm": 10.9
+          },
+          "box_cm": {
+            "x_cm": 2.7,
+            "y_cm": 5.4,
+            "width_cm": 13.0,
+            "height_cm": 10.9
+          },
+          "default_font_pt": 15.0
+        },
+        {
+          "id": "right",
+          "shape_id": 12,
+          "type": "text",
+          "description": "右栏内容（可用分点）",
+          "required": true,
+          "limits": {
+            "max_chars": 260,
+            "max_lines": 11,
+            "max_font_pt": 15,
+            "max_width_cm": 13.0,
+            "max_height_cm": 10.9
+          },
+          "box_cm": {
+            "x_cm": 18.2,
+            "y_cm": 5.4,
+            "width_cm": 13.0,
+            "height_cm": 10.9
+          },
+          "default_font_pt": 15.0
+        }
+      ],
+      "template_slide": 5
+    },
+    {
+      "id": "image_text",
+      "name": "左图右文页",
+      "description": "标题 + 左侧图片 + 右侧说明文字",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "image",
+          "shape_id": 7,
+          "type": "image",
+          "description": "左侧配图",
+          "required": true,
+          "limits": {
+            "max_width_cm": 13.2,
+            "max_height_cm": 12.9,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.0,
+            "width_cm": 13.2,
+            "height_cm": 12.9
+          },
+          "default_font_pt": 20.0
+        },
+        {
+          "id": "body",
+          "shape_id": 8,
+          "type": "text",
+          "description": "右侧文字（可用分点）",
+          "required": true,
+          "limits": {
+            "max_chars": 300,
+            "max_lines": 12,
+            "max_font_pt": 15,
+            "max_width_cm": 14.8,
+            "max_height_cm": 12.9
+          },
+          "box_cm": {
+            "x_cm": 17.0,
+            "y_cm": 4.0,
+            "width_cm": 14.8,
+            "height_cm": 12.9
+          },
+          "default_font_pt": 15.0
+        }
+      ],
+      "template_slide": 6
+    },
+    {
+      "id": "text_image",
+      "name": "左文右图页",
+      "description": "标题 + 左侧说明文字 + 右侧图片",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "body",
+          "shape_id": 7,
+          "type": "text",
+          "description": "左侧文字（可用分点）",
+          "required": true,
+          "limits": {
+            "max_chars": 300,
+            "max_lines": 12,
+            "max_font_pt": 15,
+            "max_width_cm": 14.8,
+            "max_height_cm": 12.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.0,
+            "width_cm": 14.8,
+            "height_cm": 12.9
+          },
+          "default_font_pt": 15.0
+        },
+        {
+          "id": "image",
+          "shape_id": 8,
+          "type": "image",
+          "description": "右侧配图",
+          "required": true,
+          "limits": {
+            "max_width_cm": 13.2,
+            "max_height_cm": 12.9,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 18.2,
+            "y_cm": 4.0,
+            "width_cm": 13.2,
+            "height_cm": 12.9
+          },
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 7
+    },
+    {
+      "id": "cards",
+      "name": "卡片阵列页",
+      "description": "标题 + 至多两排特性卡片（数组条目：图标 || 标题 || 说明，横向排列，每排最多 4 张；第二排可省略）",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "row_a",
+          "shape_ids": [
+            7,
+            12
+          ],
+          "type": "array",
+          "description": "第一排卡片：- 图标 || 标题 || 说明",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 4,
+            "max_item_chars": 40,
+            "max_item_lines": 2,
+            "max_item_font_pt": 15
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.2,
+            "width_cm": 7.05,
+            "height_cm": 5.7
+          },
+          "step_cm": {
+            "x_cm": 7.55,
+            "y_cm": 0.0
+          },
+          "field_indexes": [
+            1,
+            2,
+            3
+          ],
+          "default_font_pt": 20.0
+        },
+        {
+          "id": "row_b",
+          "shape_ids": [
+            17,
+            22
+          ],
+          "type": "array",
+          "description": "第二排卡片，可省略",
+          "required": false,
+          "limits": {
+            "min_items": 1,
+            "max_items": 4,
+            "max_item_chars": 40,
+            "max_item_lines": 2,
+            "max_item_font_pt": 15
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 10.5,
+            "width_cm": 7.05,
+            "height_cm": 5.7
+          },
+          "step_cm": {
+            "x_cm": 7.55,
+            "y_cm": 0.0
+          },
+          "field_indexes": [
+            1,
+            2,
+            3
+          ],
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 8
+    },
+    {
+      "id": "steps",
+      "name": "步骤流程页",
+      "description": "标题 + 编号步骤条，适合流程、阶段和计划",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            7,
+            11
+          ],
+          "type": "array",
+          "description": "流程步骤：- 序号 || 阶段 || 说明（横向，最多 5 步）",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 5,
+            "max_item_chars": 60,
+            "max_item_lines": 4,
+            "max_item_font_pt": 15
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.6,
+            "width_cm": 5.3,
+            "height_cm": 6.7
+          },
+          "step_cm": {
+            "x_cm": 6.3,
+            "y_cm": 0.0
+          },
+          "field_indexes": [
+            0,
+            1,
+            2
+          ],
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 9
+    },
+    {
+      "id": "stats",
+      "name": "数据亮点页",
+      "description": "标题 + 大数字指标卡，适合关键成果与量化目标",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            7,
+            11
+          ],
+          "type": "array",
+          "description": "数据卡片：- 数值 || 名称 || 说明（横向，最多 4 项）",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 4,
+            "max_item_chars": 40,
+            "max_item_lines": 2,
+            "max_item_font_pt": 34
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 5.6,
+            "width_cm": 7.3,
+            "height_cm": 6.1
+          },
+          "step_cm": {
+            "x_cm": 7.95,
+            "y_cm": 0.0
+          },
+          "field_indexes": [
+            0,
+            1,
+            2
+          ],
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 10
+    },
+    {
+      "id": "columns",
+      "name": "多栏对比页",
+      "description": "标题 + 胶囊标题栏目卡，适合多维对比与分类说明",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            7,
+            11
+          ],
+          "type": "array",
+          "description": "对比栏目：- 栏目标题 || 说明（横向，最多 4 栏）",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 4,
+            "max_item_chars": 90,
+            "max_item_lines": 6,
+            "max_item_font_pt": 14
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.2,
+            "width_cm": 5.9,
+            "height_cm": 9.6
+          },
+          "step_cm": {
+            "x_cm": 6.55,
+            "y_cm": 0.0
+          },
+          "field_indexes": [
+            1,
+            2
+          ],
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 11
+    },
+    {
+      "id": "table",
+      "name": "数据表格页",
+      "description": "标题 + 原生可编辑表格（橙色表头、隔行浅灰）",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "data",
+          "shape_id": 7,
+          "type": "table",
+          "description": "第一行为表头，最多六行四列",
+          "required": true,
+          "limits": {
+            "max_width_cm": 29.87,
+            "max_height_cm": 12.6,
+            "max_rows": 6,
+            "max_cols": 4,
+            "max_cell_chars": 30,
+            "max_cell_lines": 2,
+            "max_font_pt": 14
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.0,
+            "width_cm": 29.87,
+            "height_cm": 12.6
+          },
+          "default_font_pt": 14.0
+        }
+      ],
+      "template_slide": 12
+    },
+    {
+      "id": "checklist",
+      "name": "要点清单页",
+      "description": "标题 + 纵向图标事项列表，适合结论、待办与要点汇总",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            7,
+            10
+          ],
+          "type": "array",
+          "description": "清单事项：- 图标 || 事项文字（纵向，最多 7 项）",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 7,
+            "max_item_chars": 36,
+            "max_item_lines": 1,
+            "max_item_font_pt": 15
+          },
+          "item_kind": "group",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.3,
+            "width_cm": 27.55,
+            "height_cm": 1.05
+          },
+          "step_cm": {
+            "x_cm": 0.0,
+            "y_cm": 1.75
+          },
+          "field_indexes": [
+            0,
+            1
+          ],
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 13
+    },
+    {
+      "id": "image_row",
+      "name": "图片阵列页",
+      "description": "标题 + 一排本地图片，适合截图墙、成员/Logo 展示",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            7,
+            8
+          ],
+          "type": "array",
+          "description": "本地图片条目：- 图片路径 或 - {\"src\":...}（横向，最多 5 张）",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 5,
+            "max_item_pixels": 40000000
+          },
+          "item_kind": "image",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 4.6,
+            "width_cm": 5.6,
+            "height_cm": 9.4
+          },
+          "step_cm": {
+            "x_cm": 5.95,
+            "y_cm": 0.0
+          },
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 14
+    },
+    {
+      "id": "tags",
+      "name": "标签行页",
+      "description": "标题 + 一排胶囊标签，适合关键词、技术栈与特性罗列",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 2,
+          "type": "text",
+          "description": "页面标题",
+          "required": true,
+          "limits": {
+            "max_chars": 24,
+            "max_lines": 1,
+            "max_font_pt": 26,
+            "max_width_cm": 22,
+            "max_height_cm": 1.5
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 0.95,
+            "width_cm": 22.0,
+            "height_cm": 1.5
+          },
+          "default_font_pt": 26.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 3,
+          "type": "text",
+          "description": "副标题/导读，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 42,
+            "max_lines": 1,
+            "max_font_pt": 13,
+            "max_width_cm": 24,
+            "max_height_cm": 0.9
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 2.5,
+            "width_cm": 24.0,
+            "height_cm": 0.9
+          },
+          "default_font_pt": 13.0
+        },
+        {
+          "id": "items",
+          "shape_ids": [
+            7,
+            8
+          ],
+          "type": "array",
+          "description": "标签条目：- 标签文字（横向，最多 6 个）",
+          "required": true,
+          "limits": {
+            "min_items": 1,
+            "max_items": 6,
+            "max_item_chars": 10,
+            "max_item_lines": 1,
+            "max_item_font_pt": 14
+          },
+          "item_kind": "text",
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 5.0,
+            "width_cm": 4.2,
+            "height_cm": 1.2
+          },
+          "step_cm": {
+            "x_cm": 4.7,
+            "y_cm": 0.0
+          },
+          "default_font_pt": 14.0
+        }
+      ],
+      "template_slide": 15
+    },
+    {
+      "id": "quote",
+      "name": "引用页",
+      "description": "大字引述 + 出处，适合观点、用户证言与总结语",
+      "inputs": [
+        {
+          "id": "quote",
+          "shape_id": 6,
+          "type": "text",
+          "description": "引述内容",
+          "required": true,
+          "limits": {
+            "max_chars": 96,
+            "max_lines": 3,
+            "max_font_pt": 24,
+            "max_width_cm": 24.5,
+            "max_height_cm": 4.6
+          },
+          "box_cm": {
+            "x_cm": 5.5,
+            "y_cm": 5.6,
+            "width_cm": 24.5,
+            "height_cm": 4.6
+          },
+          "default_font_pt": 24.0
+        },
+        {
+          "id": "source",
+          "shape_id": 7,
+          "type": "text",
+          "description": "出处/署名，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 34,
+            "max_lines": 1,
+            "max_font_pt": 14,
+            "max_width_cm": 24.5,
+            "max_height_cm": 1.2
+          },
+          "box_cm": {
+            "x_cm": 5.5,
+            "y_cm": 11.0,
+            "width_cm": 24.5,
+            "height_cm": 1.2
+          },
+          "default_font_pt": 14.0
+        }
+      ],
+      "template_slide": 16
+    },
+    {
+      "id": "image_full",
+      "name": "全幅图片页",
+      "description": "几乎铺满的本地大图 + 底部横带说明文字",
+      "inputs": [
+        {
+          "id": "image",
+          "shape_id": 2,
+          "type": "image",
+          "description": "全幅配图（建议 cover 裁剪）",
+          "required": true,
+          "limits": {
+            "max_width_cm": 31.87,
+            "max_height_cm": 17.05,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 1.0,
+            "y_cm": 1.0,
+            "width_cm": 31.87,
+            "height_cm": 17.05
+          },
+          "default_font_pt": 20.0
+        },
+        {
+          "id": "caption",
+          "shape_id": 4,
+          "type": "text",
+          "description": "横带说明文字，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 40,
+            "max_lines": 1,
+            "max_font_pt": 15,
+            "max_width_cm": 24,
+            "max_height_cm": 1.3
+          },
+          "box_cm": {
+            "x_cm": 2.0,
+            "y_cm": 16.35,
+            "width_cm": 24.0,
+            "height_cm": 1.3
+          },
+          "default_font_pt": 15.0
+        }
+      ],
+      "template_slide": 17
+    },
+    {
+      "id": "closing",
+      "name": "结尾页",
+      "description": "致谢语 + 联系方式行，底部横带与封面呼应",
+      "inputs": [
+        {
+          "id": "title",
+          "shape_id": 6,
+          "type": "text",
+          "description": "结束语，如「感谢观看」",
+          "required": true,
+          "limits": {
+            "max_chars": 18,
+            "max_lines": 1,
+            "max_font_pt": 36,
+            "max_width_cm": 17.6,
+            "max_height_cm": 2.6
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 7.0,
+            "width_cm": 17.6,
+            "height_cm": 2.6
+          },
+          "default_font_pt": 36.0
+        },
+        {
+          "id": "subtitle",
+          "shape_id": 7,
+          "type": "text",
+          "description": "补充一句，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 32,
+            "max_lines": 1,
+            "max_font_pt": 16,
+            "max_width_cm": 17,
+            "max_height_cm": 1.2
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 10.0,
+            "width_cm": 17.0,
+            "height_cm": 1.2
+          },
+          "default_font_pt": 16.0
+        },
+        {
+          "id": "meta",
+          "shape_id": 8,
+          "type": "text",
+          "description": "横带上的日期/署名，可省略",
+          "required": false,
+          "limits": {
+            "max_chars": 32,
+            "max_lines": 1,
+            "max_font_pt": 12,
+            "max_width_cm": 15,
+            "max_height_cm": 0.95
+          },
+          "box_cm": {
+            "x_cm": 2.2,
+            "y_cm": 17.05,
+            "width_cm": 15.0,
+            "height_cm": 0.95
+          },
+          "default_font_pt": 12.0
+        },
+        {
+          "id": "image",
+          "shape_id": 9,
+          "type": "image",
+          "description": "右侧配图，可省略",
+          "required": false,
+          "limits": {
+            "max_width_cm": 11.4,
+            "max_height_cm": 11.0,
+            "max_pixels": 40000000
+          },
+          "box_cm": {
+            "x_cm": 20.4,
+            "y_cm": 2.3,
+            "width_cm": 11.4,
+            "height_cm": 11.0
+          },
+          "default_font_pt": 20.0
+        }
+      ],
+      "template_slide": 18
+    }
+  ],
+  "template_sha256": "340bb54e9a484c145125422f4b10a77a78184c4c255c57472685cd5be5afae54"
+}
