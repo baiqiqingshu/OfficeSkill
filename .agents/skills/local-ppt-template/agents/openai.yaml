@@ -1,0 +1,6 @@
+interface:
+  display_name: "本地 PPT 模板与生成"
+  short_description: "在内网本地创建带布局说明的 PPT 模板，并从 Markdown 填充可编辑演示文稿"
+  default_prompt: "使用 $local-ppt-template 读取本地模板说明，生成填充 Markdown 并调用脚本创建 PPT。"
+policy:
+  allow_implicit_invocation: true
