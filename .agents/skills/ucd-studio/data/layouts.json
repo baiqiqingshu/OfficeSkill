@@ -1,0 +1,26 @@
+{
+  "dashboard": {
+    "title": "工作总览",
+    "file": "examples/dashboard.json"
+  },
+  "admin": {
+    "title": "申请管理",
+    "file": "examples/admin.json"
+  },
+  "workbench": {
+    "title": "团队工作台",
+    "file": "examples/workbench.json"
+  },
+  "form": {
+    "title": "新建资源申请",
+    "file": "examples/form.json"
+  },
+  "detail": {
+    "title": "申请详情",
+    "file": "examples/detail.json"
+  },
+  "kanban": {
+    "title": "项目任务",
+    "file": "examples/kanban.json"
+  }
+}

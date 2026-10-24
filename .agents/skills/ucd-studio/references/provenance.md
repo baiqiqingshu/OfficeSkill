@@ -1,0 +1,8 @@
+# 来源
+
+参考日期：2026-10-25。
+
+- https://github.com/nextlevelbuilder/ui-ux-pro-max-skill ：借鉴本地分类检索、按需加载、持久化设计系统的组织方式。本包独立实现中英文词项检索，不复制其数据集或脚本，不依赖该项目。
+- https://ui.shadcn.com/docs ：借鉴开放组件代码、可组合、统一 token 和良好默认值的思路。本包 HTML/CSS/JS 独立编写，不包含 React/Radix/Tailwind 或官方组件，不宣称等同其完整行为。
+
+无第三方运行依赖，无远程图片、字体或图标。示例数据与 CSS 图形为项目生成；自带素材的许可取决于其来源。

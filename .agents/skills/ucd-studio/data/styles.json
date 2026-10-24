@@ -1,0 +1,170 @@
+{
+  "ocean": {
+    "title": "海蓝 · 专业协作",
+    "tokens": {
+      "primary": "#275cce",
+      "primary-ink": "#ffffff",
+      "soft": "#edf3ff",
+      "bg": "#f5f7fb",
+      "surface": "#ffffff",
+      "ink": "#17243b",
+      "muted": "#66738a",
+      "border": "#e4e9f1",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "slate": {
+    "title": "岩灰 · 极简秩序",
+    "tokens": {
+      "primary": "#334155",
+      "primary-ink": "#ffffff",
+      "soft": "#eef2f6",
+      "bg": "#f6f7f9",
+      "surface": "#ffffff",
+      "ink": "#17202e",
+      "muted": "#647084",
+      "border": "#e2e6eb",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "jade": {
+    "title": "青绿 · 平静高效",
+    "tokens": {
+      "primary": "#167455",
+      "primary-ink": "#ffffff",
+      "soft": "#e9f5ef",
+      "bg": "#f4f8f6",
+      "surface": "#ffffff",
+      "ink": "#1c322a",
+      "muted": "#60736a",
+      "border": "#dfe9e3",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "plum": {
+    "title": "紫藤 · 创意协同",
+    "tokens": {
+      "primary": "#7450b4",
+      "primary-ink": "#ffffff",
+      "soft": "#f1ecfa",
+      "bg": "#f8f6fb",
+      "surface": "#ffffff",
+      "ink": "#302441",
+      "muted": "#766b82",
+      "border": "#e8e1ef",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "warm": {
+    "title": "暖纸 · 内容阅读",
+    "tokens": {
+      "primary": "#92572d",
+      "primary-ink": "#ffffff",
+      "soft": "#f7eddf",
+      "bg": "#f8f6f1",
+      "surface": "#fffefa",
+      "ink": "#362d24",
+      "muted": "#7c7164",
+      "border": "#e9e2d6",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "rose": {
+    "title": "玫瑰 · 服务体验",
+    "tokens": {
+      "primary": "#a23f61",
+      "primary-ink": "#ffffff",
+      "soft": "#faeaf0",
+      "bg": "#fbf6f8",
+      "surface": "#ffffff",
+      "ink": "#3e2730",
+      "muted": "#806772",
+      "border": "#eee0e6",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "midnight": {
+    "title": "午夜 · 专注监控",
+    "tokens": {
+      "primary": "#8ab4ff",
+      "primary-ink": "#12223f",
+      "soft": "#233553",
+      "bg": "#111925",
+      "surface": "#1a2536",
+      "ink": "#e9eff9",
+      "muted": "#a3b3ca",
+      "border": "#304056",
+      "radius": "11px",
+      "success": "#8edbb3",
+      "success-soft": "#193d32",
+      "warning": "#f5cb82",
+      "warning-soft": "#443820",
+      "danger": "#ffacb5",
+      "danger-soft": "#482b36"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  },
+  "contrast": {
+    "title": "高对比 · 清晰可读",
+    "tokens": {
+      "primary": "#143fc0",
+      "primary-ink": "#ffffff",
+      "soft": "#e8edff",
+      "bg": "#f4f5f7",
+      "surface": "#ffffff",
+      "ink": "#111827",
+      "muted": "#4b5563",
+      "border": "#9ca3af",
+      "radius": "11px",
+      "success": "#16714b",
+      "success-soft": "#eaf7ef",
+      "warning": "#946216",
+      "warning-soft": "#fff5dd",
+      "danger": "#b43147",
+      "danger-soft": "#feebee"
+    },
+    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+  }
+}

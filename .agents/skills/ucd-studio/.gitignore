@@ -1,0 +1,4 @@
+# Local build snapshots and Python caches
+.history/
+__pycache__/
+*.pyc

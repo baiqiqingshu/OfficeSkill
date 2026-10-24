@@ -1,0 +1,833 @@
+[
+  {
+    "id": "ocean",
+    "kind": "style",
+    "title": "海蓝 · 专业协作",
+    "tags": "专业 蓝色 后台 审批 企业 清晰 blue enterprise admin",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "slate",
+    "kind": "style",
+    "title": "岩灰 · 极简秩序",
+    "tags": "极简 中性 黑白 简洁 shadcn minimal neutral",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "jade",
+    "kind": "style",
+    "title": "青绿 · 平静高效",
+    "tags": "绿色 医疗 运营 平静 green healthcare calm",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "plum",
+    "kind": "style",
+    "title": "紫藤 · 创意协同",
+    "tags": "紫色 创意 知识 产品 purple creative knowledge",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "warm",
+    "kind": "style",
+    "title": "暖纸 · 内容阅读",
+    "tags": "温暖 文档 阅读 米色 人文 editorial warm paper",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "rose",
+    "kind": "style",
+    "title": "玫瑰 · 服务体验",
+    "tags": "粉色 服务 客服 品牌 柔和 rose service",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "midnight",
+    "kind": "style",
+    "title": "午夜 · 专注监控",
+    "tags": "暗色 黑色 监控 数据 dark monitoring night",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "contrast",
+    "kind": "style",
+    "title": "高对比 · 清晰可读",
+    "tags": "高对比 无障碍 易读 accessibility contrast",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "stats",
+    "kind": "component",
+    "title": "统计卡片",
+    "tags": "数据 指标 KPI 总览 stats metric",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "stats",
+      "title": "统计卡片",
+      "items": [
+        {
+          "label": "待处理事项",
+          "value": "128",
+          "change": "↓ 12.5%",
+          "hint": "较上一周期"
+        },
+        {
+          "label": "本周已完成",
+          "value": "842",
+          "change": "↑ 18.6%"
+        },
+        {
+          "label": "平均处理时长",
+          "value": "2.4h",
+          "change": "↓ 0.8h"
+        },
+        {
+          "label": "按时完成率",
+          "value": "96.8%",
+          "change": "↑ 3.2%"
+        }
+      ]
+    }
+  },
+  {
+    "id": "table",
+    "kind": "component",
+    "title": "筛选数据表格",
+    "tags": "审批 列表 搜索 筛选 排序 分页 table data list",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "columns",
+      "rows"
+    ],
+    "properties": [
+      "columns",
+      "rows",
+      "statusColumn",
+      "pageSize"
+    ],
+    "example": {
+      "type": "table",
+      "title": "筛选数据表格",
+      "columns": [
+        "事项名称",
+        "编号",
+        "申请人",
+        "提交时间",
+        "状态"
+      ],
+      "rows": [
+        [
+          "研发环境资源申请",
+          "REQ-1024",
+          "陈晨",
+          "10-20 09:10",
+          {
+            "text": "待审批",
+            "tone": "warning"
+          }
+        ],
+        [
+          "季度项目预算调整",
+          "REQ-1025",
+          "林晓",
+          "10-21 09:11",
+          {
+            "text": "待审批",
+            "tone": "warning"
+          }
+        ],
+        [
+          "数据访问权限开通",
+          "REQ-1026",
+          "周亦",
+          "10-22 09:12",
+          {
+            "text": "已通过",
+            "tone": "success"
+          }
+        ],
+        [
+          "设备采购申请",
+          "REQ-1027",
+          "王宁",
+          "10-23 09:13",
+          {
+            "text": "处理中",
+            "tone": "primary"
+          }
+        ],
+        [
+          "新成员入组申请",
+          "REQ-1028",
+          "李然",
+          "10-24 09:14",
+          {
+            "text": "已通过",
+            "tone": "success"
+          }
+        ],
+        [
+          "设计资源归档申请",
+          "REQ-1029",
+          "张若",
+          "10-20 09:15",
+          {
+            "text": "待审批",
+            "tone": "warning"
+          }
+        ],
+        [
+          "测试环境扩容申请",
+          "REQ-1030",
+          "刘航",
+          "10-21 09:16",
+          {
+            "text": "处理中",
+            "tone": "primary"
+          }
+        ],
+        [
+          "办公设备调拨",
+          "REQ-1031",
+          "赵清",
+          "10-22 09:17",
+          {
+            "text": "已退回",
+            "tone": "danger"
+          }
+        ],
+        [
+          "跨部门协作邀请",
+          "REQ-1032",
+          "沈安",
+          "10-23 09:18",
+          {
+            "text": "已通过",
+            "tone": "success"
+          }
+        ],
+        [
+          "知识库发布审核",
+          "REQ-1033",
+          "许言",
+          "10-24 09:19",
+          {
+            "text": "待审批",
+            "tone": "warning"
+          }
+        ]
+      ],
+      "statusColumn": 4,
+      "pageSize": 5
+    }
+  },
+  {
+    "id": "bar-chart",
+    "kind": "component",
+    "title": "横向占比图",
+    "tags": "排行 进度 图表 横向柱状 bar chart",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "bar-chart",
+      "title": "横向占比图",
+      "items": [
+        {
+          "label": "产品研发",
+          "value": 86
+        },
+        {
+          "label": "设计体验",
+          "value": 74
+        },
+        {
+          "label": "客户支持",
+          "value": 62
+        },
+        {
+          "label": "运营管理",
+          "value": 48
+        }
+      ]
+    }
+  },
+  {
+    "id": "line-chart",
+    "kind": "component",
+    "title": "趋势折线图",
+    "tags": "趋势 数据 图表 line chart analytics",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "values",
+      "labels"
+    ],
+    "properties": [
+      "values",
+      "labels",
+      "summary",
+      "change"
+    ],
+    "example": {
+      "type": "line-chart",
+      "title": "趋势折线图",
+      "values": [
+        35,
+        52,
+        43,
+        76,
+        68,
+        94,
+        115
+      ],
+      "labels": [
+        "周一",
+        "周二",
+        "周三",
+        "周四",
+        "周五",
+        "周六",
+        "周日"
+      ],
+      "summary": "1,284",
+      "change": "↑ 18.6%"
+    }
+  },
+  {
+    "id": "activity",
+    "kind": "component",
+    "title": "时间线动态",
+    "tags": "动态 审批记录 历史 时间线 timeline activity",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "activity",
+      "title": "时间线动态",
+      "items": [
+        {
+          "time": "今天 · 10:42",
+          "title": "陈晨提交了资源申请",
+          "description": "研发环境资源 · 等待你的审批"
+        },
+        {
+          "time": "今天 · 09:30",
+          "title": "产品设计评审已完成",
+          "description": "体验改版项目 · 已归档评审结论"
+        },
+        {
+          "time": "昨天 · 16:15",
+          "title": "周亦完成数据权限配置",
+          "description": "数据平台 · 已通知相关成员"
+        },
+        {
+          "time": "昨天 · 14:20",
+          "title": "季度工作计划已更新",
+          "description": "团队空间 · 新增 3 项里程碑"
+        }
+      ]
+    }
+  },
+  {
+    "id": "form",
+    "kind": "component",
+    "title": "校验表单",
+    "tags": "申请 输入 邮箱 必填 校验 form validation",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "fields"
+    ],
+    "properties": [
+      "fields",
+      "submit"
+    ],
+    "example": {
+      "type": "form",
+      "title": "校验表单",
+      "fields": [
+        {
+          "label": "申请名称",
+          "required": true,
+          "placeholder": "例如：研发环境资源申请"
+        },
+        {
+          "label": "申请类型",
+          "type": "select",
+          "options": [
+            "资源申请",
+            "权限申请",
+            "采购申请"
+          ]
+        },
+        {
+          "label": "联系邮箱",
+          "type": "email",
+          "required": true,
+          "placeholder": "name@example.internal"
+        },
+        {
+          "label": "期望完成日期",
+          "type": "date",
+          "required": true
+        },
+        {
+          "label": "申请说明",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "说明使用场景、预期目标和资源需求",
+          "help": "使用脱敏示例，不填写密钥和真实客户数据。"
+        }
+      ],
+      "submit": "校验申请"
+    }
+  },
+  {
+    "id": "detail",
+    "kind": "component",
+    "title": "详情描述列表",
+    "tags": "详情 属性 信息 description detail",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "detail",
+      "title": "详情描述列表",
+      "items": [
+        {
+          "label": "申请编号",
+          "value": "REQ-1024"
+        },
+        {
+          "label": "当前状态",
+          "value": {
+            "text": "待审批",
+            "tone": "warning"
+          }
+        },
+        {
+          "label": "申请人",
+          "value": "陈晨"
+        },
+        {
+          "label": "所属团队",
+          "value": "产品研发中心"
+        },
+        {
+          "label": "提交时间",
+          "value": "2026-10-25 09:10"
+        },
+        {
+          "label": "期望完成",
+          "value": "2026-10-28"
+        }
+      ]
+    }
+  },
+  {
+    "id": "cards",
+    "kind": "component",
+    "title": "入口卡片网格",
+    "tags": "导航 服务 入口 卡片 cards services",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "cards",
+      "title": "入口卡片网格",
+      "items": [
+        {
+          "title": "资源与环境",
+          "description": "统一申请开发、测试和演示环境。",
+          "action": "查看资源"
+        },
+        {
+          "title": "团队知识库",
+          "description": "沉淀项目经验，快速找到协作信息。",
+          "action": "浏览知识"
+        },
+        {
+          "title": "服务与支持",
+          "description": "提交问题，跟踪处理进展与结果。",
+          "action": "获取支持"
+        }
+      ]
+    }
+  },
+  {
+    "id": "kanban",
+    "kind": "component",
+    "title": "任务看板",
+    "tags": "任务 状态 移动 敏捷 kanban board",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "columns"
+    ],
+    "properties": [
+      "columns"
+    ],
+    "example": {
+      "type": "kanban",
+      "title": "任务看板",
+      "columns": [
+        {
+          "title": "待开始",
+          "items": [
+            {
+              "title": "整理用户反馈与需求优先级",
+              "owner": "林晓 · 10-28",
+              "tag": "用户研究"
+            },
+            {
+              "title": "确认申请流程中的异常状态",
+              "owner": "周亦 · 10-29",
+              "tag": "流程设计"
+            }
+          ]
+        },
+        {
+          "title": "进行中",
+          "items": [
+            {
+              "title": "完成工作台界面设计",
+              "owner": "陈晨 · 10-27",
+              "tag": "界面设计"
+            },
+            {
+              "title": "构建基础组件与视觉规范",
+              "owner": "李然 · 10-28",
+              "tag": "设计系统"
+            }
+          ]
+        },
+        {
+          "title": "已完成",
+          "items": [
+            {
+              "title": "对齐本季度产品目标",
+              "owner": "王宁 · 10-24",
+              "tag": "产品规划"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "steps",
+    "kind": "component",
+    "title": "步骤指示器",
+    "tags": "步骤 表单 进度 step wizard",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items",
+      "current"
+    ],
+    "example": {
+      "type": "steps",
+      "title": "步骤指示器",
+      "items": [
+        "填写基本信息",
+        "补充申请说明",
+        "确认并提交"
+      ],
+      "current": 0
+    }
+  },
+  {
+    "id": "accordion",
+    "kind": "component",
+    "title": "折叠面板",
+    "tags": "问题 帮助 折叠 accordion faq",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "accordion",
+      "title": "折叠面板",
+      "items": [
+        {
+          "title": "申请提交后如何跟踪进度？",
+          "content": "在事项列表中查看状态与处理记录。本原型展示示例流程，不连接真实审批服务。"
+        },
+        {
+          "title": "信息填写错误时如何处理？",
+          "content": "提交前可直接修改；真实业务中的撤回和重新提交规则需业务方确认。"
+        }
+      ]
+    }
+  },
+  {
+    "id": "alert",
+    "kind": "component",
+    "title": "提示信息",
+    "tags": "提醒 通知 警告 alert notice",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "text"
+    ],
+    "properties": [
+      "text"
+    ],
+    "example": {
+      "type": "alert",
+      "title": "提示信息",
+      "text": "本周有 3 项工作即将到期，请优先关注关键节点并与负责人确认。"
+    }
+  },
+  {
+    "id": "empty",
+    "kind": "component",
+    "title": "空状态",
+    "tags": "无数据 空状态 附件 empty state",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "text"
+    ],
+    "properties": [
+      "text",
+      "heading",
+      "action"
+    ],
+    "example": {
+      "type": "empty",
+      "title": "空状态",
+      "heading": "尚无附件",
+      "text": "当前事项没有关联文件，可以先完成基础信息。",
+      "action": "了解附件要求"
+    }
+  },
+  {
+    "id": "progress",
+    "kind": "component",
+    "title": "进度条",
+    "tags": "百分比 完成率 进度 progress",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "progress",
+      "title": "进度条",
+      "items": [
+        {
+          "label": "需求与范围确认",
+          "value": 100
+        },
+        {
+          "label": "界面与交互设计",
+          "value": 72
+        },
+        {
+          "label": "开发交付准备",
+          "value": 38
+        }
+      ]
+    }
+  },
+  {
+    "id": "image",
+    "kind": "component",
+    "title": "本地图片",
+    "tags": "图片 封面 本地 图片资源 image asset",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "src",
+      "alt"
+    ],
+    "properties": [
+      "src",
+      "alt",
+      "caption"
+    ],
+    "example": {
+      "type": "image",
+      "title": "本地图片",
+      "src": "assets/banner.png",
+      "alt": "本地提供的产品封面图",
+      "caption": "仅引用明确声明的本地素材。"
+    }
+  },
+  {
+    "id": "tabs",
+    "kind": "component",
+    "title": "页签面板",
+    "tags": "页签 标签 切换 tabs panel",
+    "description": "可复用语义 HTML 区块，统一样式 token；通过 page.json 组装。",
+    "required": [
+      "items"
+    ],
+    "properties": [
+      "items"
+    ],
+    "example": {
+      "type": "tabs",
+      "title": "页签面板",
+      "items": [
+        {
+          "label": "申请说明",
+          "content": "为新版本联调准备独立测试环境，预计使用两周。资源配额与到期回收规则等待业务方确认。"
+        },
+        {
+          "label": "处理意见",
+          "content": "建议确认环境隔离要求、数据脱敏范围和责任人后推进。"
+        },
+        {
+          "label": "相关记录",
+          "content": "10-25 创建申请；10-25 补充资源用途；当前等待审批。"
+        }
+      ]
+    }
+  },
+  {
+    "id": "button",
+    "kind": "component",
+    "title": "按钮",
+    "tags": "按钮 操作 主按钮 button action",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/button.html"
+  },
+  {
+    "id": "input",
+    "kind": "component",
+    "title": "文本输入",
+    "tags": "输入 文本 表单 input field",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/input.html"
+  },
+  {
+    "id": "select",
+    "kind": "component",
+    "title": "原生选择器",
+    "tags": "下拉 选择 筛选 select dropdown",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/select.html"
+  },
+  {
+    "id": "textarea",
+    "kind": "component",
+    "title": "多行输入",
+    "tags": "多行 文本 备注 textarea",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/textarea.html"
+  },
+  {
+    "id": "badge",
+    "kind": "component",
+    "title": "状态标签",
+    "tags": "状态 标签 徽标 badge status",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/badge.html"
+  },
+  {
+    "id": "switch",
+    "kind": "component",
+    "title": "原生开关",
+    "tags": "开关 启用 禁用 switch toggle",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/switch.html"
+  },
+  {
+    "id": "breadcrumb",
+    "kind": "component",
+    "title": "面包屑",
+    "tags": "层级 导航 路径 breadcrumb",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/breadcrumb.html"
+  },
+  {
+    "id": "dialog",
+    "kind": "component",
+    "title": "模态对话框",
+    "tags": "弹窗 对话框 模态 dialog modal",
+    "description": "代码片段，只能手工组合，不作为 blocks.type。",
+    "primitive": true,
+    "file": "assets/components/dialog.html"
+  },
+  {
+    "id": "dashboard",
+    "kind": "layout",
+    "title": "工作总览",
+    "tags": "总览 仪表盘 数据 指标 面板 dashboard analytics",
+    "description": "完整 4 区块布局，包含可运行交互；可替换业务数据。",
+    "file": "examples/dashboard.json"
+  },
+  {
+    "id": "admin",
+    "kind": "layout",
+    "title": "申请管理",
+    "tags": "审批 列表 表格 筛选 后台 admin list approval",
+    "description": "完整 3 区块布局，包含可运行交互；可替换业务数据。",
+    "file": "examples/admin.json"
+  },
+  {
+    "id": "workbench",
+    "kind": "layout",
+    "title": "团队工作台",
+    "tags": "三栏 工作台 服务 入口 面板 workspace workbench",
+    "description": "完整 4 区块布局，包含可运行交互；可替换业务数据。",
+    "file": "examples/workbench.json"
+  },
+  {
+    "id": "form",
+    "kind": "layout",
+    "title": "新建资源申请",
+    "tags": "表单 步骤 申请 填写 form application",
+    "description": "完整 4 区块布局，包含可运行交互；可替换业务数据。",
+    "file": "examples/form.json"
+  },
+  {
+    "id": "detail",
+    "kind": "layout",
+    "title": "申请详情",
+    "tags": "详情 记录 时间线 处理 detail record",
+    "description": "完整 5 区块布局，包含可运行交互；可替换业务数据。",
+    "file": "examples/detail.json"
+  },
+  {
+    "id": "kanban",
+    "kind": "layout",
+    "title": "项目任务",
+    "tags": "任务 看板 敏捷 协作 kanban project",
+    "description": "完整 3 区块布局，包含可运行交互；可替换业务数据。",
+    "file": "examples/kanban.json"
+  }
+]

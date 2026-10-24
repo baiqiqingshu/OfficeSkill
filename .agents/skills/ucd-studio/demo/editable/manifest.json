@@ -1,0 +1,195 @@
+{
+  "tool": "ucd-studio",
+  "version": "1.0.0",
+  "mode": "editable",
+  "style": "ocean",
+  "components": [
+    "stats",
+    "table",
+    "alert"
+  ],
+  "sourceSpec": {
+    "version": 1,
+    "title": "申请管理",
+    "product": "北辰工作台",
+    "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
+    "action": "新建申请",
+    "eyebrow": "TEAM WORKSPACE / 团队协作",
+    "layout": "admin",
+    "style": "ocean",
+    "density": "comfortable",
+    "audience": "需要快速处理事项的内部业务人员",
+    "goal": "理解当前工作状态并推进关键任务",
+    "primaryTask": "定位待处理事项，查看状态与处理记录",
+    "successCriteria": [
+      "用户能识别主要操作及待处理事项",
+      "搜索、筛选和无匹配状态均提供明确反馈",
+      "可使用键盘操作主要控件，在窄屏下阅读内容"
+    ],
+    "assumptions": [
+      "内网桌面浏览器为主要使用场景，兼顾移动查看",
+      "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+    ],
+    "sources": [],
+    "assets": [],
+    "blocks": {
+      "metrics": {
+        "type": "stats",
+        "title": "关键指标",
+        "span": "full",
+        "items": [
+          {
+            "label": "待处理事项",
+            "value": "128",
+            "change": "↓ 12.5%",
+            "hint": "较上一周期"
+          },
+          {
+            "label": "本周已完成",
+            "value": "842",
+            "change": "↑ 18.6%"
+          },
+          {
+            "label": "平均处理时长",
+            "value": "2.4h",
+            "change": "↓ 0.8h"
+          },
+          {
+            "label": "按时完成率",
+            "value": "96.8%",
+            "change": "↑ 3.2%"
+          }
+        ]
+      },
+      "records": {
+        "type": "table",
+        "title": "申请事项",
+        "description": "集中查看状态，快速定位需要处理的事项",
+        "span": "full",
+        "columns": [
+          "事项名称",
+          "编号",
+          "申请人",
+          "提交时间",
+          "状态"
+        ],
+        "rows": [
+          [
+            "研发环境资源申请",
+            "REQ-1024",
+            "陈晨",
+            "10-20 09:10",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ],
+          [
+            "季度项目预算调整",
+            "REQ-1025",
+            "林晓",
+            "10-21 09:11",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ],
+          [
+            "数据访问权限开通",
+            "REQ-1026",
+            "周亦",
+            "10-22 09:12",
+            {
+              "text": "已通过",
+              "tone": "success"
+            }
+          ],
+          [
+            "设备采购申请",
+            "REQ-1027",
+            "王宁",
+            "10-23 09:13",
+            {
+              "text": "处理中",
+              "tone": "primary"
+            }
+          ],
+          [
+            "新成员入组申请",
+            "REQ-1028",
+            "李然",
+            "10-24 09:14",
+            {
+              "text": "已通过",
+              "tone": "success"
+            }
+          ],
+          [
+            "设计资源归档申请",
+            "REQ-1029",
+            "张若",
+            "10-20 09:15",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ],
+          [
+            "测试环境扩容申请",
+            "REQ-1030",
+            "刘航",
+            "10-21 09:16",
+            {
+              "text": "处理中",
+              "tone": "primary"
+            }
+          ],
+          [
+            "办公设备调拨",
+            "REQ-1031",
+            "赵清",
+            "10-22 09:17",
+            {
+              "text": "已退回",
+              "tone": "danger"
+            }
+          ],
+          [
+            "跨部门协作邀请",
+            "REQ-1032",
+            "沈安",
+            "10-23 09:18",
+            {
+              "text": "已通过",
+              "tone": "success"
+            }
+          ],
+          [
+            "知识库发布审核",
+            "REQ-1033",
+            "许言",
+            "10-24 09:19",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ]
+        ],
+        "statusColumn": 4,
+        "pageSize": 5
+      },
+      "notice": {
+        "type": "alert",
+        "title": "需要关注",
+        "span": "full",
+        "text": "本周有 3 项工作即将到期，请优先关注关键节点并与负责人确认。"
+      }
+    }
+  },
+  "specSha256": "1b644807c9883ca23a9455a528832924273351970bb0fb314e231893f4dc051a",
+  "files": {
+    "index.html": "d4cb737f1f5c868fbaa7b8d632cb6f3c147b447cc7497e747ff535d79910218b",
+    "design-system.md": "73a984df599e8221ed68e1bc84b01537a78f38a4d2bbdbc4e296b43519ff3ee6",
+    "page.js": "1a1e92cbaa64ccac3098ceffe54a149c46fe64b3482069e176acb2b665725e6e"
+  }
+}

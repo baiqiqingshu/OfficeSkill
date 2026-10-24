@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "title": "团队工作台",
+  "product": "北辰工作台",
+  "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
+  "action": "新建申请",
+  "eyebrow": "TEAM WORKSPACE / 团队协作",
+  "layout": "workbench",
+  "style": "jade",
+  "density": "comfortable",
+  "audience": "需要快速处理事项的内部业务人员",
+  "goal": "理解当前工作状态并推进关键任务",
+  "primaryTask": "定位待处理事项，查看状态与处理记录",
+  "successCriteria": [
+    "用户能识别主要操作及待处理事项",
+    "搜索、筛选和无匹配状态均提供明确反馈",
+    "可使用键盘操作主要控件，在窄屏下阅读内容"
+  ],
+  "assumptions": [
+    "内网桌面浏览器为主要使用场景，兼顾移动查看",
+    "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+  ],
+  "sources": [],
+  "assets": [],
+  "blocks": {
+    "notice": {
+      "type": "alert",
+      "title": "需要关注",
+      "span": "full",
+      "text": "本周有 3 项工作即将到期，请优先关注关键节点并与负责人确认。"
+    },
+    "services": {
+      "type": "cards",
+      "title": "常用服务",
+      "items": [
+        {
+          "title": "资源与环境",
+          "description": "统一申请开发、测试和演示环境。",
+          "action": "查看资源"
+        },
+        {
+          "title": "团队知识库",
+          "description": "沉淀项目经验，快速找到协作信息。",
+          "action": "浏览知识"
+        }
+      ]
+    },
+    "progress": {
+      "type": "progress",
+      "title": "项目推进情况",
+      "items": [
+        {
+          "label": "需求与范围确认",
+          "value": 100
+        },
+        {
+          "label": "界面与交互设计",
+          "value": 72
+        },
+        {
+          "label": "开发交付准备",
+          "value": 38
+        }
+      ]
+    },
+    "recent": {
+      "type": "activity",
+      "title": "最近动态",
+      "description": "团队协作的最新进展",
+      "items": [
+        {
+          "time": "今天 · 10:42",
+          "title": "陈晨提交了资源申请",
+          "description": "研发环境资源 · 等待你的审批"
+        },
+        {
+          "time": "今天 · 09:30",
+          "title": "产品设计评审已完成",
+          "description": "体验改版项目 · 已归档评审结论"
+        },
+        {
+          "time": "昨天 · 16:15",
+          "title": "周亦完成数据权限配置",
+          "description": "数据平台 · 已通知相关成员"
+        },
+        {
+          "time": "昨天 · 14:20",
+          "title": "季度工作计划已更新",
+          "description": "团队空间 · 新增 3 项里程碑"
+        }
+      ]
+    }
+  }
+}

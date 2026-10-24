@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "title": "申请详情",
+  "product": "北辰工作台",
+  "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
+  "action": "新建申请",
+  "eyebrow": "TEAM WORKSPACE / 团队协作",
+  "layout": "detail",
+  "style": "warm",
+  "density": "comfortable",
+  "audience": "需要快速处理事项的内部业务人员",
+  "goal": "理解当前工作状态并推进关键任务",
+  "primaryTask": "定位待处理事项，查看状态与处理记录",
+  "successCriteria": [
+    "用户能识别主要操作及待处理事项",
+    "搜索、筛选和无匹配状态均提供明确反馈",
+    "可使用键盘操作主要控件，在窄屏下阅读内容"
+  ],
+  "assumptions": [
+    "内网桌面浏览器为主要使用场景，兼顾移动查看",
+    "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+  ],
+  "sources": [],
+  "assets": [],
+  "blocks": {
+    "context": {
+      "type": "detail",
+      "title": "基本信息",
+      "items": [
+        {
+          "label": "申请编号",
+          "value": "REQ-1024"
+        },
+        {
+          "label": "当前状态",
+          "value": {
+            "text": "待审批",
+            "tone": "warning"
+          }
+        },
+        {
+          "label": "申请人",
+          "value": "陈晨"
+        },
+        {
+          "label": "所属团队",
+          "value": "产品研发中心"
+        },
+        {
+          "label": "提交时间",
+          "value": "2026-10-25 09:10"
+        },
+        {
+          "label": "期望完成",
+          "value": "2026-10-28"
+        }
+      ]
+    },
+    "recent": {
+      "type": "activity",
+      "title": "最近动态",
+      "description": "团队协作的最新进展",
+      "items": [
+        {
+          "time": "今天 · 10:42",
+          "title": "陈晨提交了资源申请",
+          "description": "研发环境资源 · 等待你的审批"
+        },
+        {
+          "time": "今天 · 09:30",
+          "title": "产品设计评审已完成",
+          "description": "体验改版项目 · 已归档评审结论"
+        },
+        {
+          "time": "昨天 · 16:15",
+          "title": "周亦完成数据权限配置",
+          "description": "数据平台 · 已通知相关成员"
+        },
+        {
+          "time": "昨天 · 14:20",
+          "title": "季度工作计划已更新",
+          "description": "团队空间 · 新增 3 项里程碑"
+        }
+      ]
+    },
+    "notes": {
+      "type": "tabs",
+      "title": "申请材料",
+      "span": "full",
+      "items": [
+        {
+          "label": "申请说明",
+          "content": "为新版本联调准备独立测试环境，预计使用两周。资源配额与到期回收规则等待业务方确认。"
+        },
+        {
+          "label": "处理意见",
+          "content": "建议确认环境隔离要求、数据脱敏范围和责任人后推进。"
+        },
+        {
+          "label": "相关记录",
+          "content": "10-25 创建申请；10-25 补充资源用途；当前等待审批。"
+        }
+      ]
+    },
+    "progress": {
+      "type": "progress",
+      "title": "项目推进情况",
+      "items": [
+        {
+          "label": "需求与范围确认",
+          "value": 100
+        },
+        {
+          "label": "界面与交互设计",
+          "value": 72
+        },
+        {
+          "label": "开发交付准备",
+          "value": 38
+        }
+      ]
+    },
+    "attachment": {
+      "type": "empty",
+      "title": "关联附件",
+      "heading": "尚无附件",
+      "text": "当前事项没有关联文件，可以先完成基础信息。",
+      "action": "了解附件要求"
+    }
+  }
+}

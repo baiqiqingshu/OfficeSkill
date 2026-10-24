@@ -1,0 +1,4 @@
+interface:
+  display_name: "UCD Studio · 离线界面设计"
+  short_description: "面向内网低性能模型，按需检索组件与样式，快速生成和迭代离线单页界面原型"
+  default_prompt: "使用 $ucd-studio，基于我的需求生成离线单页 UCD 原型、设计规范和本地资源。"

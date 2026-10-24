@@ -1,0 +1,85 @@
+# 组件与状态 · 设计规范
+
+## 任务与依据
+
+- 目标用户：需要快速处理事项的内部业务人员
+- 用户目标：理解当前工作状态并推进关键任务
+- 主要任务：定位待处理事项，查看状态与处理记录
+- 布局：dashboard；样式：海蓝 · 专业协作；密度：comfortable；输出：single
+
+验收标准：
+
+- 用户能识别主要操作及待处理事项
+- 搜索、筛选和无匹配状态均提供明确反馈
+- 可使用键盘操作主要控件，在窄屏下阅读内容
+
+设计假设（非研究结论）：
+
+- 内网桌面浏览器为主要使用场景，兼顾移动查看
+- 本示例未开展用户访谈；具体字段和流程需业务评审确认
+
+源码依据：
+
+- 未提供；待业务评审确认。
+
+## 视觉 token
+
+| Token | 值 |
+|---|---|
+| `primary` | `#275cce` |
+| `primary-ink` | `#ffffff` |
+| `soft` | `#edf3ff` |
+| `bg` | `#f5f7fb` |
+| `surface` | `#ffffff` |
+| `ink` | `#17243b` |
+| `muted` | `#66738a` |
+| `border` | `#e4e9f1` |
+| `radius` | `11px` |
+| `success` | `#16714b` |
+| `success-soft` | `#eaf7ef` |
+| `warning` | `#946216` |
+| `warning-soft` | `#fff5dd` |
+| `danger` | `#b43147` |
+| `danger-soft` | `#feebee` |
+
+系统字体 Inter（本地存在时）/ Segoe UI / Microsoft YaHei / system-ui；不请求字体服务。正文 14px，辅助 10–12px，页面标题 30px（窄屏 25px），卡片标题 16px。间距基于 4px：8/12/16/20/24/32；控件常规高度 38–39px。
+
+## 信息结构
+
+| 稳定 ID | 标题 | 组件 | 跨度 |
+|---|---|---|---|
+| `sample-stats` | 统计卡片 | `stats` | full |
+| `sample-table` | 筛选数据表格 | `table` | full |
+| `sample-bar-chart` | 横向占比图 | `bar-chart` | half |
+| `sample-line-chart` | 趋势折线图 | `line-chart` | half |
+| `sample-activity` | 时间线动态 | `activity` | half |
+| `sample-form` | 校验表单 | `form` | half |
+| `sample-detail` | 详情描述列表 | `detail` | half |
+| `sample-cards` | 入口卡片网格 | `cards` | half |
+| `sample-kanban` | 任务看板 | `kanban` | full |
+| `sample-steps` | 步骤指示器 | `steps` | full |
+| `sample-accordion` | 折叠面板 | `accordion` | half |
+| `sample-alert` | 提示信息 | `alert` | full |
+| `sample-empty` | 空状态 | `empty` | half |
+| `sample-progress` | 进度条 | `progress` | half |
+| `sample-image` | 本地图片 | `image` | full |
+| `sample-tabs` | 页签面板 | `tabs` | half |
+
+12 列网格，常规区块 6 列，full 跨 12 列；工作台常规 4 列。760px 以下单列、侧栏转换为横向导航，表格局部滚动；1100px 以下收紧边距。不要把表格缩成无法阅读的小字。
+
+## 交互与状态
+
+- 主操作打开原生 dialog，Esc/取消可关闭并返回焦点；创建后显示本地草稿反馈，不修改业务表格。
+- 表格支持文本搜索、状态筛选、数字感知排序和分页。无匹配记录时显示说明，异常状态预览提供加载/空/错误示例。
+- 表单原生必填/邮箱等校验，成功后明确显示未提交服务器；Tabs 支持方向键/Home/End，看板通过 select 移动任务。
+- 仅当前页面内存状态，刷新后恢复示例；无登录、后端、上传、真实保存或真实权限控制。
+
+## 可访问性与资源
+
+可见焦点、语义标题/表格、显式 label、非纯颜色状态、ARIA 状态反馈、减少动态效果偏好；line-chart 通过 SVG desc 提供数值。仍需结合实际业务文本及浏览器进行人工可访问性验证。
+
+资源目录 assets/，只使用清单中的本地文件；HTML 内嵌 CSS。CSP 阻止网络连接与表单外发，静态检查不能证明任意手工脚本绝无外联。宿主模型与插件须部署在获准的内网环境。
+
+## 修改与复现
+
+修改 page.json，运行 build；小范围修改用 patch，同步生成本规范。手工修改 HTML/规范会触发保护，保留并人工合并。manifest.json 记录版本与 SHA-256，.history/ 保存上次生成快照；editable 模式保留 page.js 修改。

@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "title": "项目任务",
+  "product": "北辰工作台",
+  "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
+  "action": "新建任务",
+  "eyebrow": "TEAM WORKSPACE / 团队协作",
+  "layout": "kanban",
+  "style": "midnight",
+  "density": "comfortable",
+  "audience": "需要快速处理事项的内部业务人员",
+  "goal": "理解当前工作状态并推进关键任务",
+  "primaryTask": "查看任务状态并将事项移动到下一阶段",
+  "successCriteria": [
+    "用户能识别主要操作及待处理事项",
+    "搜索、筛选和无匹配状态均提供明确反馈",
+    "可使用键盘操作主要控件，在窄屏下阅读内容"
+  ],
+  "assumptions": [
+    "内网桌面浏览器为主要使用场景，兼顾移动查看",
+    "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+  ],
+  "sources": [],
+  "assets": [],
+  "blocks": {
+    "metrics": {
+      "type": "stats",
+      "title": "关键指标",
+      "span": "full",
+      "items": [
+        {
+          "label": "待处理事项",
+          "value": "128",
+          "change": "↓ 12.5%",
+          "hint": "较上一周期"
+        },
+        {
+          "label": "本周已完成",
+          "value": "842",
+          "change": "↑ 18.6%"
+        },
+        {
+          "label": "平均处理时长",
+          "value": "2.4h",
+          "change": "↓ 0.8h"
+        },
+        {
+          "label": "按时完成率",
+          "value": "96.8%",
+          "change": "↑ 3.2%"
+        }
+      ]
+    },
+    "board": {
+      "type": "kanban",
+      "title": "迭代任务看板",
+      "description": "通过任务卡片中的选择框切换状态",
+      "span": "full",
+      "columns": [
+        {
+          "title": "待开始",
+          "items": [
+            {
+              "title": "整理用户反馈与需求优先级",
+              "owner": "林晓 · 10-28",
+              "tag": "用户研究"
+            },
+            {
+              "title": "确认申请流程中的异常状态",
+              "owner": "周亦 · 10-29",
+              "tag": "流程设计"
+            }
+          ]
+        },
+        {
+          "title": "进行中",
+          "items": [
+            {
+              "title": "完成工作台界面设计",
+              "owner": "陈晨 · 10-27",
+              "tag": "界面设计"
+            },
+            {
+              "title": "构建基础组件与视觉规范",
+              "owner": "李然 · 10-28",
+              "tag": "设计系统"
+            }
+          ]
+        },
+        {
+          "title": "已完成",
+          "items": [
+            {
+              "title": "对齐本季度产品目标",
+              "owner": "王宁 · 10-24",
+              "tag": "产品规划"
+            }
+          ]
+        }
+      ]
+    },
+    "notice": {
+      "type": "alert",
+      "title": "需要关注",
+      "span": "full",
+      "text": "本周有 3 项工作即将到期，请优先关注关键节点并与负责人确认。"
+    }
+  }
+}
