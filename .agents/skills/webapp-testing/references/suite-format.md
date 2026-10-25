@@ -44,7 +44,13 @@ JSON 顶层 `version: 1`、`name`、`cases`；其余字段按需提供。`cases`
 
 ## 浏览器
 
-顶层 `browser`：`cdp_url` 默认 `ws://127.0.0.1:9222`，`timeout_ms` 默认 10000，可配置 `storage.localStorage`、`storage.sessionStorage`。同一次运行创建独立浏览器 context，多个 browser 步骤复用同一页面；结束关闭自己的 context，保留 Lightpanda CDP 服务。
+顶层 `browser.backend` 默认 `lightpanda`，使用原生 HTTP MCP；`mcp_url` 默认 `http://127.0.0.1:8000/mcp`，可用 `mcp_token_env` 指定服务 bearer token 的环境变量名。显式 `backend: playwright` 时使用 `cdp_url`（默认 `ws://127.0.0.1:9222`），才需要安装 Playwright。两类 endpoint 字段不能混用；旧 cdp_url 配置需补 backend。
+
+`timeout_ms` 默认 10000，`step_timeout_ms` 默认 60000；单位为毫秒。`poll_interval_ms` 默认 100，仅用于 Playwright；原生 MCP 使用服务端等待。可配置 `storage.localStorage`、`storage.sessionStorage`，注入时机和请求头行为见 [服务鉴权](services.md)。多个 browser 步骤复用独立会话和页面，结束只关闭自有会话/context，保留服务；失败不自动切换后端。长流程、预算及重试边界见 [浏览器执行层](browser-control.md)。
+
+```json
+{"browser": {"backend": "lightpanda", "mcp_url": "http://127.0.0.1:8000/mcp"}}
+```
 
 ```json
 {
@@ -63,19 +69,28 @@ JSON 顶层 `version: 1`、`name`、`cases`；其余字段按需提供。`cases`
 | action | 字段与含义 |
 |---|---|
 | goto | `path`，仅配置前端同源导航，等待 DOMContentLoaded |
-| fill | `selector` + `value`，设置输入值并派发 input/change 事件 |
-| click | `selector`，DOM click，拒绝禁用或隐藏控件 |
+| fill | `selector` + `value`，设置输入值并触发输入事件；原生使用 fill 工具 |
+| click | `selector`，拒绝禁用或隐藏控件；原生使用 click 工具 |
 | select | `selector` + `value`（字符串/数组），仅原生 select；自定义 Vue 下拉用 click 对应控件/选项 ID |
 | check | `selector` + `checked`（默认 true），checkbox/radio |
-| wait_for | `selector` + `state`（attached/detached/visible/hidden，默认 attached） |
+| press | `selector` + `key`；支持 Enter、Escape、Tab、ArrowUp/Down/Left/Right、单个空格；原生使用 press 工具，Enter 可能触发表单默认行为；Playwright 后端只派发 DOM keydown/keyup |
+| scroll | `x`/`y` 增量，至少一个非零整数；可带 `selector` 滚动容器，否则滚动页面；偏移不变明确失败 |
+| snapshot | 可带 `selector` 限定子树；`max_nodes` 默认 30，上限 80；只返回限量结构状态，省略正文和输入值 |
+| wait_for | `selector` + `state`（attached/detached/visible/hidden/enabled，默认 attached）；enabled 要求 DOM 可见且启用 |
 | assert_text | `selector` + `text`；默认包含，可设 `exact: true` |
 | assert_value | `selector` + `value`，精确值 |
 | assert_visible | `selector`，DOM 可见语义 |
+| assert_checked | `selector` + `checked`（布尔值，默认 true），精确勾选状态 |
+| assert_url | `path`，与前端同源完整 URL 精确比较，包含 query/hash |
 
-每动作可设 `timeout_ms`。selector 仅一个 `#ID`，必须唯一；ID 以字母或下划线起始，后续支持字母数字 `_ . : -`。重复 ID 明确失败。执行不依赖像素坐标，不承诺完整模拟真实硬件输入，无法证明布局、颜色和视觉可见性。针对 Vue 复杂组件应检查实际事件模型并补充业务结果断言，不能仅以 DOM click 成功认定功能通过。
+每动作可设 `timeout_ms`（1–300000 的整数）；未知动作字段会失败，避免拼错参数后被忽略。`checked`/`exact` 必须是 JSON 布尔值。selector 仅一个 `#ID`，必须唯一；ID 以字母或下划线起始，后续支持字母数字 `_ . : -`。支持 `${var}` 组成动态 ID，运行前展开后再次校验；含特殊字符的业务键需先约定 DOM ID 编码，不能改用模糊匹配。重复 ID 明确失败。
+
+执行不依赖像素坐标，不承诺完整模拟真实硬件输入，无法证明布局、颜色和视觉可见性。针对 Vue 复杂组件应检查实际事件模型并补充业务结果断言，不能仅以 click 调用成功认定功能通过。scroll 增量会转换为原生绝对偏移并核对移动，不保证虚拟列表/无限滚动生效。原生 SELECT 用 select，数组多选由共享 DOM helper 执行；普通 input/textarea/contenteditable 用 fill，文件/checkbox/radio/按钮类型不能 fill。
 
 ## 报告与独立包
 
 返回状态 pass/fail/error/skipped，并生成 JSON 和 Markdown 报告。成功返回退出码 0，业务失败返回 1，参数/配置等失败可返回 2。报告脱敏但不替代用户对业务数据的审查。
 
-`export` 校验 suite、复制引用 SQL 和运行模块。导出后 `python run.py --frontend-url URL --token TOKEN`；需要时追加 `--api-url`、`--output`、`--start-services`、`--stop-services`。更多环境约定见 [服务配置](services.md)。
+browser 的成功 evidence 记录动作序号、控件和耗时；失败包含已完成动作、`failed_action`（序号从 1 起）、`last_state`、限量结构 `snapshot`。不重复存储输入值和期望文本；具体用例与预期保留在 suite 中。先用 `python SKILL_DIR/scripts/webtest.py validate --suite cases/suite.json` 做不连接服务的结构校验；通过只证明结构合法。
+
+`export` 校验 suite、复制引用 SQL 和全部后端模块。导出后 `python run.py --frontend-url URL --token TOKEN`；需要时追加 `--api-url`、`--output`、`--start-services`、`--stop-services`、`--browser-backend`、`--mcp-url`、`--cdp-url`。原生路径无 pip 必装依赖。PandaScript 通过独立命令运行并生成独立报告，不与 suite 共享浏览器会话。更多环境约定见 [服务配置](services.md)。

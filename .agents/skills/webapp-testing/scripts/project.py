@@ -198,7 +198,7 @@ def export_suite(suite, output):
             if not cwd.is_absolute():
                 service["cwd"] = str((source.parent / cwd).resolve())
     out = _new_output(output)
-    for name in ("webtest.py", "runtime.py", "browser.py", "project.py"):
+    for name in ("webtest.py", "runtime.py", "browser.py", "browser_mcp.py", "mcp_client.py", "browser_dom.js", "pandascript.py", "project.py"):
         shutil.copy2(Path(__file__).parent / name, out / name)
     for candidate, target in copies:
         dest = out / target
@@ -209,23 +209,72 @@ def export_suite(suite, output):
     requirements = Path(__file__).parent / "requirements.txt"
     if requirements.exists():
         shutil.copy2(requirements, out / "requirements.txt")
-    _write(out / "RUN.md", "# 功能用例执行包\n\nPython 3.10+；HTTP + SQLite 使用标准库。浏览器和其它数据库按需安装依赖。无需安装本 skill，无需模型/API key。\n\n```text\npython -m pip install \"playwright>=1.55,<2\"\npython run.py --frontend-url http://HOST:5173 --token YOUR_TOKEN\n```\n\n推荐通过环境变量 WEBTEST_TOKEN 传入 token，避免命令历史记录。后端默认由前端 /api 代理；独立后端使用 --api-url。数据库在 suite.databases 中引用的环境变量需事先配置。\n\n先阅读 suite.json：setup 为预处理，cases 为 HTTP/浏览器/SQL 执行语句，teardown 为定向清理；附带的 sql/ 是 SQL 文件。检查业务操作和数据范围后执行。报告默认写入执行器报告目录，失败返回非零。\n\n浏览器需单独启动 Lightpanda CDP：\n\n```text\ndocker run -d --name lightpanda -p 127.0.0.1:9222:9222 lightpanda/browser:latest\n```\n\n推荐使用 Python 与 Docker 浏览器均可访问的宿主局域网 IP（如 http://192.168.1.10:5173），并确保 Vite 监听允许访问的地址。host.docker.internal 通常仅在容器内解析，不能假定宿主 Python 同样可访问。Windows 也可使用 WSL2 的 Linux Lightpanda，原生 Windows 无官方二进制。CDP 默认 ws://127.0.0.1:9222。无需 playwright install chromium。\n\n此包默认连接已启动服务。--start-services 可启动 suite.services 中服务，其 cwd 已固定到生成时应用源码目录；换机器时需修改 cwd 或保持连接远端服务。默认保留服务以便人工查看；显式 --stop-services 或 services stop 才会停止本工具管理的服务。数据库连接密码、token 不应写入包；执行前也应复查请求体/SQL 是否含敏感业务数据。\n")
-    database_help = """
-## 可选数据库驱动
+    _write(out / "RUN.md", """# 功能用例执行包
 
-SQLite 无额外依赖。MySQL 按需安装：
+Python 3.10+。默认 HTTP＋SQLite＋Lightpanda 原生 MCP 客户端仅用标准库，无需 Playwright、Node、模型或 API key。浏览器需独立 Lightpanda 服务；其它数据库按需安装驱动。
+
+```text
+python webtest.py validate --suite suite.json
+python run.py --frontend-url http://HOST:5173 --mcp-url http://127.0.0.1:8000/mcp
+```
+
+推荐环境变量 WEBTEST_TOKEN；后端默认由前端 /api 代理，独立后端用 --api-url。数据库 URL 用 suite.databases 的 url_env 指定的环境变量。先审阅 suite：setup 预处理、cases 执行、teardown 定向清理；sql/ 为引用文件。默认报告在本包 .webtest/runs，失败返回非零。
+
+## 默认原生 MCP
+
+在 Linux/macOS/WSL2 或已有 Lightpanda 主机启动：
+
+```text
+lightpanda version
+lightpanda mcp --host 127.0.0.1 --port 8000 --load-resources stylesheet
+```
+
+Docker Linux 容器可另起服务，需覆盖镜像默认 CDP 命令：
+
+```text
+docker run -d --name lightpanda-mcp -p 127.0.0.1:8000:8000 lightpanda/browser:latest /bin/lightpanda mcp --host 0.0.0.0 --port 8000 --load-resources stylesheet
+```
+
+核对 mcp --help、独立会话和工具能力，固定已验证版本/镜像摘要。browser.backend 默认 lightpanda，mcp_url 默认 http://127.0.0.1:8000/mcp。mcp_token_env 可指定服务 bearer token 的环境变量名，与业务 token 分开。CDP 的 ws://HOST:9222 不能当 MCP；两种服务需分进程、分端口，不共享会话。
+
+frontend-url 必须同时可被 Python 与 Lightpanda 访问。容器的 127.0.0.1 指容器自身，推荐共用宿主局域网 IP；Vite 需允许访问。host.docker.internal 通常仅容器能解析。Windows 无官方原生二进制，可用已有 Linux 主机、WSL2 或 Docker Linux 容器。
+
+原生后端不注入浏览器请求头，使用应用自身登录或 token storage。browser.storage 在首个 goto 先访问前端同源 /，写入后再导航目标页，同会话只写一次；根页需可访问且不能重定向其它 origin。HTTP 步骤仍按 auth 注入业务头，HTTP 登录 cookie 不自动转移给浏览器。
+
+## 可选 Playwright＋CDP
+
+```text
+python -m pip install "playwright>=1.55,<2"
+python run.py --frontend-url http://HOST:5173 --browser-backend playwright --cdp-url ws://HOST:9222
+```
+
+需另行启动 Lightpanda CDP。suite 可持久配置 browser.backend=playwright 与 cdp_url；旧配置只有 cdp_url 时补 backend。无需 playwright install chromium。保留前导航 storage init script 和前端同源 auth 头注入。失败不自动切换后端；原生键盘等行为与 DOM 事件后端可能不同，切换需回归目标控件。
+
+## 动作与独立长流程
+
+支持 goto、click、fill、select、check、press、scroll、snapshot、wait_for、assert_text、assert_value、assert_visible、assert_checked、assert_url。唯一 #ID 定位，多 browser 步骤共用页面。timeout_ms 默认 10000，step_timeout_ms 默认 60000；poll_interval_ms 默认 100 仅用于 Playwright，原生使用服务端等待。
+
+只重试就绪检查/读取；已发出点击或输入后的超时/断连不重放，先查 HTTP/数据库结果。MCP 传输失败后拒绝继续使用该会话。失败报告含动作序号、last_state 和限量结构快照，省略输入值、正文及工具回显。按业务阶段拆步骤，以业务断言收尾。
+
+原生 press 使用 Lightpanda 工具，Enter 可能触发表单默认行为；Playwright 后端只派发 DOM keydown/keyup。scroll.x/y 为增量，原生适配层换算绝对偏移并核对移动。DOM 可见/滚动不证明视觉、虚拟列表或无限滚动正确。iframe、Shadow DOM、文件上传、拖拽和原生弹窗需额外适配。
+
+超长连续纯前端流程可另写 PandaScript，在有 Lightpanda 二进制的主机执行：
+
+```text
+python webtest.py pandascript --script frontend-batch.js --executable lightpanda --timeout 120 --output reports/frontend-batch.json
+```
+
+脚本需自行提供，不从 suite 自动转换。使用 new Page()，只有 goto 需要 await，其它方法同步；无 Node/DOM 全局，页面检查用 page.evaluate/waitForScript。凭据用进程环境 LP_*，动作参数写 $LP_* 占位符。顶层 return 带 status: pass 或 fail 的 JSON 对象，stdout 不加日志，调试用 console.error。包装器检查退出码及明确状态，生成独立脱敏报告；超时停止直接子进程、不重放，不保证 wrapper 的远端进程树停止。每次是新会话，不接续 suite 的页面、cookie、storage 或变量。
+
+## 数据库与服务
+
+SQLite 无额外依赖；MySQL/PostgreSQL 按需选择一组：
 
 ```text
 python -m pip install "sqlalchemy>=2,<3" pymysql
-```
-
-PostgreSQL 按需安装：
-
-```text
 python -m pip install "sqlalchemy>=2,<3" "psycopg[binary]>=3,<4"
 ```
 
-只安装目标数据库对应的驱动，通过 suite.databases 的 url_env 环境变量传入连接 URL；密码需要 URL 编码。
-"""
-    _write(out / "RUN.md", (out / "RUN.md").read_text(encoding="utf-8") + database_help)
+数据库密码需 URL 编码，不写入包。默认连接已运行前后端；--start-services 启动 suite.services 的服务，其 cwd 固定为导出时源码目录，跨机器需调整。默认保留服务；--stop-services 或 services stop 只停止本工具管理的进程。运行前复查请求体/SQL 业务数据范围。
+""")
     return out

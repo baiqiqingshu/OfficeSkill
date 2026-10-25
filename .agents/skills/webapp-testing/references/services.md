@@ -10,7 +10,16 @@ python SKILL_DIR/scripts/webtest.py run --suite cases/suite.json --frontend-url 
 
 推荐环境变量 `WEBTEST_TOKEN`，避免命令历史存储；未传 CLI token 时执行器读取它。`auth` 定义 `mode`（token/none）、`header`、`prefix`。无需鉴权时显式设 `mode: none`，不要用假 token。
 
-浏览器可用 `browser.storage.localStorage` 或 `sessionStorage` 设置 `${token}`，按实际 Vue 项目的 token 键及序列化格式修改。执行器在前端同源请求上按 auth 添加请求头；跨域 API 的鉴权应由前端应用自身的 token 注入逻辑处理，避免将 token 发送给其它站点。遇到 HttpOnly cookie/复杂登录流程，应通过目标项目已有登录接口或页面完成，不宣称 token 存储能替代所有登录方式。
+HTTP 步骤按 auth 注入业务请求头。浏览器可用 `browser.storage.localStorage` 或 `sessionStorage` 设置 `${token}`，按实际 Vue 项目的 token 键及序列化格式修改；也可用页面登录流程。不同后端的注入时机如下：
+
+| 后端 | storage | 浏览器请求头 |
+|---|---|---|
+| 默认原生 MCP | 首个 goto 先访问前端同源 `/`，写 storage，再导航目标页；同一会话只写一次。根页需可访问，重定向到其它 origin 会失败 | 不自动注入 auth 头；由应用自身读取 token 并鉴权 |
+| 显式 Playwright | context 的前导航 init script，在前端 origin 的页面脚本执行前写入 | 按 auth 仅注入前端同源请求；跨域 API 由应用自身处理 |
+
+需要首个请求就带头、或不能先访问根页而必须在脚本执行前写 storage 时，显式选择 Playwright 后端。不要用 Lightpanda 全局 `--http-header` 冒充同源拦截，它会作用于所有外发请求（包括重定向）。HTTP 登录响应的 cookie 不会自动转移至浏览器；HttpOnly cookie/复杂登录应通过浏览器内的项目登录流程完成。
+
+`browser.mcp_token_env` 仅用于 MCP 服务/代理 bearer 鉴权，不是业务 token，也不会作为业务请求头发送。
 
 若需要关闭鉴权，先查项目已有 local/test profile。只有用户明确授权且目标为隔离测试环境时才启用；新增绕过应限制于该 profile、带明确默认关闭开关。不要修改默认 SecurityFilterChain、生产配置或全局 `permitAll`。无此授权时保留鉴权并要求 token。
 

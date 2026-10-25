@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "name": "需改写的示例：分阶段完成前端表单提交",
+  "auth": {"mode": "token"},
+  "variables": {"test_name": "webtest-ui-demo"},
+  "browser": {
+    "backend": "lightpanda",
+    "mcp_url": "http://127.0.0.1:8000/mcp",
+    "timeout_ms": 10000,
+    "step_timeout_ms": 60000,
+    "poll_interval_ms": 100,
+    "storage": {"localStorage": {"token": "${token}"}}
+  },
+  "cases": [{
+    "id": "ui-create-order",
+    "steps": [
+      {"id": "open-and-fill", "type": "browser", "actions": [
+        {"action": "goto", "path": "/orders/new"},
+        {"action": "wait_for", "selector": "#order-name", "state": "enabled"},
+        {"action": "fill", "selector": "#order-name", "value": "${test_name}"},
+        {"action": "select", "selector": "#order-priority", "value": "normal"},
+        {"action": "check", "selector": "#order-confirmed", "checked": true},
+        {"action": "assert_value", "selector": "#order-name", "value": "${test_name}"},
+        {"action": "assert_checked", "selector": "#order-confirmed", "checked": true}
+      ]},
+      {"id": "submit-and-verify", "type": "browser", "actions": [
+        {"action": "click", "selector": "#order-submit"},
+        {"action": "wait_for", "selector": "#order-saving", "state": "hidden"},
+        {"action": "assert_url", "path": "/orders"},
+        {"action": "assert_text", "selector": "#order-result", "text": "创建成功"},
+        {"action": "assert_text", "selector": "#order-list", "text": "${test_name}"}
+      ]}
+    ]
+  }]
+}

@@ -5,7 +5,8 @@
   "auth": {"mode": "token", "header": "Authorization", "prefix": "Bearer "},
   "variables": {"test_name": "webtest-order-demo", "quantity": 2},
   "browser": {
-    "cdp_url": "ws://127.0.0.1:9222",
+    "backend": "lightpanda",
+    "mcp_url": "http://127.0.0.1:8000/mcp",
     "timeout_ms": 10000,
     "storage": {"localStorage": {"token": "${token}"}}
   },

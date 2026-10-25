@@ -1,6 +1,6 @@
-# HTTP and SQLite use only Python 3.10+ standard library.
-# Install this file for Lightpanda CDP browser support (no Chromium download).
-playwright>=1.55,<2
+# Python 3.10+: HTTP, SQLite and default native Lightpanda MCP use stdlib only.
+# Start/connect Lightpanda MCP separately. No Playwright/Chromium/LLM required.
+# Optional fallback: python -m pip install "playwright>=1.55,<2"
 # SQLAlchemy + drivers are optional; install only the target database driver:
 # python -m pip install "SQLAlchemy>=2,<3" "PyMySQL>=1.1,<2"
 # python -m pip install "SQLAlchemy>=2,<3" "psycopg[binary]>=3.2,<4"

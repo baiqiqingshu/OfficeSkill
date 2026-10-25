@@ -89,6 +89,11 @@ def validate_suite(suite, base):
     for name in ("variables", "databases", "services", "browser"):
         if not isinstance(suite.get(name, {}), dict):
             raise SuiteError(f"{name} must be an object")
+    from browser import validate_action, validate_config
+    try:
+        validate_config(suite.get("browser", {}), allow_variables=True)
+    except ValueError as exc:
+        raise SuiteError(str(exc)) from exc
     cases = suite.get("cases")
     if not isinstance(cases, list) or not cases:
         raise SuiteError("Suite needs at least one case")
@@ -140,13 +145,10 @@ def validate_suite(suite, base):
                 if not isinstance(step.get("actions"), list) or not step["actions"]:
                     raise SuiteError(f"{label}: browser actions are required")
                 for action in step["actions"]:
-                    if not isinstance(action, dict) or action.get("action") not in {"goto", "fill", "click", "select", "check", "wait_for", "assert_text", "assert_value", "assert_visible"}:
-                        raise SuiteError(f"{label}: unsupported browser action")
-                    if action["action"] == "goto":
-                        if not isinstance(action.get("path"), str):
-                            raise SuiteError(f"{label}: goto needs a path")
-                    elif not isinstance(action.get("selector"), str) or not re.fullmatch(r"#[A-Za-z_][A-Za-z0-9_.:-]*", action["selector"]):
-                        raise SuiteError(f"{label}: browser actions require one stable #ID selector")
+                    try:
+                        validate_action(action, allow_variables=True)
+                    except ValueError as exc:
+                        raise SuiteError(f"{label}: {exc}") from exc
     for name, config in suite.get("databases", {}).items():
         if not isinstance(config, dict) or not config.get("url_env") or set(config) - {"url_env"}:
             raise SuiteError(f"Database {name}: configure only url_env (never store credentials)")
@@ -537,9 +539,25 @@ def _write_report(report, output, redactor):
     return report
 
 
-def run_suite(suite_path, frontend_url, token=None, api_url=None, output=None, start_services=False, stop_services=False, state_dir=None):
+def run_suite(suite_path, frontend_url, token=None, api_url=None, output=None, start_services=False, stop_services=False, state_dir=None, browser_backend=None, mcp_url=None, cdp_url=None):
     suite_path = Path(suite_path).resolve()
     suite = load_suite(suite_path)
+    if browser_backend is not None or mcp_url is not None or cdp_url is not None:
+        browser_config = dict(suite.get("browser", {}))
+        if browser_backend is not None:
+            browser_config["backend"] = browser_backend
+            if browser_backend == "playwright":
+                browser_config.pop("mcp_url", None)
+                browser_config.pop("mcp_token_env", None)
+            else:
+                browser_config.pop("cdp_url", None)
+        if mcp_url is not None:
+            browser_config["mcp_url"] = mcp_url
+        if cdp_url is not None:
+            browser_config["cdp_url"] = cdp_url
+        suite["browser"] = browser_config
+        from browser import validate_config
+        validate_config(browser_config, allow_variables=True)
     frontend_url = normalize_url(frontend_url)
     api_url = normalize_url(api_url) if api_url else _join(frontend_url, suite.get("api_base", "/api"))
     token = token if token is not None else os.getenv("WEBTEST_TOKEN", "")
@@ -568,7 +586,7 @@ def run_suite(suite_path, frontend_url, token=None, api_url=None, output=None, s
             try:
                 step = interpolate(raw, variables)
                 redactor.observe(step)
-                item["evidence"] = {key: step[key] for key in ("method", "path", "sql", "file", "actions") if key in step}
+                item["evidence"] = {key: step[key] for key in ("method", "path", "sql", "file") if key in step}
                 if step["type"] == "http":
                     item["evidence"]["method"] = step.get("method", "GET").upper()
                     evidence = http_step(step, api_url, auth, token, variables, redactor)
@@ -578,7 +596,10 @@ def run_suite(suite_path, frontend_url, token=None, api_url=None, output=None, s
                     if browser_session is None:
                         from browser import BrowserSession
                         browser_session = BrowserSession(frontend_url, config=interpolate(suite.get("browser", {}), variables), auth=auth, token=token)
-                    evidence = browser_session.run_step(step)
+                    try:
+                        evidence = browser_session.run_step(step)
+                    finally:
+                        item["evidence"] = browser_session.last_evidence
                 item["evidence"] = evidence
             except AssertionError as exc:
                 item["status"], item["error"] = "fail", str(exc)

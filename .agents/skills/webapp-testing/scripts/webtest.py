@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from runtime import run_suite, service_command
+from runtime import load_suite, run_suite, service_command
 
 
 def parser():
@@ -23,6 +23,13 @@ def parser():
     export = commands.add_parser("export", help="Export a standalone, manually runnable suite")
     export.add_argument("--suite", required=True)
     export.add_argument("--output", required=True)
+    validate = commands.add_parser("validate", help="Check suite structure and browser actions without connecting to services")
+    validate.add_argument("--suite", required=True)
+    native_script = commands.add_parser("pandascript", help="Run an independent native frontend batch, without LLM or Playwright")
+    native_script.add_argument("--script", required=True)
+    native_script.add_argument("--executable", default="lightpanda", help="Local Lightpanda binary or wrapper path")
+    native_script.add_argument("--timeout", type=int, default=120, help="Process timeout in seconds, maximum 600")
+    native_script.add_argument("--output", help="Write a redacted JSON report")
     run = commands.add_parser("run", help="Execute HTTP / SQL / Lightpanda steps")
     run.add_argument("--suite", required=True)
     run.add_argument("--frontend-url", required=True, help="http(s) URL or HOST:PORT; also used for API proxy")
@@ -32,6 +39,9 @@ def parser():
     run.add_argument("--start-services", action="store_true")
     run.add_argument("--stop-services", action="store_true", help="Stop only services owned by this suite after execution")
     run.add_argument("--state-dir")
+    run.add_argument("--browser-backend", choices=["lightpanda", "playwright"], help="Native Lightpanda MCP (default) or explicit Playwright CDP")
+    run.add_argument("--mcp-url", help="Native MCP HTTP endpoint, e.g. http://HOST:8000/mcp")
+    run.add_argument("--cdp-url", help="CDP endpoint; requires --browser-backend playwright or matching suite config")
     services = commands.add_parser("services", help="Manage only service processes started by this tool")
     services.add_argument("action", choices=["start", "status", "stop"])
     services.add_argument("--suite", required=True)
@@ -42,11 +52,23 @@ def parser():
 def main(argv=None):
     args = parser().parse_args(argv)
     try:
+        if args.command == "pandascript":
+            from pandascript import run_script
+            result = run_script(args.script, args.executable, args.timeout, args.output)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0 if result["status"] == "pass" else 1
         if args.command == "run":
-            result = run_suite(args.suite, args.frontend_url, token=args.token, api_url=args.api_url, output=args.output, start_services=args.start_services, stop_services=args.stop_services, state_dir=args.state_dir)
+            result = run_suite(args.suite, args.frontend_url, token=args.token, api_url=args.api_url, output=args.output, start_services=args.start_services, stop_services=args.stop_services, state_dir=args.state_dir, browser_backend=args.browser_backend, mcp_url=args.mcp_url, cdp_url=args.cdp_url)
             print(json.dumps({key: result[key] for key in ("name", "status", "duration_seconds", "report_json", "report_markdown")}, ensure_ascii=False, indent=2))
             return 0 if result["status"] == "pass" else 1
-        if args.command == "services":
+        if args.command == "validate":
+            suite = load_suite(args.suite)
+            steps = [*suite.get("setup", []), *suite.get("teardown", []),
+                     *(step for case in suite["cases"] for step in case["steps"])]
+            result = {"status": "valid", "cases": len(suite["cases"]), "steps": len(steps),
+                      "browser_actions": sum(len(step["actions"]) for step in steps if step["type"] == "browser"),
+                      "note": "Structure only; no service, selector or business behavior has been verified"}
+        elif args.command == "services":
             result = service_command(args.action, args.suite, args.state_dir)
         else:
             import project
