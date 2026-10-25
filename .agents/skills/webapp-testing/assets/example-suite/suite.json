@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "name": "示例：订单创建、审批、页面展示和持久化",
+  "api_base": "/api",
+  "auth": {"mode": "token", "header": "Authorization", "prefix": "Bearer "},
+  "variables": {"test_name": "webtest-order-demo", "quantity": 2},
+  "browser": {
+    "cdp_url": "ws://127.0.0.1:9222",
+    "timeout_ms": 10000,
+    "storage": {"localStorage": {"token": "${token}"}}
+  },
+  "databases": {"main": {"url_env": "TEST_DATABASE_URL"}},
+  "services": {},
+  "setup": [
+    {
+      "type": "http", "id": "create-customer", "method": "POST", "path": "/customers",
+      "json": {"name": "${test_name}"},
+      "expect": {"status": 201, "json": {"$.data.name": "${test_name}"}},
+      "capture": {"customer_id": "$.data.id"}
+    }
+  ],
+  "cases": [
+    {
+      "id": "order-create-approve", "name": "创建并审批订单后可在详情、列表及数据库查询",
+      "steps": [
+        {
+          "type": "http", "id": "create-order", "method": "POST", "path": "/orders",
+          "json": {"customerId": "${customer_id}", "name": "${test_name}", "quantity": "${quantity}"},
+          "expect": {"status": 201, "json": {"$.data.status": "DRAFT"}},
+          "capture": {"order_id": "$.data.id"}
+        },
+        {
+          "type": "http", "id": "approve-order", "method": "POST", "path": "/orders/${order_id}/approve",
+          "expect": {"status": 200, "json": {"$.data.status": "APPROVED"}}
+        },
+        {
+          "type": "http", "id": "read-order", "path": "/orders/${order_id}",
+          "expect": {"status": 200, "json": {"$.data.name": "${test_name}", "$.data.status": "APPROVED", "$.data.quantity": "${quantity}"}}
+        },
+        {
+          "type": "browser", "id": "list-order",
+          "actions": [
+            {"action": "goto", "path": "/orders"},
+            {"action": "fill", "selector": "#order-search", "value": "${test_name}"},
+            {"action": "click", "selector": "#order-search-submit"},
+            {"action": "assert_text", "selector": "#order-list", "text": "${test_name}"},
+            {"action": "goto", "path": "/orders/${order_id}"},
+            {"action": "assert_text", "selector": "#order-detail-status", "text": "已审批"}
+          ]
+        },
+        {
+          "type": "sql", "id": "persisted-order", "database": "main", "file": "sql/check-order.sql",
+          "params": {"id": "${order_id}", "test_name": "${test_name}"},
+          "expect": {"row_count": 1, "rows": [{"status": "APPROVED", "quantity": "${quantity}"}]}
+        }
+      ]
+    },
+    {
+      "id": "order-requires-auth", "name": "未登录不得创建订单",
+      "steps": [
+        {"type": "http", "method": "POST", "path": "/orders", "auth": false,
+          "json": {"name": "${test_name}"}, "expect": {"status": 401}}
+      ]
+    }
+  ],
+  "teardown": [
+    {"type": "http", "method": "DELETE", "path": "/orders/${order_id}", "expect": {"status": 204}},
+    {"type": "http", "method": "DELETE", "path": "/customers/${customer_id}", "expect": {"status": 204}}
+  ]
+}

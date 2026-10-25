@@ -1,5 +1,7 @@
 # UML Studio · 结构化绘图 SKILL
 
+新增 **[Web 项目功能验证 skill](.agents/skills/webapp-testing/SKILL.md)**：面向 Spring Boot + Vue，通过真实接口、Lightpanda 和数据库验证功能，支持需求/暂存区影响分析及独立 Python 用例包。见 [使用说明](docs/webapp-testing/README.md)。
+
 本项目新增 **`.agents/skills/uml-studio`**：模型提供 JSON，组件负责自动布局、UML 图元、样式和图片导出。参考 FishboneStudio 的数据 / 渲染 / Vue / 导出分层，独立实现，不依赖 `D:\WorkProject\FishboneStudio`，不替换已有绘图 SKILL。
 
 ## 直接体验

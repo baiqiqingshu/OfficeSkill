@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "name": "纯 HTTP 多接口功能验证示例",
+  "api_base": "/api",
+  "auth": {"mode": "token"},
+  "variables": {"test_name": "webtest-demo"},
+  "cases": [{"id": "create-read-update", "name": "创建、查询与修改", "steps": [
+    {"type": "http", "method": "POST", "path": "/items", "json": {"name": "${test_name}"}, "expect": {"status": 201}, "capture": {"item_id": "$.data.id"}},
+    {"type": "http", "path": "/items/${item_id}", "expect": {"status": 200, "json": {"$.data.name": "${test_name}"}}},
+    {"type": "http", "method": "PATCH", "path": "/items/${item_id}", "json": {"enabled": true}, "expect": {"status": 200, "json": {"$.data.enabled": true}}},
+    {"type": "http", "path": "/items/${item_id}", "expect": {"status": 200, "json": {"$.data.enabled": true}}}
+  ]}],
+  "teardown": [{"type": "http", "method": "DELETE", "path": "/items/${item_id}", "expect": {"status": 204}}]
+}

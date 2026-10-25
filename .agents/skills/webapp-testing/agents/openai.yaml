@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web 功能验证"
+  short_description: "验证 Spring Boot 和 Vue 真实服务，生成可移交的功能用例与执行包"
+  default_prompt: "使用 $webapp-testing 分析本项目，根据需求或暂存区变更编写并运行真实服务功能用例，导出独立 Python 执行包。"
