@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ssh-configuration": {
+      "source": "bagelhole/devops-security-agent-skills",
+      "sourceType": "github",
+      "skillPath": "infrastructure/servers/ssh-configuration/SKILL.md",
+      "computedHash": "32a2c78e332a7166668ef1ccee816a5209e9f613a243e627f2c207f6dc123cab"
+    }
+  }
+}
