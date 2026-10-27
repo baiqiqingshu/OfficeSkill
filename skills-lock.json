@@ -18,6 +18,12 @@
       "sourceType": "github",
       "skillPath": "infrastructure/servers/ssh-configuration/SKILL.md",
       "computedHash": "32a2c78e332a7166668ef1ccee816a5209e9f613a243e627f2c207f6dc123cab"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "bf7fef75af567d1f5be7bcb98b4af1f9b38a68ad26d71b513f629896747ee190"
     }
   }
 }

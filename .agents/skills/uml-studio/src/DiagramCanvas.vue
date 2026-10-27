@@ -174,9 +174,13 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
     <div class="canvas-toolbar">
       <div class="canvas-status"><span class="status-dot" :class="{ busy: pending, failed: failure }"></span>{{ pending ? '正在排版' : failure ? '保留上次成功结果' : '实时预览' }}<span v-if="diagram" class="canvas-dimensions">{{ Math.round(diagram.width) }} × {{ Math.round(diagram.height) }}</span></div>
       <div class="zoom-tools" aria-label="缩放控制">
-        <button type="button" aria-label="缩小" :disabled="!diagram || zoomValue <= 0.05" @click="changeZoom(-0.1)">−</button>
+        <button type="button" aria-label="缩小" :disabled="!diagram || zoomValue <= 0.05" @click="changeZoom(-0.1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /></svg>
+        </button>
         <span class="zoom-value">{{ Math.round(zoomValue * 100) }}%</span>
-        <button type="button" aria-label="放大" :disabled="!diagram || zoomValue >= 4" @click="changeZoom(0.1)">+</button>
+        <button type="button" aria-label="放大" :disabled="!diagram || zoomValue >= 4" @click="changeZoom(0.1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
         <span class="toolbar-divider"></span>
         <button type="button" class="fit-button" :class="{ active: zoom === 1 }" :disabled="!diagram" @click="setZoom(1)">原始大小</button>
         <button type="button" class="fit-button" :class="{ active: zoom === 'fit' }" :disabled="!diagram" @click="fitCanvas">适应画布</button>
@@ -186,7 +190,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
       <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${diagram.width * zoomValue}px`, height: `${diagram.height * zoomValue}px` }">
         <div class="canvas-svg" :style="{ width: `${diagram.width}px`, height: `${diagram.height}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>
-      <div v-else class="canvas-empty"><span class="loading-ring"></span><strong>{{ failure ? '暂时无法绘制图表' : '正在整理你的想法…' }}</strong><p>{{ failure || '布局引擎正在安排每一个节点与连接。' }}</p></div>
+      <div v-else class="canvas-empty"><svg class="loading-ring" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 1 1-9 9" /></svg><strong>{{ failure ? '暂时无法绘制图表' : '正在整理你的想法…' }}</strong><p>{{ failure || '布局引擎正在安排每一个节点与连接。' }}</p></div>
     </div>
     <div v-if="failure && diagram" class="canvas-error" role="status">未替换当前图表：{{ failure }}</div>
     <div class="canvas-footer"><span>滚轮定位缩放 · 按住拖动画布 · 本地字体</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
@@ -194,19 +198,56 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
 </template>
 
 <style>
+/* 自包含令牌：与 docs/uml-studio-redesign.md §2 的 :root 同名同值，
+   使 .studio-shell 覆盖与本组件独立使用（库构建）时取值一致。 */
 .diagram-canvas {
+  --paper: #ffffff;
+  --paper-2: #f4f8fb;
+  --ink: #1b2b3a;
+  --muted: #54697d;
+  --faint: #8ba0b3;
+  --line: #dbe4ec;
+  --line-strong: #b9c9d6;
+  --accent: #0f6fa3;
+  --accent-deep: #0b5b87;
+  --accent-soft: #e9f4fa;
+  --accent-line: #b8d9ea;
+  --ring: rgb(14 159 180 / .30);
+  --danger: #c2404f;
+  --danger-soft: #fdf0f2;
+  --warning: #96650f;
+  --warning-soft: #fbf3df;
+  --success: #2e7d5b;
+  --shadow-sm: 0 1px 2px rgb(20 45 66 / .05), 0 2px 6px -1px rgb(20 45 66 / .06);
+  --shadow-md: 0 2px 6px -2px rgb(20 45 66 / .07), 0 10px 24px -8px rgb(20 45 66 / .10);
+  --shadow-lg: 0 4px 12px -4px rgb(20 45 66 / .08), 0 24px 48px -14px rgb(20 45 66 / .18);
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+  --ease: cubic-bezier(.22, .8, .32, 1);
+  --t-fast: .14s;
+  --t: .2s;
   box-sizing: border-box;
-  color: #2d3432;
+  color: var(--ink);
   font:
-    14px "Microsoft YaHei",
-    "PingFang SC",
-    Arial,
+    14px "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
     sans-serif;
 }
 .diagram-canvas *,
 .diagram-canvas *::before,
 .diagram-canvas *::after {
   box-sizing: border-box;
+}
+.diagram-canvas ::selection {
+  background: rgb(14 159 180 / .22);
 }
 .diagram-canvas button {
   font-family: inherit;
@@ -215,12 +256,13 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   touch-action: manipulation;
 }
 .diagram-canvas button:disabled {
-  opacity: 0.48;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 .diagram-canvas button:focus-visible {
-  outline: 3px solid #c67b58;
-  outline-offset: 3px;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--ring);
 }
 .diagram-canvas {
   display: flex;
@@ -228,109 +270,135 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   min-width: 0;
   min-height: 580px;
   height: clamp(580px, calc(100vh - 235px), 900px);
-  background: #fffefa;
-  border: 1px solid #e1e3d7;
-  border-radius: 10px;
-  box-shadow: 0 5px 20px #4b55430a;
+  background: var(--paper);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 .canvas-toolbar {
-  height: 48px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 17px;
-  border-bottom: 1px solid #ebede3;
-  background: #fffefa;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
   flex: none;
 }
 .canvas-status {
-  font-size: 10px;
-  color: #839178;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
   display: flex;
-  gap: 7px;
+  gap: 8px;
   align-items: center;
   white-space: nowrap;
+  min-width: 0;
 }
 .status-dot {
   display: inline-block;
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #8da078;
+  background: var(--success);
   flex: none;
 }
 .status-dot.busy {
-  background: #bd8e5e;
-  animation: uml-canvas-pulse 1s infinite;
+  background: var(--warning);
+  animation: uml-canvas-pulse 1.2s var(--ease) infinite;
 }
 .status-dot.failed {
-  background: #c27150;
+  background: var(--danger);
 }
 .canvas-dimensions {
-  font:
-    8px ui-monospace,
-    Consolas,
-    monospace;
-  color: #a4ad98;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
   padding-left: 4px;
 }
 .zoom-tools {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  padding: 3px;
+  background: var(--paper-2);
+  border-radius: 8px;
   white-space: nowrap;
+  flex: none;
 }
 .zoom-tools button {
-  background: none;
-  border: none;
-  border-radius: 3px;
-  color: #8c977e;
-  font-size: 14px;
-  width: 22px;
-  height: 23px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 28px;
+  height: 28px;
   padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease);
 }
-.zoom-tools button:hover {
-  background: #f0f1e8;
-  color: #586947;
+.zoom-tools button svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.zoom-tools button:hover:not(:disabled) {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.zoom-tools button:active:not(:disabled) {
+  box-shadow: none;
 }
 .zoom-value {
-  font-size: 9px;
-  color: #96a089;
-  min-width: 31px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 40px;
   text-align: center;
+  padding: 0 2px;
 }
 .toolbar-divider {
   display: block;
-  height: 13px;
   width: 1px;
-  background: #e3e7da;
-  margin: 0 5px;
+  height: 14px;
+  background: var(--line);
+  margin: 0 3px;
+  flex: none;
 }
 .zoom-tools .fit-button {
   width: auto;
-  font-size: 9px;
-  padding: 0 3px;
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 500;
 }
-.zoom-tools .fit-button.active {
-  color: #5d714b;
+.zoom-tools .fit-button.active,
+.zoom-tools .fit-button.active:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .canvas-stage {
   position: relative;
   flex: 1;
   min-height: 0;
   overflow: auto;
-  background-color: #f0f1eb;
-  background-image: radial-gradient(#c9cebf 0.7px, transparent 0.7px);
-  background-size: 17px 17px;
+  background-color: var(--paper-2);
+  background-image: radial-gradient(circle, #c3d2de 1px, transparent 1px);
+  background-size: 20px 20px;
   padding: 36px 32px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
   scrollbar-width: thin;
-  scrollbar-color: #d3d9c9 transparent;
+  scrollbar-color: var(--line-strong) transparent;
   touch-action: none;
   cursor: grab;
   user-select: none;
@@ -340,10 +408,10 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   flex: none;
   position: relative;
   margin: auto;
-  box-shadow:
-    0 6px 23px #45523710,
-    0 1px 3px #4552370e;
   background-color: #ffffff;
+  box-shadow:
+    0 2px 8px rgb(20 45 66 / .08),
+    0 16px 40px -12px rgb(20 45 66 / .16);
 }
 .canvas-svg {
   position: absolute;
@@ -362,8 +430,9 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   cursor: pointer;
 }
 .canvas-stage:focus-visible {
-  outline: 2px solid #6492b1;
-  outline-offset: -3px;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 4px var(--ring);
 }
 .canvas-artboard.is-transparent {
   background-color: #ffffff;
@@ -380,49 +449,56 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 13px;
-  color: #78876a;
+  gap: 12px;
+  color: var(--muted);
   text-align: center;
   max-width: 320px;
+  padding: 0 16px;
 }
 .canvas-empty strong {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--ink);
 }
 .canvas-empty p {
-  font-size: 11px;
-  color: #929d85;
-  line-height: 1.8;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
   margin: 0;
   overflow-wrap: anywhere;
 }
 .loading-ring {
-  width: 25px;
-  height: 25px;
-  border: 2px solid #d8dfcb;
-  border-top-color: #859572;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  flex: none;
   animation: uml-canvas-spin 1s linear infinite;
 }
+.loading-ring circle {
+  stroke: var(--line);
+}
+.loading-ring path {
+  stroke: var(--accent);
+}
 .canvas-footer {
-  height: 32px;
+  height: 34px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 15px;
-  font-size: 8px;
-  color: #a4ad98;
-  border-top: 1px solid #e9ecdf;
+  padding: 0 16px;
+  font-size: 12px;
+  color: var(--faint);
+  border-top: 1px solid var(--line);
+  background: var(--paper);
   flex: none;
   gap: 10px;
 }
 .canvas-error {
-  background: #fff4e9;
-  border-top: 1px solid #f1dbca;
-  padding: 10px 14px;
-  font-size: 10px;
-  color: #9a6245;
-  line-height: 1.7;
+  background: var(--warning-soft);
+  border-top: 1px solid rgb(150 101 15 / .18);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--warning);
+  line-height: 1.6;
   overflow-wrap: anywhere;
 }
 @keyframes uml-canvas-pulse {
@@ -445,8 +521,8 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
 }
 @media (max-width: 1250px) {
   .canvas-toolbar {
-    padding: 0 11px;
-    gap: 4px;
+    padding: 0 12px;
+    gap: 6px;
   }
   .canvas-dimensions {
     display: none;
@@ -455,8 +531,8 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
     padding: 28px 24px;
   }
   .canvas-footer {
-    font-size: 7px;
-    padding: 0 10px;
+    font-size: 11px;
+    padding: 0 12px;
   }
 }
 @media (max-width: 1050px) {
@@ -481,19 +557,13 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
     padding: 24px;
   }
   .canvas-toolbar {
-    height: 45px;
-    padding: 0 14px;
+    height: 44px;
+    padding: 0 12px;
   }
   .canvas-footer {
-    height: 31px;
-    padding: 0 13px;
-    font-size: 8px;
-  }
-  .canvas-status {
-    font-size: 10px;
-  }
-  .canvas-dimensions {
-    font-size: 8px;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 11px;
   }
 }
 @media (max-width: 480px) {
@@ -501,10 +571,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
     display: none;
   }
   .canvas-toolbar {
-    padding: 0 11px;
-  }
-  .canvas-status {
-    font-size: 9px;
+    padding: 0 10px;
   }
   .canvas-stage {
     padding: 20px 16px;
@@ -514,13 +581,14 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
     min-height: 415px;
   }
   .canvas-footer {
-    font-size: 7px;
+    font-size: 11px;
   }
   .canvas-footer > span:last-child {
     display: none;
   }
   .zoom-tools .fit-button {
-    font-size: 8px;
+    font-size: 11px;
+    padding: 0 6px;
   }
 }
 @media print {

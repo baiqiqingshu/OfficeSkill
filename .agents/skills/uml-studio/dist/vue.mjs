@@ -100704,7 +100704,25 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               "aria-label": "缩小",
               disabled: !diagram.value || zoomValue.value <= 0.05,
               onClick: _cache[0] || (_cache[0] = ($event) => changeZoom(-0.1))
-            }, "−", 8, _hoisted_6),
+            }, [..._cache[3] || (_cache[3] = [
+              createElementVNode(
+                "svg",
+                {
+                  viewBox: "0 0 24 24",
+                  fill: "none",
+                  stroke: "currentColor",
+                  "stroke-width": "1.7",
+                  "stroke-linecap": "round",
+                  "stroke-linejoin": "round",
+                  "aria-hidden": "true"
+                },
+                [
+                  createElementVNode("path", { d: "M5 12h14" })
+                ],
+                -1
+                /* CACHED */
+              )
+            ])], 8, _hoisted_6),
             createElementVNode(
               "span",
               _hoisted_7,
@@ -100717,8 +100735,26 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               "aria-label": "放大",
               disabled: !diagram.value || zoomValue.value >= 4,
               onClick: _cache[1] || (_cache[1] = ($event) => changeZoom(0.1))
-            }, "+", 8, _hoisted_8),
-            _cache[3] || (_cache[3] = createElementVNode(
+            }, [..._cache[4] || (_cache[4] = [
+              createElementVNode(
+                "svg",
+                {
+                  viewBox: "0 0 24 24",
+                  fill: "none",
+                  stroke: "currentColor",
+                  "stroke-width": "1.7",
+                  "stroke-linecap": "round",
+                  "stroke-linejoin": "round",
+                  "aria-hidden": "true"
+                },
+                [
+                  createElementVNode("path", { d: "M12 5v14M5 12h14" })
+                ],
+                -1
+                /* CACHED */
+              )
+            ])], 8, _hoisted_8),
+            _cache[5] || (_cache[5] = createElementVNode(
               "span",
               { class: "toolbar-divider" },
               null,
@@ -100773,10 +100809,25 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               6
               /* CLASS, STYLE */
             )) : (openBlock(), createElementBlock("div", _hoisted_12, [
-              _cache[4] || (_cache[4] = createElementVNode(
-                "span",
-                { class: "loading-ring" },
-                null,
+              _cache[6] || (_cache[6] = createElementVNode(
+                "svg",
+                {
+                  class: "loading-ring",
+                  viewBox: "0 0 24 24",
+                  fill: "none",
+                  "stroke-width": "1.7",
+                  "stroke-linecap": "round",
+                  "stroke-linejoin": "round",
+                  "aria-hidden": "true"
+                },
+                [
+                  createElementVNode("circle", {
+                    cx: "12",
+                    cy: "12",
+                    r: "9"
+                  }),
+                  createElementVNode("path", { d: "M12 3a9 9 0 1 1-9 9" })
+                ],
                 -1
                 /* CACHED */
               )),
@@ -100807,7 +100858,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           /* TEXT */
         )) : createCommentVNode("v-if", true),
         createElementVNode("div", _hoisted_14, [
-          _cache[5] || (_cache[5] = createElementVNode(
+          _cache[7] || (_cache[7] = createElementVNode(
             "span",
             null,
             "滚轮定位缩放 · 按住拖动画布 · 本地字体",

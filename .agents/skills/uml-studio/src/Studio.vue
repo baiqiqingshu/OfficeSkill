@@ -225,6 +225,18 @@ const anySourceDirty = computed(
       (spec, index) => sourceDrafts.value[index] !== json(spec),
     ),
 );
+const diagramFilter = ref("");
+const filteredDiagrams = computed(() => {
+  const keyword = diagramFilter.value.trim().toLowerCase();
+  return collection.value.diagrams
+    .map((spec, index) => ({ spec, index }))
+    .filter(
+      ({ spec }) =>
+        !keyword ||
+        spec.title.toLowerCase().includes(keyword) ||
+        labels[spec.type].toLowerCase().includes(keyword),
+    );
+});
 const canvas = ref<CanvasHandle>();
 const formEditor = ref<FormHandle>();
 const editor = ref<HTMLTextAreaElement>();
@@ -485,25 +497,25 @@ function addExample(type: DiagramType): void {
   }
   void appendDiagram(example);
 }
-async function removeDiagram(): Promise<void> {
-  if (collection.value.diagrams.length < 2) return;
+async function removeDiagramAt(index: number): Promise<void> {
+  const target = collection.value.diagrams[index];
+  if (!target || collection.value.diagrams.length < 2) return;
   if (
     !window.confirm(
-      `移除“${applied.value.title}”？这张图及其未应用草稿会被删除，其他图表不受影响。`,
+      `移除“${target.title}”？这张图及其未应用草稿会被删除，其他图表不受影响。`,
     )
   )
     return;
   const ticket = ++revision;
-  const removed = activeIndex.value;
   const diagrams = collection.value.diagrams.filter(
-    (_, index) => index !== removed,
+    (_, position) => position !== index,
   );
-  const index = Math.min(removed, diagrams.length - 1);
+  const nextIndex = Math.min(index, diagrams.length - 1);
   try {
-    if (!(await renderCandidate(diagrams[index]!, ticket))) return;
+    if (!(await renderCandidate(diagrams[nextIndex]!, ticket))) return;
     commitCollection({ ...getDocument(), diagrams });
-    sourceDrafts.value.splice(removed, 1);
-    activeIndex.value = index;
+    sourceDrafts.value.splice(index, 1);
+    activeIndex.value = nextIndex;
     error.value = "";
     await nextTick();
     if (ticket === revision) formEditor.value?.resetDraft();
@@ -511,6 +523,9 @@ async function removeDiagram(): Promise<void> {
   } catch (reason) {
     if (ticket === revision) reportError(reason);
   }
+}
+async function removeDiagram(): Promise<void> {
+  await removeDiagramAt(activeIndex.value);
 }
 async function applyDraft(): Promise<void> {
   const source = draft.value;
@@ -904,7 +919,24 @@ defineExpose({
         class="studio-brand"
         aria-label="UML Studio 工作台"
         @click.prevent
-        ><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span
+        ><span class="brand-mark" aria-hidden="true"
+          ><svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            ><rect x="3.5" y="3.5" width="7" height="7" rx="1.8" /><rect
+              x="13.5"
+              y="13.5"
+              width="7"
+              height="7"
+              rx="1.8"
+            /><path d="M10.5 7h4.2a2.8 2.8 0 0 1 2.8 2.8v3.7" /><path
+              d="M13.5 17h-4.2a2.8 2.8 0 0 1-2.8-2.8v-3.7"
+            /></svg></span
         ><span
           >UML<span class="brand-light"> STUDIO</span
           ><small>把复杂，画清楚。</small></span
@@ -921,14 +953,38 @@ defineExpose({
           :aria-expanded="sidebarOpen"
           @click="sidebarOpen = !sidebarOpen"
         >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+          </svg>
           图表列表
         </button>
         <button
-          class="button button-quiet"
+          class="button button-outline"
           type="button"
           title="导入单张图表或整个文档；替换当前集合"
           @click="importInput?.click()"
         >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+            />
+          </svg>
           导入<span class="hide-small">
             JSON / HTML</span
           >
@@ -940,6 +996,19 @@ defineExpose({
           :title="runtimeError || '保存全部图表为可离线编辑的单个 HTML 文件'"
           @click="downloadHtml"
         >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+            />
+          </svg>
           保存 HTML<span class="hide-small">
             · 全部 {{ collection.diagrams.length }} 张</span
           >
@@ -968,7 +1037,7 @@ defineExpose({
         :class="{ 'is-open': sidebarOpen }"
         aria-label="文档与图表列表"
       >
-        <button class="button button-quiet mobile-menu-button sidebar-close" type="button" @click="sidebarOpen = false">关闭图表列表</button>
+        <button class="button button-quiet mobile-menu-button sidebar-close" type="button" @click="sidebarOpen = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6l12 12" /></svg>关闭图表列表</button>
         <div class="sidebar-section">
           <div class="section-heading">
             <h2>文档中的图表</h2>
@@ -984,29 +1053,112 @@ defineExpose({
             :disabled="loading"
             @change="renameDocument"
           />
-          <nav class="diagram-list" aria-label="选择要编辑的图表">
-            <button
-              v-for="(spec, index) in collection.diagrams"
-              :key="spec.id ?? index"
-              type="button"
-              :class="{ selected: activeIndex === index }"
-              :aria-current="activeIndex === index ? 'true' : undefined"
-              @click="selectFromList(index)"
+          <div class="diagram-search">
+            <svg
+              class="diagram-search-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
             >
-              <span class="diagram-list-index">{{
-                String(index + 1).padStart(2, "0")
-              }}</span
-              ><span
-                ><strong>{{ spec.title }}</strong
-                ><small
-                  >{{ labels[spec.type] }} ·
-                  {{ themeLabels[spec.theme ?? "ocean"]
-                  }}<b v-if="sourceDrafts[index] !== json(spec)">
-                    · JSON 草稿</b
-                  ></small
-                ></span
+              <path
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+              />
+            </svg>
+            <input
+              v-model="diagramFilter"
+              type="search"
+              role="searchbox"
+              class="text-input diagram-filter"
+              placeholder="搜索标题或图型"
+              aria-label="过滤图表列表"
+            />
+          </div>
+          <nav class="diagram-list" aria-label="选择要编辑的图表">
+            <div
+              v-for="{ spec, index } in filteredDiagrams"
+              :key="spec.id ?? index"
+              class="diagram-item"
+              :class="{ selected: activeIndex === index }"
+            >
+              <button
+                type="button"
+                class="diagram-select"
+                :aria-current="activeIndex === index ? 'true' : undefined"
+                @click="selectFromList(index)"
               >
-            </button>
+                <span class="diagram-list-index">{{
+                  String(index + 1).padStart(2, "0")
+                }}</span
+                ><span class="diagram-item-text"
+                  ><strong>{{ spec.title }}</strong
+                  ><small
+                    >{{ labels[spec.type] }} ·
+                    {{ themeLabels[spec.theme ?? "ocean"]
+                    }}<b v-if="sourceDrafts[index] !== json(spec)">
+                      JSON 草稿</b
+                    ></small
+                  ></span
+                >
+              </button>
+              <span class="diagram-item-actions">
+                <button
+                  type="button"
+                  title="复制这张图（保留原图）"
+                  aria-label="复制图表"
+                  :disabled="loading"
+                  @click.stop="appendDiagram(spec, true)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="9" y="9" width="11" height="11" rx="2" />
+                    <path
+                      d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="danger"
+                  title="移除这张图"
+                  aria-label="删除图表"
+                  :disabled="loading || collection.diagrams.length < 2"
+                  @click.stop="removeDiagramAt(index)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 6h18" />
+                    <path
+                      d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"
+                    />
+                    <path
+                      d="M19 6l-.8 12.4a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6L5 6"
+                    />
+                    <path d="M10 11v5M14 11v5" />
+                  </svg>
+                </button>
+              </span>
+            </div>
+            <p v-if="!filteredDiagrams.length" class="diagram-list-empty">
+              没有匹配的图表。
+            </p>
           </nav>
           <div class="collection-actions">
             <button
@@ -1016,6 +1168,20 @@ defineExpose({
               title="复制当前已应用数据，保留原图"
               @click="appendDiagram(applied, true)"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path
+                  d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"
+                />
+              </svg>
               复制当前图</button
             ><button
               class="button button-outline danger-button"
@@ -1024,6 +1190,24 @@ defineExpose({
               title="至少保留一张图表"
               @click="removeDiagram"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 6h18" />
+                <path
+                  d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"
+                />
+                <path
+                  d="M19 6l-.8 12.4a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6L5 6"
+                />
+                <path d="M10 11v5M14 11v5" />
+              </svg>
               移除
             </button>
           </div>
@@ -1051,10 +1235,21 @@ defineExpose({
               :disabled="loading"
               @click="addExample(addType)"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
               新增图表
             </button>
           </div>
-          <details class="quick-presets-disclosure"><summary>常用图型快捷新增</summary><div class="quick-presets">
+          <details class="quick-presets-disclosure"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>常用图型快捷新增</summary><div class="quick-presets">
             <button
               v-for="type in [
                 'fishbone',
@@ -1087,7 +1282,7 @@ defineExpose({
             <p v-if="applied.description">{{ applied.description }}</p>
           </div>
           <div class="workspace-actions">
-          <button class="button button-outline" type="button" :aria-expanded="styleOpen" aria-controls="diagram-styles" @click="showStyles">调整样式</button>
+          <button class="button button-outline" type="button" :aria-expanded="styleOpen" aria-controls="diagram-styles" @click="showStyles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>调整样式</button>
           <button
             class="button button-accent editor-toggle"
             type="button"
@@ -1095,6 +1290,19 @@ defineExpose({
             aria-controls="diagram-editor"
             @click="toggleEditor"
           >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+              />
+            </svg>
             {{ editorOpen ? "收起编辑器" : "编辑图表" }}
           </button>
           </div>
@@ -1162,6 +1370,19 @@ defineExpose({
               :disabled="loading || exporting"
               @click="downloadImage"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                />
+              </svg>
               {{ exporting ? "正在导出…" : "导出图片" }}
             </button>
             <button
@@ -1170,19 +1391,46 @@ defineExpose({
               :disabled="loading || copyingImage"
               @click="copyImage"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="8" y="2.5" width="8" height="4" rx="1" />
+                <path
+                  d="M16 4.5h2.5A1.5 1.5 0 0 1 20 6v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H8"
+                />
+              </svg>
               {{ copyingImage ? "正在复制 PNG…" : "复制图片（PNG）" }}
             </button>
           </div>
           <details class="more-export">
-            <summary>更多导出</summary>
+            <summary>更多导出<svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></summary>
             <div class="more-export-content">
-              <button class="button button-outline" type="button" @click="downloadDocumentJson">下载整个文档 JSON</button>
+              <button class="button button-outline" type="button" @click="downloadDocumentJson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>下载整个文档 JSON</button>
               <p class="export-tip">图片导出当前图；HTML 与文档 JSON 包含全部图表。PNG / WebP 支持透明，JPEG 铺白底。</p>
             </div>
           </details>
         </section>
         <div v-if="error" class="error-banner" role="alert">
-          <span class="error-icon" aria-hidden="true">!</span>
+          <svg
+            class="error-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v5" />
+            <path d="M12 16.5h.01" />
+          </svg>
           <div>
             <strong>这次修改未替换画布，保留上次成功结果</strong>
             <p>{{ error }}</p>
@@ -1193,7 +1441,17 @@ defineExpose({
             aria-label="关闭错误提示"
             @click="error = ''"
           >
-            ×
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 18 18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
         <div class="workspace-panels" :class="{ 'with-editor': editorOpen }">
@@ -1209,7 +1467,7 @@ defineExpose({
             />
             <details id="diagram-styles" ref="stylePanel" class="preview-style-panel" :open="styleOpen" @toggle="styleOpen = ($event.target as HTMLDetailsElement).open">
               <summary>
-                图形样式与布局 <span>展开调整配色、字体和布局参数</span>
+                <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>图形样式与布局 <span>展开调整配色、字体和布局参数</span>
               </summary>
               <div class="style-panel-content">
                 <div class="sidebar-section">
@@ -1225,7 +1483,7 @@ defineExpose({
                         })
                       "
                     >
-                      重置定制
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>重置定制
                     </button>
                   </div>
                   <div class="theme-grid" aria-label="主题预设">
@@ -1251,7 +1509,7 @@ defineExpose({
                       ><span>{{ themeLabels[name] }}</span>
                     </button>
                   </div>
-                  <details class="advanced-styles"><summary>自定义配色</summary><div class="advanced-inner">
+                  <details class="advanced-styles"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>自定义配色</summary><div class="advanced-inner">
                   <div class="style-subheading">
                     配色覆盖<span v-if="applied.style" class="custom-badge"
                       >已定制</span
@@ -1273,7 +1531,7 @@ defineExpose({
                   </div></details>
                   <details class="advanced-styles">
                     <summary>
-                      字体与细节
+                      <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>字体与细节
                     </summary>
                     <div class="advanced-inner">
                       <label class="field-label" for="font-preset"
@@ -1395,7 +1653,7 @@ defineExpose({
                   </details>
                   <details class="advanced-styles">
                     <summary>
-                      布局与尺寸
+                      <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>布局与尺寸
                     </summary>
                     <div class="advanced-inner">
                       <template v-if="graphDiagram">
@@ -1560,7 +1818,7 @@ defineExpose({
                   :disabled="loading"
                   @click="formatJson"
                 >
-                  格式化
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></svg>格式化
                 </button>
               </div>
               <label class="source-scope"
@@ -1600,24 +1858,35 @@ defineExpose({
                   :disabled="loading"
                   @click="applyDraft"
                 >
-                  {{
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  <span>{{
                     loading
                       ? "正在绘制…"
                       : sourceScope === "document"
                         ? "应用整个文档"
                         : "应用当前图表"
-                  }}<kbd>⌘ / Ctrl ↵</kbd>
+                  }}</span><kbd>⌘ / Ctrl ↵</kbd>
                 </button>
                 <div>
                   <button class="text-button" type="button" @click="copyJson">
-                    复制草稿</button
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5" /></svg>复制草稿</button
                   ><span>·</span
                   ><button
                     class="text-button"
                     type="button"
                     @click="downloadJson"
                   >
-                    下载草稿</button
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>下载草稿</button
                   ><span>·</span
                   ><button
                     class="text-button"
@@ -1625,7 +1894,7 @@ defineExpose({
                     :disabled="loading"
                     @click="resetSource"
                   >
-                    恢复已应用
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>恢复已应用
                   </button>
                 </div>
               </div>
@@ -1661,11 +1930,12 @@ defineExpose({
 .uml-form-editor,
 .uml-color-input,
 .uml-cause-editor {
-  --uml-edit-ink: #203c52;
-  --uml-edit-muted: #61788b;
-  --uml-edit-line: #cadbe7;
-  --uml-edit-accent: #2167a8;
-  --uml-edit-soft: #eef6fc;
+  --uml-edit-ink: var(--ink);
+  --uml-edit-muted: var(--muted);
+  --uml-edit-line: var(--line);
+  --uml-edit-accent: var(--accent);
+  --uml-edit-soft: var(--accent-soft);
+  --uml-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color: var(--uml-edit-ink);
   font: inherit;
   min-width: 0;
@@ -1688,11 +1958,11 @@ defineExpose({
   display: grid;
   gap: 10px;
   padding: 12px 0;
-  background: #fff;
+  background: var(--paper);
   border-bottom: 1px solid var(--uml-edit-line);
 }
 .uml-editor-selected {
-  outline: 3px solid #6ba9d8;
+  outline: 3px solid var(--ring);
   outline-offset: 3px;
 }
 .uml-form-editor h3 {
@@ -1717,21 +1987,34 @@ defineExpose({
   display: block;
   width: 100%;
   min-width: 0;
-  min-height: 35px;
+  min-height: 34px;
   border: 1px solid var(--uml-edit-line);
-  border-radius: 7px;
-  background: #fff;
+  border-radius: var(--r-sm);
+  background: var(--paper);
   color: var(--uml-edit-ink);
-  padding: 7px 9px;
+  padding: 7px 10px;
   font: inherit;
   font-size: 12px;
   line-height: 1.5;
+  transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
 .uml-form-editor textarea {
   resize: vertical;
 }
 .uml-form-editor input::placeholder {
-  color: #61788b;
+  color: var(--faint);
+}
+.uml-form-editor :is(input, select, textarea):hover:not(:focus),
+.uml-color-input input[type="text"]:hover:not(:focus),
+.uml-cause-editor input[type="text"]:hover:not(:focus) {
+  border-color: var(--line-strong);
+}
+.uml-form-editor :is(input, select, textarea):focus,
+.uml-color-input input[type="text"]:focus,
+.uml-cause-editor input[type="text"]:focus {
+  outline: none;
+  border-color: var(--uml-edit-accent);
+  box-shadow: 0 0 0 4px var(--ring);
 }
 .uml-form-editor button,
 .uml-color-input button,
@@ -1739,30 +2022,34 @@ defineExpose({
   min-height: 32px;
   padding: 6px 10px;
   border: 1px solid var(--uml-edit-line);
-  border-radius: 7px;
-  background: #fff;
+  border-radius: var(--r-sm);
+  background: var(--paper);
   color: var(--uml-edit-ink);
   font: inherit;
   font-size: 12px;
   line-height: 1.4;
   cursor: pointer;
+  transition: background-color var(--t) var(--ease),
+    border-color var(--t) var(--ease), box-shadow var(--t) var(--ease),
+    transform var(--t) var(--ease);
 }
 .uml-form-editor button:hover:not(:disabled),
 .uml-color-input button:hover:not(:disabled),
 .uml-cause-editor button:hover:not(:disabled) {
-  border-color: var(--uml-edit-accent);
+  border-color: var(--accent-line);
   background-color: var(--uml-edit-soft);
 }
 .uml-form-editor button:disabled,
 .uml-color-input button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.55;
 }
 .uml-form-editor :is(button, input, select, textarea, summary):focus-visible,
 .uml-color-input :is(button, input):focus-visible,
 .uml-cause-editor :is(button, input):focus-visible {
-  outline: 3px solid #9dc8ed;
+  outline: 2px solid var(--uml-edit-accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--ring);
 }
 .uml-editor-heading {
   display: flex;
@@ -1780,12 +2067,13 @@ defineExpose({
   overflow-wrap: anywhere;
 }
 .uml-editor-badge {
-  padding: 3px 7px;
-  border: 1px solid #c8dfef;
-  border-radius: 999px;
-  color: #34698f;
-  background: #edf6fc;
+  padding: 3px 8px;
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  color: var(--accent-deep);
+  background: var(--accent-soft);
   font-size: 12px;
+  font-weight: 500;
 }
 .uml-editor-section {
   display: grid;
@@ -1797,24 +2085,57 @@ defineExpose({
 .uml-editor-card {
   min-width: 0;
   border: 1px solid var(--uml-edit-line);
-  border-radius: 9px;
-  background: #fff;
+  border-radius: var(--r-md);
+  background: var(--paper);
+}
+.uml-editor-card > summary,
+.uml-editor-subsection > summary,
+.uml-cause-editor > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.uml-editor-card > summary::after,
+.uml-editor-subsection > summary::after,
+.uml-cause-editor > summary::after {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-inline-start: auto;
+  background-color: currentColor;
+  opacity: 0.5;
+  -webkit-mask-image: var(--uml-chevron);
+  mask-image: var(--uml-chevron);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  transform: rotate(-90deg);
+  transition: transform var(--t) var(--ease);
+}
+.uml-editor-card[open] > summary::after,
+.uml-editor-subsection[open] > summary::after,
+.uml-cause-editor[open] > summary::after {
+  transform: rotate(0deg);
 }
 .uml-editor-card > summary,
 .uml-editor-subsection > summary {
   padding: 12px 16px;
-  cursor: pointer;
   font-size: 12px;
   font-weight: 650;
-  overflow-wrap: anywhere;
 }
 .uml-editor-card > summary {
-  background: #f4f8fb;
-  border-radius: 8px;
+  background: var(--paper-2);
+  border-radius: calc(var(--r-md) - 1px);
 }
 .uml-editor-card[open] > summary {
   border-bottom: 1px solid var(--uml-edit-line);
-  border-radius: 8px 8px 0 0;
+  border-radius: calc(var(--r-md) - 1px) calc(var(--r-md) - 1px) 0 0;
 }
 .uml-form-editor code {
   font-size: 12px;
@@ -1865,8 +2186,8 @@ defineExpose({
 .uml-editor-subsection {
   display: grid;
   min-width: 0;
-  border: 1px solid #dce7ee;
-  border-radius: 7px;
+  border: 1px solid var(--uml-edit-line);
+  border-radius: var(--r-sm);
 }
 .uml-editor-subsection[open] {
   padding: 0 9px 10px;
@@ -1875,17 +2196,17 @@ defineExpose({
   margin-top: 10px;
 }
 .uml-editor-subsection > summary {
-  padding: 8px;
+  padding: 8px 10px;
 }
 .uml-form-editor button.uml-editor-danger,
 .uml-cause-editor button.uml-editor-danger {
-  color: #a83545;
-  border-color: #e7c6cd;
+  color: var(--danger);
+  border-color: var(--danger-line);
 }
-.uml-form-editor button.uml-editor-danger:hover,
-.uml-cause-editor button.uml-editor-danger:hover {
-  border-color: #bc5363;
-  background: #fff3f4;
+.uml-form-editor button.uml-editor-danger:hover:not(:disabled),
+.uml-cause-editor button.uml-editor-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
 }
 .uml-editor-actions {
   position: sticky;
@@ -1893,22 +2214,28 @@ defineExpose({
   z-index: 2;
   padding: 12px 0 2px;
   border-top: 1px solid var(--uml-edit-line);
-  background: #fff;
+  background: var(--paper);
 }
 .uml-form-editor button.uml-editor-apply {
   padding-inline: 20px;
-  background: var(--uml-edit-accent);
+  border: 0;
+  background: var(--gradient-brand);
   color: #fff;
-  border-color: var(--uml-edit-accent);
-  font-weight: 700;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(11 91 135 / 0.3),
+    0 6px 16px -6px rgb(11 91 135 / 0.45);
 }
-.uml-form-editor button.uml-editor-apply:hover {
-  background: #18568f;
+.uml-form-editor button.uml-editor-apply:hover:not(:disabled) {
+  background: var(--gradient-brand-hover);
   color: #fff;
+  transform: translateY(-1px);
+}
+.uml-form-editor button.uml-editor-apply:active:not(:disabled) {
+  transform: translateY(0);
 }
 .uml-editor-error {
   margin: 0 0 9px;
-  color: #ac273d;
+  color: var(--danger);
   font-size: 12px;
   line-height: 1.7;
   overflow-wrap: anywhere;
@@ -1932,8 +2259,8 @@ defineExpose({
   flex: 0 0 34px;
   width: 34px;
   height: 34px;
-  border: 1px solid #9dafbe;
-  border-radius: 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
 }
 .uml-color-input__sample input[type="color"] {
   position: absolute;
@@ -1944,8 +2271,9 @@ defineExpose({
   cursor: pointer;
 }
 .uml-color-input__sample:focus-within {
-  outline: 3px solid #9dc8ed;
+  outline: 2px solid var(--uml-edit-accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--ring);
 }
 .uml-checker {
   background-color: #fff;
@@ -1961,9 +2289,9 @@ defineExpose({
   display: grid;
   gap: 10px;
   padding: 11px;
-  border: 1px solid #bfd3e3;
-  border-radius: 8px;
-  background: #f5f9fc;
+  border: 1px solid var(--uml-edit-line);
+  border-radius: var(--r-sm);
+  background: var(--paper-2);
 }
 .uml-color-input__palette strong {
   font-size: 12px;
@@ -1980,15 +2308,15 @@ defineExpose({
   min-height: 28px;
   height: 28px;
   padding: 0;
-  border-color: #a6b6c3;
-  border-radius: 5px;
+  border-color: var(--line-strong);
+  border-radius: var(--r-xs);
 }
 .uml-color-input__swatches button:hover:not(:disabled) {
   transform: translateY(-1px);
   background-color: revert;
 }
 .uml-color-input__swatches button[aria-pressed="true"] {
-  outline: 2px solid #2167a8;
+  outline: 2px solid var(--uml-edit-accent);
   outline-offset: 2px;
 }
 .uml-color-input__swatches button > span {
@@ -1998,9 +2326,9 @@ defineExpose({
   height: 18px;
   background: #fff;
   border-radius: 50%;
-  color: #133e60;
+  color: var(--accent-deep);
   font-size: 12px;
-  box-shadow: 0 0 0 1px #b5c4d0;
+  box-shadow: 0 0 0 1px var(--line-strong);
 }
 .uml-color-input__transparent {
   display: flex;
@@ -2012,23 +2340,21 @@ defineExpose({
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 1px solid #a6b6c3;
+  border: 1px solid var(--line-strong);
   border-radius: 3px;
 }
 .uml-color-input__transparent[aria-pressed="true"] {
-  outline: 2px solid #2167a8;
+  outline: 2px solid var(--uml-edit-accent);
   outline-offset: 1px;
 }
 .uml-cause-editor {
   min-width: 0;
   border: 1px solid var(--uml-edit-line);
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   padding: 10px;
 }
 .uml-cause-editor > summary {
-  cursor: pointer;
   font-size: 12px;
-  overflow-wrap: anywhere;
 }
 .uml-cause-editor[open] > :not(summary) {
   margin-top: 10px;
@@ -2053,7 +2379,7 @@ defineExpose({
   gap: 8px;
   margin-inline-start: 7px;
   padding-inline-start: 9px;
-  border-inline-start: 1px solid #c6ddec;
+  border-inline-start: 1px solid var(--accent-line);
 }
 @media (max-width: 420px) {
   .uml-form-editor {
@@ -2074,201 +2400,278 @@ defineExpose({
 }
 
 :root {
-  font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
-  color: #203c52;
-  background: #f3f6f9;
+  /* 中性底（冷灰偏蓝纸感） */
+  --bg: #eef2f6;            /* 应用背景 */
+  --paper: #ffffff;         /* 卡片/面板 */
+  --paper-2: #f4f8fb;       /* 凹陷面（画布底、井区、分段控件底） */
+  --ink: #1b2b3a;           /* 主文字 */
+  --muted: #54697d;         /* 次要文字 */
+  --faint: #8ba0b3;         /* 三级文字/占位 */
+  --line: #dbe4ec;          /* 平面元素描边 */
+  --line-strong: #b9c9d6;   /* 悬停描边 */
+
+  /* 品牌：海洋蓝→青碧（渐变仅用于品牌/主按钮/聚焦） */
+  --brand-from: #1668b0;
+  --brand-mid:  #0e93ad;
+  --brand-to:   #0fa79e;
+  --gradient-brand: linear-gradient(135deg, var(--brand-from) 0%, var(--brand-mid) 55%, var(--brand-to) 100%);
+  --gradient-brand-hover: linear-gradient(135deg, #135a9b 0%, #0b8299 55%, #0d948f 100%);
+  --accent: #0f6fa3;        /* 链接/强调实色，白底对比度 ≥4.5:1 */
+  --accent-deep: #0b5b87;
+  --accent-soft: #e9f4fa;   /* 选中态淡底 */
+  --accent-line: #b8d9ea;   /* 淡描边 */
+  --ring: rgb(14 159 180 / .30); /* 聚焦光环 */
+
+  /* 状态 */
+  --danger: #c2404f;  --danger-soft: #fdf0f2;  --danger-line: #eec4ca;
+  --warning: #96650f; --warning-soft: #fbf3df;
+  --success: #2e7d5b;
+
+  /* 柔和弥散阴影（浮层只用阴影不描边） */
+  --shadow-sm: 0 1px 2px rgb(20 45 66 / .05), 0 2px 6px -1px rgb(20 45 66 / .06);
+  --shadow-md: 0 2px 6px -2px rgb(20 45 66 / .07), 0 10px 24px -8px rgb(20 45 66 / .10);
+  --shadow-lg: 0 4px 12px -4px rgb(20 45 66 / .08), 0 24px 48px -14px rgb(20 45 66 / .18);
+
+  /* 圆角 */
+  --r-xs: 6px; --r-sm: 9px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
+
+  /* 动效 */
+  --ease: cubic-bezier(.22, .8, .32, 1);
+  --t-fast: .14s; --t: .2s;
+
+  /* 字体（仅本机栈） */
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root {
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 14px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --accent: #2167a8;
-  --accent-hover: #17558d;
-  --ink: #203c52;
-  --muted: #526b7d;
-  --line: #cfdae4;
-  --paper: #fff;
-  --radius: 12px;
 }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
+body { margin: 0; min-width: 320px; background: var(--bg); color: var(--ink); }
 button, input, select, textarea { font: inherit; }
 button, a { touch-action: manipulation; }
-button { color: inherit; cursor: pointer; transition: background-color .16s, border-color .16s; }
-button:disabled { cursor: not-allowed; opacity: .5; }
-:is(button,a,summary,input,select,textarea):focus-visible { outline: 3px solid #70a9db; outline-offset: 3px; }
+button { color: inherit; cursor: pointer; transition: background-color var(--t) var(--ease), border-color var(--t) var(--ease), box-shadow var(--t) var(--ease), transform var(--t) var(--ease), color var(--t) var(--ease); }
+button:disabled { cursor: not-allowed; opacity: .55; }
+:is(button,a,summary,input,select,textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 5px var(--ring); }
 input,textarea { caret-color: var(--accent); }
-input[type="range"] { accent-color: var(--accent); }
-::selection { background: #cce4f7; color: #173b5b; }
-* { scrollbar-width: thin; scrollbar-color: #aebfcd #f3f6f9; }
+input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
+::selection { background: rgb(14 159 180 / .22); }
+* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
-.studio-shell { min-height: 100vh; }
-.studio-header { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 12px 24px; background: #fff; border-bottom: 1px solid var(--line); position: relative; z-index: 20; }
-.studio-brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; font-size: 20px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
-.brand-light { font-weight: 400; font-size: 17px; }
-.studio-brand small { display: block; margin-top: 5px; font-size: 12px; font-weight: 400; color: var(--muted); }
-.brand-mark { position: relative; display: block; width: 32px; height: 36px; border: 1.5px solid var(--accent); border-radius: 6px; }
-.brand-mark i { position: absolute; width: 9px; height: 9px; border: 1.5px solid var(--accent); border-radius: 2px; background: white; }
-.brand-mark i:nth-child(1) { top: 5px; left: 5px; }
-.brand-mark i:nth-child(2) { bottom: 5px; right: 5px; }
-.brand-mark i:nth-child(3) { width: 1px; height: 13px; left: 15px; top: 10px; transform: rotate(-32deg); border-width: 0 0 0 1.5px; }
+.studio-shell { min-height: 100vh; color: var(--ink); }
+.studio-header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 60px; padding: 0 20px; background: rgb(255 255 255 / .72); -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5); border-bottom: 1px solid rgb(219 228 236 / .8); }
+.studio-brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; font-size: 19px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.brand-light { font-weight: 400; font-size: 16px; }
+.studio-brand small { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; color: var(--muted); }
+.brand-mark { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--gradient-brand); color: #fff; box-shadow: 0 2px 8px rgb(11 91 135 / .32); }
+.brand-mark svg { width: 18px; height: 18px; }
 .header-center { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
-.live-indicator { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #357662; flex: none; }
-.header-slash { margin: 0 4px; color: #92a5b4; }
+.live-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: none; box-shadow: 0 0 0 3px rgb(46 125 91 / .14); animation: uml-live-breathe 2s var(--ease) infinite; }
+@keyframes uml-live-breathe { 50% { box-shadow: 0 0 0 5px rgb(46 125 91 / .06); } }
+.header-slash { margin: 0 4px; color: var(--faint); }
 .header-actions, .workspace-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; padding: 8px 12px; border: 1px solid transparent; border-radius: 6px; font-size: 13px; font-weight: 500; line-height: 1.5; white-space: nowrap; }
-.button-dark, .button-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-.button-dark:hover:not(:disabled), .button-accent:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
-.button-outline { background: #fff; border-color: var(--line); color: #315974; }
-.button-outline:hover:not(:disabled), .button-quiet:hover:not(:disabled) { background: #edf4fa; border-color: #8cabc3; }
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 14px; border: 1px solid transparent; border-radius: 10px; font-size: 13px; font-weight: 500; line-height: 1.5; white-space: nowrap; }
+.button > svg { width: 15px; height: 15px; flex: none; }
+.button-dark, .button-accent { background: var(--gradient-brand); border-color: transparent; color: #fff; box-shadow: 0 1px 2px rgb(11 91 135 / .30), 0 6px 16px -6px rgb(11 91 135 / .45); }
+.button-dark:hover:not(:disabled), .button-accent:hover:not(:disabled) { background: var(--gradient-brand-hover); transform: translateY(-1px); box-shadow: 0 2px 4px rgb(11 91 135 / .30), 0 10px 22px -6px rgb(11 91 135 / .50); }
+.button-dark:active:not(:disabled), .button-accent:active:not(:disabled) { transform: translateY(0); }
+.button-outline { background: var(--paper); border-color: var(--line); color: var(--ink); }
+.button-outline:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-line); }
 .button-quiet { background: transparent; color: var(--muted); }
+.button-quiet:hover:not(:disabled) { background: rgb(20 45 66 / .06); }
+.danger-button { color: var(--danger); }
+.button-outline.danger-button:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger-line); }
 .mobile-menu-button, .sidebar-scrim { display: none; }
-.studio-body { display: flex; min-height: calc(100vh - 72px); align-items: stretch; }
-.studio-sidebar { width: 256px; flex: none; padding: 0 16px 16px; background: #fff; border-right: 1px solid var(--line); }
-.sidebar-section { padding: 20px 0; }
-.section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.section-heading h2 { margin: 0; font-size: 14px; font-weight: 600; }
-.section-meta { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
-.field-label { display: block; color: var(--muted); font-size: 12px; margin: 12px 0 6px; }
-.select-input, .text-input { width: 100%; max-width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: #fff; color: var(--ink); font-size: 13px; }
-.select-input:hover, .text-input:hover { border-color: #8ca8bd; }
-.document-title { margin-bottom: 16px; }
+.studio-body { display: flex; min-height: calc(100vh - 60px); align-items: stretch; }
+.studio-sidebar { width: 264px; flex: none; padding: 0 18px 18px; background: var(--paper); border-right: 1px solid var(--line); }
+.sidebar-section { padding: 18px 0; }
+.section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.section-heading h2 { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .04em; }
+.section-meta { margin-left: auto; color: var(--faint); font-size: 12px; white-space: nowrap; }
+.field-label { display: block; color: var(--muted); font-size: 12px; margin: 14px 0 6px; }
+.select-input, .text-input { width: 100%; max-width: 100%; min-height: 36px; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 7px 11px; background: var(--paper); color: var(--ink); font-size: 13px; transition: border-color var(--t) var(--ease), box-shadow var(--t) var(--ease); }
+.select-input:hover, .text-input:hover { border-color: var(--line-strong); }
+.select-input:focus, .text-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); }
+.document-title { margin-bottom: 14px; }
+.diagram-search { position: relative; margin-bottom: 8px; }
+.diagram-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--faint); pointer-events: none; }
+.diagram-filter { padding-left: 34px; }
 .diagram-list { display: grid; gap: 4px; max-height: min(48vh, 500px); overflow-y: auto; margin-bottom: 12px; }
-.diagram-list > button { display: flex; gap: 10px; align-items: center; min-width: 0; padding: 10px 8px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 6px; }
-.diagram-list > button:hover { background: #f1f6fa; }
-.diagram-list > button.selected { background: #e9f3fb; border-color: #a8c6df; }
-.diagram-list-index { color: #4b7594; font-size: 12px; font-variant-numeric: tabular-nums; flex: none; }
-.diagram-list > button > span:last-child { min-width: 0; }
-.diagram-list strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.6; overflow-wrap: anywhere; }
-.diagram-list small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
-.diagram-list small b { color: #8b571e; font-weight: 400; }
-.collection-actions { display: flex; gap: 8px; padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
-.collection-actions .button { flex: 1; min-height: 34px; padding: 6px; font-size: 12px; }
-.danger-button { color: #a2394a; }
+.diagram-item { position: relative; border-radius: var(--r-md); transition: background-color var(--t) var(--ease), box-shadow var(--t) var(--ease); }
+.diagram-item:hover { background: var(--paper-2); }
+.diagram-item.selected { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent-line); }
+.diagram-select { display: flex; gap: 10px; align-items: flex-start; width: 100%; min-width: 0; padding: 10px 58px 10px 10px; text-align: left; background: transparent; border: 0; border-radius: inherit; }
+.diagram-list-index { color: var(--faint); font-size: 12px; line-height: 1.7; font-variant-numeric: tabular-nums; flex: none; }
+.diagram-item-text { min-width: 0; }
+.diagram-item strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.6; color: var(--ink); overflow-wrap: anywhere; }
+.diagram-item.selected strong { color: var(--accent); }
+.diagram-item small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.diagram-item small b { display: inline-block; margin-left: 5px; padding: 0 7px; border-radius: var(--r-pill); background: var(--warning-soft); color: var(--warning); font-size: 11px; font-weight: 500; line-height: 1.8; }
+.diagram-item-actions { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity var(--t-fast) var(--ease); }
+.diagram-item:hover .diagram-item-actions, .diagram-item:focus-within .diagram-item-actions { opacity: 1; }
+.diagram-item-actions button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: var(--r-xs); background: var(--paper); color: var(--muted); box-shadow: var(--shadow-sm); }
+.diagram-item-actions button svg { width: 15px; height: 15px; }
+.diagram-item-actions button:hover:not(:disabled) { color: var(--accent); }
+.diagram-item-actions button.danger:hover:not(:disabled) { color: var(--danger); }
+.diagram-item-actions button:disabled { opacity: .45; }
+.diagram-list-empty { margin: 8px 2px 4px; color: var(--faint); font-size: 13px; }
+.collection-actions { display: flex; gap: 8px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.collection-actions .button { flex: 1; min-height: 34px; padding: 6px 10px; font-size: 12px; }
 .add-diagram-row { display: flex; gap: 6px; }
 .add-diagram-row .select-input { flex: 1; min-width: 0; }
-.add-diagram-row .button { flex: none; padding: 7px 9px; font-size: 12px; }
-.quick-presets-disclosure { margin-top: 16px; font-size: 12px; color: var(--muted); }
-.quick-presets-disclosure > summary { cursor: pointer; padding: 4px 0; }
+.add-diagram-row .button { flex: none; padding: 7px 10px; font-size: 12px; }
+.quick-presets-disclosure { margin-top: 14px; font-size: 12px; color: var(--muted); }
+.quick-presets-disclosure > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 0; }
 .quick-presets { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; margin-top: 10px; }
-.quick-presets button { min-height: 34px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: #315974; font-size: 12px; }
-.quick-presets button:hover { background: #edf4fa; }
+.quick-presets button { min-height: 32px; padding: 5px 10px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--paper); color: var(--ink); font-size: 12px; }
+.quick-presets button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent-line); }
 .export-tip, .control-hint, .field-hint { margin: 10px 0 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
-.sidebar-footnote { display: flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; line-height: 1.6; padding-top: 16px; border-top: 1px solid var(--line); }
-.studio-main { flex: 1; min-width: 0; padding: 24px; background: #f3f6f9; }
+.sidebar-footnote { display: flex; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; line-height: 1.6; padding-top: 14px; border-top: 1px solid var(--line); }
+.studio-main { flex: 1; min-width: 0; padding: 24px; background: var(--bg); }
 .workspace-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .workspace-heading > div:first-child { min-width: 0; }
-.workspace-heading h1 { margin: 0; font-size: 24px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.workspace-heading h1 { margin: 0; font-size: 23px; font-weight: 650; line-height: 1.45; color: var(--ink); overflow-wrap: anywhere; }
 .workspace-heading p { max-width: 74ch; margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .workspace-actions { flex: none; }
-.workspace-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0 20px; color: var(--muted); font-size: 12px; line-height: 1.6; }
-.type-badge { color: #315f83; }
-.meta-dot { color: #7a91a2; }
-.draft-indicator { color: #895518; }
+.workspace-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 12px 0 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.type-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
+.meta-dot { color: var(--faint); }
+.draft-indicator { padding: 3px 10px; border-radius: var(--r-pill); background: var(--warning-soft); color: var(--warning); font-size: 12px; font-weight: 500; }
 .save-state { color: var(--muted); margin-left: auto; }
-.export-toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding: 12px 0 16px; border-bottom: 1px solid var(--line); }
-.export-fields { display: flex; gap: 8px; }
+.export-toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px; margin-bottom: 16px; padding: 14px 16px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-sm); }
+.export-fields { display: flex; gap: 10px; }
 .export-fields > label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
 .export-fields .select-input { min-width: 124px; }
 .export-image-actions { display: flex; gap: 8px; }
 .quality-control { width: 128px; margin: 0 0 4px; }
 .range-control > span { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; gap: 8px; }
 .range-control input { width: 100%; margin: 8px 0 0; }
-.more-export { position: relative; margin-bottom: 1px; font-size: 12px; }
-.more-export > summary { min-height: 38px; padding: 9px 4px; cursor: pointer; color: #315974; }
-.more-export-content { position: absolute; z-index: 10; top: 44px; right: 0; width: 290px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.more-export { position: relative; font-size: 12px; }
+.more-export > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 7px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color var(--t) var(--ease), border-color var(--t) var(--ease), box-shadow var(--t) var(--ease); }
+.more-export > summary:hover { background: var(--accent-soft); border-color: var(--accent-line); }
+.more-export > summary .summary-chevron { transform: none; }
+.more-export[open] > summary .summary-chevron { transform: rotate(180deg); }
+.more-export-content { position: absolute; z-index: 10; top: calc(100% + 6px); right: 0; width: 290px; padding: 16px; border-radius: var(--r-md); background: var(--paper); box-shadow: var(--shadow-lg); }
+.more-export-content .button { width: 100%; }
 .workspace-panels { display: grid; grid-template-columns: minmax(0,1fr); align-items: start; gap: 16px; }
 .workspace-panels.with-editor { grid-template-columns: minmax(0,1fr) minmax(340px,380px); }
 .preview-column { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.preview-style-panel { min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
-.preview-style-panel > summary { padding: 16px 18px; cursor: pointer; color: var(--ink); font-size: 14px; font-weight: 600; }
-.preview-style-panel > summary span { margin-left: 8px; font-size: 12px; color: var(--muted); font-weight: 400; }
+.preview-style-panel { min-width: 0; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-md); }
+.preview-style-panel > summary { display: flex; align-items: center; gap: 10px; padding: 16px 18px; cursor: pointer; color: var(--ink); font-size: 14px; font-weight: 600; }
+.preview-style-panel > summary span { margin-left: 2px; font-size: 12px; color: var(--muted); font-weight: 400; }
 .style-panel-content { padding: 0 18px 18px; }
 .style-panel-content > .sidebar-section { padding: 12px 0 0; }
 .section-heading .text-button { margin-left: auto; }
-.text-button { border: 0; background: none; padding: 5px 0; color: #315f83; font-size: 12px; line-height: 1.6; }
-.text-button:hover:not(:disabled) { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
-.theme-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(64px,1fr)); gap: 10px; }
-.theme-option { display: flex; flex-direction: column; align-items: center; gap: 8px; background: transparent; border: 0; padding: 4px; color: var(--muted); font-size: 12px; }
-.theme-preview { width: 100%; height: 30px; display: flex; gap: 5px; align-items: center; justify-content: center; border: 1px solid; border-radius: 5px; }
+.text-button { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 5px 0; color: var(--accent); font-size: 12px; line-height: 1.6; }
+.text-button svg { width: 13px; height: 13px; flex: none; }
+.text-button:hover:not(:disabled) { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }
+.summary-chevron { flex: none; width: 15px; height: 15px; color: var(--faint); transform: rotate(-90deg); transition: transform var(--t) var(--ease); }
+details[open] > summary .summary-chevron { transform: rotate(0deg); }
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(68px,1fr)); gap: 10px; }
+.theme-option { display: flex; flex-direction: column; align-items: center; gap: 8px; background: transparent; border: 0; border-radius: var(--r-sm); padding: 6px 4px; color: var(--muted); font-size: 12px; }
+.theme-option:hover { background: var(--paper-2); }
+.theme-option:hover .theme-preview { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.theme-preview { width: 100%; height: 32px; display: flex; gap: 5px; align-items: center; justify-content: center; border: 1px solid; border-radius: var(--r-xs); transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease); }
 .theme-preview i { display: block; width: 10px; height: 12px; border-radius: 2px; }
 .theme-preview i + i { height: 9px; }
 .theme-option.selected .theme-preview { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-option.selected { color: var(--accent); font-weight: 600; }
 .style-subheading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--muted); font-size: 12px; }
-.custom-badge { padding: 2px 6px; border-radius: 4px; color: #8b571e; background: #fff2df; font-size: 12px; }
+.custom-badge { padding: 2px 8px; border-radius: var(--r-pill); color: var(--warning); background: var(--warning-soft); font-size: 12px; font-weight: 500; }
 .studio-colors { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 16px; }
-.advanced-styles { margin-top: 20px; border-top: 1px solid var(--line); }
-.advanced-styles > summary { padding: 14px 0; font-size: 13px; font-weight: 600; color: #315974; cursor: pointer; }
+.advanced-styles { margin-top: 16px; border-top: 1px solid var(--line); }
+.advanced-styles > summary { display: flex; align-items: center; gap: 8px; padding: 14px 0; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; }
 .advanced-inner { padding: 0 0 4px; }
 .advanced-inner > .text-input { margin-bottom: 12px; }
 .font-format-row { display: flex; gap: 8px; align-items: flex-end; margin: 16px 0; }
 .font-format-row > label { flex: 1; font-size: 12px; color: var(--muted); }
 .font-format-row select { margin-top: 6px; }
-.format-button { display: flex; gap: 5px; align-items: center; justify-content: center; min-height: 38px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: #315974; font-size: 12px; }
-.format-button[aria-pressed="true"] { background: #e9f3fb; border-color: #86b1d2; }
+.format-button { display: flex; gap: 5px; align-items: center; justify-content: center; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--paper); color: var(--ink); font-size: 12px; }
+.format-button:hover:not(:disabled) { border-color: var(--line-strong); }
+.format-button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
 .number-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 16px; }
 .number-control { display: grid; align-content: start; gap: 6px; min-width: 0; color: var(--muted); font-size: 12px; }
 .number-control > span { display: flex; justify-content: space-between; gap: 4px; }
-.number-control small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.number-control small { font-size: 12px; color: var(--faint); line-height: 1.5; }
 .number-control input { font-variant-numeric: tabular-nums; }
 .number-control input:disabled { opacity: .5; cursor: not-allowed; }
 .layout-number-grid { margin-top: 16px; }
 .checkbox-control { display: flex; align-items: center; gap: 8px; margin: 16px 0; font-size: 13px; }
 .checkbox-control input { accent-color: var(--accent); }
-.data-panel { display: flex; flex-direction: column; min-width: 0; height: clamp(560px,calc(100vh - 250px),900px); border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; scroll-margin-top: 16px; }
-.editor-mode-tabs { display: flex; flex: none; padding: 6px; gap: 6px; background: #edf3f8; border-bottom: 1px solid var(--line); }
-.editor-mode-tabs > button { flex: 1; min-height: 36px; border: 1px solid transparent; border-radius: 5px; padding: 8px; background: transparent; color: var(--muted); font-size: 13px; }
-.editor-mode-tabs > button[aria-selected="true"] { background: #fff; border-color: #c4d6e4; color: #215a86; font-weight: 600; }
+.data-panel { display: flex; flex-direction: column; min-width: 0; height: clamp(560px,calc(100vh - 250px),900px); border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--shadow-md); overflow: hidden; scroll-margin-top: 16px; }
+.editor-mode-tabs { display: flex; flex: none; gap: 4px; margin: 12px 12px 0; padding: 4px; background: var(--paper-2); border-radius: var(--r-pill); }
+.editor-mode-tabs > button { flex: 1; min-height: 32px; border: 0; border-radius: var(--r-pill); padding: 6px 8px; background: transparent; color: var(--muted); font-size: 13px; }
+.editor-mode-tabs > button:hover { color: var(--ink); }
+.editor-mode-tabs > button[aria-selected="true"] { background: var(--paper); box-shadow: var(--shadow-sm); color: var(--ink); font-weight: 600; }
 .form-panel { flex: 1; min-height: 0; overflow: auto; }
 .editor-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
-.json-panel { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: #fff; overflow: hidden; }
-.json-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.json-panel { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: var(--paper); overflow: hidden; }
+.json-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
 .json-header h2 { margin: 0; font-size: 13px; font-weight: 600; }
 .source-scope { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--muted); font-size: 12px; }
 .source-scope select { flex: 1; min-width: 0; font-size: 12px; }
-.editor-filebar { display: flex; align-items: center; gap: 7px; flex: none; padding: 9px 16px; background: #f3f7fa; border-block: 1px solid #e4ebf1; color: var(--muted); font-size: 12px; }
-.file-dot { width: 5px; height: 5px; background: #5d8b78; border-radius: 50%; }
+.editor-filebar { display: flex; align-items: center; gap: 7px; flex: none; padding: 9px 16px; background: var(--paper-2); border-block: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.file-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
 .file-saved, .file-dirty { margin-left: auto; }
-.file-dirty { color: #895518; }
-.json-editor { flex: 1; min-height: 220px; width: 100%; resize: vertical; border: 0; background: #fff; color: #24485f; font: 13px/1.8 Consolas,"Microsoft YaHei",monospace; padding: 16px; tab-size: 2; white-space: pre; overflow: auto; }
-.json-editor:focus-visible { outline: 2px solid #70a9db; outline-offset: -2px; }
+.file-saved { color: var(--success); }
+.file-dirty { color: var(--warning); }
+.json-editor { flex: 1; min-height: 220px; width: 100%; resize: vertical; border: 0; background: var(--paper); color: var(--ink); font: 13px/1.7 ui-monospace,Consolas,"Microsoft YaHei",monospace; padding: 16px; tab-size: 2; white-space: pre; overflow: auto; }
+.json-editor:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 6px var(--ring); }
 .json-actions { border-top: 1px solid var(--line); padding: 12px 16px 0; }
 .json-actions > .button { width: 100%; justify-content: space-between; }
-.json-actions kbd { font: 11px/1.5 Consolas,monospace; }
-.json-actions > div { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 8px; color: #a0b0bc; }
+.json-actions kbd { font: 11px/1.5 ui-monospace,Consolas,monospace; opacity: .7; }
+.json-actions > div { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 8px; color: var(--faint); }
 .editor-hint { margin: 0; padding: 8px 16px 14px; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .workspace-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.7; }
-.runtime-warning { color: #895518; }
-.error-banner { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; padding: 14px; background: #fff3f3; border: 1px solid #e8bfc5; border-radius: 8px; color: #9c2f40; }
+.runtime-warning { color: var(--warning); }
+.error-banner { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding: 14px 16px; background: var(--danger-soft); border: 1px solid var(--danger-line); border-radius: var(--r-md); color: var(--danger); }
+.error-icon { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--danger); }
 .error-banner strong { font-size: 14px; }
 .error-banner p { margin: 6px 0 0; font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 .error-banner > div { flex: 1; min-width: 0; }
-.error-icon { font-size: 14px; }
-.icon-button { width: 32px; height: 32px; border: 0; border-radius: 5px; background: transparent; color: #9c2f40; font-size: 20px; }
-.studio-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 100; max-width: calc(100vw - 32px); padding: 12px 20px; background: #234963; color: #fff; border-radius: 8px; box-shadow: 0 6px 20px #203c5230; font-size: 13px; line-height: 1.6; }
-.toast-enter-active, .toast-leave-active { transition: opacity .15s; }
-.toast-enter-from, .toast-leave-to { opacity: 0; }
+.icon-button { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--danger); }
+.icon-button:hover { background: rgb(194 64 79 / .10); }
+.icon-button svg { width: 15px; height: 15px; }
+.studio-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 100; max-width: calc(100vw - 32px); padding: 11px 18px; background: var(--ink); color: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-lg); font-size: 13px; line-height: 1.6; }
+.toast-enter-active, .toast-leave-active { transition: opacity .18s var(--ease), transform .18s var(--ease); }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%,8px); }
 /* Canvas geometry and export stay unchanged; align its controls with the workbench. */
-.studio-shell .diagram-canvas { height: clamp(560px,calc(100vh - 250px),900px); min-height: 560px; border-color: var(--line); border-radius: 12px; background: #fff; box-shadow: none; color: var(--ink); }
-.studio-shell .canvas-toolbar { min-height: 48px; height: auto; padding: 8px 12px; background: #fff; border-color: var(--line); flex-wrap: wrap; }
+.studio-shell .diagram-canvas { height: clamp(560px,calc(100vh - 250px),900px); min-height: 560px; border-color: transparent; border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--shadow-md); color: var(--ink); }
+.studio-shell .canvas-toolbar { min-height: 48px; height: auto; padding: 8px 14px; background: var(--paper); border-color: var(--line); flex-wrap: wrap; }
 .studio-shell .canvas-status { color: var(--muted); font-size: 12px; }
-.studio-shell .canvas-dimensions { color: var(--muted); font-size: 12px; }
-.studio-shell .canvas-stage { background-color: #edf2f6; background-image: radial-gradient(#c0ced9 .7px,transparent .7px); }
-.studio-shell .zoom-value { font-size: 12px; color: var(--muted); min-width: 40px; }
-.studio-shell .zoom-tools button { width: 28px; min-height: 30px; color: #315974; font-size: 16px; }
-.studio-shell .zoom-tools .fit-button { width: auto; padding: 0 6px; font-size: 12px; }
-.studio-shell .zoom-tools button:hover { background: #edf4fa; color: var(--accent); }
-.studio-shell .diagram-canvas button:focus-visible { outline-color: #70a9db; }
+.studio-shell .status-dot { background: var(--success); }
+.studio-shell .status-dot.busy { background: var(--warning); }
+.studio-shell .status-dot.failed { background: var(--danger); }
+.studio-shell .canvas-dimensions { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.studio-shell .canvas-stage { background-color: var(--paper-2); background-image: radial-gradient(circle, #c3d2de 1px, transparent 1px); background-size: 20px 20px; }
+.studio-shell .zoom-tools { gap: 2px; padding: 3px; background: var(--paper-2); border-radius: 8px; }
+.studio-shell .zoom-tools button { width: 28px; min-height: 28px; height: 28px; border-radius: 6px; color: var(--muted); font-size: 15px; }
+.studio-shell .zoom-tools .fit-button { width: auto; padding: 0 8px; font-size: 12px; }
+.studio-shell .zoom-tools button:hover:not(:disabled) { background: var(--paper); box-shadow: var(--shadow-sm); color: var(--ink); }
+.studio-shell .zoom-tools .fit-button.active { background: var(--accent-soft); color: var(--accent); box-shadow: none; }
+.studio-shell .zoom-value { font-size: 12px; color: var(--muted); min-width: 40px; font-variant-numeric: tabular-nums; }
+.studio-shell .toolbar-divider { background: var(--line); }
+.studio-shell .canvas-artboard { box-shadow: 0 2px 8px rgb(20 45 66 / .08), 0 16px 40px -12px rgb(20 45 66 / .16); }
+.studio-shell .diagram-canvas button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: 0 0 0 4px var(--ring); }
+.studio-shell .canvas-error { background: var(--warning-soft); color: var(--warning); }
 @media (max-width: 1200px) {
   .header-center { display: none; }
   .workspace-panels.with-editor { grid-template-columns: minmax(0,1fr); }
   .data-panel { height: 650px; }
 }
 @media (max-width: 860px) {
-  .studio-header { gap: 12px; padding: 12px 16px; }
+  .studio-header { gap: 12px; padding: 0 16px; }
   .mobile-menu-button { display: inline-flex; }
-  .studio-sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(300px,88vw); z-index: 40; overflow-y: auto; transform: translateX(-100%); visibility: hidden; }
+  .studio-sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(300px,88vw); z-index: 40; overflow-y: auto; transform: translateX(-100%); visibility: hidden; background: rgb(255 255 255 / .86); -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5); box-shadow: var(--shadow-lg); transition: transform var(--t) var(--ease), visibility var(--t) var(--ease); }
   .studio-sidebar.is-open { transform: translateX(0); visibility: visible; }
-  .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 35; border: 0; background: #18314666; }
+  .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 35; border: 0; background: rgb(27 43 58 / .4); }
   .studio-main { padding: 20px 16px; }
   .workspace-heading { flex-wrap: wrap; gap: 16px; }
   .workspace-actions { width: 100%; }
@@ -2276,7 +2679,7 @@ input[type="range"] { accent-color: var(--accent); }
   .save-state { margin-left: 0; }
 }
 @media (max-width: 540px) {
-  .studio-header { flex-wrap: wrap; gap: 16px; }
+  .studio-header { flex-wrap: wrap; gap: 12px; height: auto; padding: 12px 16px; }
   .studio-brand { font-size: 18px; }
   .header-actions { width: 100%; }
   .header-actions .button { flex: 1; padding-inline: 8px; font-size: 12px; }
@@ -2290,7 +2693,8 @@ input[type="range"] { accent-color: var(--accent); }
   .export-image-actions { width: 100%; }
   .export-image-actions .button { flex: 1; font-size: 12px; padding-inline: 8px; }
   .more-export-content { position: static; width: min(290px,calc(100vw - 32px)); margin-top: 6px; }
-  .preview-style-panel > summary span { display: block; margin: 6px 0 0; }
+  .preview-style-panel > summary { flex-wrap: wrap; }
+  .preview-style-panel > summary span { flex-basis: 100%; margin: 2px 0 0; }
   .style-panel-content { padding-inline: 14px; }
   .theme-grid { grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px 4px; }
   .theme-option { padding: 2px; }
@@ -2310,8 +2714,10 @@ input[type="range"] { accent-color: var(--accent); }
   .workspace-panels.with-editor,.studio-body { display: block; }
 }
 /* Persistent preview instructions remain legible at every viewport. */
-.studio-shell .canvas-footer { height: auto; min-height: 38px; color: #526b7d; font-size: 12px; line-height: 1.6; padding: 10px 12px; background: #fff; border-color: #cfdae4; flex-wrap: wrap; gap: 6px; }
-.studio-shell .canvas-empty { color: #526b7d; }
+.studio-shell .canvas-footer { height: auto; min-height: 38px; color: var(--faint); font-size: 12px; line-height: 1.6; padding: 10px 14px; background: var(--paper); border-color: var(--line); flex-wrap: wrap; gap: 6px; }
+.studio-shell .canvas-empty { color: var(--muted); }
 .studio-shell .canvas-empty p { font-size: 13px; }
+.studio-shell .loading-ring circle { stroke: var(--line); }
+.studio-shell .loading-ring path { stroke: var(--accent); }
 .sidebar-close { margin-top: 12px; }
 </style>
