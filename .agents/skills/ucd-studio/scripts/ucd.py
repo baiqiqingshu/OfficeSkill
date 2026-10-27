@@ -163,8 +163,11 @@ def terms(text):
     return result
 
 
-def show_entry(entry, code=False):
+def show_entry(entry, code=False, example=False):
     result = copy.deepcopy(entry)
+    if not code and not example:
+        result.pop('example', None)
+        return result
     if code and entry['kind'] == 'component':
         if entry.get('primitive'):
             result['html'] = (ROOT/entry['file']).read_text(encoding='utf-8')
@@ -176,7 +179,7 @@ def show_entry(entry, code=False):
         result['dependencies'] = ['assets/base.css: base + responsive', 'assets/runtime.js（行为组件）', 'data/styles.json: tokens']
     elif entry['kind'] == 'style':
         result.update(styles()[entry['id']])
-    elif code and entry['kind'] == 'layout':
+    elif (code or example) and entry['kind'] == 'layout':
         result['example'] = read_json(ROOT/f'examples/{entry["id"]}.json')
     return result
 
@@ -206,12 +209,27 @@ def bounded(value, max_chars):
     item = copy.deepcopy(value[0] if isinstance(value, list) and value else value)
     for key in ('html','css','example'):
         item.pop(key, None)
-    item['note'] = '代码超过预算，已仅返回元数据；使用 show ID --code --max-chars 增大单项预算。'
+    item['note'] = '内容超过预算，已仅返回元数据；按需增大 --max-chars 再取单项内容。'
     return item
 
 
 def md(value):
     return str(value).replace('|','\\|').replace('\n',' ')
+
+
+def page_summary(out, block=None, max_chars=2500):
+    spec = read_json(local_path(out)/'page.json')
+    if block is not None:
+        require(block in spec['blocks'], f'未知区块：{block}')
+        result = {'id':block, **spec['blocks'][block]}
+        if len(json_text(result)) > max_chars:
+            result = {key:value for key,value in result.items() if key not in ('rows','items','columns','fields')}
+            result['note'] = '区块数据超过预算，已省略集合字段；按需增大 --max-chars 或本地读取 page.json。'
+        return result
+    return {'title':spec['title'], 'layout':spec['layout'], 'style':spec['style'],
+            'density':spec.get('density','comfortable'),
+            'blocks':[{'id':key, 'title':b['title'], 'type':b['type']}
+                      for key,b in spec['blocks'].items()]}
 
 
 def design_doc(spec, mode):
@@ -246,7 +264,9 @@ def design_doc(spec, mode):
 |---|---|
 {rows}
 
-系统字体 Inter（本地存在时）/ Segoe UI / Microsoft YaHei / system-ui；不请求字体服务。正文 14px，辅助 10–12px，页面标题 30px（窄屏 25px），卡片标题 16px。间距基于 4px：8/12/16/20/24/32；控件常规高度 38–39px。
+系统字体 Segoe UI / Microsoft YaHei / PingFang SC / system-ui；不请求字体服务。正文 14px，表格与控件 13px，辅助文字不小于 12px；页面标题 24px（窄屏 22px），区块标题 15px。间距基于 4px：8/12/16/20/24/28；控件常规高度 36px。
+
+默认面向公司内网工具：浅色工作区、216px 侧栏、56px 顶栏；主色用于主要操作与当前选择。数据区使用分隔线与对齐组织信息；指标条不绘制无数据依据的趋势装饰。导航使用本页锚点，不伪装成未实现的业务路由。状态同时提供文字，示例环境标记不暗示真实在线连接。
 
 ## 信息结构
 
@@ -254,7 +274,7 @@ def design_doc(spec, mode):
 |---|---|---|---|
 {sections}
 
-12 列网格，常规区块 6 列，full 跨 12 列；工作台常规 4 列。760px 以下单列、侧栏转换为横向导航，表格局部滚动；1100px 以下收紧边距。不要把表格缩成无法阅读的小字。
+12 列网格，常规区块 6 列，full 跨 12 列；工作台的工具/队列/动态采用 3/6/3 列，表单与说明采用 8/4 列。1180px 以下收紧布局；760px 以下单列、侧栏转换为横向导航，表格局部滚动。不要把表格缩成无法阅读的小字。
 
 ## 交互与状态
 
@@ -417,7 +437,11 @@ def build(spec, out, mode=None, source_base=None):
                     else:shutil.copy2(source,history/name)
         out.mkdir(parents=True,exist_ok=True);(out/'assets').mkdir(exist_ok=True)
         for name in all_files:
-            (out/name).parent.mkdir(parents=True,exist_ok=True);os.replace(stage/name,out/name)
+            destination=out/name
+            # Preserve unchanged assets and editable JS without replacing open files.
+            if destination.is_file() and destination.read_bytes()==all_files[name]:
+                continue
+            destination.parent.mkdir(parents=True,exist_ok=True);os.replace(stage/name,destination)
         if old:
             for name in set(old['files'])-set(files):
                 (out/safe_relative(name)).unlink()
@@ -471,9 +495,10 @@ def inspect_source(root, out, max_files=100, max_bytes=160000):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
-    p=sub.add_parser('search');p.add_argument('query');p.add_argument('--kind',choices=('all','style','component','layout'),default='all');p.add_argument('--limit',type=int,choices=range(1,6),default=3);p.add_argument('--code',action='store_true');p.add_argument('--max-chars',type=int,default=6500)
-    p=sub.add_parser('show');p.add_argument('id');p.add_argument('--kind',choices=('style','component','layout'));p.add_argument('--code',action='store_true');p.add_argument('--max-chars',type=int,default=14000)
-    p=sub.add_parser('init');p.add_argument('--layout',default='dashboard');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--out',required=True)
+    p=sub.add_parser('search');p.add_argument('query');p.add_argument('--kind',choices=('all','style','component','layout'),default='all');p.add_argument('--limit',type=int,choices=range(1,6),default=2);p.add_argument('--code',action='store_true');p.add_argument('--max-chars',type=int,default=2500)
+    p=sub.add_parser('show');p.add_argument('id');p.add_argument('--kind',choices=('style','component','layout'));p.add_argument('--code',action='store_true');p.add_argument('--example',action='store_true');p.add_argument('--max-chars',type=int,default=4500)
+    p=sub.add_parser('init');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--config')
+    p=sub.add_parser('summary');p.add_argument('--dir',required=True);p.add_argument('--block');p.add_argument('--max-chars',type=int,default=2500)
     p=sub.add_parser('build');p.add_argument('--dir',required=True);p.add_argument('--mode',choices=MODES)
     p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch',required=True)
     p=sub.add_parser('check');p.add_argument('--dir',required=True)
@@ -485,11 +510,18 @@ def main():
         else:
             matches=[e for e in catalog() if e['id']==args.id and (not args.kind or e['kind']==args.kind)]
             require(len(matches)>0,'未知 ID');require(len(matches)==1,'ID 存在多个种类，请加 --kind component 或 --kind layout')
-            result=bounded(show_entry(matches[0],args.code),args.max_chars)
+            result=bounded(show_entry(matches[0],args.code,args.example),args.max_chars)
     elif args.command=='init':
         out=local_path(args.out);require(not out.exists() or not any(out.iterdir()),'init 只允许新目录或空目录')
         require(args.layout in read_json(ROOT/'data/layouts.json'),'未知 layout')
-        spec=read_json(ROOT/f'examples/{args.layout}.json');spec['style']=args.style;result=build(spec,out,args.mode)
+        spec=read_json(ROOT/f'examples/{args.layout}.json');spec['style']=args.style
+        if args.config:
+            patch=read_json(args.config);require(isinstance(patch,dict),'配置必须是对象');spec=merge(spec,patch)
+        if args.title is not None:spec['title']=args.title
+        result=build(spec,out,args.mode,source_base=local_path(args.config).absolute().parent if args.config else None)
+    elif args.command=='summary':
+        require(1000<=args.max_chars<=50000,'max-chars 需 1000–50000')
+        result=page_summary(args.dir,args.block,args.max_chars)
     elif args.command=='build':result=build(read_json(Path(args.dir)/'page.json'),args.dir,args.mode)
     elif args.command=='patch':
         patch=read_json(args.patch);require(isinstance(patch,dict),'补丁必须是对象');result=build(merge(read_json(Path(args.dir)/'page.json'),patch),args.dir)

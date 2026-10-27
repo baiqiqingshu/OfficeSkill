@@ -2,110 +2,177 @@
   "tool": "ucd-studio",
   "version": "1.0.0",
   "mode": "single",
-  "style": "jade",
+  "style": "ocean",
   "components": [
-    "alert",
     "cards",
-    "progress",
+    "table",
     "activity"
   ],
   "sourceSpec": {
     "version": 1,
-    "title": "团队工作台",
-    "product": "北辰工作台",
-    "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
-    "action": "新建申请",
-    "eyebrow": "TEAM WORKSPACE / 团队协作",
+    "title": "服务工作台",
+    "product": "协同工作台",
+    "description": "常用工具、待处理事项与办理动态集中查看。",
+    "action": "新建工单",
+    "eyebrow": "",
     "layout": "workbench",
-    "style": "jade",
-    "density": "comfortable",
-    "audience": "需要快速处理事项的内部业务人员",
-    "goal": "理解当前工作状态并推进关键任务",
-    "primaryTask": "定位待处理事项，查看状态与处理记录",
+    "style": "ocean",
+    "density": "compact",
+    "audience": "内部服务专员",
+    "goal": "在工作队列中定位并处理事项",
+    "primaryTask": "在工作队列中定位并处理事项",
     "successCriteria": [
-      "用户能识别主要操作及待处理事项",
-      "搜索、筛选和无匹配状态均提供明确反馈",
-      "可使用键盘操作主要控件，在窄屏下阅读内容"
+      "主任务和下一步操作清晰",
+      "键盘可操作，窄屏保留主要内容"
     ],
     "assumptions": [
-      "内网桌面浏览器为主要使用场景，兼顾移动查看",
-      "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+      "公司内网桌面端为主要场景；示例字段与流程需业务确认"
     ],
     "sources": [],
     "assets": [],
     "blocks": {
-      "notice": {
-        "type": "alert",
-        "title": "需要关注",
-        "span": "full",
-        "text": "本周有 3 项工作即将到期，请优先关注关键节点并与负责人确认。"
-      },
       "services": {
         "type": "cards",
-        "title": "常用服务",
+        "title": "常用工具",
         "items": [
           {
-            "title": "资源与环境",
-            "description": "统一申请开发、测试和演示环境。",
-            "action": "查看资源"
+            "title": "资源申请",
+            "description": "开发环境、计算与存储资源。",
+            "action": "发起申请"
           },
           {
-            "title": "团队知识库",
-            "description": "沉淀项目经验，快速找到协作信息。",
-            "action": "浏览知识"
+            "title": "权限管理",
+            "description": "查看系统与数据访问权限。",
+            "action": "查看权限"
+          },
+          {
+            "title": "服务工单",
+            "description": "设备报修与办公支持。",
+            "action": "查看工单"
           }
         ]
       },
-      "progress": {
-        "type": "progress",
-        "title": "项目推进情况",
-        "items": [
-          {
-            "label": "需求与范围确认",
-            "value": 100
-          },
-          {
-            "label": "界面与交互设计",
-            "value": 72
-          },
-          {
-            "label": "开发交付准备",
-            "value": 38
-          }
-        ]
+      "queue": {
+        "type": "table",
+        "title": "待处理事项",
+        "description": "按状态筛选当前工作队列。",
+        "span": "half",
+        "columns": [
+          "事项名称",
+          "申请人",
+          "状态"
+        ],
+        "rows": [
+          [
+            "研发环境资源申请",
+            "陈晨",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ],
+          [
+            "季度项目预算调整",
+            "林晓",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ],
+          [
+            "数据访问权限开通",
+            "周亦",
+            {
+              "text": "已通过",
+              "tone": "success"
+            }
+          ],
+          [
+            "设备采购申请",
+            "王宁",
+            {
+              "text": "处理中",
+              "tone": "primary"
+            }
+          ],
+          [
+            "新成员入组申请",
+            "李然",
+            {
+              "text": "已通过",
+              "tone": "success"
+            }
+          ],
+          [
+            "设计资源归档申请",
+            "张若",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ],
+          [
+            "测试环境扩容申请",
+            "刘航",
+            {
+              "text": "处理中",
+              "tone": "primary"
+            }
+          ],
+          [
+            "办公设备调拨",
+            "赵清",
+            {
+              "text": "已退回",
+              "tone": "danger"
+            }
+          ],
+          [
+            "跨部门协作邀请",
+            "沈安",
+            {
+              "text": "已通过",
+              "tone": "success"
+            }
+          ],
+          [
+            "知识库发布审核",
+            "许言",
+            {
+              "text": "待审批",
+              "tone": "warning"
+            }
+          ]
+        ],
+        "statusColumn": 2,
+        "pageSize": 5
       },
       "recent": {
         "type": "activity",
-        "title": "最近动态",
-        "description": "团队协作的最新进展",
+        "title": "处理动态",
         "items": [
           {
-            "time": "今天 · 10:42",
-            "title": "陈晨提交了资源申请",
-            "description": "研发环境资源 · 等待你的审批"
+            "time": "10-27 10:42",
+            "title": "研发环境申请已提交",
+            "description": "陈晨 · 等待部门审批"
           },
           {
-            "time": "今天 · 09:30",
-            "title": "产品设计评审已完成",
-            "description": "体验改版项目 · 已归档评审结论"
+            "time": "10-27 09:30",
+            "title": "数据访问权限已开通",
+            "description": "周亦 · 已完成办理"
           },
           {
-            "time": "昨天 · 16:15",
-            "title": "周亦完成数据权限配置",
-            "description": "数据平台 · 已通知相关成员"
-          },
-          {
-            "time": "昨天 · 14:20",
-            "title": "季度工作计划已更新",
-            "description": "团队空间 · 新增 3 项里程碑"
+            "time": "10-26 16:15",
+            "title": "设备报修需补充信息",
+            "description": "赵宁 · 请补充设备编号"
           }
         ]
       }
     }
   },
-  "specSha256": "a0e5277b1653c9082f5ea0cccfe9cf6f52c7685ca7dd254e9aa4ba10eb5b24d0",
+  "specSha256": "ceb056138eb943b6ae165da42a3e10824ea6ddc33c54f409025e771e0f4fc92c",
   "files": {
-    "index.html": "4ca07c783debe86a0f6896b65bdf53e474ae0224b160f7e428cc3b5752825e57",
-    "design-system.md": "dee2e4e90af9e083c3ecfd1624e37a6199f1dee3d2f345fbec621b22c3b6ae0c"
+    "index.html": "a02b158c54506444a5e3cf4988b30cd16d5d4de3f876ec57b7eba5c16c3954ad",
+    "design-system.md": "f91767a741c8b02b27d5e4e923b387f644f8283a2a2a92c56c19ec9eb9ff3f4b"
   }
 }

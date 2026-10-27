@@ -2,7 +2,7 @@
   {
     "id": "ocean",
     "kind": "style",
-    "title": "海蓝 · 专业协作",
+    "title": "企业蓝 · 日常办公",
     "tags": "专业 蓝色 后台 审批 企业 清晰 blue enterprise admin",
     "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
   },
@@ -785,7 +785,7 @@
   {
     "id": "dashboard",
     "kind": "layout",
-    "title": "工作总览",
+    "title": "我的工作台",
     "tags": "总览 仪表盘 数据 指标 面板 dashboard analytics",
     "description": "完整 4 区块布局，包含可运行交互；可替换业务数据。",
     "file": "examples/dashboard.json"
@@ -793,7 +793,7 @@
   {
     "id": "admin",
     "kind": "layout",
-    "title": "申请管理",
+    "title": "审批管理",
     "tags": "审批 列表 表格 筛选 后台 admin list approval",
     "description": "完整 3 区块布局，包含可运行交互；可替换业务数据。",
     "file": "examples/admin.json"
@@ -801,7 +801,7 @@
   {
     "id": "workbench",
     "kind": "layout",
-    "title": "团队工作台",
+    "title": "服务工作台",
     "tags": "三栏 工作台 服务 入口 面板 workspace workbench",
     "description": "完整 4 区块布局，包含可运行交互；可替换业务数据。",
     "file": "examples/workbench.json"
@@ -809,7 +809,7 @@
   {
     "id": "form",
     "kind": "layout",
-    "title": "新建资源申请",
+    "title": "资源申请",
     "tags": "表单 步骤 申请 填写 form application",
     "description": "完整 4 区块布局，包含可运行交互；可替换业务数据。",
     "file": "examples/form.json"

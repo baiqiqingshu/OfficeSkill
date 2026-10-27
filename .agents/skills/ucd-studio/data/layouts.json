@@ -1,18 +1,18 @@
 {
   "dashboard": {
-    "title": "工作总览",
+    "title": "我的工作台",
     "file": "examples/dashboard.json"
   },
   "admin": {
-    "title": "申请管理",
+    "title": "审批管理",
     "file": "examples/admin.json"
   },
   "workbench": {
-    "title": "团队工作台",
+    "title": "服务工作台",
     "file": "examples/workbench.json"
   },
   "form": {
-    "title": "新建资源申请",
+    "title": "资源申请",
     "file": "examples/form.json"
   },
   "detail": {

@@ -1,6 +1,7 @@
 """Run: python -m unittest discover -s ucd-studio/tests -v"""
 import copy
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -36,6 +37,27 @@ class UCDTests(unittest.TestCase):
         code=ucd.show_entry(entry,True)
         self.assertIn('<table',code['html']);self.assertIn('.data-table',code['css'])
         self.assertEqual(ucd.search('zzzz-unmatched','all',3,False,6500),[])
+
+    def test_progressive_disclosure_and_one_command_config(self):
+        config=self.base/'brief.json'
+        config.write_text(ucd.json_text({'title':'设备台账','blocks':{'metrics':None,'records':{
+            'title':'设备记录','columns':['设备','状态'],'rows':[['测试设备',{'text':'在用','tone':'success'}]],'statusColumn':1}}}),encoding='utf-8')
+        out=self.base/'quick'
+        command=[sys.executable,str(ROOT/'scripts/ucd.py')]
+        completed=subprocess.run(command+['init','--config',str(config),'--title','资产管理','--out',str(out)],capture_output=True,check=True)
+        self.assertTrue(json.loads(completed.stdout)['ok'])
+        spec=ucd.read_json(out/'page.json')
+        self.assertEqual(spec['layout'],'admin');self.assertEqual(spec['title'],'资产管理')
+        self.assertEqual(list(spec['blocks']),['records']);self.assertTrue(ucd.check(out)['ok'])
+        summary=ucd.page_summary(out)
+        self.assertNotIn('rows',ucd.json_text(summary));self.assertEqual(summary['blocks'][0]['id'],'records')
+        self.assertEqual(ucd.page_summary(out,'records')['rows'][0][0],'测试设备')
+        with self.assertRaisesRegex(ValueError,'未知区块'):ucd.page_summary(out,'missing')
+        entry=next(c for c in ucd.catalog() if c['id']=='table')
+        self.assertNotIn('example',ucd.show_entry(entry))
+        example=ucd.show_entry(entry,example=True)
+        self.assertIn('rows',example['example']);self.assertNotIn('html',example)
+        self.assertIn('tokens',ucd.show_entry(next(c for c in ucd.catalog() if c['id']=='ocean'),example=True))
 
     def test_every_component_generates(self):
         for entry in ucd.catalog():

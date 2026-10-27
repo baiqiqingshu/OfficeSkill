@@ -1,6 +1,16 @@
 # page.json 数据协议
 
-优先 init 后修改示例。以下是可完整生成的最小配置：
+普通任务优先 init --config small.json：只写与模板不同的字段，无需拼整份配置或先读模板。init/patch/build 已执行结构与离线检查。
+
+例如替换列表业务字段（statusColumn 从 0 起，与列数一起调整）：
+
+```json
+{"title":"资产台账","blocks":{"records":{"title":"设备记录","columns":["设备","责任人","状态"],"rows":[["测试笔记本","示例成员",{"text":"在用","tone":"success"}]],"statusColumn":2},"metrics":null}}
+```
+
+执行 `init --layout admin --config small.json --out output/assets` 即可；完整 page.json 由工具补齐。后续已知字段直接 patch；仅需要了解现状时用 summary --dir，再按需 --block records。
+
+需要脱离模板自行组织页面时，以下是完整最小配置：
 
 ```json
 {
@@ -29,7 +39,7 @@
 }
 ```
 
-可选顶层：action（主按钮）、eyebrow（标题眉题）、density（comfortable/compact）、tokens（覆盖语义 token）、successCriteria（字符串数组）、assets（明确的本地素材声明）。禁止原始 HTML、任意脚本或任意 CSS 注入字段。
+可选顶层：action（主按钮）、eyebrow（可省略，不默认使用英文眉题）、density（comfortable/compact，内置模板默认 compact）、tokens（覆盖语义 token）、successCriteria（字符串数组）、assets（明确的本地素材声明）。禁止原始 HTML、任意脚本或任意 CSS 注入字段。
 
 style 有 ocean/slate/jade/plum/warm/rose/midnight/contrast，先检索再选。tokens 只允许已有颜色键与 radius，如 `{"primary":"#2455aa","radius":"8px"}`；颜色必须六位 HEX。density 只影响密度，不改变信息结构。覆盖品牌色后要重新确认对比度。
 
@@ -56,6 +66,6 @@ layout 决定网格规则，blocks 定义内容和顺序。block ID 为小写字
 
 表格单元格与 detail.value 可用文本或 `{"text":"已通过","tone":"success"}`。tone=primary/neutral/success/warning/danger，状态文字不可省略。表格 rows 可为空；列数 1–12，最多 500 行。form.type=text/email/date/number/select/textarea，select 必须有 options。
 
-按钮、input、select、textarea、badge、switch、breadcrumb、dialog 另有可查询 HTML 片段；属于 primitive，不是合法 blocks.type。通过 `show ID --code` 获取当前组件的 HTML/CSS 和依赖约定。重名时使用 `show form --kind component --code` 或 `--kind layout` 区分。组件公共基础样式和行为分别在 assets/base.css、assets/runtime.js；只在手工扩展时按需读相关片段。
+新增区块时用 `show ID --example` 取单项 JSON；默认 show 仅返回元数据。按钮、input、select、textarea、badge、switch、breadcrumb、dialog 另有可查询 HTML 片段，属于 primitive，不是合法 blocks.type；仅在手工扩展时通过 `show ID --code` 读取。重名时加 `--kind component` 或 `--kind layout`。公共样式与行为在 assets/base.css、assets/runtime.js，普通模板任务不需要读取。
 
 大模型无需加载所有示例：`search "审批 筛选" --kind component --limit 2` 返回少量元数据；`show table --code` 返回一个组件。`--max-chars` 控制结果预算，超限时退回元数据并提示，不把 JSON 截成无效片段。新主题可扩展 data/styles.json 和 catalog.json，新布局同时添加 examples/、layouts.json 与 catalog.json。

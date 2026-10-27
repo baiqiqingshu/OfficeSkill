@@ -2,53 +2,39 @@
   "tool": "ucd-studio",
   "version": "1.0.0",
   "mode": "single",
-  "style": "plum",
+  "style": "ocean",
   "components": [
-    "steps",
     "form",
     "detail",
     "accordion"
   ],
   "sourceSpec": {
     "version": 1,
-    "title": "新建资源申请",
-    "product": "北辰工作台",
-    "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
-    "action": "新建申请",
-    "eyebrow": "TEAM WORKSPACE / 团队协作",
+    "title": "资源申请",
+    "product": "协同工作台",
+    "description": "填写资源用途与使用时间，提交前核对申请信息。",
+    "action": "新建草稿",
+    "eyebrow": "",
     "layout": "form",
-    "style": "plum",
-    "density": "comfortable",
-    "audience": "需要快速处理事项的内部业务人员",
-    "goal": "理解当前工作状态并推进关键任务",
-    "primaryTask": "填写并校验资源申请信息",
+    "style": "ocean",
+    "density": "compact",
+    "audience": "资源申请人",
+    "goal": "填写并校验资源申请",
+    "primaryTask": "填写并校验资源申请",
     "successCriteria": [
-      "用户能识别主要操作及待处理事项",
-      "搜索、筛选和无匹配状态均提供明确反馈",
-      "可使用键盘操作主要控件，在窄屏下阅读内容"
+      "主任务和下一步操作清晰",
+      "键盘可操作，窄屏保留主要内容"
     ],
     "assumptions": [
-      "内网桌面浏览器为主要使用场景，兼顾移动查看",
-      "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+      "公司内网桌面端为主要场景；示例字段与流程需业务确认"
     ],
     "sources": [],
     "assets": [],
     "blocks": {
-      "steps": {
-        "type": "steps",
-        "title": "申请步骤",
-        "span": "full",
-        "items": [
-          "填写基本信息",
-          "补充申请说明",
-          "确认并提交"
-        ],
-        "current": 0
-      },
       "application": {
         "type": "form",
         "title": "填写申请信息",
-        "description": "清楚描述用途，让协作更高效",
+        "description": "带 * 的项目为必填项。",
         "fields": [
           {
             "label": "申请名称",
@@ -80,41 +66,33 @@
             "type": "textarea",
             "required": true,
             "placeholder": "说明使用场景、预期目标和资源需求",
-            "help": "使用脱敏示例，不填写密钥和真实客户数据。"
+            "help": "简要说明用途、资源规格和使用周期。"
           }
         ],
         "submit": "校验申请"
       },
       "context": {
         "type": "detail",
-        "title": "基本信息",
+        "title": "填写说明",
         "items": [
           {
-            "label": "申请编号",
-            "value": "REQ-1024"
+            "label": "适用范围",
+            "value": "公司内部开发、测试与演示环境"
+          },
+          {
+            "label": "申请准备",
+            "value": "确认资源规格、用途和预计使用时间"
+          },
+          {
+            "label": "后续流程",
+            "value": "部门审批 → 资源配置 → 结果通知"
           },
           {
             "label": "当前状态",
             "value": {
-              "text": "待审批",
-              "tone": "warning"
+              "text": "尚未提交",
+              "tone": "neutral"
             }
-          },
-          {
-            "label": "申请人",
-            "value": "陈晨"
-          },
-          {
-            "label": "所属团队",
-            "value": "产品研发中心"
-          },
-          {
-            "label": "提交时间",
-            "value": "2026-10-25 09:10"
-          },
-          {
-            "label": "期望完成",
-            "value": "2026-10-28"
           }
         ]
       },
@@ -135,9 +113,9 @@
       }
     }
   },
-  "specSha256": "5c644fbd0083b2704d5fef01c6e43b1cbcf98d45f3fc55480f51fde022be00b4",
+  "specSha256": "0a7853a166ee6a0b22f7ac5d96ad61ac29eea4d13ce96b9344a1d7d3fd375819",
   "files": {
-    "index.html": "ce97c7ae72780b3e01615526c590254247894d671ea13621bef42244dfcf1eca",
-    "design-system.md": "42243c4252bea43b142d294089170fb4fbe8466e703caaebd4595366faca7396"
+    "index.html": "3a2107dab1804a3b5c91b860174c0ed48d596cb72d094451ac1885b62626e7ca",
+    "design-system.md": "ec50e28115e3c648b584af1e4ab78c410bf9eaca4887f89407ca9efe00fd514c"
   }
 }

@@ -31,7 +31,7 @@ try{
     await table.locator('[data-search]').fill('不存在的词');assert.equal(await table.locator('tbody tr:visible').count(),0);assert.equal(await table.locator('[data-empty]').isVisible(),true);
     await table.locator('[data-search]').fill('');await table.locator('[data-filter]').selectOption('待审批');assert.equal(await table.locator('tbody tr:visible').count(),4);
     await table.locator('[data-sort="0"]').click();assert.equal(await table.locator('th').first().getAttribute('aria-sort'),'ascending');
-    await table.locator('summary').click();await table.locator('[data-state]').selectOption('error');assert.match(await table.locator('[data-state-message]').textContent(),/无法加载/);await table.locator('[data-state]').selectOption('ready');
+    await table.locator('summary').click();await table.locator('[data-state]').selectOption('loading');assert.match(await table.locator('[data-state-message]').textContent(),/正在加载/);await table.locator('[data-state]').selectOption('empty');assert.match(await table.locator('[data-state-message]').textContent(),/暂无记录/);await table.locator('[data-state]').selectOption('error');assert.match(await table.locator('[data-state-message]').textContent(),/无法加载/);await table.locator('[data-state]').selectOption('ready');
    }
    if(layout==='form'){
     const form=page.locator('[data-form]');await form.locator('input[required]').nth(0).fill('测试申请');await form.locator('input[type=email]').fill('test@example.internal');await form.locator('input[type=date]').fill('2026-10-30');await form.locator('textarea').fill('脱敏示例申请说明');await form.locator('button[type=submit]').click();assert.match(await form.locator('[data-feedback]').textContent(),/未提交/);
@@ -66,13 +66,16 @@ try{
   assert.equal(await page.locator('h1').count(),1);
   if(example==='components')assert.equal(await page.locator('img').evaluate(img=>img.complete&&img.naturalWidth>0),true);
   if(!example)await page.screenshot({path:path.join(output,'gallery.png'),fullPage:true});
-  if(example==='kanban')await page.screenshot({path:path.join(output,'kanban-dark.png'),fullPage:true});
-  if(example==='dashboard')await page.screenshot({path:path.join(output,'shipped-dashboard.png'),fullPage:true});
+  if(example)await page.screenshot({path:path.join(output,`shipped-${example}.png`),fullPage:true});
+  await page.setViewportSize({width:1024,height:768});
+  const medium=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:innerWidth}));
+  assert.ok(medium.content<=medium.viewport+1,`shipped ${example}: medium overflow`);
   await page.setViewportSize({width:375,height:812});
   const width=await page.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:innerWidth}));
   assert.ok(width.content<=width.viewport+1,`shipped ${example}: horizontal overflow`);
+  if(['admin','form','workbench','kanban'].includes(example))await page.screenshot({path:path.join(output,`shipped-${example}-mobile.png`),fullPage:true});
   await page.close();
  }
  assert.deepEqual(violations,[]);assert.deepEqual(errors,[]);
- console.log(JSON.stringify({ok:true,matrixPages,shippedPages:examples.length,pages,viewports:pages*2,externalRequests:violations.length,pageErrors:errors.length,screenshots:output},null,2));
+ console.log(JSON.stringify({ok:true,matrixPages,shippedPages:examples.length,pages,viewports:matrixPages*2+examples.length*3,externalRequests:violations.length,pageErrors:errors.length,screenshots:output},null,2));
 }finally{await browser.close();}

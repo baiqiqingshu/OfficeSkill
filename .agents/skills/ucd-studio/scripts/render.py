@@ -13,6 +13,22 @@ def h(value):
     return html.escape(str(value), quote=True)
 
 
+def icon(kind):
+    paths = {
+        'table':'M4 4h16v16H4z M4 9h16 M9 9v11',
+        'stats':'M5 19V12 M12 19V5 M19 19V9',
+        'cards':'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
+        'form':'M8 4H5v16h14V4h-3 M8 3h8v4H8z M8 12h8 M8 16h5',
+        'activity':'M6 5v14 M6 6h14 M6 12h10 M6 18h7',
+        'detail':'M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h6',
+        'kanban':'M4 5h16 M5 9v10 M12 9v7 M19 9v9',
+        'progress':'M4 12h16 M4 6h10 M4 18h7',
+        'alert':'M12 4 2 20h20L12 4z M12 10v4 M12 17h.01',
+    }
+    path = paths.get(kind, 'M4 19V5 M4 19h16 M8 14l4-5 4 3 4-7')
+    return f'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{path}"/></svg>'
+
+
 def badge(value):
     if not isinstance(value, dict):
         return h(value)
@@ -44,7 +60,8 @@ def fields(items, prefix):
             extra = ' min="0"' if kind == 'number' else ''
             control = f'<input type="{kind}" {attrs}{extra} value="{h(field.get("value", ""))}" placeholder="{h(field.get("placeholder", ""))}">'
         wide = ' class="field-wide"' if kind == 'textarea' else ''
-        result.append(f'<label{wide} for="{name}">{h(field["label"])}{control}{hint}</label>')
+        required_mark = '<span class="required" aria-hidden="true">*</span>' if required else ''
+        result.append(f'<label{wide} for="{name}"><span>{h(field["label"])}{required_mark}</span>{control}{hint}</label>')
     return ''.join(result)
 
 
@@ -52,14 +69,14 @@ def render_block(key, b, index=1):
     kind = b['type']
     title = h(b.get('title', ''))
     description = f'<p>{h(b["description"])}</p>' if b.get('description') else ''
-    head = f'<div class="panel-head"><div><h2 id="{key}-heading">{title}</h2>{description}</div><span class="section-index">{index:02d}</span></div>'
+    head = f'<div class="panel-head"><div><h2 id="{key}-heading">{title}</h2>{description}</div></div>'
     body = ''
     if kind == 'stats':
         cards = []
-        for n, item in enumerate(b['items']):
-            bars = ''.join(f'<i style="height:{v}px"></i>' for v in (10, 19, 14, 24, 21, 30))
-            cards.append(f'<div class="stat"><div class="stat-label">{h(item["label"])}</div><div class="stat-value">{h(item["value"])}</div><div class="stat-foot"><span class="stat-change">{h(item.get("change", ""))}</span>{h(item.get("hint", "较上一周期"))}</div><div class="mini-bars" aria-hidden="true">{bars}</div></div>')
-        content = f'<h2 class="muted" id="{key}-heading" style="font-size:11px;margin-bottom:12px">{title}</h2><div class="stats-grid">{"".join(cards)}</div>'
+        for item in b['items']:
+            foot = f'<div class="stat-foot"><span class="stat-change">{h(item.get("change", ""))}</span>{h(item.get("hint", ""))}</div>' if item.get('change') or item.get('hint') else ''
+            cards.append(f'<div class="stat"><div class="stat-label">{h(item["label"])}</div><div class="stat-value">{h(item["value"])}</div>{foot}</div>')
+        content = f'<h2 class="visually-hidden" id="{key}-heading">{title}</h2><div class="stats-grid">{"".join(cards)}</div>'
     elif kind == 'table':
         cols = ''.join(f'<th scope="col"><button type="button" class="sort-btn" data-sort="{i}" aria-label="按{h(c)}排序">{h(c)}</button></th>' for i, c in enumerate(b['columns']))
         rows = []
@@ -91,7 +108,7 @@ def render_block(key, b, index=1):
     elif kind == 'detail':
         body = '<dl class="detail-grid">'+''.join(f'<div><dt>{h(x["label"])}</dt><dd>{badge(x["value"])}</dd></div>' for x in b['items'])+'</dl>'
     elif kind == 'cards':
-        body = '<div class="cards">'+''.join(f'<article class="item-card"><div class="item-icon" aria-hidden="true">{i+1:02d}</div><h3>{h(x["title"])}</h3><p>{h(x.get("description", ""))}</p>{button(x.get("action", "查看详情"))}</article>' for i, x in enumerate(b['items']))+'</div>'
+        body = '<div class="cards">'+''.join(f'<article class="item-card"><div class="item-icon">{icon("cards")}</div><div class="item-copy"><h3>{h(x["title"])}</h3><p>{h(x.get("description", ""))}</p></div>{button(x.get("action", "查看详情"))}</article>' for x in b['items'])+'</div>'
     elif kind == 'kanban':
         columns = []
         for i, column in enumerate(b['columns']):
@@ -123,17 +140,17 @@ def render_block(key, b, index=1):
     if kind not in ('stats', 'table', 'alert'):
         content = f'<div class="panel">{head}<div class="panel-body">{body}</div></div>'
     span = 'full' if b.get('span', 'half') == 'full' else ''
-    return f'<section class="block {span}" id="{key}" aria-labelledby="{key}-heading">{content}</section>'
+    return f'<section class="block block-{kind} {span}" id="{key}" aria-labelledby="{key}-heading">{content}</section>'
 
 
 def render_page(spec, style, mode):
     tokens = {**style['tokens'], **spec.get('tokens', {})}
     token_css = ';'.join(f'--{key}:{value}' for key, value in tokens.items())+';'
     blocks = ''.join(render_block(key, b, i+1) for i, (key, b) in enumerate(spec['blocks'].items()))
-    nav = ''.join(f'<a href="#{key}"'+(' class="active" aria-current="location"' if i == 0 else '')+f'><span class="nav-dot" aria-hidden="true"></span>{h(b["title"])}</a>' for i, (key, b) in enumerate(spec['blocks'].items()))
+    nav = ''.join(f'<a href="#{key}"'+(' class="active" aria-current="location"' if i == 0 else '')+f'>{icon(b["type"])}<span>{h(b["title"])}</span></a>' for i, (key, b) in enumerate(spec['blocks'].items()))
     runtime = (ROOT/'assets/runtime.js').read_text(encoding='utf-8')
     script = f'<script>{runtime}</script>' if mode == 'single' else '<script defer src="'+('assets/ucd-runtime.js' if mode == 'library' else 'page.js')+'"></script>'
-    values = {key:h(spec.get(key, default)) for key, default in {'title':'工作总览','product':'Workplace','description':'聚焦重要事项，推进每一项工作。','action':'新建事项','eyebrow':'Workspace overview'}.items()}
+    values = {key:h(spec.get(key, default)) for key, default in {'title':'工作总览','product':'内部工作台','description':'查看并处理当前事项。','action':'新建事项','eyebrow':''}.items()}
     values.update(tokens=token_css, css=(ROOT/'assets/base.css').read_text(encoding='utf-8'),
                   blocks=blocks, nav=nav, layout=spec['layout'], density='dense' if spec.get('density') == 'compact' else '', script=script)
     return Template((ROOT/'assets/shell.html').read_text(encoding='utf-8')).substitute(values)

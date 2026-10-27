@@ -1,16 +1,16 @@
 {
   "ocean": {
-    "title": "海蓝 · 专业协作",
+    "title": "企业蓝 · 日常办公",
     "tokens": {
-      "primary": "#275cce",
+      "primary": "#1d4ed8",
       "primary-ink": "#ffffff",
-      "soft": "#edf3ff",
-      "bg": "#f5f7fb",
+      "soft": "#eff4ff",
+      "bg": "#f5f6f8",
       "surface": "#ffffff",
-      "ink": "#17243b",
-      "muted": "#66738a",
-      "border": "#e4e9f1",
-      "radius": "11px",
+      "ink": "#202938",
+      "muted": "#596579",
+      "border": "#dce1e8",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -18,7 +18,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "slate": {
     "title": "岩灰 · 极简秩序",
@@ -26,12 +26,12 @@
       "primary": "#334155",
       "primary-ink": "#ffffff",
       "soft": "#eef2f6",
-      "bg": "#f6f7f9",
+      "bg": "#f5f6f8",
       "surface": "#ffffff",
       "ink": "#17202e",
-      "muted": "#647084",
-      "border": "#e2e6eb",
-      "radius": "11px",
+      "muted": "#596579",
+      "border": "#dce1e8",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -39,7 +39,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "jade": {
     "title": "青绿 · 平静高效",
@@ -52,7 +52,7 @@
       "ink": "#1c322a",
       "muted": "#60736a",
       "border": "#dfe9e3",
-      "radius": "11px",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -60,7 +60,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "plum": {
     "title": "紫藤 · 创意协同",
@@ -71,9 +71,9 @@
       "bg": "#f8f6fb",
       "surface": "#ffffff",
       "ink": "#302441",
-      "muted": "#766b82",
+      "muted": "#6d6078",
       "border": "#e8e1ef",
-      "radius": "11px",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -81,7 +81,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "warm": {
     "title": "暖纸 · 内容阅读",
@@ -92,9 +92,9 @@
       "bg": "#f8f6f1",
       "surface": "#fffefa",
       "ink": "#362d24",
-      "muted": "#7c7164",
+      "muted": "#706353",
       "border": "#e9e2d6",
-      "radius": "11px",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -102,7 +102,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "rose": {
     "title": "玫瑰 · 服务体验",
@@ -113,9 +113,9 @@
       "bg": "#fbf6f8",
       "surface": "#ffffff",
       "ink": "#3e2730",
-      "muted": "#806772",
+      "muted": "#755a65",
       "border": "#eee0e6",
-      "radius": "11px",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -123,7 +123,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "midnight": {
     "title": "午夜 · 专注监控",
@@ -136,7 +136,7 @@
       "ink": "#e9eff9",
       "muted": "#a3b3ca",
       "border": "#304056",
-      "radius": "11px",
+      "radius": "6px",
       "success": "#8edbb3",
       "success-soft": "#193d32",
       "warning": "#f5cb82",
@@ -144,7 +144,7 @@
       "danger": "#ffacb5",
       "danger-soft": "#482b36"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   },
   "contrast": {
     "title": "高对比 · 清晰可读",
@@ -157,7 +157,7 @@
       "ink": "#111827",
       "muted": "#4b5563",
       "border": "#9ca3af",
-      "radius": "11px",
+      "radius": "6px",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -165,6 +165,6 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "以主色突出操作；状态使用文字和颜色共同表达。保留留白和统一圆角，避免大面积渐变、装饰阴影和过度动效。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
   }
 }

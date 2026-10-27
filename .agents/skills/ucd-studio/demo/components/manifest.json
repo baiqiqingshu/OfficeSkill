@@ -24,24 +24,22 @@
   "sourceSpec": {
     "version": 1,
     "title": "组件与状态",
-    "product": "北辰工作台",
+    "product": "协同工作台",
     "description": "16 种生成区块的完整预览；基础按钮、字段与弹窗可通过本地检索按需获取。",
     "action": "体验弹窗",
-    "eyebrow": "TEAM WORKSPACE / 团队协作",
+    "eyebrow": "",
     "layout": "dashboard",
     "style": "ocean",
-    "density": "comfortable",
-    "audience": "需要快速处理事项的内部业务人员",
-    "goal": "理解当前工作状态并推进关键任务",
-    "primaryTask": "定位待处理事项，查看状态与处理记录",
+    "density": "compact",
+    "audience": "公司内部员工",
+    "goal": "定位待办并跟进申请进度",
+    "primaryTask": "定位待办并跟进申请进度",
     "successCriteria": [
-      "用户能识别主要操作及待处理事项",
-      "搜索、筛选和无匹配状态均提供明确反馈",
-      "可使用键盘操作主要控件，在窄屏下阅读内容"
+      "主任务和下一步操作清晰",
+      "键盘可操作，窄屏保留主要内容"
     ],
     "assumptions": [
-      "内网桌面浏览器为主要使用场景，兼顾移动查看",
-      "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+      "公司内网桌面端为主要场景；示例字段与流程需业务确认"
     ],
     "sources": [],
     "assets": [
@@ -491,10 +489,10 @@
       }
     }
   },
-  "specSha256": "d073dcf0df65d3e75b2f9bdbcae14df340284fe1b48c9537271a7d85081e61c1",
+  "specSha256": "992db428b09616341fdca395d89fb322534a3ea1b08070bb4a7ce652dffb282a",
   "files": {
     "assets/cover.png": "9cf21ab72798322fb28a06cf22318a2ed1ec4f9adea0d869250fae5de666023e",
-    "index.html": "024b0f8f5ec6be35e22dfa9f6339bcc8e5c573b2c3f923a0448d6cceb885040e",
-    "design-system.md": "ea60ffa138bf72a8493078475b77d20397709da3ce7e9656955f9a6c6ad029aa"
+    "index.html": "479b914079f4b3f0901216913c606edfe5691877b9cbcd1905de244a37bc0e1a",
+    "design-system.md": "e33c1ba31128eb3be45ff2857ada877dc8c5a5cf55e26afe7f86d43a4e407031"
   }
 }

@@ -2,69 +2,65 @@
   "tool": "ucd-studio",
   "version": "1.0.0",
   "mode": "single",
-  "style": "slate",
+  "style": "ocean",
   "components": [
     "stats",
-    "table",
-    "alert"
+    "table"
   ],
   "sourceSpec": {
     "version": 1,
-    "title": "申请管理",
-    "product": "北辰工作台",
-    "description": "每一项进展，都清晰可见。聚焦重要事项，让团队协作更有序。",
+    "title": "审批管理",
+    "product": "协同工作台",
+    "description": "筛选申请、核对信息，优先处理待审批事项。",
     "action": "新建申请",
-    "eyebrow": "TEAM WORKSPACE / 团队协作",
+    "eyebrow": "",
     "layout": "admin",
-    "style": "slate",
-    "density": "comfortable",
-    "audience": "需要快速处理事项的内部业务人员",
-    "goal": "理解当前工作状态并推进关键任务",
-    "primaryTask": "定位待处理事项，查看状态与处理记录",
+    "style": "ocean",
+    "density": "compact",
+    "audience": "部门审批人",
+    "goal": "筛选待审批事项并查看申请信息",
+    "primaryTask": "筛选待审批事项并查看申请信息",
     "successCriteria": [
-      "用户能识别主要操作及待处理事项",
-      "搜索、筛选和无匹配状态均提供明确反馈",
-      "可使用键盘操作主要控件，在窄屏下阅读内容"
+      "主任务和下一步操作清晰",
+      "键盘可操作，窄屏保留主要内容"
     ],
     "assumptions": [
-      "内网桌面浏览器为主要使用场景，兼顾移动查看",
-      "本示例未开展用户访谈；具体字段和流程需业务评审确认"
+      "公司内网桌面端为主要场景；示例字段与流程需业务确认"
     ],
     "sources": [],
     "assets": [],
     "blocks": {
       "metrics": {
         "type": "stats",
-        "title": "关键指标",
+        "title": "申请状态概览",
         "span": "full",
         "items": [
           {
-            "label": "待处理事项",
-            "value": "128",
-            "change": "↓ 12.5%",
-            "hint": "较上一周期"
+            "label": "待我审批",
+            "value": "4",
+            "hint": "等待处理"
           },
           {
-            "label": "本周已完成",
-            "value": "842",
-            "change": "↑ 18.6%"
+            "label": "处理中",
+            "value": "2",
+            "hint": "跟进办理进度"
           },
           {
-            "label": "平均处理时长",
-            "value": "2.4h",
-            "change": "↓ 0.8h"
+            "label": "已通过",
+            "value": "3",
+            "hint": "当前示例记录"
           },
           {
-            "label": "按时完成率",
-            "value": "96.8%",
-            "change": "↑ 3.2%"
+            "label": "已退回",
+            "value": "1",
+            "hint": "等待补充信息"
           }
         ]
       },
       "records": {
         "type": "table",
-        "title": "申请事项",
-        "description": "集中查看状态，快速定位需要处理的事项",
+        "title": "申请记录",
+        "description": "搜索名称、编号或申请人，按状态缩小范围。",
         "span": "full",
         "columns": [
           "事项名称",
@@ -177,18 +173,12 @@
         ],
         "statusColumn": 4,
         "pageSize": 5
-      },
-      "notice": {
-        "type": "alert",
-        "title": "需要关注",
-        "span": "full",
-        "text": "本周有 3 项工作即将到期，请优先关注关键节点并与负责人确认。"
       }
     }
   },
-  "specSha256": "3a360ccfacb089c3f0a74745b43cc300449b71da79c04ab7a1830be803069cea",
+  "specSha256": "944b493a1d9225b2d93596a07a7583a8b53274648f4d415188cfcc02b020cd92",
   "files": {
-    "index.html": "a079f1225f1870df63c05b724a21f96701794bce6ee468e9f5b16423e60ab187",
-    "design-system.md": "527ac489bcd3ba26ca6377589c1ed6686dfecf3b15e8a772bcf101a761cb2b4d"
+    "index.html": "e19c85d72b884e43e827d8650f89c4fc3509732de4f5dfdcf3c662ada93f6821",
+    "design-system.md": "ca4cf7eb7b9fd7fc4e6182efdf52cc9ed44e4726dc98332bf139aaa89da9f249"
   }
 }

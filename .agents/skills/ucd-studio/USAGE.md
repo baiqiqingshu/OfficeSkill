@@ -1,18 +1,20 @@
 # UCD Studio 离线技能包
 
-本目录是完整可搬运技能，无需联网安装依赖。把整个 ucd-studio 目录复制到目标工具的技能目录（如 .agents/skills/ucd-studio），不要只复制 SKILL.md。当前在普通工作目录交付，尚未安装到受保护的 .agents。
+本目录是完整可搬运技能，无需联网安装依赖。把整个 ucd-studio 目录复制到目标工具的技能目录（如 .agents/skills/ucd-studio），不要只复制 SKILL.md。默认针对公司内网工具网站设计，入口优先直接生成，仅按需读取组件与参考。
 
 生成端：Python 3.10+，标准库。预览端：现代 Chromium/Edge/Firefox，直接双击 HTML，无需服务。下列命令在包的上级目录执行：
 
 ```text
-python ucd-studio/scripts/ucd.py search "审批 列表" --kind component --limit 2
-python ucd-studio/scripts/ucd.py show table --code
-python ucd-studio/scripts/ucd.py init --layout admin --style ocean --out output/approval
-python ucd-studio/scripts/ucd.py build --dir output/approval
-python ucd-studio/scripts/ucd.py check --dir output/approval
-python ucd-studio/scripts/ucd.py patch --dir output/approval --patch change.json
-python ucd-studio/scripts/ucd.py inspect --root your-project --out output/source-map.json
+python ucd-studio/scripts/ucd.py init --layout admin --title "申请管理" --out output/approval
 ```
+
+已生成 HTML、规范并执行结构与离线检查；不必再 build/check。业务字段明确时用 `--config brief.json` 一次定制，brief.json 只写与模板不同的字段。修改时：
+
+```text
+python ucd-studio/scripts/ucd.py patch --dir output/approval --patch change.json
+```
+
+按需披露：入口 → 摘要/目标区块 → JSON 示例/协议 → 手工扩展代码。已知标题变更直接 patch；不了解现状才 summary。检索、源码扫描和独立 JS 模式不进入默认路径，见 [advanced-usage.md](references/advanced-usage.md)。
 
 在支持技能的内网模型中可直接输入：
 
