@@ -1,6 +1,6 @@
 {
   "tool": "ucd-studio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "mode": "library",
   "style": "ocean",
   "components": [
@@ -178,8 +178,8 @@
   },
   "specSha256": "944b493a1d9225b2d93596a07a7583a8b53274648f4d415188cfcc02b020cd92",
   "files": {
-    "index.html": "b6f09924fea9b7e1c5ad84a6c2baf240c51661d4a482e30cd3dc8c60c20f6088",
-    "design-system.md": "15d4840f481b89d91740e0a54272e34aac3ad2fce34cd21bed06c9340a31e95e",
-    "assets/ucd-runtime.js": "1a1e92cbaa64ccac3098ceffe54a149c46fe64b3482069e176acb2b665725e6e"
+    "index.html": "bf6a8dbcd4f61d7a8462d5a8ae7f4157389ff99fd6f7b13709eda5f0ecec7118",
+    "design-system.md": "ade10f0a4de1e84dac8dd63d70037fc44eb99de86969d1be425c7a0c080c119e",
+    "assets/ucd-runtime.js": "9e27c63b27d17cf36ffd83a140239a31eac91af4681551149661771064f4aba5"
   }
 }

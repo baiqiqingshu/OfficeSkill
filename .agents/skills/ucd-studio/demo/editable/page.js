@@ -1,4 +1,4 @@
-/* UCD Studio 1.0.0 — offline, original vanilla JS. No network or storage. */
+/* UCD Studio 1.1.0 — offline, original vanilla JS. No network or storage. */
 (()=>{'use strict';
   const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>[...r.querySelectorAll(s)];
   const toast=q('#toast');let toastTimer;
@@ -6,18 +6,20 @@
   qa('[data-notify]').forEach(button=>button.addEventListener('click',()=>notify(button.dataset.notify)));
   qa('.nav-list a').forEach(a=>a.addEventListener('click',()=>{qa('.nav-list a').forEach(n=>{n.classList.remove('active');n.removeAttribute('aria-current');});a.classList.add('active');a.setAttribute('aria-current','location');}));
   qa('[data-table]').forEach(panel=>{
-    const rows=qa('tbody tr',panel), search=q('[data-search]',panel), filter=q('[data-filter]',panel), status=q('[data-table-status]',panel), state=q('[data-state]',panel), message=q('[data-state-message]',panel), empty=q('[data-empty]',panel), table=q('.table-scroll',panel), prev=q('[data-prev]',panel),next=q('[data-next]',panel), pages=q('[data-pages]',panel);
+    const rows=qa('tbody tr',panel), search=q('[data-search]',panel), filter=q('[data-filter]',panel), status=q('[data-table-status]',panel), state=q('[data-state]',panel), message=q('[data-state-message]',panel), statePanel=q('[data-table-state]',panel), skeleton=q('[data-skeleton]',panel), retry=q('[data-retry]',panel), empty=q('[data-empty]',panel), table=q('.table-scroll',panel), prev=q('[data-prev]',panel),next=q('[data-next]',panel), pages=q('[data-pages]',panel);
     let page=0,sorted=[...rows],direction=1,lastColumn=-1;const size=Number(panel.dataset.pageSize)||5;
     function draw(){
       const term=search.value.trim().toLocaleLowerCase(), selected=filter.value;
       const visible=sorted.filter(r=>r.textContent.toLocaleLowerCase().includes(term)&&(!selected||r.dataset.status===selected));
       const count=Math.max(1,Math.ceil(visible.length/size));page=Math.max(0,Math.min(page,count-1));
       rows.forEach(r=>r.hidden=true);visible.slice(page*size,(page+1)*size).forEach(r=>r.hidden=false);
-      const mode=state.value;table.hidden=mode!=='ready';message.hidden=mode==='ready';message.textContent={loading:'正在加载示例记录…',error:'暂时无法加载。切换到“正常”可重试。',empty:'暂无记录，创建第一项任务。'}[mode]||'';
+      const mode=state.value;table.hidden=mode!=='ready';statePanel.hidden=mode==='ready';skeleton.hidden=mode!=='loading';panel.setAttribute('aria-busy',String(mode==='loading'));message.textContent={loading:'正在加载示例记录…',error:'暂时无法加载记录。请重试以恢复本地示例。',empty:'暂无记录。可恢复示例记录，继续体验筛选和分页。'}[mode]||'';retry.hidden=!['error','empty'].includes(mode);retry.textContent=mode==='empty'?'恢复示例记录':'重试';
       empty.hidden=mode!=='ready'||visible.length>0;status.textContent=mode==='ready'?`共 ${visible.length} 项 · 当前 ${visible.length?page*size+1:0}–${Math.min((page+1)*size,visible.length)}`:message.textContent;
       pages.textContent=`${page+1} / ${count}`;prev.disabled=page===0||mode!=='ready';next.disabled=page>=count-1||mode!=='ready';
     }
     search.addEventListener('input',()=>{page=0;draw();});filter.addEventListener('change',()=>{page=0;draw();});state.addEventListener('change',draw);
+    q('[data-reset-filters]',panel).addEventListener('click',()=>{search.value='';filter.value='';page=0;draw();search.focus();});
+    retry.addEventListener('click',()=>{state.value='ready';search.value='';filter.value='';page=0;draw();search.focus();notify('已恢复本地示例记录');});
     prev.addEventListener('click',()=>{page--;draw();});next.addEventListener('click',()=>{page++;draw();});
     qa('[data-sort]',panel).forEach(button=>button.addEventListener('click',()=>{
       const index=Number(button.dataset.sort);direction=lastColumn===index?-direction:1;lastColumn=index;

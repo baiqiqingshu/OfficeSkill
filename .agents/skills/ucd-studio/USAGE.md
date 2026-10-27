@@ -30,7 +30,13 @@ python ucd-studio/scripts/ucd.py patch --dir output/approval --patch change.json
 
 8 套主题、24 个组件（16 个生成区块 + 8 个基础代码片段）、6 类完整布局。打开 [demo/index.html](demo/index.html) 选择页面；另外提供完整组件和两种 JS 分离模式示例。默认使用单 HTML 模式；另支持 --mode library 和 --mode editable。三种取舍见 [output-modes.md](references/output-modes.md)。
 
+默认设计以业务操作为中心：统一字号、4px 间距基准、语义色与控件状态，桌面保持数据密度，窄屏重排并保留表格局部滚动。浅色企业蓝用于日常办公，深色需符合实际使用环境，不自动随系统偏好切换。详细决策及六类模板的结构约定见 [design-guidelines.md](references/design-guidelines.md)，只在定制规范时读取。
+
+每次 init、patch 或 build 都会同步 design-system.md：包含有效 token 及覆盖来源、实色文字对比度、当前密度尺寸、实际区块网格和对应交互。没有表单或看板的页面不会列出它们的行为。对比度未达推荐值会写入规范，不会阻止用户自定义主题，也不会自动修正品牌色；交付时结合实际页面确认。
+
 命名重复时（如 form 同时是布局和组件），使用 `show form --kind layout --code` 区分。用 `python ucd-studio/scripts/make_demo.py` 可重新生成整个示例目录；它也遵守手工修改保护。
+
+1.1.0 包含模板规范与运行时升级。旧版目录触发版本保护时，使用 `make_demo.py --out 新目录` 或在新目录 init 后迁移配置与素材，不修改 manifest 绕过保护；editable 的手工行为需要人工合并。详见 [output-modes.md](references/output-modes.md)。
 
 离线承诺的边界：包内脚本无网络调用、不安装软件；生成页面无远程资源、带 CSP。内网模型服务及工具宿主本身仍须处于获准隔离环境。任意新增 JS 不能仅凭静态扫描证明安全；手工修改后应做浏览器检查。源码扫描报告也是内部数据，不应对外上传。
 

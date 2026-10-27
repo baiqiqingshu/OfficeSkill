@@ -24,6 +24,11 @@ def icon(kind):
         'kanban':'M4 5h16 M5 9v10 M12 9v7 M19 9v9',
         'progress':'M4 12h16 M4 6h10 M4 18h7',
         'alert':'M12 4 2 20h20L12 4z M12 10v4 M12 17h.01',
+        'plus':'M12 5v14 M5 12h14',
+        'previous':'M14 6l-6 6 6 6',
+        'next':'M10 6l6 6-6 6',
+        'sort':'M8 17V5 M5 8l3-3 3 3 M16 7v12 M13 16l3 3 3-3',
+        'empty':'M4 8l3-4h10l3 4v12H4z M4 13h5l2 3h2l2-3h5',
     }
     path = paths.get(kind, 'M4 19V5 M4 19h16 M8 14l4-5 4 3 4-7')
     return f'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{path}"/></svg>'
@@ -52,7 +57,7 @@ def fields(items, prefix):
         help_attr = f' aria-describedby="{name}-help"' if hint else ''
         attrs = f'id="{name}" name="{name}"{required}{help_attr}'
         if kind == 'select':
-            options = ''.join(f'<option>{h(x)}</option>' for x in field.get('options', []))
+            options = ''.join(f'<option'+(' selected' if x == field.get('value') else '')+f'>{h(x)}</option>' for x in field.get('options', []))
             control = f'<select {attrs}>{options}</select>'
         elif kind == 'textarea':
             control = f'<textarea {attrs} placeholder="{h(field.get("placeholder", ""))}">{h(field.get("value", ""))}</textarea>'
@@ -78,7 +83,8 @@ def render_block(key, b, index=1):
             cards.append(f'<div class="stat"><div class="stat-label">{h(item["label"])}</div><div class="stat-value">{h(item["value"])}</div>{foot}</div>')
         content = f'<h2 class="visually-hidden" id="{key}-heading">{title}</h2><div class="stats-grid">{"".join(cards)}</div>'
     elif kind == 'table':
-        cols = ''.join(f'<th scope="col"><button type="button" class="sort-btn" data-sort="{i}" aria-label="按{h(c)}排序">{h(c)}</button></th>' for i, c in enumerate(b['columns']))
+        numeric_columns = {i for i in range(len(b['columns'])) if b['rows'] and all(not isinstance(row[i], dict) and re.fullmatch(r'[+-]?(?:[¥￥$€]\s*)?[\d,]+(?:\.\d+)?(?:%|元|万元)?', str(row[i])) for row in b['rows'])}
+        cols = ''.join(f'<th scope="col"'+(' class="numeric"' if i in numeric_columns else '')+f'><button type="button" class="sort-btn" data-sort="{i}" aria-label="按{h(c)}排序">{h(c)}{icon("sort")}</button></th>' for i, c in enumerate(b['columns']))
         rows = []
         status_index = b.get('statusColumn', len(b['columns']) - 1)
         statuses = []
@@ -87,10 +93,11 @@ def render_block(key, b, index=1):
             status = str(value.get('text', '')) if isinstance(value, dict) else str(value)
             if status not in statuses:
                 statuses.append(status)
-            cells = ''.join(f'<td>{badge(value)}</td>' for value in row)
+            cells = ''.join('<td'+(' class="numeric"' if i in numeric_columns else '')+f'>{badge(value)}</td>' for i, value in enumerate(row))
             rows.append(f'<tr data-status="{h(status)}">{cells}</tr>')
         opts = ''.join(f'<option value="{h(s)}">{h(s)}</option>' for s in statuses)
-        body = f'''<div class="table-toolbar"><label class="search-label">搜索记录<input type="search" data-search placeholder="搜索任意字段…"></label><label class="filter-label">状态<select data-filter><option value="">全部状态</option>{opts}</select></label></div><div class="table-scroll"><table class="data-table"><caption hidden>{title}</caption><thead><tr>{cols}</tr></thead><tbody>{''.join(rows)}</tbody></table><p class="state-message" data-empty hidden>没有匹配记录，请调整搜索或筛选条件。</p></div><p class="state-message" role="status" data-state-message hidden></p><div class="table-footer"><span role="status" data-table-status></span><div class="pagination"><button type="button" class="btn btn-small" data-prev aria-label="上一页">←</button><span data-pages></span><button type="button" class="btn btn-small" data-next aria-label="下一页">→</button></div></div><details class="state-tools"><summary>预览异常状态</summary><label>显示状态<select data-state><option value="ready">正常</option><option value="loading">加载中</option><option value="empty">空状态</option><option value="error">加载失败</option></select></label></details>'''
+        skeleton = '<div class="table-skeleton" data-skeleton aria-hidden="true" hidden>'+''.join('<div><i></i><i></i><i></i></div>' for _ in range(4))+'</div>'
+        body = f'''<div class="table-toolbar"><label class="search-label">搜索记录<input type="search" data-search placeholder="搜索任意字段…"></label><label class="filter-label">状态<select data-filter><option value="">全部状态</option>{opts}</select></label></div><div class="table-scroll" tabindex="0" role="region" aria-label="{title}，宽表格可横向滚动"><table class="data-table"><caption class="visually-hidden">{title}</caption><thead><tr>{cols}</tr></thead><tbody>{''.join(rows)}</tbody></table><div class="state-message" data-empty hidden><p>没有匹配记录，请调整搜索或筛选条件。</p><button type="button" class="btn btn-small" data-reset-filters>清除搜索与筛选</button></div></div>{skeleton}<div class="table-state" data-table-state hidden><p class="state-message" role="status" data-state-message></p><button type="button" class="btn btn-small" data-retry hidden>重试</button></div><div class="table-footer"><span role="status" data-table-status></span><div class="pagination" aria-label="记录分页"><button type="button" class="btn btn-small" data-prev aria-label="上一页">{icon("previous")}</button><span data-pages></span><button type="button" class="btn btn-small" data-next aria-label="下一页">{icon("next")}</button></div></div><details class="state-tools"><summary>预览加载、空与错误状态</summary><label>显示状态<select data-state><option value="ready">正常</option><option value="loading">加载中</option><option value="empty">空状态</option><option value="error">加载失败</option></select></label></details>'''
         content = f'<div class="panel" data-table data-page-size="{b.get("pageSize", 5)}">{head}{body}</div>'
     elif kind == 'bar-chart':
         body = ''.join(f'<div class="chart-row"><span>{h(x["label"])}</span><div class="bar-track"><span class="bar-fill" style="width:{x["value"]}%"></span></div><span class="chart-value">{x["value"]}%</span></div>' for x in b['items'])
@@ -125,7 +132,7 @@ def render_block(key, b, index=1):
     elif kind == 'alert':
         content = f'<div class="alert" role="note"><h2 id="{key}-heading">{title}</h2><p>{h(b["text"])}</p></div>'
     elif kind == 'empty':
-        body = f'<div class="empty"><div class="empty-icon" aria-hidden="true">＋</div><h3>{h(b.get("heading", "暂无内容"))}</h3><p>{h(b["text"])}</p>{button(b.get("action", "创建第一项"))}</div>'
+        body = f'<div class="empty"><div class="empty-icon" aria-hidden="true">{icon("empty")}</div><h3>{h(b.get("heading", "暂无内容"))}</h3><p>{h(b["text"])}</p>{button(b.get("action", "创建第一项"))}</div>'
     elif kind == 'progress':
         body = ''.join(f'<div class="progress-item"><div class="row"><span>{h(x["label"])}</span><span class="muted">{x["value"]}%</span></div><progress value="{x["value"]}" max="100" aria-label="{h(x["label"])}">{x["value"]}%</progress></div>' for x in b['items'])
     elif kind == 'image':

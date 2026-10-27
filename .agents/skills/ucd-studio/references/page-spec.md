@@ -39,11 +39,11 @@
 }
 ```
 
-可选顶层：action（主按钮）、eyebrow（可省略，不默认使用英文眉题）、density（comfortable/compact，内置模板默认 compact）、tokens（覆盖语义 token）、successCriteria（字符串数组）、assets（明确的本地素材声明）。禁止原始 HTML、任意脚本或任意 CSS 注入字段。
+可选顶层：action（主按钮）、eyebrow（仅保留旧配置兼容，不再渲染）、density（comfortable/compact，内置模板默认 compact）、tokens（覆盖语义 token）、successCriteria（字符串数组）、assets（明确的本地素材声明）。禁止原始 HTML、任意脚本或任意 CSS 注入字段。
 
-style 有 ocean/slate/jade/plum/warm/rose/midnight/contrast，先检索再选。tokens 只允许已有颜色键与 radius，如 `{"primary":"#2455aa","radius":"8px"}`；颜色必须六位 HEX。density 只影响密度，不改变信息结构。覆盖品牌色后要重新确认对比度。
+style 有 ocean/slate/jade/plum/warm/rose/midnight/contrast；默认 ocean 已确定，无需检索，只有需要其他风格时才按需查询。tokens 只允许已有颜色键与 radius，如 `{"primary":"#2455aa","radius":"8px"}`；颜色必须六位 HEX。density 只影响留白，不改变字号或信息结构；省略时为 comfortable，内置布局明确指定 compact。生成规范记录当前主题合并 token 及部分实色对比度，覆盖品牌色后仍需复查实际页面。详细语义、密度尺寸与状态扩展见 [design-guidelines.md](design-guidelines.md)。
 
-layout 决定网格规则，blocks 定义内容和顺序。block ID 为小写字母开头、字母数字连字符，不超过 48 字符；不要使用 main/toast/create-dialog/dialog-title。通用属性 type/title/description/span，span=half/full。最多 30 区块；小模型任务通常用 3–6 个区块即可。
+layout 决定网格规则，blocks 定义内容和顺序。block ID 为小写字母开头、字母数字连字符，不超过 48 字符；不要使用 main/toast/create-dialog/dialog-title。通用属性 type/title/description/span，span=half/full；half 表示参与布局，工作台与表单会按组件职责分配实际列数，full 始终跨 12 列。生成规范会列出每个区块的桌面实际跨度。最多 30 区块；小模型任务通常用 3–6 个区块即可。
 
 | type | 主要属性 | 用途 |
 |---|---|---|

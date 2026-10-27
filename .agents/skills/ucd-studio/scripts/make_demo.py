@@ -61,7 +61,7 @@ def make(out):
         'kanban':'按阶段推进任务，更新办理状态'}
     names=read_json(ROOT/'data/layouts.json')
     for layout,style in combinations:
-        panels.append(f'<a class="sample" href="{layout}/index.html"><div class="sample-visual" aria-hidden="true"><div class="mini-side"><i></i><i></i><i></i></div><div class="mini-main"><div class="mini-title"></div><div class="preview {layout}"><i></i><i></i><i></i><i></i></div></div></div><div class="sample-copy"><small>{layout}</small><h2>{html.escape(names[layout]["title"])}<span aria-hidden="true">&rarr;</span></h2><p>{html.escape(descriptions[layout])}</p></div></a>')
+        panels.append(f'<a class="sample" href="{layout}/index.html"><div class="sample-visual" aria-hidden="true"><div class="mini-side"><i></i><i></i><i></i></div><div class="mini-main"><div class="mini-title"></div><div class="preview {layout}"><i></i><i></i><i></i><i></i></div></div></div><div class="sample-copy"><h2>{html.escape(names[layout]["title"])}</h2><p>{html.escape(descriptions[layout])}</p></div></a>')
     swatches=''.join(f'<div class="swatch"><span style="background:{s["tokens"]["primary"]}"></span>{html.escape(s["title"])}</div>' for s in styles().values())
     gallery=(ROOT/'assets/gallery.html').read_text(encoding='utf-8')
     from string import Template
