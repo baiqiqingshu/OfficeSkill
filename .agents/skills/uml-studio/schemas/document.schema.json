@@ -90,6 +90,7 @@
           "type": "string",
           "enum": [
             "ocean",
+            "white",
             "paper",
             "forest",
             "blueprint",
@@ -662,6 +663,23 @@
             "effect": {
               "type": "string",
               "minLength": 1
+            },
+            "headStyle": {
+              "type": "string",
+              "enum": [
+                "classic",
+                "fish",
+                "slim",
+                "shark",
+                "roundfish",
+                "carp",
+                "sunfish",
+                "triangle",
+                "rounded",
+                "label"
+              ],
+              "default": "classic",
+              "description": "默认保留原版鱼头与比例；其余轮廓仅在显式选择时应用，不改变原因结构。"
             },
             "categories": {
               "type": "array",

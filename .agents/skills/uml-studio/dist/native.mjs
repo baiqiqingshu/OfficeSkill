@@ -9,6 +9,7 @@ import Ajv2 from "ajv";
 
 // src/types.ts
 var diagramTypes = ["activity", "sequence", "swimlane", "flowchart", "usecase", "class", "state", "component", "package", "architecture", "module", "deployment", "logical", "development", "process", "physical", "scenario", "fishbone"];
+var fishboneHeadStyles = ["classic", "fish", "slim", "shark", "roundfish", "carp", "sunfish", "triangle", "rounded", "label"];
 
 // src/themes.ts
 var base = {
@@ -32,6 +33,7 @@ var base = {
 };
 var themes = {
   ocean: { ...base },
+  white: { ...base, background: "#ffffff", surface: "#ffffff", text: "#193b56", muted: "#526b7d", border: "#9bb7cc" },
   paper: { ...base, background: "#faf8f3", text: "#253248", muted: "#667286", primary: "#b35231", secondary: "#327781", border: "#cbd2d9" },
   forest: { ...base, background: "#f4f7ef", text: "#283b31", muted: "#67765d", primary: "#3b7153", secondary: "#99713b", border: "#c3d0bc" },
   blueprint: { ...base, background: "#edf3fc", surface: "#f9fbff", text: "#183f74", muted: "#567296", primary: "#245ba3", secondary: "#557ab4", border: "#9bb7d6", radius: 0, lineWidth: 1.3 },
@@ -166,7 +168,7 @@ var specSchema = {
     participants: array(object({ id, label, kind: en("actor", "participant", "database") }, ["id", "label"])),
     messages: array(object({ from: id, to: id, label: str, kind: en("sync", "async", "return", "create", "destroy"), activate: { type: "boolean" }, deactivate: { type: "boolean" } }, ["from", "to", "label"])),
     fragments: array(object({ kind: en("alt", "opt", "loop", "par"), label: str, from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 }, elseAt: { type: "integer", minimum: 0 }, elseLabel: str }, ["kind", "label", "from", "to"])),
-    fishbone: object({ effect: label, categories: array(object({ id, label, causes: array({ $ref: "#/definitions/cause" }, 1) }, ["id", "label", "causes"]), 1) }, ["effect", "categories"])
+    fishbone: object({ effect: label, headStyle: { ...en(...fishboneHeadStyles), default: "classic", description: "\u9ED8\u8BA4\u4FDD\u7559\u539F\u7248\u9C7C\u5934\u4E0E\u6BD4\u4F8B\uFF1B\u5176\u4F59\u8F6E\u5ED3\u4EC5\u5728\u663E\u5F0F\u9009\u62E9\u65F6\u5E94\u7528\uFF0C\u4E0D\u6539\u53D8\u539F\u56E0\u7ED3\u6784\u3002" }, categories: array(object({ id, label, causes: array({ $ref: "#/definitions/cause" }, 1) }, ["id", "label", "causes"]), 1) }, ["effect", "categories"])
   }, ["version", "type", "title"]),
   allOf: [
     { if: { properties: { type: { const: "sequence" } } }, then: { required: ["participants", "messages"], properties: { participants: { minItems: 1 }, messages: { minItems: 1 } } } },
@@ -2360,6 +2362,61 @@ function renderSequence(spec, theme) {
   );
   return frame(spec, theme, width, height, body);
 }
+function fishHeadMetrics(style2) {
+  const tall = ["roundfish", "carp", "sunfish", "triangle"].includes(style2);
+  const eye = ["fish", "shark", "sunfish"].includes(style2);
+  const notch = style2 === "shark" || style2 === "sunfish";
+  return {
+    width: tall ? 340 : 300,
+    minHeight: style2 === "sunfish" ? 260 : style2 === "carp" ? 230 : tall ? 240 : style2 === "fish" ? 160 : style2 === "shark" ? 184 : 108,
+    textWidth: style2 === "slim" ? 158 : style2 === "fish" ? 144 : notch ? 132 : style2 === "triangle" ? 144 : tall ? 158 : 184,
+    textCenter: style2 === "fish" ? 0.465 : style2 === "slim" ? 0.445 : notch ? 0.4 : style2 === "roundfish" || style2 === "triangle" ? 0.36 : style2 === "carp" ? 0.43 : 0.5,
+    textY: style2 === "fish" ? 0.57 : eye ? 0.6 : 0.5,
+    textHeightRatio: style2 === "fish" ? 0.3 : style2 === "triangle" ? 0.4 : eye ? 0.36 : 0.52
+  };
+}
+function fishHeadSvg(style2, x, y, w, h, theme) {
+  const p = (a, b) => `${x + w * a} ${y + h * b}`;
+  const anatomical = style2 !== "rounded" && style2 !== "label";
+  const notch = style2 === "shark" || style2 === "sunfish";
+  let silhouette;
+  switch (style2) {
+    case "fish":
+      silhouette = `M${p(0.11, 0.12)} C${p(0.23, 0.035)} ${p(0.65, 0.12)} ${p(0.9, 0.36)} Q${p(0.975, 0.44)} ${p(0.985, 0.52)} C${p(0.76, 0.72)} ${p(0.38, 0.955)} ${p(0.13, 0.92)} Q${p(0.045, 0.91)} ${p(0.065, 0.8)} C${p(0.13, 0.61)} ${p(0.13, 0.4)} ${p(0.065, 0.23)} Q${p(0.045, 0.16)} ${p(0.11, 0.12)} Z`;
+      break;
+    case "slim":
+      silhouette = `M${p(0.075, 0.5)} C${p(0.075, 0.25)} ${p(0.29, 0.12)} ${p(0.56, 0.13)} C${p(0.8, 0.14)} ${p(0.965, 0.32)} ${p(0.98, 0.5)} C${p(0.965, 0.68)} ${p(0.8, 0.86)} ${p(0.56, 0.87)} C${p(0.29, 0.88)} ${p(0.075, 0.75)} ${p(0.075, 0.5)} Z`;
+      break;
+    case "shark":
+      silhouette = `M${p(0.085, 0.085)} C${p(0.31, 0.025)} ${p(0.76, 0.12)} ${p(0.98, 0.43)} L${p(0.74, 0.5)} Q${p(0.83, 0.58)} ${p(0.935, 0.61)} C${p(0.745, 0.845)} ${p(0.43, 0.96)} ${p(0.095, 0.935)} Q${p(0.17, 0.5)} ${p(0.085, 0.085)} Z`;
+      break;
+    case "roundfish":
+      silhouette = `M${p(0.13, 0.045)} C${p(0.37, 0.065)} ${p(0.745, 0.21)} ${p(0.955, 0.42)} Q${p(1, 0.5)} ${p(0.955, 0.58)} C${p(0.745, 0.79)} ${p(0.37, 0.935)} ${p(0.13, 0.955)} Q${p(0.055, 0.96)} ${p(0.055, 0.865)} L${p(0.055, 0.135)} Q${p(0.055, 0.04)} ${p(0.13, 0.045)} Z`;
+      break;
+    case "carp":
+      silhouette = `M${p(0.075, 0.5)} C${p(0.075, 0.225)} ${p(0.225, 0.055)} ${p(0.44, 0.055)} C${p(0.67, 0.055)} ${p(0.88, 0.29)} ${p(0.975, 0.455)} Q${p(1, 0.5)} ${p(0.975, 0.545)} C${p(0.88, 0.71)} ${p(0.67, 0.945)} ${p(0.44, 0.945)} C${p(0.225, 0.945)} ${p(0.075, 0.775)} ${p(0.075, 0.5)} Z`;
+      break;
+    case "sunfish":
+      silhouette = `M${p(0.1, 0.055)} C${p(0.43, 0.015)} ${p(0.76, 0.16)} ${p(0.98, 0.395)} L${p(0.65, 0.505)} Q${p(0.76, 0.6)} ${p(0.915, 0.65)} C${p(0.73, 0.865)} ${p(0.45, 0.98)} ${p(0.105, 0.945)} Q${p(0.2, 0.5)} ${p(0.1, 0.055)} Z`;
+      break;
+    case "triangle":
+      silhouette = `M${p(0.12, 0.06)} L${p(0.965, 0.465)} Q${p(1, 0.5)} ${p(0.965, 0.535)} L${p(0.12, 0.94)} Q${p(0.075, 0.965)} ${p(0.075, 0.91)} L${p(0.075, 0.09)} Q${p(0.075, 0.035)} ${p(0.12, 0.06)} Z`;
+      break;
+    default:
+      silhouette = "";
+  }
+  let shape = anatomical ? `<path data-feature="silhouette"${notch ? ' data-mouth="notch"' : ""} d="${silhouette}"/>` : `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${style2 === "rounded" ? Math.min(h / 2, 38) : theme.radius}"/>`;
+  if (["fish", "slim", "shark", "sunfish", "carp"].includes(style2)) {
+    const eyeX = x + w * (notch ? 0.4 : style2 === "slim" ? 0.84 : 0.67);
+    const eyeY = y + h * (style2 === "slim" ? 0.32 : 0.25);
+    shape += `<circle data-feature="eye" cx="${eyeX}" cy="${eyeY}" r="${style2 === "slim" ? 3.2 : 4}" fill="${esc(theme.text)}" stroke="none" opacity=".75"/>`;
+  }
+  if (anatomical && !["triangle", "roundfish"].includes(style2))
+    shape += `<path data-feature="gill" d="M${p(0.15, 0.3)} C${p(0.12, 0.41)} ${p(0.12, 0.59)} ${p(0.15, 0.7)}" fill="none" stroke="${esc(theme.text)}" stroke-width="1.2" stroke-opacity=".27" stroke-linecap="round"/>`;
+  if (style2 === "slim")
+    shape += `<path data-feature="mouth" d="M${p(0.915, 0.58)} Q${p(0.946, 0.59)} ${p(0.97, 0.55)}" fill="none" stroke="${esc(theme.text)}" stroke-width="1" stroke-opacity=".5" stroke-linecap="round"/>`;
+  return `<g data-part="head" data-style="${style2}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${Math.max(1, theme.lineWidth * (anatomical ? 0.8 : 1))}" stroke-linejoin="round">${shape}</g>`;
+}
 function renderFishbone(spec, theme) {
   spec = { ...spec, layout: resolveLayout(spec) };
   const data = spec.fishbone;
@@ -2397,11 +2454,14 @@ function renderFishbone(spec, theme) {
   const columns = [];
   for (let i = 0; i < categories.length; i += 2)
     columns.push(Math.max(categories[i].width, categories[i + 1]?.width ?? 0));
-  const headWidth = Math.max(300, theme.nodeWidth + 120);
+  const headStyle = data.headStyle ?? "classic";
+  const classicHead = headStyle === "classic";
+  const headMetrics = fishHeadMetrics(classicHead ? "fish" : headStyle);
+  const headWidth = Math.max(classicHead ? 300 : headMetrics.width, theme.nodeWidth + 120);
   const effectSize = size + 3;
-  const effectLines = wrap(data.effect, headWidth * 0.47, effectSize);
+  const effectLines = wrap(data.effect, classicHead ? headWidth * 0.47 : headMetrics.textWidth * headWidth / headMetrics.width, effectSize);
   const effectHeight = effectLines.length * effectSize * 1.4;
-  const headHeight = Math.max(160, effectHeight * 1.8 + 48);
+  const headHeight = classicHead ? Math.max(160, effectHeight * 1.8 + 48) : Math.max(headMetrics.minHeight, (effectHeight + 12) / headMetrics.textHeightRatio);
   const width = Math.max(
     920,
     150 + columns.reduce((sum, w) => sum + w, 0) + Math.max(0, columns.length - 1) * regionGap + headWidth + 80
@@ -2443,7 +2503,7 @@ function renderFishbone(spec, theme) {
   body += line(
     96,
     spineY,
-    headX + 28,
+    classicHead ? headX + 28 : headX + headWidth * 0.15,
     spineY,
     theme.primary,
     theme.lineWidth + 2
@@ -2535,12 +2595,17 @@ function renderFishbone(spec, theme) {
     left += colWidth + regionGap;
   }
   body += `<g data-editor-key="effect">`;
-  body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
-  body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
-  body += `<circle cx="${headX + headWidth - 49}" cy="${spineY - headHeight * 0.25}" r="5" fill="${esc(theme.primary)}"/>`;
+  const headY = spineY - headHeight / 2;
+  if (classicHead) {
+    body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+    body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
+    body += `<circle cx="${headX + headWidth - 49}" cy="${spineY - headHeight * 0.25}" r="5" fill="${esc(theme.primary)}"/>`;
+  } else {
+    body += fishHeadSvg(headStyle, headX, headY, headWidth, headHeight, theme);
+  }
   body += text(
-    headX + headWidth / 2 + 8,
-    spineY + 5 - (effectLines.length - 1) * effectSize * 0.7,
+    classicHead ? headX + headWidth / 2 + 8 : headX + headWidth * headMetrics.textCenter,
+    classicHead ? spineY + 5 - (effectLines.length - 1) * effectSize * 0.7 : headY + headHeight * headMetrics.textY + effectSize * 0.35 - (effectLines.length - 1) * effectSize * 0.7,
     effectLines.join("\n"),
     theme,
     { size: effectSize, anchor: "middle", weight: 700 }
@@ -2651,9 +2716,14 @@ export {
   readDiagramFile,
   renderNativeImage
 };
+/**
+ * @license Fish-head silhouettes adapted from Fishbone Studio, MIT.
+ * Copyright (c) 2026 Fishbone Studio contributors. Full terms in LICENSE.
+ * Standalone SVG keeps browser and native image exports on the same geometry.
+ */
 
 /*
-UML Studio third-party notices. Dependencies are used unmodified.
+UML Studio third-party notices. Dependency licenses and adapted source notices follow.
 ELK.js source: https://github.com/kieler/elkjs
 
 @resvg/resvg-js@2.6.2 — MPL-2.0
@@ -4578,4 +4648,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
+
+========================================================================
+
+Fish-head silhouettes and proportions adapted from Fishbone Studio.
+Source files: packages/vue/src/appearance.ts and packages/vue/src/paint.ts
+
+MIT License
+
+Copyright (c) 2026 Fishbone Studio contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 */

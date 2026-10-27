@@ -38,6 +38,8 @@ python ucd-studio/scripts/ucd.py patch --dir output/approval --patch change.json
 
 1.1.0 包含模板规范与运行时升级。旧版目录触发版本保护时，使用 `make_demo.py --out 新目录` 或在新目录 init 后迁移配置与素材，不修改 manifest 绕过保护；editable 的手工行为需要人工合并。详见 [output-modes.md](references/output-modes.md)。
 
+仓库自带 `demo/` 的更新快照写入仓库 `temp/ucd-studio-history/<示例>/`，避免重复历史撑大技能目录；独立安装时改用系统临时目录下按技能路径区分的缓存。其他输出目录仍在自身 `.history/` 中保存快照。已有 146 个示例历史文件无损合并到 `demo-history.zip`，其内部路径从 `demo/` 开始；仅在需要旧版本时解压到技能之外的新目录，不覆盖当前示例。正常使用和查看示例不需要解压。
+
 离线承诺的边界：包内脚本无网络调用、不安装软件；生成页面无远程资源、带 CSP。内网模型服务及工具宿主本身仍须处于获准隔离环境。任意新增 JS 不能仅凭静态扫描证明安全；手工修改后应做浏览器检查。源码扫描报告也是内部数据，不应对外上传。
 
 开发验证（不属于使用时依赖）：Python unittest；浏览器验证可使用项目已有 Playwright/Chromium。验证结果见 [validation.md](references/validation.md)。

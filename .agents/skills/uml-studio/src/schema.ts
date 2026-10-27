@@ -1,4 +1,4 @@
-import { diagramTypes } from './types'
+import { diagramTypes, fishboneHeadStyles } from './types'
 import { layoutModes, themes } from './themes'
 const str = { type: 'string' }
 const label = { type: 'string', minLength: 1 }
@@ -35,7 +35,7 @@ const specSchema = {
     participants: array(object({ id, label, kind: en('actor', 'participant', 'database') }, ['id', 'label'])),
     messages: array(object({ from: id, to: id, label: str, kind: en('sync', 'async', 'return', 'create', 'destroy'), activate: { type: 'boolean' }, deactivate: { type: 'boolean' } }, ['from', 'to', 'label'])),
     fragments: array(object({ kind: en('alt', 'opt', 'loop', 'par'), label: str, from: { type: 'integer', minimum: 0 }, to: { type: 'integer', minimum: 0 }, elseAt: { type: 'integer', minimum: 0 }, elseLabel: str }, ['kind', 'label', 'from', 'to'])),
-    fishbone: object({ effect: label, categories: array(object({ id, label, causes: array({ $ref: '#/definitions/cause' }, 1) }, ['id', 'label', 'causes']), 1) }, ['effect', 'categories']),
+    fishbone: object({ effect: label, headStyle: { ...en(...fishboneHeadStyles), default: 'classic', description: '默认保留原版鱼头与比例；其余轮廓仅在显式选择时应用，不改变原因结构。' }, categories: array(object({ id, label, causes: array({ $ref: '#/definitions/cause' }, 1) }, ['id', 'label', 'causes']), 1) }, ['effect', 'categories']),
   }, ['version', 'type', 'title']),
   allOf: [
     { if: { properties: { type: { const: 'sequence' } } }, then: { required: ['participants', 'messages'], properties: { participants: { minItems: 1 }, messages: { minItems: 1 } } } },

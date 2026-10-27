@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { colorPresets } from "./themes";
-import "./editor.css";
 
 const props = defineProps<{
   modelValue: string;

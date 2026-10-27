@@ -4,17 +4,17 @@
   "private": true,
   "type": "module",
   "main": "./dist/core.mjs",
-  "types": "./dist/types/src/core.d.ts",
+  "types": "./dist/core.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/types/src/core.d.ts",
+      "types": "./dist/core.d.ts",
       "import": "./dist/core.mjs"
     },
     "./vue": {
-      "types": "./dist/types/src/index.d.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/vue.mjs"
     },
-    "./node": {"types":"./dist/types/src/native.d.ts","import":"./dist/native.mjs"},
+    "./node": {"types":"./dist/native.d.ts","import":"./dist/native.mjs"},
     "./style.css": "./dist/diagram.css"
   },
   "scripts": {

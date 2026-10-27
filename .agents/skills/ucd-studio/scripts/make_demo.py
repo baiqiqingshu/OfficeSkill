@@ -2,9 +2,11 @@
 import argparse
 import html
 import struct
+import sys
 import zlib
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 from ucd import ROOT, build, catalog, read_json, styles
 
 

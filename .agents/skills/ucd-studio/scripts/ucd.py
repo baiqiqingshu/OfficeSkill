@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 
+sys.dont_write_bytecode = True
 from render import ROOT, TYPES, component_css, render_block, render_page
 
 VERSION = '1.1.0'
@@ -494,6 +495,15 @@ def guard(out, old):
         require(digest((out/'assets/ucd-runtime.js').read_bytes()) == digest((ROOT/'assets/runtime.js').read_bytes()), '固定运行库被修改，禁止覆盖')
 
 
+def history_root(out):
+    # Keep packaged examples small; user-created pages retain local .history/.
+    if out.parent == (ROOT/'demo').resolve():
+        repository = ROOT.parents[2]
+        cache = repository/'temp/ucd-studio-history' if (repository/'.git').exists() else Path(tempfile.gettempdir())/'ucd-studio-history'/digest(str(ROOT).encode('utf-8'))[:12]
+        return cache/out.name
+    return out/'.history'
+
+
 def build(spec, out, mode=None, source_base=None):
     validate(spec);out = local_path(out).absolute()
     require(not any(linked(p) for p in [out,*out.parents]), '输出目录不能经过符号链接或 junction')
@@ -526,8 +536,9 @@ def build(spec, out, mode=None, source_base=None):
         for name,data in all_files.items():
             (stage/name).parent.mkdir(parents=True,exist_ok=True);(stage/name).write_bytes(data)
         if old:
-            history = out/'.history'/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-            require(not linked(out/'.history'), '历史目录不能是链接')
+            base = history_root(out)
+            require(not any(linked(p) for p in [base,*base.parents]), '历史目录不能经过链接')
+            history = base/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
             for name in [*old['files'],'page.json','manifest.json']:
                 source = out/name
                 if source.is_file():

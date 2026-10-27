@@ -7,6 +7,7 @@ const base: Theme = {
 }
 export const themes: Record<ThemeName, Theme> = {
   ocean: { ...base },
+  white: { ...base, background: '#ffffff', surface: '#ffffff', text: '#193b56', muted: '#526b7d', border: '#9bb7cc' },
   paper: { ...base, background: '#faf8f3', text: '#253248', muted: '#667286', primary: '#b35231', secondary: '#327781', border: '#cbd2d9' },
   forest: { ...base, background: '#f4f7ef', text: '#283b31', muted: '#67765d', primary: '#3b7153', secondary: '#99713b', border: '#c3d0bc' },
   blueprint: { ...base, background: '#edf3fc', surface: '#f9fbff', text: '#183f74', muted: '#567296', primary: '#245ba3', secondary: '#557ab4', border: '#9bb7d6', radius: 0, lineWidth: 1.3 },
@@ -18,7 +19,7 @@ export const themes: Record<ThemeName, Theme> = {
   mint: { ...base, background: '#eefbf6', surface: '#fbfffd', text: '#254e46', muted: '#60877b', primary: '#19866c', secondary: '#438fa6', border: '#b3ddcf', radius: 14 },
 }
 export const themeLabels: Record<ThemeName, string> = {
-  ocean: '海洋蓝', paper: '暖纸', forest: '森林绿', blueprint: '工程蓝图', midnight: '午夜',
+  ocean: '海洋蓝', white: '纯白', paper: '暖纸', forest: '森林绿', blueprint: '工程蓝图', midnight: '午夜',
   lavender: '薰衣草', rose: '玫瑰', amber: '琥珀', slate: '岩灰', mint: '薄荷',
 }
 export const fontPresets: { label: string; value: string }[] = [

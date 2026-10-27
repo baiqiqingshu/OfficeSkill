@@ -6,6 +6,7 @@
 - [验证结果](validation.md)
 - [默认设计规范](../../.agents/skills/ucd-studio/references/design-guidelines.md)
 - [审批页生成规范](../../.agents/skills/ucd-studio/demo/admin/design-system.md)
+- [文件精简与历史恢复](file-consolidation.md)
 - [使用说明](../../.agents/skills/ucd-studio/USAGE.md)
 - [模板预览](../../.agents/skills/ucd-studio/demo/index.html)
 

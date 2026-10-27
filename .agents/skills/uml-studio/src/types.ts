@@ -1,6 +1,6 @@
 export const diagramTypes = ['activity', 'sequence', 'swimlane', 'flowchart', 'usecase', 'class', 'state', 'component', 'package', 'architecture', 'module', 'deployment', 'logical', 'development', 'process', 'physical', 'scenario', 'fishbone'] as const
 export type DiagramType = typeof diagramTypes[number]
-export type ThemeName = 'paper' | 'ocean' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint'
+export type ThemeName = 'paper' | 'ocean' | 'white' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint'
 export interface Theme {
   background: string; surface: string; text: string; muted: string; primary: string; secondary: string; border: string
   fontFamily: string; fontSize: number; lineWidth: number; radius: number; nodeWidth: number; nodeHeight: number; gap: number
@@ -22,7 +22,9 @@ export interface Participant { id: string; label: string; kind?: 'actor' | 'part
 export interface Message { from: string; to: string; label: string; kind?: 'sync' | 'async' | 'return' | 'create' | 'destroy'; activate?: boolean; deactivate?: boolean }
 export interface Fragment { kind: 'alt' | 'opt' | 'loop' | 'par'; label: string; from: number; to: number; elseAt?: number; elseLabel?: string }
 export interface FishboneCause { label: string; children?: FishboneCause[] }
-export interface FishboneData { effect: string; categories: { id: string; label: string; causes: FishboneCause[] }[] }
+export const fishboneHeadStyles = ['classic', 'fish', 'slim', 'shark', 'roundfish', 'carp', 'sunfish', 'triangle', 'rounded', 'label'] as const
+export type FishboneHeadStyle = typeof fishboneHeadStyles[number]
+export interface FishboneData { effect: string; headStyle?: FishboneHeadStyle; categories: { id: string; label: string; causes: FishboneCause[] }[] }
 export interface DiagramLayoutOptions {
   mode?: 'compact' | 'balanced' | 'spacious' | 'grid'
   edgeCrossing?: 'bridge' | 'plain'

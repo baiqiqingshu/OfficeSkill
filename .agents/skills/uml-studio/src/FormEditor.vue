@@ -13,7 +13,6 @@ import type {
   Fragment,
   Theme,
 } from "./types";
-import "./editor.css";
 
 const props = defineProps<{ modelValue: DiagramSpec }>();
 const emit = defineEmits<{ "update:modelValue": [value: DiagramSpec] }>();
@@ -535,7 +534,7 @@ function updateCause(
           :data-editor-key="elementKey(node)"
           :key="node.id"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>
             {{ index + 1 }}. {{ node.label || "未命名节点" }}
@@ -753,7 +752,7 @@ function updateCause(
           :data-editor-key="elementKey(edge)"
           :key="edge.id ?? index"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>
             {{ index + 1 }}. {{ edge.label || `${edge.from} → ${edge.to}` }}
@@ -844,7 +843,7 @@ function updateCause(
           :data-editor-key="elementKey(group)"
           :key="group.id"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>{{ index + 1 }}. {{ group.label || "未命名分组" }}</summary>
           <div class="uml-editor-card__body">
@@ -901,7 +900,7 @@ function updateCause(
           :data-editor-key="elementKey(lane)"
           :key="lane.id"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>{{ index + 1 }}. {{ lane.label || "未命名泳道" }}</summary>
           <div class="uml-editor-card__body">
@@ -931,7 +930,7 @@ function updateCause(
           :data-editor-key="elementKey(participant)"
           :key="participant.id"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>{{ index + 1 }}. {{ participant.label || "未命名参与者" }}</summary>
           <div class="uml-editor-card__body">
@@ -972,7 +971,7 @@ function updateCause(
           :data-editor-key="elementKey(message)"
           :key="index"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>
             第 {{ index + 1 }} 条 · {{ message.label || "未命名消息" }}
@@ -1060,7 +1059,7 @@ function updateCause(
           :data-editor-key="elementKey(fragment)"
           :key="index"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>{{ index + 1 }}. {{ fragment.label || "未命名片段" }}</summary>
           <div class="uml-editor-card__body">
@@ -1153,6 +1152,16 @@ function updateCause(
             v-model="draft.fishbone.effect"
             type="text"
         /></label>
+        <label v-if="draft.fishbone">鱼头样式
+          <select :value="draft.fishbone.headStyle ?? 'classic'" @change="draft.fishbone.headStyle = valueOf($event) as NonNullable<DiagramSpec['fishbone']>['headStyle']">
+            <option value="classic">原版鱼头（默认）</option>
+            <option value="fish">弧面鱼头</option><option value="slim">细长鱼头</option>
+            <option value="shark">开口鱼头</option><option value="roundfish">高身圆角</option>
+            <option value="carp">水滴鱼头</option><option value="sunfish">扇面鱼头</option>
+            <option value="triangle">极简三角</option><option value="rounded">胶囊标签</option>
+            <option value="label">方框标签</option>
+          </select>
+        </label>
         <div class="uml-editor-heading">
           <h3>分析分类（{{ draft.fishbone?.categories.length ?? 0 }}）</h3>
           <button type="button" @click="addCategory">＋ 分类</button>
@@ -1163,7 +1172,7 @@ function updateCause(
           :data-editor-key="elementKey(category)"
           :key="category.id"
           class="uml-editor-card"
-          :open="expanded ?? true"
+          :open="expanded ?? false"
         >
           <summary>
             {{ categoryIndex + 1 }}. {{ category.label || "未命名分类" }}

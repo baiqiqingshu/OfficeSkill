@@ -4,7 +4,6 @@ import gallery from '../examples/documents/gallery.json';
 import { readStudioRuntime } from './export';
 import type { StudioRuntime } from './export';
 import type { DiagramDocument, DiagramInput, DiagramSpec, ExportOptions } from './types';
-import './studio.css';
 
 export interface UmlStudioHandle {
   ready: Promise<void>;

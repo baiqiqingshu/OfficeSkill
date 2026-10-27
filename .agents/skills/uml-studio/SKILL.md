@@ -94,12 +94,14 @@ npm run demo:verify
 
 安装、构建、开发命令也可在 OfficeSkill 根目录执行；Demo 维护命令在本 SKILL 目录执行。`npm run diagram -- ...` 是根目录 CLI 入口。
 
+完整构建将公开类型声明归并为 `dist/core.d.ts`、`dist/index.d.ts`、`dist/native.d.ts`，三个包入口及 API 保持不变。逐文件声明中间产物与 Vite 缓存在仓库 `temp/uml-studio-types/`、`temp/uml-studio-vite/`；独立安装时使用系统临时目录，不写回技能目录。组件样式保留在 Vue 文件的全局 style 中。构建将 LICENSE 中的 Fishbone Studio MIT 附录与依赖许可一起写入 THIRD_PARTY_NOTICES.txt、运行时和离线 HTML，维护时须保留。
+
 复杂输入参考 `examples/scenarios/<type>.json`，入门集合保留在 `examples/documents/quickstart.json`。场景索引、布局对照与验证方法见 [references/demo-coverage.md](references/demo-coverage.md)。修改场景源文件后运行 `npm run demo:refresh` 或完整构建来更新设计册。
 
 ## JSON 规则
 
 - 主结构见 schema。除通用元数据外，图节点、时序和鱼骨数据不可混用；未知字段会报错，不静默丢弃。
-- 默认 `theme:"ocean"`；还支持 `paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
+- 默认 `theme:"ocean"`；还支持 `white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint`。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
 - 色值支持十六进制 `#RGB` / `#RRGGBB` 和 `transparent`。网页支持粘贴色值、系统拾色器与精选色板。PNG / WebP / SVG 可保留透明；JPEG 无透明通道，铺白底。字体使用本机字体；Node 导出可重复传入 `--font-file path.ttf`，不下载远程字体。
 - `direction: "TB" | "LR"` 控制图布局；用例图默认 `LR`，其它节点图默认 `TB`。开始 / 结束节点使用独立的顶部 / 底部留白带；单开始、单结束的符号中心固定同轴，不通过横移结束节点挤占其它节点。显式 `LR` 时对应左 / 右及同一水平轴。起止带位于区域容器外，节点的 `group/lane` 数据仍保留。普通节点关系按正交折线路由，用例图关系按 UML 常见的直线路由，交叉处再按 `layout.edgeCrossing` 绘制。时序顺序由 `messages` 顺序决定，鱼骨分类按数组顺序排列。
 - `layout.edgeCrossing: "bridge" | "plain"` 控制当前节点图的连线交叉表示。默认 `bridge` 在穿越处画拱桥形跳线（小半圆弧），表示不相连；`plain` 保留直接交叉，正交线形成无圆点的十字，也表示不相连，不改变用例图斜线方向。共用端点、共线重合不添加跳线；密集交叉合并相邻拱桥，端点或折角附近空间不足、两侧均被节点/文字阻挡时保留原线。设置不改变拓扑，时序图生命线和鱼骨分支不使用此选项。网页“连线”表单和“布局与尺寸”均可设置，保存 HTML / JSON 与图片导出保留该选择。真实连通必须显式建节点并让连线引用它；不可将几何交叉自动解释为连接，或给所有交叉加实心圆点。
@@ -107,7 +109,7 @@ npm run demo:verify
 - 类节点可有 `attributes`、`operations`；用 `kind` 选择 UML 图元。依赖、包含、扩展、继承、实现、聚合、组合用连线 `kind`，不要只改标签冒充 UML 关系。
 - 时序消息支持 `sync`、`async`、`return`、`create`、`destroy`。`activate` 打开接收方激活条；`return` 的 `deactivate` 关闭发送方激活，其他消息关闭接收方激活。销毁关闭目标的全部激活，未关闭的激活绘至图底；`database` 参与者使用标准圆柱体图元。
 - `fragments` 支持 `alt`、`opt`、`loop`、`par`，使用从 0 开始、首尾包含的消息索引；`alt` / `par` 的 `elseAt` 是第二分支首条消息索引，`elseLabel` 描述该分支。长消息和条件文字自动换行并扩展时间轴间距。
-- 鱼骨 `causes` 可有递归 `children`，保留原因层级。
+- 鱼骨 `causes` 可有递归 `children`，保留原因层级。默认 `fishbone.headStyle:"classic"` 保留原版鱼头、文字比例和鱼骨样式；未设置时也使用原版。可显式选择 `fish`、`slim`、`shark`、`roundfish`、`carp`、`sunfish`、`triangle`、`rounded`、`label` 九种附加轮廓，不改变原因、层级及连接。网页鱼骨表单可选择，保存 HTML / JSON 和 SVG / PNG / JPEG / WebP 导出保留该值。
 
 ### 布局与文字
 
@@ -153,7 +155,7 @@ npm run demo:verify
 
 - `#diagram-data` application/json 数据块保存单图或完整多图文档。多图用 `diagrams` 数组，不能以 `type` 为字典键，否则会丢失同类图。
 - 全部 Vue / 布局 JS、CSS、数据内联，无 CDN 与远程字体，断网后仍可打开；只保存当前已应用的数据，未应用草稿会明确提示。
-- 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。导出工具栏在编辑按钮附近、预览上方；样式位于预览下方，默认折叠，可展开调整。拖动的是预览画布，不改变结构化模型中的节点位置。
+- 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。默认优先显示画布，点击“编辑图表”打开编辑器；点击“调整样式”展开预览下方的主题、配色及进阶参数。导出图片、复制图片及格式 / 倍率集中在画布上方，文档 JSON 位于“更多导出”，顶部“保存 HTML”保存全部已应用图表。窄屏图表列表为可关闭抽屉、编辑器整行显示。拖动的是预览画布，不改变结构化模型中的节点位置。
 - 表单支持全部展开 / 全部折叠、按内容检索（仅显示命中元素及必要上级）和清空检索。表单编辑器打开时，点击预览中的元素会展开并滚动定位相应表单，突出显示目标；检索隐藏目标时会清空检索。拖动画布不会触发定位。此功能不更改图表数据或布局。旧 HTML 需用更新后的运行时重新生成才能获得这些功能。
 - 下载按钮下的“复制图片（PNG）”写入图片剪贴板，不下载、不复制 URL。需要支持 ClipboardItem 的安全页面环境与权限；不支持或权限被拒绝时明确报错。
 - `window.UmlStudio` 提供 `ready,getDocument,setDocument,selectDiagram,getSpec,setSpec,getSvg,exportImage,saveHtml`。选择序号在浏览器 API 中从 0 开始；`getSpec/setSpec/getSvg/exportImage` 只操作当前图，`saveHtml` 保存全部图。等待 `ready` 与异步编辑 / 导出方法。

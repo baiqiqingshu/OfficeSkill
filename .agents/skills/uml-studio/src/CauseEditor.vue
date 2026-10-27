@@ -2,7 +2,6 @@
 import { computed, useId } from "vue";
 import { matchesContent } from "./editor-search";
 import type { FishboneCause } from "./types";
-import "./editor.css";
 
 const props = withDefaults(
   defineProps<{ modelValue: FishboneCause; path?: string; editorKey?: string; query?: string; expanded?: boolean; keyFor?: (cause: FishboneCause) => string | undefined }>(),
