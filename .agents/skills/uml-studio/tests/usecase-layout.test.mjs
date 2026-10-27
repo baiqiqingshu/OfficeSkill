@@ -6,7 +6,7 @@ import { inspectDiagram } from '../scripts/demo-checks.mjs'
 
 const load = path => readFile(new URL(path, import.meta.url), 'utf8').then(JSON.parse)
 const bookstore = await load('../examples/usecase.json')
-const login = await load('./fixtures/login-usecase.json')
+const login = (await load('./fixtures/login.json')).usecase
 const commerce = await load('../examples/scenarios/usecase.json')
 
 function geometry(svg) {

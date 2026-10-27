@@ -161,7 +161,16 @@ onBeforeUnmount(() => document.removeEventListener("click", outside));
           @click="choose(swatch.color)"
         >
           <span v-if="normalize(modelValue) === swatch.color" aria-hidden="true"
-            >✓</span
+            ><svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              ><path d="M4.5 12.75l6 6 9-13.5" /></svg
+          ></span
           >
         </button>
       </div>

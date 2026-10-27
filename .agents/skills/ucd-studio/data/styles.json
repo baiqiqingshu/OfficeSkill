@@ -10,7 +10,12 @@
       "ink": "#202938",
       "muted": "#596579",
       "border": "#dce1e8",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#f4f7fa",
+      "line-strong": "#b9c9d6",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(29 78 216/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -18,7 +23,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "slate": {
     "title": "岩灰 · 极简秩序",
@@ -31,7 +36,12 @@
       "ink": "#17202e",
       "muted": "#596579",
       "border": "#dce1e8",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#f2f5f9",
+      "line-strong": "#b4bfcc",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(51 65 85/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -39,7 +49,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "jade": {
     "title": "青绿 · 平静高效",
@@ -52,7 +62,12 @@
       "ink": "#1c322a",
       "muted": "#60736a",
       "border": "#dfe9e3",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#f0f6f3",
+      "line-strong": "#b0c8bd",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(22 116 85/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -60,7 +75,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "plum": {
     "title": "紫藤 · 创意协同",
@@ -73,7 +88,12 @@
       "ink": "#302441",
       "muted": "#6d6078",
       "border": "#e8e1ef",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#f5f2fa",
+      "line-strong": "#c4b8d6",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(116 80 180/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -81,7 +101,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "warm": {
     "title": "暖纸 · 内容阅读",
@@ -94,7 +114,12 @@
       "ink": "#362d24",
       "muted": "#706353",
       "border": "#e9e2d6",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#f6f1e8",
+      "line-strong": "#cec3b0",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(146 87 45/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -102,7 +127,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "rose": {
     "title": "玫瑰 · 服务体验",
@@ -115,7 +140,12 @@
       "ink": "#3e2730",
       "muted": "#755a65",
       "border": "#eee0e6",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#f8f0f4",
+      "line-strong": "#d5bcc9",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(162 63 97/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -123,7 +153,7 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "midnight": {
     "title": "午夜 · 专注监控",
@@ -136,7 +166,12 @@
       "ink": "#e9eff9",
       "muted": "#a3b3ca",
       "border": "#304056",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#131c2a",
+      "line-strong": "#43536d",
+      "shadow": "0 1px 2px rgb(0 0 0/.4),0 10px 28px -10px rgb(0 0 0/.55)",
+      "shadow-pop": "0 4px 14px -4px rgb(0 0 0/.5),0 26px 54px -14px rgb(0 0 0/.65)",
+      "ring": "rgb(138 180 255/.35)",
       "success": "#8edbb3",
       "success-soft": "#193d32",
       "warning": "#f5cb82",
@@ -144,7 +179,7 @@
       "danger": "#ffacb5",
       "danger-soft": "#482b36"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   },
   "contrast": {
     "title": "高对比 · 清晰可读",
@@ -157,7 +192,12 @@
       "ink": "#111827",
       "muted": "#4b5563",
       "border": "#9ca3af",
-      "radius": "6px",
+      "radius": "10px",
+      "surface-2": "#eef1f4",
+      "line-strong": "#77818f",
+      "shadow": "0 1px 2px rgb(20 45 66/.05),0 8px 24px -10px rgb(20 45 66/.10)",
+      "shadow-pop": "0 4px 12px -4px rgb(20 45 66/.10),0 24px 48px -14px rgb(20 45 66/.20)",
+      "ring": "rgb(20 63 192/.28)",
       "success": "#16714b",
       "success-soft": "#eaf7ef",
       "warning": "#946216",
@@ -165,6 +205,6 @@
       "danger": "#b43147",
       "danger-soft": "#feebee"
     },
-    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、渐变和无意义卡片。"
+    "guidance": "公司内网工具以任务为先：紧凑表格、清晰分隔、系统字体；主色用于操作与选择，状态同时提供文字。避免装饰性图表、大面积渐变装饰和无意义卡片。"
   }
 }

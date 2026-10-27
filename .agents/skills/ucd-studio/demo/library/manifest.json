@@ -178,8 +178,8 @@
   },
   "specSha256": "944b493a1d9225b2d93596a07a7583a8b53274648f4d415188cfcc02b020cd92",
   "files": {
-    "index.html": "bf6a8dbcd4f61d7a8462d5a8ae7f4157389ff99fd6f7b13709eda5f0ecec7118",
-    "design-system.md": "ade10f0a4de1e84dac8dd63d70037fc44eb99de86969d1be425c7a0c080c119e",
+    "index.html": "de2987d99a1f5a66dd39dedba66b6026e4bdab5dc323dd6796bdc58fbf7b0348",
+    "design-system.md": "bc4464bb6828e3d5cfc67d9ffa3ff2440f442499b7bbb8b58e177bb207ab5644",
     "assets/ucd-runtime.js": "9e27c63b27d17cf36ffd83a140239a31eac91af4681551149661771064f4aba5"
   }
 }

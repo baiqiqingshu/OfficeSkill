@@ -192,3 +192,14 @@
 - 验证：`npm run build` exit 0（产物 `assets/viewer.js/css`、`dist/*`、`demo-dist/index.html` 同步更新）；`node --test tests/*.test.mjs` 98/98 通过；Playwright 实测计算样式逐项吻合（玻璃导航、渐变主按钮、卡片上浮、聚焦光环、SVG 图标、无 emoji/渐变文字/紫粉）；`impeccable detect` 对改动文件 0 发现（`demo-dist/index.html` 一条 `pulsing-dot` warning 为 §3.1 允许的呼吸指示点，保留）。
 - 遗留可选项：`ColorInput.vue` 的 `✓`、`FormEditor.vue` 的 `→` 为存量文本符号（模板未动范围），后续可换 SVG。
 - 另附 `.agents/skills/uml-studio/PRODUCT.md`、`DESIGN.md` 持久记录产品事实与视觉系统。
+
+## 7. 本轮修正记录（按钮去渐变 + 收敛，2026-10-28 后差量迭代）
+
+按 `docs/frontend-redesign.md` §0/§1 做的差量修正，未推翻既有令牌体系：
+
+- **按钮一律实色（本条取代 §3.2 中"渐变主按钮"表述）**：`.button-dark`、`.button-accent`、`.uml-editor-apply` 的 `background` 改为 `var(--accent)`，hover `var(--accent-deep)`，保留 `translateY(-1px)` 与 `rgb(11 91 135/.30-.50)` 彩色投影，active `translateY(0)`；disabled 用 `color-mix(in srgb, var(--accent), var(--paper) 55%)` 实色（不再叠加透明度变暗）。`--gradient-brand` 仅 `.brand-mark` logo 方块使用；`--gradient-brand-hover` 改供 `.studio-brand:hover .brand-mark` 微变体。
+- 渐变白名单收紧为：logo 方块（135°）、`:focus-visible` 光环、`.canvas-stage` 点阵 `radial-gradient`、棋盘格/loading 相关 `conic-gradient`（数据特性）。其余元素禁渐变。
+- 编辑器卡片 `summary::after` 的 `--uml-chevron` `url("data:image/svg+xml,…")` mask 改为纯 CSS 边框 chevron（1.7px 圆角双边，闭合 `rotate(-45deg)`→展开 `rotate(45deg)`）——清除源码中唯一的 CSS `url(`，与离线约束一致。
+- 隐藏组件补齐：`select-input`/`text-input` 与 `.uml-form-editor` 内控件的 `:disabled` 态（opacity .55 + not-allowed）、`option` 实色底字规则。
+- `ColorInput.vue` 选中 `✓`、`FormEditor.vue` 连线 `A → B` 已改内联 SVG（24 viewBox、stroke 1.7、currentColor、aria-hidden）。
+- 文件收敛：`PRODUCT.md` 并入 `DESIGN.md` 顶部 "Product" 节后删除；`tests/fixtures/login-{activity,usecase}.json` 合并为 `tests/fixtures/login.json`（`{activity,usecase}` 键），对应两个测试文件已更新读取路径。文件总数 ≤99。

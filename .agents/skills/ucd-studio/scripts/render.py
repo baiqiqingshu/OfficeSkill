@@ -34,6 +34,14 @@ def icon(kind):
     return f'<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{path}"/></svg>'
 
 
+CHEVRON = '<svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
+MAGNIFIER = '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z M20 20l-4.8-4.8"/></svg>'
+
+
+def select_wrap(inner):
+    return f'<span class="select-wrap">{inner}{CHEVRON}</span>'
+
+
 def badge(value):
     if not isinstance(value, dict):
         return h(value)
@@ -58,7 +66,7 @@ def fields(items, prefix):
         attrs = f'id="{name}" name="{name}"{required}{help_attr}'
         if kind == 'select':
             options = ''.join(f'<option'+(' selected' if x == field.get('value') else '')+f'>{h(x)}</option>' for x in field.get('options', []))
-            control = f'<select {attrs}>{options}</select>'
+            control = select_wrap(f'<select {attrs}>{options}</select>')
         elif kind == 'textarea':
             control = f'<textarea {attrs} placeholder="{h(field.get("placeholder", ""))}">{h(field.get("value", ""))}</textarea>'
         else:
@@ -97,7 +105,9 @@ def render_block(key, b, index=1):
             rows.append(f'<tr data-status="{h(status)}">{cells}</tr>')
         opts = ''.join(f'<option value="{h(s)}">{h(s)}</option>' for s in statuses)
         skeleton = '<div class="table-skeleton" data-skeleton aria-hidden="true" hidden>'+''.join('<div><i></i><i></i><i></i></div>' for _ in range(4))+'</div>'
-        body = f'''<div class="table-toolbar"><label class="search-label">搜索记录<input type="search" data-search placeholder="搜索任意字段…"></label><label class="filter-label">状态<select data-filter><option value="">全部状态</option>{opts}</select></label></div><div class="table-scroll" tabindex="0" role="region" aria-label="{title}，宽表格可横向滚动"><table class="data-table"><caption class="visually-hidden">{title}</caption><thead><tr>{cols}</tr></thead><tbody>{''.join(rows)}</tbody></table><div class="state-message" data-empty hidden><p>没有匹配记录，请调整搜索或筛选条件。</p><button type="button" class="btn btn-small" data-reset-filters>清除搜索与筛选</button></div></div>{skeleton}<div class="table-state" data-table-state hidden><p class="state-message" role="status" data-state-message></p><button type="button" class="btn btn-small" data-retry hidden>重试</button></div><div class="table-footer"><span role="status" data-table-status></span><div class="pagination" aria-label="记录分页"><button type="button" class="btn btn-small" data-prev aria-label="上一页">{icon("previous")}</button><span data-pages></span><button type="button" class="btn btn-small" data-next aria-label="下一页">{icon("next")}</button></div></div><details class="state-tools"><summary>预览加载、空与错误状态</summary><label>显示状态<select data-state><option value="ready">正常</option><option value="loading">加载中</option><option value="empty">空状态</option><option value="error">加载失败</option></select></label></details>'''
+        filter_select = select_wrap('<select data-filter><option value="">全部状态</option>'+opts+'</select>')
+        state_select = select_wrap('<select data-state><option value="ready">正常</option><option value="loading">加载中</option><option value="empty">空状态</option><option value="error">加载失败</option></select>')
+        body = f'''<div class="table-toolbar"><label class="search-label">搜索记录<span class="input-wrap">{MAGNIFIER}<input type="search" data-search placeholder="搜索任意字段…"></span></label><label class="filter-label">状态{filter_select}</label></div><div class="table-scroll" tabindex="0" role="region" aria-label="{title}，宽表格可横向滚动"><table class="data-table"><caption class="visually-hidden">{title}</caption><thead><tr>{cols}</tr></thead><tbody>{''.join(rows)}</tbody></table><div class="state-message" data-empty hidden><p>没有匹配记录，请调整搜索或筛选条件。</p><button type="button" class="btn btn-small" data-reset-filters>清除搜索与筛选</button></div></div>{skeleton}<div class="table-state" data-table-state hidden><p class="state-message" role="status" data-state-message></p><button type="button" class="btn btn-small" data-retry hidden>重试</button></div><div class="table-footer"><span role="status" data-table-status></span><div class="pagination" aria-label="记录分页"><button type="button" class="btn btn-small" data-prev aria-label="上一页">{icon("previous")}</button><span data-pages></span><button type="button" class="btn btn-small" data-next aria-label="下一页">{icon("next")}</button></div></div><details class="state-tools"><summary>预览加载、空与错误状态</summary><label>显示状态{state_select}</label></details>'''
         content = f'<div class="panel" data-table data-page-size="{b.get("pageSize", 5)}">{head}{body}</div>'
     elif kind == 'bar-chart':
         body = ''.join(f'<div class="chart-row"><span>{h(x["label"])}</span><div class="bar-track"><span class="bar-fill" style="width:{x["value"]}%"></span></div><span class="chart-value">{x["value"]}%</span></div>' for x in b['items'])
@@ -122,7 +132,8 @@ def render_block(key, b, index=1):
             tasks = []
             for task in column['items']:
                 options = ''.join(f'<option value="{n}"'+(' selected' if i == n else '')+f'>{h(c["title"])}</option>' for n, c in enumerate(b['columns']))
-                tasks.append(f'<article class="task"><span class="badge">{h(task.get("tag", "任务"))}</span><p>{h(task["title"])}</p><small>{h(task.get("owner", "未指派"))}</small><label>移动至<select data-task-move aria-label="移动任务：{h(task["title"])}">{options}</select></label></article>')
+                move = f'<select data-task-move aria-label="移动任务：{h(task["title"])}">{options}</select>'
+                tasks.append(f'<article class="task"><span class="badge">{h(task.get("tag", "任务"))}</span><p>{h(task["title"])}</p><small>{h(task.get("owner", "未指派"))}</small><label>移动至{select_wrap(move)}</label></article>')
             columns.append(f'<section class="kanban-column" data-column="{i}"><h3>{h(column["title"])}<span class="badge neutral" data-count>{len(tasks)}</span></h3>{"".join(tasks)}</section>')
         body = '<div class="kanban">'+''.join(columns)+'</div>'
     elif kind == 'steps':

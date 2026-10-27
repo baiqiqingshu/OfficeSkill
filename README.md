@@ -1,6 +1,6 @@
 # UML Studio · 结构化绘图 SKILL
 
-新增 **[Web 项目功能验证 skill](.agents/skills/webapp-testing/SKILL.md)**：面向 Spring Boot + Vue，通过真实接口、Lightpanda 和数据库验证功能，支持需求/暂存区影响分析及独立 Python 用例包。见 [使用说明](docs/webapp-testing/README.md)。
+新增 **[Web 项目功能验证 skill](.agents/skills/webapp-testing/SKILL.md)**：面向 Spring Boot + Vue，通过真实接口、Lightpanda 和数据库验证功能，支持需求/暂存区影响分析及独立 Python 用例包。详见 [使用说明](.agents/skills/webapp-testing/SKILL.md)。
 
 本项目新增 **`.agents/skills/uml-studio`**：模型提供 JSON，组件负责自动布局、UML 图元、样式和图片导出。参考 FishboneStudio 的数据 / 渲染 / Vue / 导出分层，独立实现，不依赖 `D:\WorkProject\FishboneStudio`，不替换已有绘图 SKILL。
 
@@ -10,7 +10,7 @@
 
 场景包括登录多重判断、发布并行汇合、四方报销泳道、嵌套时序片段、订单领域基数、跨区域部署、死信重放与递归鱼骨。每张图的说明列出观察点；[场景与验证索引](.agents/skills/uml-studio/references/demo-coverage.md) 说明覆盖范围和运行方式。
 
-默认海蓝视觉风格、均衡布局，不显示图内标题。工作台以画布为中心，顶部“编辑图表”和“调整样式”按需展开对应区域；图片导出与复制集中在画布上方，文档 JSON 等低频操作收进“更多导出”。左侧管理图表，编辑区支持表单与 JSON 源码切换，进阶参数分组折叠。每张图独立保存数据与设置，未应用草稿和待保存 HTML 状态分别提示。预览可滚轮定点缩放、按住拖拽平移、用滚动条浏览、恢复原始大小 / 适应画布，不改变导出内容。详见 [工作台说明](docs/uml-studio/README.md) 和 [设计约定](docs/uml-studio/design.md)。
+默认海蓝视觉风格、均衡布局，不显示图内标题。工作台以画布为中心，顶部“编辑图表”和“调整样式”按需展开对应区域；图片导出与复制集中在画布上方，文档 JSON 等低频操作收进“更多导出”。左侧管理图表，编辑区支持表单与 JSON 源码切换，进阶参数分组折叠。每张图独立保存数据与设置，未应用草稿和待保存 HTML 状态分别提示。预览可滚轮定点缩放、按住拖拽平移、用滚动条浏览、恢复原始大小 / 适应画布，不改变导出内容。详见 [工作台说明](.agents/skills/uml-studio/SKILL.md) 和 [设计约定](docs/uml-studio-redesign.md)。
 
 HTML 内联 Vue 运行时、布局库、CSS、JSON，无 CDN、无远程字体，离线也能继续编辑和导出。网页不会自动覆盖磁盘上的原文件，修改后须点击“保存 HTML”下载新文件。
 

@@ -34,7 +34,7 @@ function orthogonalDistance(box, path) {
 }
 
 test('login branch guards stay beside their own paths and off shared trunks', async () => {
-  const spec = JSON.parse(await readFile(new URL('./fixtures/login-activity.json', import.meta.url), 'utf8'))
+  const spec = JSON.parse(await readFile(new URL('./fixtures/login.json', import.meta.url), 'utf8')).activity
   for (const edges of [spec.edges, [...spec.edges].reverse()]) for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious']) {
     const { routes, labels } = annotations((await renderDiagram({ ...spec, edges, direction, layout: { mode } })).svg)
     assert.equal(labels.length, 8)
