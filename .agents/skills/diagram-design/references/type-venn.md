@@ -21,6 +21,6 @@
 - 4+ circles where 2–3 would do.
 
 ## Examples
-- `assets/example-venn.html` — minimal light
-- `assets/example-venn-dark.html` — minimal dark
-- `assets/example-venn-full.html` — full editorial
+- `assets/examples.zip/example-venn.html` — minimal light
+- `assets/examples.zip/example-venn-dark.html` — minimal dark
+- `assets/examples.zip/example-venn-full.html` — full editorial

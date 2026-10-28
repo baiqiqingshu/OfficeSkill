@@ -98,6 +98,6 @@ These rules are executable: `scripts/verify-service-blueprint.py` reads the decl
 
 ## Examples
 
-- `assets/example-service-blueprint.html` — minimal light. *Trial to paid — what the customer never sees*, 5 stages, focal backstage `dunning-job timeout` under "Hit the limit".
-- `assets/example-service-blueprint-dark.html` — minimal dark, same data.
-- `assets/example-service-blueprint-full.html` — full editorial: container framing + 3 varied-width summary cards + footer.
+- `assets/examples.zip/example-service-blueprint.html` — minimal light. *Trial to paid — what the customer never sees*, 5 stages, focal backstage `dunning-job timeout` under "Hit the limit".
+- `assets/examples.zip/example-service-blueprint-dark.html` — minimal dark, same data.
+- `assets/examples.zip/example-service-blueprint-full.html` — full editorial: container framing + 3 varied-width summary cards + footer.

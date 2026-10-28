@@ -73,11 +73,11 @@ The silhouette verifier accepts signed decimal and scientific-notation coordinat
 
 ## Examples
 
-- `assets/example-axonometric-plan.html`: office floor, minimal light
-- `assets/example-axonometric-plan-dark.html`: office floor, minimal dark
-- `assets/example-axonometric-plan-full.html`: office floor, full editorial
-- `assets/example-axonometric-plan-campus.html`, `-dark`, `-full`: campus site plan with roads, trees, and buildings tagged by phase
-- `assets/example-axonometric-plan-coffee-shop.html`, `-dark`, `-full`: a coffee shop with an entrance and queue posts, an espresso bar, round tables, a kitchen, and a restroom
-- `assets/example-axonometric-plan-warehouse.html`, `-dark`, `-full`: a fulfillment floor with dock doors, tall storage racks, a pick zone, packing stations, and shipping docks
-- `assets/example-axonometric-plan-campus-animated.html`: the campus built phase by phase
-- `assets/example-axonometric-plan-coffee-shop-animated.html`, `assets/example-axonometric-plan-warehouse-animated.html`: each floor revealed zone by zone in three phases
+- `assets/examples.zip/example-axonometric-plan.html`: office floor, minimal light
+- `assets/examples.zip/example-axonometric-plan-dark.html`: office floor, minimal dark
+- `assets/examples.zip/example-axonometric-plan-full.html`: office floor, full editorial
+- `assets/examples.zip/example-axonometric-plan-campus.html`, `-dark`, `-full`: campus site plan with roads, trees, and buildings tagged by phase
+- `assets/examples.zip/example-axonometric-plan-coffee-shop.html`, `-dark`, `-full`: a coffee shop with an entrance and queue posts, an espresso bar, round tables, a kitchen, and a restroom
+- `assets/examples.zip/example-axonometric-plan-warehouse.html`, `-dark`, `-full`: a fulfillment floor with dock doors, tall storage racks, a pick zone, packing stations, and shipping docks
+- `assets/examples.zip/example-axonometric-plan-campus-animated.html`: the campus built phase by phase
+- `assets/examples.zip/example-axonometric-plan-coffee-shop-animated.html`, `assets/examples.zip/example-axonometric-plan-warehouse-animated.html`: each floor revealed zone by zone in three phases

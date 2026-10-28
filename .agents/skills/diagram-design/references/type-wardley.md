@@ -34,6 +34,6 @@
 
 ## Examples
 
-- `assets/example-wardley.html` — minimal light. AI assistant product, agent orchestration commoditising toward Product.
-- `assets/example-wardley-dark.html` — minimal dark, same map.
-- `assets/example-wardley-full.html` — full editorial: framed container + 3 varied-width cards (the moving component, a genesis-stage build, and the commodity base).
+- `assets/examples.zip/example-wardley.html` — minimal light. AI assistant product, agent orchestration commoditising toward Product.
+- `assets/examples.zip/example-wardley-dark.html` — minimal dark, same map.
+- `assets/examples.zip/example-wardley-full.html` — full editorial: framed container + 3 varied-width cards (the moving component, a genesis-stage build, and the commodity base).

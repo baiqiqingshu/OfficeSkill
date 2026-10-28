@@ -41,6 +41,10 @@ python -X utf8 .agents/skills/ucd-studio/scripts/ucd.py check --dir .agents/skil
 
 浏览器脚本使用宿主已有 Playwright/Chromium，不自动下载或安装；其现有 66 次视口检查之外，本次临时补充 18 个生成组合的中屏检查。运行会返回本机临时截图目录；补充脚本不随技能分发。
 
+## 第二轮视觉精修补记
+
+在 1.1.0 基础上做第二轮视觉精修后，上述历史数值部分已更新：h1 现为 20px/650（窄屏不变）、表头 12px/600 + `--surface-2`、KPI 值 30px/650；comfortable 面板头/内容/单元格/工具条/页脚统一为 16px 24px / 24px / 12px 24px，compact 对应项统一对齐 16px 边距；面包屑分隔符改为 inline SVG（`.crumb-sep`）。回归结果：16 项 unittest 通过；官方浏览器矩阵 28 页 / 66 次视口检查通过、外部请求 0、pageerror 0；demo 重新生成且静态检查无外联资源。
+
 ## 边界
 
 本次仅覆盖 Chromium 和所列页面/操作，不代表所有浏览器、任意新 JS 或完整可访问性认证。普通文字对比度记录不包括悬停、禁用、透明叠加与自定义样式；实际内容仍需检查缩放、焦点顺序及辅助技术体验。

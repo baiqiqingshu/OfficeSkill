@@ -22,9 +22,9 @@
 - Unlabeled transitions (the whole point is *what triggers this*).
 
 ## Examples
-- `assets/example-state.html` — minimal light
-- `assets/example-state-dark.html` — minimal dark
-- `assets/example-state-full.html` — full editorial
-- `assets/example-state-lifecycle.html` — lifecycle phase map, minimal light
-- `assets/example-state-lifecycle-dark.html` — lifecycle phase map, minimal dark
-- `assets/example-state-lifecycle-full.html` — lifecycle phase map, full editorial
+- `assets/examples.zip/example-state.html` — minimal light
+- `assets/examples.zip/example-state-dark.html` — minimal dark
+- `assets/examples.zip/example-state-full.html` — full editorial
+- `assets/examples.zip/example-state-lifecycle.html` — lifecycle phase map, minimal light
+- `assets/examples.zip/example-state-lifecycle-dark.html` — lifecycle phase map, minimal dark
+- `assets/examples.zip/example-state-lifecycle-full.html` — lifecycle phase map, full editorial

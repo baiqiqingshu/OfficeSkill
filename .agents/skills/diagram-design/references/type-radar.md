@@ -77,6 +77,6 @@ Light and dark values for every slot live in [`style-guide.md` § Series palette
 
 ## Examples
 
-- `assets/example-radar.html` — minimal light. 4 storage backends × 5 workload dimensions, MinIO focal.
-- `assets/example-radar-dark.html` — minimal dark, same data.
-- `assets/example-radar-full.html` — full editorial: container framing + 4 cards (one per backend) with varied widths + footer.
+- `assets/examples.zip/example-radar.html` — minimal light. 4 storage backends × 5 workload dimensions, MinIO focal.
+- `assets/examples.zip/example-radar-dark.html` — minimal dark, same data.
+- `assets/examples.zip/example-radar-full.html` — full editorial: container framing + 4 cards (one per backend) with varied widths + footer.

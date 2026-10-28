@@ -320,18 +320,18 @@ The binding contract is the slopegraph's, one level up: the path declares its ra
 
 ## Examples
 
-- `assets/example-line.html` — minimal light
-- `assets/example-line-dark.html` — minimal dark
-- `assets/example-line-full.html` — full editorial
-- `assets/example-slopegraph.html` — slopegraph, minimal light
-- `assets/example-slopegraph-dark.html` — slopegraph, minimal dark
-- `assets/example-slopegraph-full.html` — slopegraph, full editorial
-- `assets/example-ridgeline.html` — ridgeline, minimal light
-- `assets/example-ridgeline-dark.html` — ridgeline, minimal dark
-- `assets/example-ridgeline-full.html` — ridgeline, full editorial
-- `assets/example-streamgraph.html` — streamgraph, minimal light
-- `assets/example-streamgraph-dark.html` — streamgraph, minimal dark
-- `assets/example-streamgraph-full.html` — streamgraph, full editorial
-- `assets/example-bump.html` — bump chart, minimal light
-- `assets/example-bump-dark.html` — bump chart, minimal dark
-- `assets/example-bump-full.html` — bump chart, full editorial
+- `assets/examples.zip/example-line.html` — minimal light
+- `assets/examples.zip/example-line-dark.html` — minimal dark
+- `assets/examples.zip/example-line-full.html` — full editorial
+- `assets/examples.zip/example-slopegraph.html` — slopegraph, minimal light
+- `assets/examples.zip/example-slopegraph-dark.html` — slopegraph, minimal dark
+- `assets/examples.zip/example-slopegraph-full.html` — slopegraph, full editorial
+- `assets/examples.zip/example-ridgeline.html` — ridgeline, minimal light
+- `assets/examples.zip/example-ridgeline-dark.html` — ridgeline, minimal dark
+- `assets/examples.zip/example-ridgeline-full.html` — ridgeline, full editorial
+- `assets/examples.zip/example-streamgraph.html` — streamgraph, minimal light
+- `assets/examples.zip/example-streamgraph-dark.html` — streamgraph, minimal dark
+- `assets/examples.zip/example-streamgraph-full.html` — streamgraph, full editorial
+- `assets/examples.zip/example-bump.html` — bump chart, minimal light
+- `assets/examples.zip/example-bump-dark.html` — bump chart, minimal dark
+- `assets/examples.zip/example-bump-full.html` — bump chart, full editorial

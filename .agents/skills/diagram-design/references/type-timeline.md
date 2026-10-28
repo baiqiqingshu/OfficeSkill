@@ -15,6 +15,6 @@
 - Crowded labels without vertical offset — illegible.
 
 ## Examples
-- `assets/example-timeline.html` — minimal light
-- `assets/example-timeline-dark.html` — minimal dark
-- `assets/example-timeline-full.html` — full editorial
+- `assets/examples.zip/example-timeline.html` — minimal light
+- `assets/examples.zip/example-timeline-dark.html` — minimal dark
+- `assets/examples.zip/example-timeline-full.html` — full editorial

@@ -109,9 +109,9 @@ Provider-neutral metadata (no vendor prefix):
 - Colour as the only distinction between an administrative band and a traffic box — the shapes must differ, because greyscale still has to tell them apart.
 
 ## Examples
-- `assets/example-architecture.html` — minimal light
-- `assets/example-architecture-dark.html` — minimal dark
-- `assets/example-architecture-full.html` — full editorial
-- `assets/example-architecture-containment.html` — nested admin/traffic scopes, light
-- `assets/example-architecture-containment-dark.html` — nested admin/traffic scopes, dark
-- `assets/example-architecture-containment-full.html` — nested admin/traffic scopes, full editorial
+- `assets/examples.zip/example-architecture.html` — minimal light
+- `assets/examples.zip/example-architecture-dark.html` — minimal dark
+- `assets/examples.zip/example-architecture-full.html` — full editorial
+- `assets/examples.zip/example-architecture-containment.html` — nested admin/traffic scopes, light
+- `assets/examples.zip/example-architecture-containment-dark.html` — nested admin/traffic scopes, dark
+- `assets/examples.zip/example-architecture-containment-full.html` — nested admin/traffic scopes, full editorial

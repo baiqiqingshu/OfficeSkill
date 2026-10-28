@@ -459,12 +459,12 @@ Before emitting SVG, verify **every** item. If any fails, fix it — don't ship.
 
 ## 9. Examples
 
-- `assets/example-high-level.html` — horizontal-only, 5 phases, light skin.
-- `assets/example-high-level-dark.html` — same, dark skin.
-- `assets/example-high-level-full.html` — same, editorial-card frame.
-- `assets/example-high-level-vertical.html` — adds vertical Orchestration + Security chevrons, Airflow bar, Keycloak cross-cutting. **Reference render of the full parametric pattern.**
-- `assets/example-high-level-vertical-dark.html` — vertical pattern, dark skin.
-- `assets/example-high-level-vertical-full.html` — vertical pattern, editorial-card frame.
-- `assets/example-datalake.html` — unclustered five-phase data stack (Sources → Ingest → Data Lake → Query → Consume), zone-based flow without a container-orchestrator boundary. The MinIO lake is the focal node; vertical concerns are flattened into the horizontal chevron banner. Light skin.
-- `assets/example-datalake-dark.html` — same, dark skin.
-- `assets/example-datalake-full.html` — same, editorial-card frame.
+- `assets/examples.zip/example-high-level.html` — horizontal-only, 5 phases, light skin.
+- `assets/examples.zip/example-high-level-dark.html` — same, dark skin.
+- `assets/examples.zip/example-high-level-full.html` — same, editorial-card frame.
+- `assets/examples.zip/example-high-level-vertical.html` — adds vertical Orchestration + Security chevrons, Airflow bar, Keycloak cross-cutting. **Reference render of the full parametric pattern.**
+- `assets/examples.zip/example-high-level-vertical-dark.html` — vertical pattern, dark skin.
+- `assets/examples.zip/example-high-level-vertical-full.html` — vertical pattern, editorial-card frame.
+- `assets/examples.zip/example-datalake.html` — unclustered five-phase data stack (Sources → Ingest → Data Lake → Query → Consume), zone-based flow without a container-orchestrator boundary. The MinIO lake is the focal node; vertical concerns are flattened into the horizontal chevron banner. Light skin.
+- `assets/examples.zip/example-datalake-dark.html` — same, dark skin.
+- `assets/examples.zip/example-datalake-full.html` — same, editorial-card frame.

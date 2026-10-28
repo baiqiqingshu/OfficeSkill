@@ -129,9 +129,9 @@ Every segment is one `<rect>` (over its paper mask, as in the parent) carrying t
 
 ## Examples
 
-- `assets/example-treemap.html` — minimal light
-- `assets/example-treemap-dark.html` — minimal dark
-- `assets/example-treemap-full.html` — full editorial
-- `assets/example-marimekko.html` — marimekko, minimal light
-- `assets/example-marimekko-dark.html` — marimekko, minimal dark
-- `assets/example-marimekko-full.html` — marimekko, full editorial
+- `assets/examples.zip/example-treemap.html` — minimal light
+- `assets/examples.zip/example-treemap-dark.html` — minimal dark
+- `assets/examples.zip/example-treemap-full.html` — full editorial
+- `assets/examples.zip/example-marimekko.html` — marimekko, minimal light
+- `assets/examples.zip/example-marimekko-dark.html` — marimekko, minimal dark
+- `assets/examples.zip/example-marimekko-full.html` — marimekko, full editorial

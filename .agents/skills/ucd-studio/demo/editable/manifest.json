@@ -178,8 +178,8 @@
   },
   "specSha256": "944b493a1d9225b2d93596a07a7583a8b53274648f4d415188cfcc02b020cd92",
   "files": {
-    "index.html": "091917f2e94b44521c54ade4cf0a62f293b8cfa2f8244dc0d516fecdccdd9b6e",
-    "design-system.md": "41e0eccfd2b0ca782fa224717f6824ee9d72ab07f9084542c370eec3fc83326e",
+    "index.html": "67b1225cad332c8c54eabbe15408f9d23a7e223448ba2714537948ee28822d1e",
+    "design-system.md": "562fa24081dcb20f7dbde5393ff80b3f35d2025861387e4b1504ca8bd61c5f28",
     "page.js": "9e27c63b27d17cf36ffd83a140239a31eac91af4681551149661771064f4aba5"
   }
 }

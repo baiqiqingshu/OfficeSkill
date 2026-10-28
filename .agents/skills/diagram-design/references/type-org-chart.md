@@ -39,6 +39,6 @@ Use **Org Chart** instead of **Tree** when the nodes are people, agents, teams, 
 - Floating legends in the org area. Use the standard bottom legend strip.
 
 ## Examples
-- `assets/example-org-chart.html` — minimal light
-- `assets/example-org-chart-dark.html` — minimal dark
-- `assets/example-org-chart-full.html` — full editorial
+- `assets/examples.zip/example-org-chart.html` — minimal light
+- `assets/examples.zip/example-org-chart-dark.html` — minimal dark
+- `assets/examples.zip/example-org-chart-full.html` — full editorial

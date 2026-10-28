@@ -345,9 +345,9 @@ Before emitting SVG, verify **every** item:
 
 ## 9. Examples
 
-- `assets/example-medallion.html` — minimal light (NatStat quarterly survey: 5 tiers, 2 path cards, Aggregated focal). Gallery default.
-- `assets/example-medallion-dark.html` — same, dark skin.
-- `assets/example-medallion-full.html` — same, editorial-card frame with subtitle + summary cards.
+- `assets/examples.zip/example-medallion.html` — minimal light (NatStat quarterly survey: 5 tiers, 2 path cards, Aggregated focal). Gallery default.
+- `assets/examples.zip/example-medallion-dark.html` — same, dark skin.
+- `assets/examples.zip/example-medallion-full.html` — same, editorial-card frame with subtitle + summary cards.
 
 ---
 

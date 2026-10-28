@@ -206,6 +206,13 @@
       }
       #type-tabs .tab { text-align: left; max-width: 100%; overflow-wrap: anywhere; }
       .empty-results { padding: 0.75rem 0; }
+      .zip-note {
+        font-family: var(--mono);
+        font-size: 0.6875rem;
+        color: var(--muted);
+        margin-top: 0.625rem;
+      }
+      .zip-note code { color: var(--ink); font-size: inherit; }
       :is(button, a, input):focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
       ::selection { background: var(--ink); color: var(--paper); }
       @media (max-width: 640px) {
@@ -274,6 +281,11 @@
           <button class="tab" data-variant="-full">Full editorial</button>
         </div>
       </div>
+      <p class="zip-note">
+        Most examples ship zipped in <code>examples.zip</code> — run
+        <code>python -m zipfile -e examples.zip .</code> in this folder to
+        restore all 210 previews; see <code>examples-index.md</code>.
+      </p>
       <nav class="catalog" id="diagram-nav" aria-label="Diagram catalog">
         <div class="catalog-tools">
           <label class="search-label" for="diagram-search">Find a diagram

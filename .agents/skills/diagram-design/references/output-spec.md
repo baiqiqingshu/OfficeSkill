@@ -143,21 +143,21 @@ Each is registered against the font carrying it, because that is what the sweep 
 
 | File | Sizes | What they are |
 |---|---|---|
-| `assets/example-data-flow.html` | Geist Mono 5, Geist Mono 6 | chip text and role label, both set in CSS |
-| `assets/example-data-flow-dark.html` | Geist Mono 5, Geist Mono 6 | chip text and role label, both set in CSS |
-| `assets/example-data-flow-full.html` | Geist Mono 5, Geist Mono 6 | chip text and role label, both set in CSS |
-| `assets/example-nested.html` | Instrument Serif 14, Instrument Serif 14 | two italic serif asides |
-| `assets/example-nested-dark.html` | Instrument Serif 14, Instrument Serif 14 | two italic serif asides |
-| `assets/example-nested-full.html` | Instrument Serif 14, Instrument Serif 14 | two italic serif asides |
-| `assets/example-paved-road-animated.html` | Geist 600 13 | boundary node name |
-| `assets/example-process.html` | Geist Mono 6 | role chip |
-| `assets/example-process-dark.html` | Geist Mono 6 | role chip |
-| `assets/example-process-full.html` | Geist Mono 6 | role chip |
-| `assets/example-quadrant-consultant.html` | Geist 600 13 | inline dot glyph in a `tspan` |
-| `assets/example-queue-animated.html` | Geist 600 13, Geist 600 22, Geist 600 24 | state caption and two fill counters |
-| `assets/example-treemap.html` | Geist 600 7, Geist 600 7, Geist 600 13, Geist 600 13 | two cell index glyphs and two cell names |
-| `assets/example-treemap-dark.html` | Geist 600 7, Geist 600 7, Geist 600 13, Geist 600 13 | two cell index glyphs and two cell names |
-| `assets/example-treemap-full.html` | Geist 600 7, Geist 600 7, Geist 600 13, Geist 600 13 | two cell index glyphs and two cell names |
+| `assets/examples.zip/example-data-flow.html` | Geist Mono 5, Geist Mono 6 | chip text and role label, both set in CSS |
+| `assets/examples.zip/example-data-flow-dark.html` | Geist Mono 5, Geist Mono 6 | chip text and role label, both set in CSS |
+| `assets/examples.zip/example-data-flow-full.html` | Geist Mono 5, Geist Mono 6 | chip text and role label, both set in CSS |
+| `assets/examples.zip/example-nested.html` | Instrument Serif 14, Instrument Serif 14 | two italic serif asides |
+| `assets/examples.zip/example-nested-dark.html` | Instrument Serif 14, Instrument Serif 14 | two italic serif asides |
+| `assets/examples.zip/example-nested-full.html` | Instrument Serif 14, Instrument Serif 14 | two italic serif asides |
+| `assets/examples.zip/example-paved-road-animated.html` | Geist 600 13 | boundary node name |
+| `assets/examples.zip/example-process.html` | Geist Mono 6 | role chip |
+| `assets/examples.zip/example-process-dark.html` | Geist Mono 6 | role chip |
+| `assets/examples.zip/example-process-full.html` | Geist Mono 6 | role chip |
+| `assets/examples.zip/example-quadrant-consultant.html` | Geist 600 13 | inline dot glyph in a `tspan` |
+| `assets/examples.zip/example-queue-animated.html` | Geist 600 13, Geist 600 22, Geist 600 24 | state caption and two fill counters |
+| `assets/examples.zip/example-treemap.html` | Geist 600 7, Geist 600 7, Geist 600 13, Geist 600 13 | two cell index glyphs and two cell names |
+| `assets/examples.zip/example-treemap-dark.html` | Geist 600 7, Geist 600 7, Geist 600 13, Geist 600 13 | two cell index glyphs and two cell names |
+| `assets/examples.zip/example-treemap-full.html` | Geist 600 7, Geist 600 7, Geist 600 13, Geist 600 13 | two cell index glyphs and two cell names |
 | `references/type-treemap.md` | Geist 600 13 | the cell-name line of the documented pattern |
 
 New diagrams get no rows here. Bringing one of these onto the ramp is a visual change to a shipped example and belongs in its own PR.

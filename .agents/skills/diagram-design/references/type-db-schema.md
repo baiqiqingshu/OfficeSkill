@@ -43,6 +43,6 @@ Max 5 tables, max 8 column rows shown per table, max 6 FK edges, max 2 accent el
 
 ## Examples
 
-- `assets/example-db-schema.html` — minimal light
-- `assets/example-db-schema-dark.html` — minimal dark
-- `assets/example-db-schema-full.html` — full editorial
+- `assets/examples.zip/example-db-schema.html` — minimal light
+- `assets/examples.zip/example-db-schema-dark.html` — minimal dark
+- `assets/examples.zip/example-db-schema-full.html` — full editorial

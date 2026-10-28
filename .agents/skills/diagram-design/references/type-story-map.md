@@ -41,6 +41,6 @@ Exactly 2 accent elements: the release cut line with its `RELEASE CUT` label (co
 
 ## Examples
 
-- `assets/example-story-map.html` — minimal light. *Reporting, first release*: four activities (`Find the data`, `Build the report`, `Share it`, `Trust it`), MVP/Release 2/Later slices, release cut under MVP, `Row-level permissions` flagged as the riskiest story.
-- `assets/example-story-map-dark.html` — minimal dark, same data.
-- `assets/example-story-map-full.html` — full editorial: container framing + 3 summary cards of varied widths + footer.
+- `assets/examples.zip/example-story-map.html` — minimal light. *Reporting, first release*: four activities (`Find the data`, `Build the report`, `Share it`, `Trust it`), MVP/Release 2/Later slices, release cut under MVP, `Row-level permissions` flagged as the riskiest story.
+- `assets/examples.zip/example-story-map-dark.html` — minimal dark, same data.
+- `assets/examples.zip/example-story-map-full.html` — full editorial: container framing + 3 summary cards of varied widths + footer.

@@ -103,13 +103,13 @@ The silhouette verifier accepts signed decimal and scientific-notation coordinat
 
 ## Examples
 
-- `assets/example-exploded.html`: app stack, minimal light
-- `assets/example-exploded-dark.html`: app stack, minimal dark
-- `assets/example-exploded-full.html`: app stack, full editorial
-- `assets/example-exploded-phone.html`, `-dark`, `-full`: phone teardown with a housing, a shared board and battery level, and a display
-- `assets/example-exploded-unboxing.html`, `-dark`, `-full`: packaging with a telescoping lid, a product and cable on one level, an insert, and a box
-- `assets/example-exploded-ai-stack.html`, `-dark`, `-full`: an AI agent stack with a secrets vault, tools, skills as small cards on one layer, the agent harness around the model, and the interface
-- `assets/example-exploded-keyboard.html`, `-dark`, `-full`: a mechanical keyboard with a case tray, PCB, plate, a grid of switches, and a grid of keycaps
-- `assets/example-exploded-phone-animated.html`: the phone assembled, then exploded once
-- `assets/example-exploded-unboxing-animated.html`: the box closed, then unpacked once
-- `assets/example-exploded-ai-stack-animated.html`, `assets/example-exploded-keyboard-animated.html`: the stack and the keyboard assembled, then exploded once
+- `assets/examples.zip/example-exploded.html`: app stack, minimal light
+- `assets/examples.zip/example-exploded-dark.html`: app stack, minimal dark
+- `assets/examples.zip/example-exploded-full.html`: app stack, full editorial
+- `assets/examples.zip/example-exploded-phone.html`, `-dark`, `-full`: phone teardown with a housing, a shared board and battery level, and a display
+- `assets/examples.zip/example-exploded-unboxing.html`, `-dark`, `-full`: packaging with a telescoping lid, a product and cable on one level, an insert, and a box
+- `assets/examples.zip/example-exploded-ai-stack.html`, `-dark`, `-full`: an AI agent stack with a secrets vault, tools, skills as small cards on one layer, the agent harness around the model, and the interface
+- `assets/examples.zip/example-exploded-keyboard.html`, `-dark`, `-full`: a mechanical keyboard with a case tray, PCB, plate, a grid of switches, and a grid of keycaps
+- `assets/examples.zip/example-exploded-phone-animated.html`: the phone assembled, then exploded once
+- `assets/examples.zip/example-exploded-unboxing-animated.html`: the box closed, then unpacked once
+- `assets/examples.zip/example-exploded-ai-stack-animated.html`, `assets/examples.zip/example-exploded-keyboard-animated.html`: the stack and the keyboard assembled, then exploded once

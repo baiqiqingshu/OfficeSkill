@@ -70,6 +70,6 @@ These rules are executable: `scripts/verify-waterfall.py` reads each bar's decla
 
 ## Examples
 
-- `assets/example-waterfall.html` — minimal light
-- `assets/example-waterfall-dark.html` — minimal dark
-- `assets/example-waterfall-full.html` — full editorial
+- `assets/examples.zip/example-waterfall.html` — minimal light
+- `assets/examples.zip/example-waterfall-dark.html` — minimal dark
+- `assets/examples.zip/example-waterfall-full.html` — full editorial

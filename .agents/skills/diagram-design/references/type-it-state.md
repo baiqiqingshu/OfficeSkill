@@ -393,9 +393,9 @@ Before emitting SVG, verify **every** item:
 
 ## 9. Examples
 
-- `assets/example-it-state.html` — minimal light (NatStat canonical: 3 zones, 9 components, 8 connectors, 0 footer bars, SQL Server tinted olive). Gallery default.
-- `assets/example-it-state-dark.html` — same, dark skin.
-- `assets/example-it-state-full.html` — same, editorial-card frame with summary cards.
+- `assets/examples.zip/example-it-state.html` — minimal light (NatStat canonical: 3 zones, 9 components, 8 connectors, 0 footer bars, SQL Server tinted olive). Gallery default.
+- `assets/examples.zip/example-it-state-dark.html` — same, dark skin.
+- `assets/examples.zip/example-it-state-full.html` — same, editorial-card frame with summary cards.
 
 ---
 

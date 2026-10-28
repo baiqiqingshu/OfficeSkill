@@ -70,6 +70,6 @@ Over budget → split into two linked Sankeys (e.g. an overview stage-1→stage-
 
 ## Examples
 
-- `assets/example-sankey.html` — minimal light. A month of CI compute (12,000 minutes) splitting into test/build/lint stages, merging into passed/failed/flaked outcomes; the flaky-rerun path is the one accent flow.
-- `assets/example-sankey-dark.html` — minimal dark, same data.
-- `assets/example-sankey-full.html` — full editorial: container framing + 3 summary cards of varied widths + footer.
+- `assets/examples.zip/example-sankey.html` — minimal light. A month of CI compute (12,000 minutes) splitting into test/build/lint stages, merging into passed/failed/flaked outcomes; the flaky-rerun path is the one accent flow.
+- `assets/examples.zip/example-sankey-dark.html` — minimal dark, same data.
+- `assets/examples.zip/example-sankey-full.html` — full editorial: container framing + 3 summary cards of varied widths + footer.
