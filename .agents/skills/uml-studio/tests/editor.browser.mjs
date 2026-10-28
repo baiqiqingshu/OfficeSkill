@@ -23,6 +23,23 @@ test('offline editor filters, folds, locates elements and preserves drafts and c
     };
     await page.evaluate(spec => window.UmlStudio.setSpec(spec), spec);
     await page.getByRole('button', { name: '编辑图表', exact: true }).click();
+    // Custom dropdowns: trigger mirrors the model, grouped popup commits through the hidden native select.
+    const typeTrigger = page.locator('.select-wrap:has(#diagram-type) .v-select-trigger');
+    const pop = page.locator('.v-select-pop');
+    assert.match((await typeTrigger.locator('.v-select-value').textContent()).trim(), /\S/);
+    await typeTrigger.click();
+    assert.equal(await pop.isVisible(), true);
+    assert.ok((await pop.locator('.v-select-group').count()) > 1);
+    await pop.getByRole('option', {name: '时序图'}).click();
+    assert.equal(await page.locator('#diagram-type').inputValue(), 'sequence');
+    assert.equal((await typeTrigger.locator('.v-select-value').textContent()).trim(), '时序图');
+    await typeTrigger.focus();
+    await page.keyboard.press('ArrowDown');
+    assert.equal(await pop.isVisible(), true);
+    await page.keyboard.press('End');
+    await page.keyboard.press('Escape');
+    assert.equal(await pop.isVisible(), false);
+    assert.equal(await typeTrigger.evaluate(el => el === document.activeElement), true);
     const form = page.locator('.uml-form-editor');
     const search = form.getByRole('searchbox');
     await form.getByRole('button', {name:'全部折叠', exact:true}).click();
@@ -42,6 +59,17 @@ test('offline editor filters, folds, locates elements and preserves drafts and c
     assert.equal(await selected.getAttribute('data-editor-key'), 'nodes/11');
     assert.equal(await selected.getAttribute('open'), '');
     assert.equal(await search.inputValue(), '');
+    // A card-level dropdown (:value + @change) writes back through the real select.
+    const kindSelect = selected.locator('select.v-select-native').first();
+    const kindTrigger = selected.locator('.v-select-trigger').first();
+    const kindValue = await kindSelect.evaluate(el => el.options[2].value);
+    await kindTrigger.click();
+    await page.locator('.v-select-pop').getByRole('option').nth(2).click();
+    assert.equal(await kindSelect.inputValue(), kindValue);
+    assert.equal(
+      (await kindTrigger.locator('.v-select-value').textContent()).trim(),
+      await kindSelect.evaluate(el => el.selectedOptions[0].textContent.trim()),
+    );
     const position = await selected.evaluate(el => {
       const panel=el.closest('.form-panel').getBoundingClientRect();
       const card=el.getBoundingClientRect();

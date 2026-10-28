@@ -27,6 +27,7 @@ Operate 模式的现代 SaaS 工具质感：暖纸底 + 石墨墨黑主按钮 + 
 - 高度二选一：浮层=柔和阴影无描边；平面元素=1px `--line` 无阴影。
 - 主按钮 `.button-dark`=`--primary` 实色白字，hover `--primary-hover`+`translateY(-1px)`+`--shadow-sm`；`.button-accent`=`--accent` 实色，hover `--accent-deep`；outline=白底描边；quiet=透明；disabled 用 `color-mix` 淡化、无投影无位移。`--gradient-brand` 仅 `.brand-mark` 与顶栏 2px 发丝线（`::after`）。
 - 图标：24 viewBox、stroke 1.6–1.7、currentColor、round caps、aria-hidden；select 箭头=`.select-wrap`+`.select-chevron` 内联 SVG（`appearance:none`，禁 `url(` 背景）。
+- 下拉统一用 `src/VSelect.vue`（用法同原生 `<select>`：`v-model`/`v-model.number` 或 `:value`+`@change`，插槽写 `<option>`/`<optgroup>`）：真实 select 隐藏保留为数据/校验层，自绘触发按钮+`fixed` 弹层（选中态 `--accent-soft`，分组标题 `--faint`），支持键盘导航、typeahead、翻转会出界时向上展开。
 - 聚焦：`outline 2px var(--accent)` + `box-shadow 0 0 0 4px var(--ring)`。
 - 磨砂玻璃仅 `.studio-header`（`blur(14px) saturate(1.4)` + `rgb(255 255 255/.74)`）与窄屏抽屉；`::selection`=`--accent-soft`。
 - 禁：渐变文字、>1px 彩色边条、emoji 图标、装饰性玻璃、远程资源、紫色系、`url(`。

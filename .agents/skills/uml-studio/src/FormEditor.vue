@@ -3,6 +3,7 @@ import { computed, nextTick, ref, toRaw, watch } from "vue";
 import { matchesContent } from "./editor-search";
 import CauseEditor from "./CauseEditor.vue";
 import ColorInput from "./ColorInput.vue";
+import VSelect from "./VSelect.vue";
 import { resolveTheme } from "./themes";
 import { validateSpec } from "./validate";
 import type {
@@ -508,14 +509,14 @@ function updateCause(
         />
       </label>
       <label v-if="isGraph"
-        >排列方向<span class="select-wrap"><select
+        >排列方向<span class="select-wrap"><VSelect
           :value="draft.direction ?? ''"
           @change="optionalText(draft, 'direction', valueOf($event))"
         >
           <option value="">默认</option>
           <option value="TB">从上到下</option>
           <option value="LR">从左到右</option>
-        </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+        </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
       >
       <p v-if="draft.id" class="uml-editor-hint">
         图表 ID：<code>{{ draft.id }}</code>
@@ -543,7 +544,7 @@ function updateCause(
           <div class="uml-editor-card__body">
             <label>名称<input v-model="node.label" type="text" /></label>
             <label
-              >节点类型<span class="select-wrap"><select
+              >节点类型<span class="select-wrap"><VSelect
                 :value="node.kind ?? ''"
                 @change="optionalText(node, 'kind', valueOf($event))"
               >
@@ -551,7 +552,7 @@ function updateCause(
                 <option v-for="kind in nodeKinds" :key="kind" :value="kind">
                   {{ kindLabels[kind] }} · {{ kind }}
                 </option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <label
               >详情<textarea
@@ -569,7 +570,7 @@ function updateCause(
             /></label>
             <div class="uml-editor-grid">
               <label v-if="draft.type !== 'swimlane'"
-                >所属分组<span class="select-wrap"><select
+                >所属分组<span class="select-wrap"><VSelect
                   :value="node.group ?? ''"
                   @change="membership(node, 'group', valueOf($event))"
                 >
@@ -581,10 +582,10 @@ function updateCause(
                   >
                     {{ group.label }} ({{ group.id }})
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
               <label
-                >所属泳道<span class="select-wrap"><select
+                >所属泳道<span class="select-wrap"><VSelect
                   :value="node.lane ?? ''"
                   @change="membership(node, 'lane', valueOf($event))"
                 >
@@ -598,7 +599,7 @@ function updateCause(
                   >
                     {{ lane.label }} ({{ lane.id }})
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
             </div>
             <details
@@ -696,16 +697,16 @@ function updateCause(
               /></label>
               <div class="uml-editor-grid">
                 <label
-                  >字形<span class="select-wrap"><select
+                  >字形<span class="select-wrap"><VSelect
                     :value="node.style?.fontStyle ?? ''"
                     @change="optionalStyle(node, 'fontStyle', valueOf($event))"
                   >
                     <option value="">继承主题</option>
                     <option value="normal">常规</option>
                     <option value="italic">斜体</option>
-                  </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                  </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
                 ><label
-                  >文字装饰<span class="select-wrap"><select
+                  >文字装饰<span class="select-wrap"><VSelect
                     :value="node.style?.textDecoration ?? ''"
                     @change="
                       optionalStyle(node, 'textDecoration', valueOf($event))
@@ -714,7 +715,7 @@ function updateCause(
                     <option value="">继承主题</option>
                     <option value="none">无</option>
                     <option value="underline">下划线</option>
-                  </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                  </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
                 >
               </div>
               <button type="button" @click="delete node.style">
@@ -737,13 +738,13 @@ function updateCause(
           <button type="button" @click="addEdge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>连线</button>
         </div>
         <label>连线交叉表示（当前图）
-          <span class="select-wrap"><select
+          <span class="select-wrap"><VSelect
             :value="draft.layout?.edgeCrossing ?? 'bridge'"
             @change="draft.layout = { ...draft.layout, edgeCrossing: ($event.target as HTMLSelectElement).value as 'bridge' | 'plain' }"
           >
             <option value="bridge">拱桥形跳线（默认）</option>
             <option value="plain">直接交叉（无圆点）</option>
-          </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+          </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
         </label>
         <p class="uml-editor-hint">拱桥或无圆点交叉均表示不相连。</p>
         <details
@@ -776,7 +777,7 @@ function updateCause(
           <div class="uml-editor-card__body">
             <div class="uml-editor-grid">
               <label
-                >起点<span class="select-wrap"><select v-model="edge.from">
+                >起点<span class="select-wrap"><VSelect v-model="edge.from">
                   <option
                     v-for="node in draft.nodes"
                     :key="node.id"
@@ -784,9 +785,9 @@ function updateCause(
                   >
                     {{ node.label }} ({{ node.id }})
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               ><label
-                >终点<span class="select-wrap"><select v-model="edge.to">
+                >终点<span class="select-wrap"><VSelect v-model="edge.to">
                   <option
                     v-for="node in draft.nodes"
                     :key="node.id"
@@ -794,7 +795,7 @@ function updateCause(
                   >
                     {{ node.label }} ({{ node.id }})
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
             </div>
             <label
@@ -804,7 +805,7 @@ function updateCause(
                 @input="optionalText(edge, 'label', valueOf($event))"
             /></label>
             <label
-              >关系类型<span class="select-wrap"><select
+              >关系类型<span class="select-wrap"><VSelect
                 :value="edge.kind ?? ''"
                 @change="optionalText(edge, 'kind', valueOf($event))"
               >
@@ -812,7 +813,7 @@ function updateCause(
                 <option v-for="kind in edgeKinds" :key="kind" :value="kind">
                   {{ kindLabels[kind] }} · {{ kind }}
                 </option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <div class="uml-editor-grid">
               <label
@@ -865,7 +866,7 @@ function updateCause(
             <code>{{ group.id }}</code
             ><label>分组名称<input v-model="group.label" type="text" /></label>
             <label
-              >分组类型<span class="select-wrap"><select
+              >分组类型<span class="select-wrap"><VSelect
                 :value="group.kind ?? ''"
                 @change="optionalText(group, 'kind', valueOf($event))"
               >
@@ -877,10 +878,10 @@ function updateCause(
                 >
                   {{ kindLabels[kind] }} · {{ kind }}
                 </option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <label
-              >父分组<span class="select-wrap"><select
+              >父分组<span class="select-wrap"><VSelect
                 :value="group.parent ?? ''"
                 @change="optionalText(group, 'parent', valueOf($event))"
               >
@@ -892,7 +893,7 @@ function updateCause(
                 >
                   {{ parent.label }} ({{ parent.id }})
                 </option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <button
               type="button"
@@ -952,7 +953,7 @@ function updateCause(
             <code>{{ participant.id }}</code
             ><label>名称<input v-model="participant.label" type="text" /></label
             ><label
-              >类型<span class="select-wrap"><select
+              >类型<span class="select-wrap"><VSelect
                 :value="participant.kind ?? ''"
                 @change="optionalText(participant, 'kind', valueOf($event))"
               >
@@ -964,7 +965,7 @@ function updateCause(
                 >
                   {{ kindLabels[kind] }} · {{ kind }}
                 </option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             ><button
               type="button"
               class="uml-editor-danger"
@@ -994,7 +995,7 @@ function updateCause(
           <div class="uml-editor-card__body">
             <div class="uml-editor-grid">
               <label
-                >发送者<span class="select-wrap"><select v-model="message.from">
+                >发送者<span class="select-wrap"><VSelect v-model="message.from">
                   <option
                     v-for="participant in draft.participants"
                     :key="participant.id"
@@ -1002,9 +1003,9 @@ function updateCause(
                   >
                     {{ participant.label }} ({{ participant.id }})
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               ><label
-                >接收者<span class="select-wrap"><select v-model="message.to">
+                >接收者<span class="select-wrap"><VSelect v-model="message.to">
                   <option
                     v-for="participant in draft.participants"
                     :key="participant.id"
@@ -1012,12 +1013,12 @@ function updateCause(
                   >
                     {{ participant.label }} ({{ participant.id }})
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
             </div>
             <label>消息文字<input v-model="message.label" type="text" /></label
             ><label
-              >消息类型<span class="select-wrap"><select
+              >消息类型<span class="select-wrap"><VSelect
                 :value="message.kind ?? ''"
                 @change="optionalText(message, 'kind', valueOf($event))"
               >
@@ -1035,7 +1036,7 @@ function updateCause(
                 >
                   {{ kindLabels[kind] }} · {{ kind }}
                 </option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <div class="uml-editor-grid">
               <label class="uml-editor-checkbox"
@@ -1079,7 +1080,7 @@ function updateCause(
           <summary>{{ index + 1 }}. {{ fragment.label || "未命名片段" }}</summary>
           <div class="uml-editor-card__body">
             <label
-              >片段类型<span class="select-wrap"><select
+              >片段类型<span class="select-wrap"><VSelect
                 :value="fragment.kind"
                 @change="fragmentKind(fragment, valueOf($event))"
               >
@@ -1087,14 +1088,14 @@ function updateCause(
                 <option value="opt">opt · 可选</option>
                 <option value="loop">loop · 循环</option>
                 <option value="par">par · 并行</option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <label
               >条件 / 标题<input v-model="fragment.label" type="text"
             /></label>
             <div class="uml-editor-grid">
               <label
-                >起始消息<span class="select-wrap"><select v-model.number="fragment.from">
+                >起始消息<span class="select-wrap"><VSelect v-model.number="fragment.from">
                   <option
                     v-for="(message, messageIndex) in draft.messages"
                     :key="messageIndex"
@@ -1102,9 +1103,9 @@ function updateCause(
                   >
                     {{ messageIndex + 1 }} · {{ message.label }}
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               ><label
-                >结束消息<span class="select-wrap"><select v-model.number="fragment.to">
+                >结束消息<span class="select-wrap"><VSelect v-model.number="fragment.to">
                   <option
                     v-for="(message, messageIndex) in draft.messages"
                     :key="messageIndex"
@@ -1112,12 +1113,12 @@ function updateCause(
                   >
                     {{ messageIndex + 1 }} · {{ message.label }}
                   </option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
             </div>
             <template v-if="fragment.kind === 'alt' || fragment.kind === 'par'"
               ><label
-                >第二分支起始消息<span class="select-wrap"><select
+                >第二分支起始消息<span class="select-wrap"><VSelect
                   :value="fragment.elseAt ?? ''"
                   @change="fragmentElse(fragment, valueOf($event))"
                 >
@@ -1135,7 +1136,7 @@ function updateCause(
                       {{ messageIndex + 1 }} · {{ message.label }}
                     </option></template
                   >
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               ><label
                 >第二分支条件<input
                   :value="fragment.elseLabel ?? ''"
@@ -1168,14 +1169,14 @@ function updateCause(
             type="text"
         /></label>
         <label v-if="draft.fishbone">鱼头样式
-          <span class="select-wrap"><select :value="draft.fishbone.headStyle ?? 'classic'" @change="draft.fishbone.headStyle = valueOf($event) as NonNullable<DiagramSpec['fishbone']>['headStyle']">
+          <span class="select-wrap"><VSelect :value="draft.fishbone.headStyle ?? 'classic'" @change="draft.fishbone.headStyle = valueOf($event) as NonNullable<DiagramSpec['fishbone']>['headStyle']">
             <option value="classic">原版鱼头（默认）</option>
             <option value="fish">弧面鱼头</option><option value="slim">细长鱼头</option>
             <option value="shark">开口鱼头</option><option value="roundfish">高身圆角</option>
             <option value="carp">水滴鱼头</option><option value="sunfish">扇面鱼头</option>
             <option value="triangle">极简三角</option><option value="rounded">胶囊标签</option>
             <option value="label">方框标签</option>
-          </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+          </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
         </label>
         <div class="uml-editor-heading">
           <h3>分析分类（{{ draft.fishbone?.categories.length ?? 0 }}）</h3>

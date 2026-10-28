@@ -11,6 +11,7 @@ import {
 import DiagramCanvas from "./DiagramCanvas.vue";
 import FormEditor from "./FormEditor.vue";
 import ColorInput from "./ColorInput.vue";
+import VSelect from "./VSelect.vue";
 import { createHtml, downloadBlob } from "./export";
 import type { StudioRuntime } from "./export";
 import {
@@ -1215,7 +1216,7 @@ defineExpose({
             >从示例新增（不会替换现有图表）</label
           >
           <div class="add-diagram-row">
-            <span class="select-wrap"><select
+            <span class="select-wrap"><VSelect
               id="diagram-type"
               v-model="addType"
               class="select-input type-select"
@@ -1228,7 +1229,7 @@ defineExpose({
                 <option v-for="type in family.types" :key="type" :value="type">
                   {{ labels[type] }}
                 </option>
-              </optgroup></select
+              </optgroup></VSelect
             ><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span
             ><button
               class="button button-accent"
@@ -1329,7 +1330,7 @@ defineExpose({
 
           <div class="export-fields">
             <label for="export-format"
-              >文件格式<span class="select-wrap"><select
+              >文件格式<span class="select-wrap"><VSelect
                 id="export-format"
                 v-model="format"
                 class="select-input"
@@ -1338,9 +1339,9 @@ defineExpose({
                 <option value="png">PNG · 无损</option>
                 <option value="jpeg">JPEG · 通用</option>
                 <option value="webp">WebP · 轻量</option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             ><label for="export-scale"
-              >导出倍率<span class="select-wrap"><select
+              >导出倍率<span class="select-wrap"><VSelect
                 id="export-scale"
                 v-model.number="scale"
                 class="select-input"
@@ -1349,7 +1350,7 @@ defineExpose({
                 <option :value="2">2× 清晰</option>
                 <option :value="3">3× 高清</option>
                 <option :value="4">4× 超清</option>
-              </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
           </div>
           <label
@@ -1537,7 +1538,7 @@ defineExpose({
                     <div class="advanced-inner">
                       <label class="field-label" for="font-preset"
                         >字体预设（只使用本机字体）</label
-                      ><span class="select-wrap"><select
+                      ><span class="select-wrap"><VSelect
                         id="font-preset"
                         class="select-input"
                         :value="selectedFont"
@@ -1557,7 +1558,7 @@ defineExpose({
                         >
                           {{ font.label }}
                         </option>
-                      </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                      </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
                       <label class="field-label" for="font-family"
                         >自定义字体 / 回退列表</label
                       ><input
@@ -1574,7 +1575,7 @@ defineExpose({
                       />
                       <div class="font-format-row">
                         <label for="font-weight"
-                          >字重<span class="select-wrap"><select
+                          >字重<span class="select-wrap"><VSelect
                             id="font-weight"
                             class="select-input"
                             :value="currentTheme.fontWeight"
@@ -1594,7 +1595,7 @@ defineExpose({
                             <option :value="700">700 粗体</option>
                             <option :value="800">800 特粗</option>
                             <option :value="900">900 重体</option>
-                          </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                          </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
                         ><button
                           type="button"
                           class="format-button"
@@ -1659,17 +1660,17 @@ defineExpose({
                     <div class="advanced-inner">
                       <template v-if="graphDiagram">
                         <label class="field-label" for="edge-crossing">连线交叉表示</label>
-                        <span class="select-wrap"><select id="edge-crossing" class="select-input"
+                        <span class="select-wrap"><VSelect id="edge-crossing" class="select-input"
                           :value="applied.layout?.edgeCrossing ?? 'bridge'"
                           @change="updateLayout('edgeCrossing', ($event.target as HTMLSelectElement).value as 'bridge' | 'plain')">
                           <option value="bridge">拱桥形跳线（默认）</option>
                           <option value="plain">直接交叉（无圆点）</option>
-                        </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                        </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
                         <p class="field-hint">拱桥或无圆点交叉均表示不相连。</p>
                       </template>
                       <label class="field-label" for="layout-mode"
                         >布局模式</label
-                      ><span class="select-wrap"><select
+                      ><span class="select-wrap"><VSelect
                         id="layout-mode"
                         class="select-input layout-mode-select"
                         :value="applied.layout?.mode ?? 'balanced'"
@@ -1689,7 +1690,7 @@ defineExpose({
                         >
                           {{ mode.label }}
                         </option>
-                      </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                      </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
                       <p class="control-hint">
                         切换模式会恢复该模式的元素 /
                         区域间距，保留尺寸上限等设置。
@@ -1708,7 +1709,7 @@ defineExpose({
                       >
                       <label class="field-label" for="layout-direction"
                         >布局方向</label
-                      ><span class="select-wrap"><select
+                      ><span class="select-wrap"><VSelect
                         id="layout-direction"
                         class="select-input"
                         :value="applied.direction ?? (applied.type === 'usecase' ? 'LR' : 'TB')"
@@ -1723,7 +1724,7 @@ defineExpose({
                       >
                         <option value="TB">从上到下</option>
                         <option value="LR">从左到右</option>
-                      </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+                      </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
                       <p v-if="!graphDiagram" class="control-hint">
                         方向、节点尺寸及每列节点数只用于节点图；时序图和鱼骨图采用专用布局。
                       </p>
@@ -1823,10 +1824,10 @@ defineExpose({
                 </button>
               </div>
               <label class="source-scope"
-                >编辑范围<span class="select-wrap"><select v-model="sourceScope" class="select-input">
+                >编辑范围<span class="select-wrap"><VSelect v-model="sourceScope" class="select-input">
                   <option value="diagram">当前图表 · 单图 JSON</option>
                   <option value="document">整个文档 · 全部图表 JSON</option>
-                </select><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
               <div class="editor-filebar">
                 <span class="file-dot"></span
