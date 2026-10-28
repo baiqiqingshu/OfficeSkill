@@ -282,6 +282,7 @@ def design_doc(spec, mode):
                          for key,b in spec['blocks'].items())
     bullets = lambda values: '\n'.join('- '+md(x) for x in values) or '- 未提供；待业务评审确认。'
     interactions = ['- 页面主操作打开原生 dialog；Esc 或“取消”关闭并返回触发按钮，校验通过后显示本地草稿反馈，不写入业务记录。',
+                    '- 下拉选择由运行时增强为统一样式的按钮与浮层选项（支持方向键、Home/End、打字定位与 Esc 关闭），真实 select 保留为隐藏的数据与校验层。',
                     '- 本页导航使用区块锚点及当前项标记，不代表额外业务路由。']
     if 'table' in kinds:
         interactions.append('- 表格支持任意字段搜索、状态筛选、数字感知排序与分页；禁用不可用的翻页按钮。无匹配时可清除筛选；状态预览包含加载骨架、空与错误，就近恢复示例记录或重试，均无网络请求。')
@@ -290,7 +291,7 @@ def design_doc(spec, mode):
     if 'tabs' in kinds:
         interactions.append('- 页签支持点击、左右方向键、Home/End；当前页签与内容面板通过 ARIA 关联。')
     if 'kanban' in kinds:
-        interactions.append('- 看板通过任务中的原生 select 移动至目标阶段，同时更新各列数量并显示本地反馈；不提供拖拽或真实协作同步。')
+        interactions.append('- 看板通过任务中的下拉选择移动至目标阶段，同时更新各列数量并显示本地反馈；不提供拖拽或真实协作同步。')
     if 'accordion' in kinds:
         interactions.append('- 折叠内容使用原生 details/summary，可通过鼠标和键盘展开。')
     if kinds & {'cards', 'empty'}:

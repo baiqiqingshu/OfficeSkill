@@ -492,7 +492,7 @@
   "specSha256": "992db428b09616341fdca395d89fb322534a3ea1b08070bb4a7ce652dffb282a",
   "files": {
     "assets/cover.png": "d6f02e17952fdc3297f39960e4f08a6c1a69ba9b0fde774e8ab53580bf2f9eb3",
-    "index.html": "534f9dba544e80fa168dfcc69563da89296a27e2057cff37339bf30b8d6a21d2",
-    "design-system.md": "b082dbd5e186a3231dcb12046ed185b38fe7effdf9c86b752f729c90c63b6a42"
+    "index.html": "5336af7a199de840a1d9e83d62535a0d7adc1bb2478334638d26ee0c8b1b3635",
+    "design-system.md": "dc398ce3d52e92cb41260f81181a67c4796e99f6c5399aca6f9a5b7aafecf6db"
   }
 }

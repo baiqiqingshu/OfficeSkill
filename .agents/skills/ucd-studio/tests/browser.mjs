@@ -30,6 +30,11 @@ try{
     await table.locator('[data-next]').click();assert.match(await table.locator('[data-pages]').textContent(),/2 \/ 2/);
     await table.locator('[data-search]').fill('不存在的词');assert.equal(await table.locator('tbody tr:visible').count(),0);assert.equal(await table.locator('[data-empty]').isVisible(),true);
     await table.locator('[data-search]').fill('');await table.locator('[data-filter]').selectOption('待审批');assert.equal(await table.locator('tbody tr:visible').count(),4);
+    // 自定义下拉：触发按钮同步、弹层选项提交回写真实 select。
+    const filterTrigger=table.locator('.filter-label .select-trigger');assert.equal(await filterTrigger.locator('.select-value').textContent(),'待审批');
+    await filterTrigger.click();const pop=page.locator('.select-pop');assert.equal(await pop.isVisible(),true);
+    await pop.locator('.select-opt',{hasText:'已通过'}).click();assert.equal(await table.locator('[data-filter]').inputValue(),'已通过');assert.equal(await filterTrigger.locator('.select-value').textContent(),'已通过');
+    await filterTrigger.click();await pop.locator('.select-opt',{hasText:'全部状态'}).click();assert.equal(await table.locator('tbody tr:visible').count(),5);
     await table.locator('[data-sort="0"]').click();assert.equal(await table.locator('th').first().getAttribute('aria-sort'),'ascending');
     await table.locator('summary').click();await table.locator('[data-state]').selectOption('loading');assert.match(await table.locator('[data-state-message]').textContent(),/正在加载/);await table.locator('[data-state]').selectOption('empty');assert.match(await table.locator('[data-state-message]').textContent(),/暂无记录/);await table.locator('[data-state]').selectOption('error');assert.match(await table.locator('[data-state-message]').textContent(),/无法加载/);await table.locator('[data-state]').selectOption('ready');
    }
