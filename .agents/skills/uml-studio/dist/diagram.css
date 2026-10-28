@@ -1,35 +1,47 @@
 
-/* 自包含令牌：与 docs/uml-studio-redesign.md §2 的 :root 同名同值，
+/* 自包含令牌：与 docs/frontend-redesign-r5.md §2.1 的 :root 同名同值，
    使 .studio-shell 覆盖与本组件独立使用（库构建）时取值一致。 */
 .diagram-canvas {
-  --paper: #ffffff;
-  --paper-2: #f4f8fb;
-  --ink: #1b2b3a;
-  --muted: #54697d;
-  --faint: #8ba0b3;
-  --line: #dbe4ec;
-  --line-strong: #b9c9d6;
-  --accent: #0f6fa3;
-  --accent-deep: #0b5b87;
-  --accent-soft: #e9f4fa;
-  --accent-line: #b8d9ea;
-  --ring: rgb(14 159 180 / .30);
-  --danger: #c2404f;
-  --danger-soft: #fdf0f2;
-  --warning: #96650f;
-  --warning-soft: #fbf3df;
-  --success: #2e7d5b;
-  --shadow-sm: 0 1px 2px rgb(20 45 66 / .05), 0 2px 6px -1px rgb(20 45 66 / .06);
-  --shadow-md: 0 2px 6px -2px rgb(20 45 66 / .07), 0 10px 24px -8px rgb(20 45 66 / .10);
-  --shadow-lg: 0 4px 12px -4px rgb(20 45 66 / .08), 0 24px 48px -14px rgb(20 45 66 / .18);
-  --r-xs: 6px;
-  --r-sm: 9px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-pill: 999px;
+  /* 中性：暖纸底 + 冷墨文字 */
+  --bg: #f3f2ee;            /* 应用背景，暖纸灰 */
+  --paper: #ffffff;         /* 卡片/面板 */
+  --paper-2: #f6f5f1;       /* 凹陷面：画布底、井区、分段控件底 */
+  --ink: #20242c;           /* 主文字，近黑 */
+  --muted: #5b6370;         /* 次要文字 */
+  --faint: #969da9;         /* 三级文字/占位 */
+  --line: #e4e2db;          /* 平面元素描边（暖调） */
+  --line-strong: #c5cad2;   /* 悬停描边 */
+
+  /* 品牌：松绿（渐变仅 logo 方块 / 顶栏发丝线 / 聚焦光环） */
+  --brand-from: #0a5a48;
+  --brand-to:   #13a07c;
+  --gradient-brand: linear-gradient(135deg, var(--brand-from) 0%, var(--brand-to) 100%);
+  --gradient-brand-hover: linear-gradient(135deg, #084c3e 0%, #0f8a6b 100%);
+  --primary: #1f2430;       /* 主按钮近黑实色 */
+  --primary-hover: #38404e;
+  --accent: #0d6e55;        /* 链接/选中/聚焦实色，白底对比度 ≥4.5:1 */
+  --accent-deep: #0a5843;
+  --accent-soft: #e9f4f0;   /* 选中态淡底 */
+  --accent-line: #bcdfd2;   /* 淡描边 */
+  --ring: rgb(13 110 85 / .25);
+
+  /* 状态 */
+  --danger: #bf4234;  --danger-soft: #fdf0ed;  --danger-line: #ecc9c4;
+  --warning: #8f5f0e; --warning-soft: #faf2de;
+  --success: #2e7d58; --success-soft: #e9f4ee;
+
+  /* 柔和弥散阴影（暖墨色调；浮层只用阴影不描边） */
+  --shadow-sm: 0 1px 2px rgb(33 36 44 / .05), 0 1px 4px -1px rgb(33 36 44 / .05);
+  --shadow-md: 0 2px 8px -2px rgb(33 36 44 / .08), 0 12px 28px -12px rgb(33 36 44 / .12);
+  --shadow-lg: 0 4px 14px -4px rgb(33 36 44 / .10), 0 28px 56px -18px rgb(33 36 44 / .20);
+
+  /* 圆角 */
+  --r-xs: 6px; --r-sm: 9px; --r-md: 12px; --r-lg: 16px; --r-pill: 999px;
+
+  /* 动效 */
   --ease: cubic-bezier(.22, .8, .32, 1);
-  --t-fast: .14s;
-  --t: .2s;
+  --t-fast: .14s; --t: .2s;
+
   box-sizing: border-box;
   color: var(--ink);
   font:
@@ -48,7 +60,7 @@
   box-sizing: border-box;
 }
 .diagram-canvas ::selection {
-  background: rgb(14 159 180 / .22);
+  background: var(--accent-soft);
 }
 .diagram-canvas button {
   font-family: inherit;
@@ -57,13 +69,14 @@
   touch-action: manipulation;
 }
 .diagram-canvas button:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 .diagram-canvas button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  box-shadow: 0 0 0 5px var(--ring);
+  box-shadow: 0 0 0 4px var(--ring);
 }
 .diagram-canvas {
   display: flex;
@@ -77,15 +90,16 @@
   overflow: hidden;
 }
 .canvas-toolbar {
-  height: 46px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 16px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--line);
   background: var(--paper);
   flex: none;
+  flex-wrap: wrap;
 }
 .canvas-status {
   font-size: 12px;
@@ -106,15 +120,15 @@
   flex: none;
 }
 .status-dot.busy {
-  background: var(--warning);
-  animation: uml-canvas-pulse 1.2s var(--ease) infinite;
+  background: var(--accent);
+  animation: uml-canvas-pulse 1.6s var(--ease) infinite;
 }
 .status-dot.failed {
   background: var(--danger);
 }
 .canvas-dimensions {
   font-family: ui-monospace, "SF Mono", Consolas, monospace;
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   padding-left: 4px;
@@ -125,7 +139,7 @@
   gap: 2px;
   padding: 3px;
   background: var(--paper-2);
-  border-radius: 8px;
+  border-radius: var(--r-pill);
   white-space: nowrap;
   flex: none;
 }
@@ -138,7 +152,7 @@
   height: 28px;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--muted);
   transition:
@@ -154,16 +168,15 @@
 .zoom-tools button:hover:not(:disabled) {
   background: var(--paper);
   color: var(--ink);
-  box-shadow: var(--shadow-sm);
 }
 .zoom-tools button:active:not(:disabled) {
-  box-shadow: none;
+  background: var(--paper-2);
 }
 .zoom-value {
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-width: 40px;
+  min-width: 42px;
   text-align: center;
   padding: 0 2px;
 }
@@ -177,23 +190,28 @@
 }
 .zoom-tools .fit-button {
   width: auto;
-  padding: 0 9px;
+  padding: 0 10px;
   font-size: 12px;
   font-weight: 500;
 }
 .zoom-tools .fit-button.active,
 .zoom-tools .fit-button.active:hover:not(:disabled) {
-  background: var(--accent-soft);
+  background: var(--paper);
   color: var(--accent);
+  box-shadow: var(--shadow-sm);
 }
 .canvas-stage {
   position: relative;
   flex: 1;
   min-height: 0;
+  margin: 12px;
   overflow: auto;
   background-color: var(--paper-2);
-  background-image: radial-gradient(circle, #c3d2de 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image: radial-gradient(circle, rgb(33 36 44 / .13) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: center;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
   padding: 36px 32px;
   display: flex;
   align-items: flex-start;
@@ -209,10 +227,14 @@
   flex: none;
   position: relative;
   margin: auto;
-  background-color: #ffffff;
-  box-shadow:
-    0 2px 8px rgb(20 45 66 / .08),
-    0 16px 40px -12px rgb(20 45 66 / .16);
+  background-color: var(--paper);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--t) var(--ease);
+}
+.canvas-artboard:hover {
+  box-shadow: var(--shadow-md);
 }
 .canvas-svg {
   position: absolute;
@@ -230,18 +252,25 @@
 .canvas-stage.can-select-elements:not(.is-dragging) .uml-container {
   cursor: pointer;
 }
+.canvas-stage.can-select-elements:not(.is-dragging) [data-editor-key]:hover,
+.canvas-stage.can-select-elements:not(.is-dragging) [data-editor-key]:focus-visible,
+.canvas-stage.can-select-elements:not(.is-dragging) .uml-container:hover,
+.canvas-stage.can-select-elements:not(.is-dragging) .uml-container:focus-visible {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
 .canvas-stage:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: -2px;
-  box-shadow: inset 0 0 0 4px var(--ring);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-sm), 0 0 0 4px var(--ring);
 }
 .canvas-artboard.is-transparent {
-  background-color: #ffffff;
+  background-color: var(--paper);
   background-image: conic-gradient(
-    #e5e8eb 25%,
-    #ffffff 0 50%,
-    #e5e8eb 0 75%,
-    #ffffff 0
+    var(--line) 25%,
+    var(--paper) 0 50%,
+    var(--line) 0 75%,
+    var(--paper) 0
   );
   background-size: 18px 18px;
 }
@@ -250,21 +279,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: var(--muted);
   text-align: center;
-  max-width: 320px;
-  padding: 0 16px;
+  max-width: 340px;
+  padding: 30px 36px;
+  background: var(--paper);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
 }
 .canvas-empty strong {
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
 .canvas-empty p {
   font-size: 13px;
   color: var(--muted);
-  line-height: 1.7;
+  line-height: 1.6;
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -281,13 +314,13 @@
   stroke: var(--accent);
 }
 .canvas-footer {
-  height: 34px;
+  min-height: 36px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 8px 16px;
   font-size: 12px;
-  color: var(--faint);
+  color: var(--muted);
   border-top: 1px solid var(--line);
   background: var(--paper);
   flex: none;
@@ -295,16 +328,24 @@
 }
 .canvas-error {
   background: var(--warning-soft);
-  border-top: 1px solid rgb(150 101 15 / .18);
-  padding: 10px 16px;
+  border: 1px solid color-mix(in srgb, var(--warning) 22%, transparent);
+  border-radius: var(--r-md);
+  margin: 0 12px 12px;
+  padding: 10px 14px;
   font-size: 12px;
   color: var(--warning);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 @keyframes uml-canvas-pulse {
+0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 var(--accent-soft);
+}
 50% {
-    opacity: 0.35;
+    opacity: 0.55;
+    box-shadow: 0 0 0 5px var(--accent-soft);
 }
 }
 @keyframes uml-canvas-spin {
@@ -322,18 +363,22 @@ to {
 }
 @media (max-width: 1250px) {
 .canvas-toolbar {
-    padding: 0 12px;
+    padding: 8px 12px;
     gap: 6px;
 }
 .canvas-dimensions {
     display: none;
 }
 .canvas-stage {
+    margin: 10px;
     padding: 28px 24px;
+}
+.canvas-error {
+    margin: 0 10px 10px;
 }
 .canvas-footer {
     font-size: 11px;
-    padding: 0 12px;
+    padding: 8px 12px;
 }
 }
 @media (max-width: 1050px) {
@@ -355,15 +400,19 @@ to {
 }
 .canvas-stage {
     min-height: 0;
+    margin: 8px;
     padding: 24px;
 }
+.canvas-error {
+    margin: 0 8px 8px;
+}
 .canvas-toolbar {
-    height: 44px;
-    padding: 0 12px;
+    min-height: 44px;
+    padding: 6px 12px;
 }
 .canvas-footer {
-    height: 32px;
-    padding: 0 14px;
+    min-height: 32px;
+    padding: 6px 14px;
     font-size: 11px;
 }
 }
@@ -372,11 +421,16 @@ to {
     display: none;
 }
 .canvas-toolbar {
-    padding: 0 10px;
+    padding: 6px 10px;
 }
 .canvas-stage {
+    margin: 8px;
     padding: 20px 16px;
     min-height: 330px;
+    border-radius: var(--r-md);
+}
+.canvas-error {
+    margin: 0 8px 8px;
 }
 .diagram-canvas {
     min-height: 415px;
@@ -389,7 +443,7 @@ to {
 }
 .zoom-tools .fit-button {
     font-size: 11px;
-    padding: 0 6px;
+    padding: 0 8px;
 }
 }
 @media print {
@@ -406,13 +460,17 @@ to {
 }
 .canvas-stage {
     background: none;
+    margin: 0;
     padding: 0;
+    border-radius: 0;
+    box-shadow: none;
     overflow: visible;
     min-height: 0;
 }
 .canvas-artboard {
     box-shadow: none;
     margin: 0;
+    border-radius: 0;
 }
 }
 @media (prefers-reduced-motion: reduce) {

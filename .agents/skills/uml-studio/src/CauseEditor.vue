@@ -50,7 +50,7 @@ function removeChild(index: number): void {
         :aria-label="`${path}：添加子原因`"
         @click="addChild"
       >
-        ＋ 子原因
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>子原因
       </button>
       <button
         type="button"

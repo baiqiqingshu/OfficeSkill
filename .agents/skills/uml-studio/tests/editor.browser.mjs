@@ -22,6 +22,7 @@ test('offline editor filters, folds, locates elements and preserves drafts and c
       lanes: [{id: 'l', label: '审核泳道'}],
     };
     await page.evaluate(spec => window.UmlStudio.setSpec(spec), spec);
+    await page.getByRole('button', { name: '编辑图表', exact: true }).click();
     const form = page.locator('.uml-form-editor');
     const search = form.getByRole('searchbox');
     await form.getByRole('button', {name:'全部折叠', exact:true}).click();
