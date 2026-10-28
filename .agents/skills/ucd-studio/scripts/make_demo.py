@@ -16,16 +16,16 @@ def banner():
     for y in range(height):
         row=bytearray()
         for x in range(width):
-            color=(235,241,252)
-            if (x-570)**2+(y-120)**2<135**2:color=(211,225,250)
-            if 42<x<375 and 54<y<78:color=(39,92,206)
-            if 42<x<290 and 94<y<107:color=(112,142,191)
-            if 42<x<325 and 122<y<135:color=(151,172,208)
-            if 42<x<155 and 169<y<199:color=(39,92,206)
-            if 482<x<656 and 57<y<187:color=(255,255,255)
-            if 506<x<630 and 84<y<94:color=(216,226,242)
-            if 506<x<596 and 112<y<122:color=(216,226,242)
-            if 506<x<615 and 141<y<158:color=(39,92,206)
+            color=(244,246,249)
+            if (x-570)**2+(y-120)**2<135**2:color=(214,226,250)
+            if 42<x<375 and 54<y<78:color=(31,79,216)
+            if 42<x<290 and 94<y<107:color=(166,178,203)
+            if 42<x<325 and 122<y<135:color=(208,216,231)
+            if 42<x<155 and 169<y<199:color=(31,79,216)
+            if 482<=x<=656 and 57<=y<=187:color=(255,255,255) if 483<=x<=655 and 58<=y<=186 else (227,232,240)
+            if 506<x<630 and 84<y<94:color=(226,232,240)
+            if 506<x<596 and 112<y<122:color=(226,232,240)
+            if 506<x<615 and 141<y<158:color=(31,79,216)
             row.extend(color)
         pixels.append(b'\0'+row)
     def chunk(kind,data):
@@ -41,7 +41,7 @@ def make(out):
         build(spec,out/layout)
     # A complete component page also demonstrates packaging local media.
     component_out=out/'components';local=component_out/'local';local.mkdir(parents=True,exist_ok=True)
-    if not (local/'cover.png').exists():(local/'cover.png').write_bytes(banner())
+    (local/'cover.png').write_bytes(banner())
     spec=read_json(ROOT/'examples/dashboard.json')
     spec.update(title='组件与状态',description='16 种生成区块的完整预览；基础按钮、字段与弹窗可通过本地检索按需获取。',action='体验弹窗',assets=[{'source':'local/cover.png','name':'cover.png'}],blocks={})
     for entry in catalog():
@@ -55,16 +55,28 @@ def make(out):
         build(read_json(ROOT/'examples/admin.json'),out/mode,mode)
     panels=[]
     descriptions={
-        'admin':'查询记录、筛选状态与核对申请',
-        'dashboard':'从待办开始，跟进申请进度',
-        'workbench':'工具入口、工作队列与办理动态',
-        'form':'填写业务字段，核对提交要求',
-        'detail':'阅读申请上下文与处理记录',
-        'kanban':'按阶段推进任务，更新办理状态'}
+        'admin':'查询与筛选申请记录，核对状态并批量处理',
+        'dashboard':'汇总待办、指标与进度，从概览进入办理',
+        'workbench':'汇集常用入口、工作队列与办理动态',
+        'form':'按业务要求填写字段，提交前完成本地校验',
+        'detail':'查看申请上下文、字段明细与处理记录',
+        'kanban':'按阶段归集任务卡片，逐卡更新办理状态'}
+    tags={
+        'admin':'列表 · 筛选',
+        'dashboard':'指标 · 待办',
+        'workbench':'入口 · 队列',
+        'form':'表单 · 校验',
+        'detail':'详情 · 记录',
+        'kanban':'看板 · 流转'}
+    bars={'admin':5,'dashboard':4,'workbench':3,'form':5,'detail':6,'kanban':3}
+    arrow='<svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14 M13 6l6 6-6 6"/></svg>'
     names=read_json(ROOT/'data/layouts.json')
     for layout,style in combinations:
-        panels.append(f'<a class="sample" href="{layout}/index.html"><div class="sample-visual" aria-hidden="true"><div class="mini-side"><i></i><i></i><i></i></div><div class="mini-main"><div class="mini-title"></div><div class="preview {layout}"><i></i><i></i><i></i><i></i></div></div></div><div class="sample-copy"><h2>{html.escape(names[layout]["title"])}</h2><p>{html.escape(descriptions[layout])}</p></div></a>')
-    swatches=''.join(f'<div class="swatch"><span style="background:{s["tokens"]["primary"]}"></span>{html.escape(s["title"])}</div>' for s in styles().values())
+        visual=('<div class="browser"><div class="browser-bar"><i></i><i></i><i></i><span></span></div>'
+                '<div class="browser-body"><div class="mini-side"><b></b><i></i><i></i><i></i><i></i></div>'
+                f'<div class="mini-main"><i class="mini-title"></i><div class="preview {layout}">'+'<i></i>'*bars[layout]+'</div></div></div></div>')
+        panels.append(f'<a class="sample" href="{layout}/index.html"><div class="sample-visual" aria-hidden="true">{visual}</div><div class="sample-copy"><div class="sample-head"><h2>{html.escape(names[layout]["title"])}</h2>{arrow}</div><p>{html.escape(descriptions[layout])}</p><span class="chip">{html.escape(tags[layout])}</span></div></a>')
+    swatches=''.join(f'<span class="swatch"><i style="background:{s["tokens"]["primary"]}"></i>{html.escape(s["title"])}</span>' for s in styles().values())
     gallery=(ROOT/'assets/gallery.html').read_text(encoding='utf-8')
     from string import Template
     (out/'index.html').write_text(Template(gallery).substitute(panels=''.join(panels),swatches=swatches),encoding='utf-8')

@@ -63,3 +63,24 @@ Use `node bin/archify.mjs brands --json` to inspect all canonical IDs, aliases,
 categories, domains, and provenance. Current categories cover AI, cloud,
 engineering, data, collaboration, business systems, channels, languages, and
 frameworks.
+
+## Maintaining the catalogue
+
+Most vector paths and brand metadata are generated from Simple Icons 16.28.0.
+Every generated entry records its source and, when available upstream, its
+guidelines and license metadata in `renderers/shared/generated-brand-marks.mjs`.
+Brand names and logos may be trademarks of their respective owners; Simple
+Icons' CC0 license covers its collection work, not every underlying trademark
+or artwork. Review the recorded source, current brand guidelines, and intended
+referential use before adding or updating a mark. Archify does not imply
+sponsorship, endorsement, or partnership.
+
+Edit `brand-marks/catalog.json`, then regenerate the committed
+zero-runtime-dependency bundle:
+
+```bash
+npm run generate:brand-marks
+npm run check:brand-marks
+```
+
+Do not hand-edit `renderers/shared/generated-brand-marks.mjs`.

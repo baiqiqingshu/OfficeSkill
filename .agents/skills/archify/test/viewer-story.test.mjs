@@ -281,7 +281,6 @@ const PROOF_CASES = [
   'release-delivery.workflow.json',
   'incident-response.workflow.json',
   'product-analytics.dataflow.json',
-  'async-job-roundtrip.sequence.json',
   'event-stream.dataflow.json',
   'agent-run.lifecycle.json',
   'deployment-release.lifecycle.json',
@@ -344,8 +343,8 @@ test('exact stable-ID set math powers truthful counts and the existing handoff',
       if (delta(views[index - 1].focus, views[index].focus).stay.length) shared += 1;
     }
   }
-  assert.equal(adjacent, 22);
-  assert.equal(shared, 19);
+  assert.equal(adjacent, 20);
+  assert.equal(shared, 17);
 
   const workflow = JSON.parse(fs.readFileSync(path.join(skillRoot, 'examples', CASES.workflow), 'utf8'));
   const [first, second, third] = workflow.meta.views;

@@ -2,7 +2,7 @@
 
 离线入口是 `demo-dist/index.html`，开发入口是 `npm run dev`。两者都载入 `examples/documents/gallery.json` 的完整 26 图集合。
 
-`examples/<type>.json` 保留简明入门模板。复杂场景的源数据在 `examples/scenarios/`；`scripts/gallery.mjs` 按固定顺序组合 20 个场景、3 个布局对照与 `examples/documents/quickstart.json` 的原有 3 张图。修改源文件后运行 `npm run demo:refresh`，不要手改生成的 `gallery.json`。`npm run build` 也会先刷新设计册，再打包运行资源和离线 HTML。
+`examples/<type>.json` 保留 13 类 UML / 系统设计的简明入门模板；4+1 视图（logical / development / process / physical / scenario）不设入门模板，直接参考 `examples/scenarios/` 同名文件。复杂场景的源数据在 `examples/scenarios/`；`scripts/gallery.mjs` 按固定顺序组合 20 个场景、3 个布局对照与 `examples/documents/quickstart.json` 的原有 3 张图。修改源文件后运行 `npm run demo:refresh`，不要手改生成的 `gallery.json`。`npm run build` 也会先刷新设计册，再打包运行资源和离线 HTML。
 
 ## 场景索引
 

@@ -19,7 +19,7 @@ metadata:
 | 角色、业务能力、系统边界 | `usecase` | `nodes`, `edges`, `groups` | `examples/usecase.json` |
 | 类、状态、组件、包 | `class` / `state` / `component` / `package` | `nodes`, `edges`, 可选 `groups` | 同名示例 |
 | 系统架构、功能模块、部署 | `architecture` / `module` / `deployment` | `nodes`, `edges`, 可选嵌套 `groups` | 同名示例 |
-| 4+1：逻辑、开发、进程、物理、场景 | `logical` / `development` / `process` / `physical` / `scenario` | `nodes`, `edges`, 可选 `groups` | 同名示例 |
+| 4+1：逻辑、开发、进程、物理、场景 | `logical` / `development` / `process` / `physical` / `scenario` | `nodes`, `edges`, 可选 `groups` | `examples/scenarios/` 同名文件 |
 | 原因分析、鱼骨图 | `fishbone` | `fishbone.effect`, `fishbone.categories` | `examples/fishbone.json` |
 
 4+1 是架构视角，不是五种新的 UML 记法。选择视角后，以有明确语义的类、组件、包、部署节点或业务场景表达；不要把同一张架构图改标题充当五个视图。
@@ -30,7 +30,7 @@ metadata:
 
 以下命令在本 SKILL 目录执行；从其它目录调用时，使用脚本和数据文件的实际路径。输出路径相对当前工作目录。
 
-1. 单图读取 `schemas/diagram.schema.json` 和对应 `examples/<type>.json`；多图读取 `schemas/document.schema.json` 与 `examples/documents/gallery.json`。不照搬示例中的业务事实。
+1. 单图读取 `schemas/diagram.schema.json` 和对应 `examples/<type>.json`（4+1 视图读 `examples/scenarios/<type>.json`）；多图读取 `schemas/document.schema.json` 与 `examples/documents/gallery.json`。不照搬示例中的业务事实。
 2. 单图使用 `version:1,type,title`；多图使用 `version:1,title,diagrams:[...]`。同类图可以重复，每张独立保存主题、布局、数据；可选图形 `id` 在文档内唯一，节点 ID 只须在各自图内唯一。
 3. 验证再生成。默认海蓝主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。不要生成坐标或 SVG 路径。
 

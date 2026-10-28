@@ -45,6 +45,14 @@ python -X utf8 .agents/skills/ucd-studio/scripts/ucd.py check --dir .agents/skil
 
 在 1.1.0 基础上做第二轮视觉精修后，上述历史数值部分已更新：h1 现为 20px/650（窄屏不变）、表头 12px/600 + `--surface-2`、KPI 值 30px/650；comfortable 面板头/内容/单元格/工具条/页脚统一为 16px 24px / 24px / 12px 24px，compact 对应项统一对齐 16px 边距；面包屑分隔符改为 inline SVG（`.crumb-sep`）。回归结果：16 项 unittest 通过；官方浏览器矩阵 28 页 / 66 次视口检查通过、外部请求 0、pageerror 0；demo 重新生成且静态检查无外联资源。
 
+## 第三轮视觉推翻重设计补记
+
+第三轮按 `docs/frontend-redesign-r3.md` 整体更换视觉语言（"暖纸工作台"），管线契约未动：中性阶改带暖色相的墨灰，8 主题主色全部重校并新增 `scheme` token；面板 radius 10→12px、控件 8→10px；侧栏 216→224px 改 `surface-2` 凹陷轨道、导航项改 pill（active 浮起白 pill）；顶栏 56→52px 磨砂并加品牌渐变发丝线；h1 20→21px/650、KPI 30→28px/640；comfortable 面板头 16→20px 24px；小按钮 32→30px；760px 面板头统一 14px 16px。stats 改独立卡片阵列、tabs 改分段控件、badge 加同族描边、`input[role=switch]` 实现真实开关。回归结果：16 项 unittest 通过；Playwright 临时抽查（顶栏磨砂/实色按钮/12px 面板/pill 导航/分段 tabs/375px 无横向溢出）通过；demo 9 页 + 门户重新生成且 0 外联、0 `url(`。
+
+## 第四轮视觉推翻重设计补记
+
+第四轮按 `docs/frontend-redesign-r4.md` 整体更换视觉语言（"霁蓝瓷面"），管线契约未动：中性阶改冷调蓝灰（bg `#f4f6f9` / ink `#101c2c` / muted `#55637a`），ocean 主色改霁蓝 `#1f4fd8`，8 主题 token 全部重校；面板 radius 12→14px；顶栏改磨砂玻璃 + 底部 2px 品牌渐变发丝线；按钮一律实色，渐变仅保留于 `.brand-mark`、聚焦光环、顶栏发丝线与骨架扫光；门户改为磨砂顶栏 + browser-wireframe 模板卡 + swatch 主题区。回归结果：16 项 unittest 通过；`make_demo.py` 再生成 demo 9 页 + 门户成功；逐页 `check` 全部 ok；生成物审计 0 `url(`、0 外联（CSP meta 除外）、0 emoji、按钮无渐变。demo/preview.png 待浏览器复查时按实际页面重新截图。
+
 ## 边界
 
 本次仅覆盖 Chromium 和所列页面/操作，不代表所有浏览器、任意新 JS 或完整可访问性认证。普通文字对比度记录不包括悬停、禁用、透明叠加与自定义样式；实际内容仍需检查缩放、焦点顺序及辅助技术体验。

@@ -1,1 +1,4 @@
-<label for="example-input">事项名称<input id="example-input" name="title" required placeholder="请输入名称"></label>
+<!-- 文本输入：label 依次包裹标题、控件与 .field-help 说明 -->
+<label for="example-input"><span>事项名称<span class="required" aria-hidden="true">*</span></span><input id="example-input" name="title" type="text" required maxlength="80" placeholder="请输入名称"><span class="field-help">不超过 80 字，提交后可在列表中检索</span></label>
+<label for="example-input-invalid"><span>期望完成日期</span><input id="example-input-invalid" type="date" aria-invalid="true"><span class="field-help">日期需晚于今天，请重新选择</span></label>
+<label for="example-input-disabled"><span>经办部门</span><input id="example-input-disabled" type="text" value="由当前账号自动填充" disabled></label>

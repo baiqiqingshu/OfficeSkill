@@ -1,2 +1,2 @@
-<button type="button" class="btn btn-primary" data-open-dialog>新建事项</button>
-<!-- 生成页面自带 #create-dialog，使用原生 showModal；runtime.js 绑定事件。 -->
+<!-- 生成页面自带 #create-dialog（原生 showModal）；用 data-open-dialog 触发，runtime.js 已绑定 -->
+<button type="button" class="btn btn-primary" data-open-dialog aria-haspopup="dialog" aria-controls="create-dialog"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14 M5 12h14"/></svg>新建事项</button>

@@ -37,7 +37,7 @@ npm run diagram -- .agents/skills/uml-studio/examples/usecase.json --image temp/
 
 # JPEG / WebP：支持倍率、质量和主题参数
 npm run diagram -- .agents/skills/uml-studio/examples/sequence.json --out temp/sequence.html --image temp/sequence.jpeg --scale 1 --quality 0.92
-npm run diagram -- .agents/skills/uml-studio/examples/physical.json --image temp/physical.webp --theme blueprint --scale 1
+npm run diagram -- .agents/skills/uml-studio/examples/scenarios/physical.json --image temp/physical.webp --theme blueprint --scale 1
 
 # 从已经保存的 HTML 直接导出第 2 张图；不启动浏览器
 npm run diagram -- .agents/skills/uml-studio/demo-dist/index.html --diagram 2 --image temp/from-html.png
@@ -99,7 +99,7 @@ HTML 始终包含全部已应用图形；保存时有未应用草稿会明确提
 | [SKILL.md](.agents/skills/uml-studio/SKILL.md) | Agent 路由、生成步骤、完整使用约定 |
 | [schemas/diagram.schema.json](.agents/skills/uml-studio/schemas/diagram.schema.json) | 可供模型和编辑器使用的 JSON Schema |
 | [schemas/document.schema.json](.agents/skills/uml-studio/schemas/document.schema.json) | 多图文档 Schema，可包含同类多图 |
-| [examples/](.agents/skills/uml-studio/examples/) | 18 类简明模板、20 个复杂场景与多图设计册 |
+| [examples/](.agents/skills/uml-studio/examples/) | 13 类简明模板、20 个复杂场景（含 4+1 视图）与多图设计册 |
 | `.agents/skills/uml-studio/src/` | Vue 组件、类型、校验器、布局与导出源码 |
 | `.agents/skills/uml-studio/dist/` | Node 渲染器、Vue 组件模块、组件 CSS 与类型声明 |
 | `.agents/skills/uml-studio/assets/` | 可内联进单个 HTML 的完整工作台运行资源 |

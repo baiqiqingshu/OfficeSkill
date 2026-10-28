@@ -491,8 +491,8 @@
   },
   "specSha256": "992db428b09616341fdca395d89fb322534a3ea1b08070bb4a7ce652dffb282a",
   "files": {
-    "assets/cover.png": "9cf21ab72798322fb28a06cf22318a2ed1ec4f9adea0d869250fae5de666023e",
-    "index.html": "56f8c98394dbecaebc9da5a856461927de9a8a3bf47f9ed3f86d65d262e5ce4b",
-    "design-system.md": "fc0fe65e35e7f0b7dec22b9dd370838632ff325b0deae16327ad05dc970e7517"
+    "assets/cover.png": "d6f02e17952fdc3297f39960e4f08a6c1a69ba9b0fde774e8ab53580bf2f9eb3",
+    "index.html": "534f9dba544e80fa168dfcc69563da89296a27e2057cff37339bf30b8d6a21d2",
+    "design-system.md": "b082dbd5e186a3231dcb12046ed185b38fe7effdf9c86b752f729c90c63b6a42"
   }
 }
