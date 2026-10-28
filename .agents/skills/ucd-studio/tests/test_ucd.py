@@ -1,6 +1,7 @@
 """Run: python -m unittest discover -s ucd-studio/tests -v"""
 import copy
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -58,6 +59,13 @@ class UCDTests(unittest.TestCase):
         example=ucd.show_entry(entry,example=True)
         self.assertIn('rows',example['example']);self.assertNotIn('html',example)
         self.assertIn('tokens',ucd.show_entry(next(c for c in ucd.catalog() if c['id']=='ocean'),example=True))
+
+    def test_selects_always_use_enhanced_wrap(self):
+        out=self.base/'selects';ucd.build(self.spec,out)
+        html=(out/'index.html').read_text(encoding='utf-8')
+        selects=len(re.findall(r'</select>',html))
+        self.assertTrue(selects)
+        self.assertEqual(len(re.findall(r'class="select-wrap"><select\b',html)),selects)
 
     def test_every_component_generates(self):
         for entry in ucd.catalog():

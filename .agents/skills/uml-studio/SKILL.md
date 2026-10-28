@@ -94,6 +94,8 @@ npm run demo:verify
 
 安装、构建、开发命令也可在 OfficeSkill 根目录执行；Demo 维护命令在本 SKILL 目录执行。`npm run diagram -- ...` 是根目录 CLI 入口。
 
+修改组件源码时，下拉框一律用 `src/VSelect.vue`（用法与原生 `<select>` 相同：`v-model`/`v-model.number` 或 `:value`+`@change`，插槽写 `<option>`/`<optgroup>`），不得新写裸 `<select>`——`appearance:none` 只能美化关闭态，打开的原生选项列表不受 CSS 控制。模式与细节见 DESIGN.md。
+
 完整构建将公开类型声明归并为 `dist/core.d.ts`、`dist/index.d.ts`、`dist/native.d.ts`，三个包入口及 API 保持不变。逐文件声明中间产物与 Vite 缓存在仓库 `temp/uml-studio-types/`、`temp/uml-studio-vite/`；独立安装时使用系统临时目录，不写回技能目录。组件样式保留在 Vue 文件的全局 style 中。构建将 LICENSE 中的 Fishbone Studio MIT 附录与依赖许可一起写入 THIRD_PARTY_NOTICES.txt、运行时和离线 HTML，维护时须保留。
 
 复杂输入参考 `examples/scenarios/<type>.json`，入门集合保留在 `examples/documents/quickstart.json`。场景索引、布局对照与验证方法见 [references/demo-coverage.md](references/demo-coverage.md)。修改场景源文件后运行 `npm run demo:refresh` 或完整构建来更新设计册。

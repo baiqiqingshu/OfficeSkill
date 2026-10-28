@@ -37,6 +37,8 @@ python <skill>/scripts/ucd.py patch --dir output/approval --patch change.json
 
 例如 `{"blocks":{"records":{"title":"待我审批"}}}`。对象递归合并、数组整体替换、null 删除可选字段。需要了解现状才执行 `summary --dir output/approval`；需要区块内容再加 `--block records`。手工修改冲突才读 [editing.md](references/editing.md)。
 
+下拉框只写 `.select-wrap` 内的原生 `<select>`+`.select-chevron` 结构：runtime.js 会自动增强为自绘触发按钮+弹出层，真实 select 保留为隐藏数据/校验层。不要自写替代下拉组件、不要把 `multiple`/`size` 列表框混进 `.select-wrap`，也不要只靠 `appearance:none`——它只美化关闭态，打开的原生选项列表不受 CSS 控制，仍是浏览器默认样式。
+
 ## 按需展开
 
 | 遇到的需求 | 再读取或调用 |
