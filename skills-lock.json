@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "dashi-ppt": {
+      "source": "chuspeeism/dashi-ppt-skill",
+      "sourceType": "github",
+      "skillPath": "skills/dashi-ppt/SKILL.md",
+      "computedHash": "6dc59e51531c0c65b2d863ce65e8f543e8c3fd6a2f53a21f5f62ff5622410a9c"
+    },
     "impeccable": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
