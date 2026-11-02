@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "sourceId": "ef5a20d54e44",
+      "relative": "assets/user-media/account-identify.png",
+      "kind": "image",
+      "mime": "image/png"
+    },
+    {
+      "sourceId": "07b02c035114",
+      "relative": "assets/user-media/identity-verify.png",
+      "kind": "image",
+      "mime": "image/png"
+    }
+  ]
+}

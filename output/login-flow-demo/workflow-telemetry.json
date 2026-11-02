@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "runId": "20261101152210388-3a086c61",
+  "goalPath": "D:\\WorkProject\\OfficeSkill\\output\\login-flow-demo\\goal.json",
+  "startedAt": "2026-11-01T15:22:10.390Z",
+  "updatedAt": "2026-11-01T15:22:15.434Z",
+  "totalDurationMs": 5044,
+  "totalStageCount": 2,
+  "failureCount": 0,
+  "retryCount": 0,
+  "stages": {
+    "scaffold": {
+      "count": 1,
+      "successCount": 1,
+      "failureCount": 0,
+      "retryCount": 0,
+      "durationMs": 1516,
+      "lastStatus": "passed",
+      "lastFailureCategory": null,
+      "lastFailureReason": null,
+      "metrics": {
+        "planningPasses": 1,
+        "layoutQueryPasses": 1,
+        "projectionPlansEvaluated": 75,
+        "allocationPasses": 1,
+        "materializationPasses": 1,
+        "materializedVariants": 24,
+        "pageCount": 8
+      }
+    },
+    "render": {
+      "count": 1,
+      "successCount": 1,
+      "failureCount": 0,
+      "retryCount": 0,
+      "durationMs": 738,
+      "lastStatus": "passed",
+      "lastFailureCategory": null,
+      "lastFailureReason": null,
+      "metrics": {
+        "logicalPageCount": 8,
+        "renderedSlideCount": 8
+      }
+    }
+  },
+  "failures": []
+}

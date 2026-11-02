@@ -1,0 +1,253 @@
+{
+  "pages": [
+    {
+      "id": "cover",
+      "presentation": {
+        "pageIntent": "封面",
+        "coreMessage": "从进入页面到完成验证",
+        "title": { "full": "登录流程示例", "short": "登录流程示例" },
+        "summary": { "full": "产品与前端", "short": "产品与前端" },
+        "items": [
+          {
+            "id": "enter",
+            "label": "进入页面",
+            "detail": { "full": "用户打开登录页", "short": "打开登录页" },
+            "priority": "low"
+          },
+          {
+            "id": "verify-done",
+            "label": "完成验证",
+            "detail": { "full": "验证完成即收束", "short": "验证后收束" },
+            "priority": "low"
+          },
+          {
+            "id": "audience",
+            "label": "产品与前端",
+            "detail": { "full": "两边看同一条路径", "short": "同一条路径" },
+            "priority": "low"
+          }
+        ]
+      }
+    },
+    {
+      "id": "path",
+      "presentation": {
+        "pageIntent": "路径",
+        "coreMessage": "从进入页面走到完成验证",
+        "title": { "full": "登录目标与用户路径", "short": "登录目标与用户路径" },
+        "summary": { "full": "一条登录路径", "short": "一条登录路径" },
+        "items": [
+          {
+            "id": "open",
+            "label": "进入页面",
+            "detail": { "full": "用户到达登录页", "short": "到达登录页" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "submit",
+            "label": "提交登录",
+            "detail": { "full": "沿路径提交登录", "short": "提交登录" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "finish",
+            "label": "完成验证",
+            "detail": { "full": "路径停在验证完成", "short": "验证完成" },
+            "required": true,
+            "priority": "high"
+          }
+        ]
+      }
+    },
+    {
+      "id": "identify",
+      "presentation": {
+        "pageIntent": "识别",
+        "coreMessage": "邮箱、手机号、单点登录",
+        "title": { "full": "账号识别", "short": "账号识别" },
+        "summary": { "full": "先识别账号", "short": "先识别账号" },
+        "items": [
+          {
+            "id": "email",
+            "label": "邮箱",
+            "detail": { "full": "用邮箱识别账号", "short": "邮箱识别" },
+            "priority": "low"
+          },
+          {
+            "id": "phone",
+            "label": "手机号",
+            "detail": { "full": "用手机号识别账号", "short": "手机号识别" },
+            "priority": "low"
+          },
+          {
+            "id": "sso",
+            "label": "单点登录",
+            "detail": { "full": "走已有单点登录", "short": "单点登录" },
+            "priority": "low"
+          }
+        ],
+        "media": [
+          {
+            "src": "assets/user-media/account-identify.png",
+            "kind": "image",
+            "type": "image/png",
+            "alt": "邮箱、手机号和单点登录汇入同一账号的示意图"
+          }
+        ]
+      }
+    },
+    {
+      "id": "verify",
+      "presentation": {
+        "pageIntent": "验证",
+        "coreMessage": "密码、验证码、多因素",
+        "title": { "full": "身份验证", "short": "身份验证" },
+        "summary": { "full": "确认该账号", "short": "确认该账号" },
+        "items": [
+          {
+            "id": "password",
+            "label": "密码",
+            "detail": { "full": "用密码核验身份", "short": "密码核验" },
+            "priority": "low"
+          },
+          {
+            "id": "code",
+            "label": "验证码",
+            "detail": { "full": "用验证码核验身份", "short": "验证码核验" },
+            "priority": "low"
+          },
+          {
+            "id": "mfa",
+            "label": "多因素",
+            "detail": { "full": "再增加多因素核验", "short": "多因素核验" },
+            "priority": "low"
+          }
+        ],
+        "media": [
+          {
+            "src": "assets/user-media/identity-verify.png",
+            "kind": "image",
+            "type": "image/png",
+            "alt": "密码、验证码和多因素依次核验的示意图"
+          }
+        ]
+      }
+    },
+    {
+      "id": "risk",
+      "presentation": {
+        "pageIntent": "风险",
+        "coreMessage": "异常设备、失败次数、锁定",
+        "title": { "full": "风险校验", "short": "风险校验" },
+        "summary": { "full": "同时看风险", "short": "同时看风险" },
+        "items": [
+          {
+            "id": "device",
+            "label": "异常设备",
+            "detail": { "full": "发现异常设备", "short": "异常设备" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "fails",
+            "label": "失败次数",
+            "detail": { "full": "累计失败次数", "short": "失败次数" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "lock",
+            "label": "锁定",
+            "detail": { "full": "触发条件后锁定", "short": "条件后锁定" },
+            "required": true,
+            "priority": "high"
+          }
+        ]
+      }
+    },
+    {
+      "id": "result",
+      "presentation": {
+        "pageIntent": "结果",
+        "coreMessage": "成功进入工作台，失败给出可恢复提示",
+        "title": { "full": "登录结果", "short": "登录结果" },
+        "summary": { "full": "都要有去处", "short": "都要有去处" },
+        "items": [
+          {
+            "id": "success",
+            "label": "进入工作台",
+            "detail": { "full": "成功进入工作台", "short": "进入工作台" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "failure",
+            "label": "可恢复提示",
+            "detail": { "full": "失败给出可恢复提示", "short": "可恢复提示" },
+            "required": true,
+            "priority": "high"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recover",
+      "presentation": {
+        "pageIntent": "恢复",
+        "coreMessage": "忘记密码、重发验证码、联系支持",
+        "title": { "full": "异常恢复", "short": "异常恢复" },
+        "summary": { "full": "失败后继续", "short": "失败后继续" },
+        "items": [
+          {
+            "id": "forgot",
+            "label": "忘记密码",
+            "detail": { "full": "可以走忘记密码", "short": "忘记密码" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "resend",
+            "label": "重发验证码",
+            "detail": { "full": "可以重发验证码", "short": "重发验证码" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "support",
+            "label": "联系支持",
+            "detail": { "full": "可以联系支持", "short": "联系支持" },
+            "required": true,
+            "priority": "high"
+          }
+        ]
+      }
+    },
+    {
+      "id": "close",
+      "presentation": {
+        "pageIntent": "结尾",
+        "coreMessage": "判定登录完成并进入下一步",
+        "title": { "full": "完成判定与下一步", "short": "完成判定与下一步" },
+        "summary": { "full": "完成后离开", "short": "完成后离开" },
+        "items": [
+          {
+            "id": "done",
+            "label": "完成判定",
+            "detail": { "full": "确认登录已经完成", "short": "已经完成" },
+            "required": true,
+            "priority": "high"
+          },
+          {
+            "id": "next",
+            "label": "下一步",
+            "detail": { "full": "再进入登录后的下一步", "short": "进入下一步" },
+            "required": true,
+            "priority": "high"
+          }
+        ]
+      }
+    }
+  ]
+}

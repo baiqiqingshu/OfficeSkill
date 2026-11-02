@@ -1,0 +1,863 @@
+{
+  "goal": "D:\\WorkProject\\OfficeSkill\\output\\login-flow-demo\\goal.part-02.json",
+  "themePack": "theme07",
+  "slideCount": 3,
+  "part": {
+    "index": 2,
+    "total": 2,
+    "startSlide": 6,
+    "endSlide": 8
+  },
+  "slides": [
+    {
+      "slide": 6,
+      "selectedVariant": "v1",
+      "variants": [
+        {
+          "id": "v1",
+          "kind": "template",
+          "layout": "theme07_page055",
+          "label": "三角 人才资本算力",
+          "roles": [],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 24
+              },
+              {
+                "key": "kicker",
+                "role": "title",
+                "type": "string",
+                "maxChars": 20
+              },
+              {
+                "key": "quoteLead",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "source",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 42
+              }
+            ],
+            "arrays": [
+              {
+                "key": "pillars",
+                "role": "misc",
+                "visibleCount": 3,
+                "maxCount": 3,
+                "countKey": "pillarCount",
+                "itemShape": {
+                  "glyph": "string",
+                  "zh": "string",
+                  "en": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "glyph": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "zh": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "en": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v2",
+          "kind": "template",
+          "layout": "theme07_page015",
+          "label": "结论 Conclusion",
+          "roles": [
+            "statement",
+            "observation",
+            "result"
+          ],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "kicker",
+                "role": "title",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteLead",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm1",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteMid",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm2",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "source",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 42
+              }
+            ],
+            "arrays": [
+              {
+                "key": "conclusions",
+                "role": "misc",
+                "visibleCount": 3,
+                "maxCount": 3,
+                "countKey": "itemCount",
+                "itemShape": {
+                  "idx": "string",
+                  "title": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "idx": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "title": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v3",
+          "kind": "template",
+          "layout": "theme07_page007",
+          "label": "目录 Contents",
+          "roles": [
+            "breakdown"
+          ],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "title",
+                "role": "title",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "sub",
+                "role": "body",
+                "type": "string",
+                "maxChars": 36
+              },
+              {
+                "key": "lead",
+                "role": "body",
+                "type": "string",
+                "maxChars": 71
+              },
+              {
+                "key": "closing",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 27
+              }
+            ],
+            "arrays": [
+              {
+                "key": "chapters",
+                "role": "chapter",
+                "visibleCount": 8,
+                "maxCount": 8,
+                "countKey": "cardCount",
+                "itemShape": {
+                  "no": "string",
+                  "zh": "string",
+                  "en": "string"
+                },
+                "itemFields": {
+                  "no": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "zh": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "en": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v4",
+          "kind": "bespoke",
+          "adjustable": false,
+          "designTask": {
+            "status": "generated",
+            "instruction": "保留 scaffold 生成的 composition 结构与 projection bindings；业务值只修改 slide.content.presentation，不写回 composition。"
+          }
+        }
+      ]
+    },
+    {
+      "slide": 7,
+      "selectedVariant": "v1",
+      "variants": [
+        {
+          "id": "v1",
+          "kind": "template",
+          "layout": "theme07_page015",
+          "label": "结论 Conclusion",
+          "roles": [
+            "statement",
+            "observation",
+            "result"
+          ],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "kicker",
+                "role": "title",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteLead",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm1",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteMid",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm2",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "source",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 42
+              }
+            ],
+            "arrays": [
+              {
+                "key": "conclusions",
+                "role": "misc",
+                "visibleCount": 3,
+                "maxCount": 3,
+                "countKey": "itemCount",
+                "itemShape": {
+                  "idx": "string",
+                  "title": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "idx": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "title": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v2",
+          "kind": "template",
+          "layout": "theme07_page055",
+          "label": "三角 人才资本算力",
+          "roles": [],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 24
+              },
+              {
+                "key": "kicker",
+                "role": "title",
+                "type": "string",
+                "maxChars": 20
+              },
+              {
+                "key": "quoteLead",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "source",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 42
+              }
+            ],
+            "arrays": [
+              {
+                "key": "pillars",
+                "role": "misc",
+                "visibleCount": 3,
+                "maxCount": 3,
+                "countKey": "pillarCount",
+                "itemShape": {
+                  "glyph": "string",
+                  "zh": "string",
+                  "en": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "glyph": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "zh": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "en": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v3",
+          "kind": "template",
+          "layout": "theme07_page071",
+          "label": "关于 About the Lab",
+          "roles": [
+            "image"
+          ],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "segment",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "title",
+                "role": "title",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "titleTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "lead",
+                "role": "body",
+                "type": "string",
+                "maxChars": 80
+              },
+              {
+                "key": "statLine",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 29
+              },
+              {
+                "key": "closing",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 31
+              },
+              {
+                "key": "badge",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "listTitle",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "contactTitle",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              }
+            ],
+            "arrays": [
+              {
+                "key": "cards",
+                "role": "list-item",
+                "visibleCount": 4,
+                "maxCount": 4,
+                "countKey": "cardCount",
+                "itemShape": {
+                  "label": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "label": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              },
+              {
+                "key": "contacts",
+                "role": "misc",
+                "visibleCount": 2,
+                "maxCount": 2,
+                "countKey": null,
+                "itemShape": "string",
+                "item": {
+                  "role": "eyebrow",
+                  "maxChars": 24
+                }
+              }
+            ],
+            "media": [
+              {
+                "key": "images",
+                "write": "props.images",
+                "visibleCount": 2,
+                "maxCount": 3,
+                "countKey": "imageCount",
+                "accepts": [
+                  "image",
+                  "video"
+                ],
+                "acceptedKindsSource": "mediaArrayField",
+                "itemShape": "string | {src,kind,type}"
+              }
+            ]
+          }
+        },
+        {
+          "id": "v4",
+          "kind": "bespoke",
+          "adjustable": false,
+          "designTask": {
+            "status": "generated",
+            "instruction": "保留 scaffold 生成的 composition 结构与 projection bindings；业务值只修改 slide.content.presentation，不写回 composition。"
+          }
+        }
+      ]
+    },
+    {
+      "slide": 8,
+      "selectedVariant": "v1",
+      "variants": [
+        {
+          "id": "v1",
+          "kind": "template",
+          "layout": "theme07_page068",
+          "label": "章节 附录",
+          "roles": [
+            "transition",
+            "closing"
+          ],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "index",
+                "role": "metric",
+                "type": "string",
+                "maxChars": 9
+              },
+              {
+                "key": "title",
+                "role": "title",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "sub",
+                "role": "body",
+                "type": "string",
+                "maxChars": 36
+              },
+              {
+                "key": "lead",
+                "role": "body",
+                "type": "string",
+                "maxChars": 80
+              },
+              {
+                "key": "closing",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 22
+              }
+            ],
+            "arrays": [
+              {
+                "key": "keywords",
+                "role": "misc",
+                "visibleCount": 4,
+                "maxCount": 4,
+                "countKey": "keywordCount",
+                "itemShape": "string",
+                "item": {
+                  "role": "eyebrow",
+                  "maxChars": 18
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v2",
+          "kind": "template",
+          "layout": "theme07_page055",
+          "label": "三角 人才资本算力",
+          "roles": [],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 24
+              },
+              {
+                "key": "kicker",
+                "role": "title",
+                "type": "string",
+                "maxChars": 20
+              },
+              {
+                "key": "quoteLead",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "source",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 42
+              }
+            ],
+            "arrays": [
+              {
+                "key": "pillars",
+                "role": "misc",
+                "visibleCount": 3,
+                "maxCount": 3,
+                "countKey": "pillarCount",
+                "itemShape": {
+                  "glyph": "string",
+                  "zh": "string",
+                  "en": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "glyph": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "zh": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "en": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v3",
+          "kind": "template",
+          "layout": "theme07_page015",
+          "label": "结论 Conclusion",
+          "roles": [
+            "statement",
+            "observation",
+            "result"
+          ],
+          "fillPlan": {
+            "text": [
+              {
+                "key": "eyebrow",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "kicker",
+                "role": "title",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteLead",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm1",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteMid",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteEm2",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "quoteTail",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 18
+              },
+              {
+                "key": "source",
+                "role": "eyebrow",
+                "type": "string",
+                "maxChars": 42
+              }
+            ],
+            "arrays": [
+              {
+                "key": "conclusions",
+                "role": "misc",
+                "visibleCount": 3,
+                "maxCount": 3,
+                "countKey": "itemCount",
+                "itemShape": {
+                  "idx": "string",
+                  "title": "string",
+                  "note": "string"
+                },
+                "itemFields": {
+                  "idx": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "title": {
+                    "role": "eyebrow",
+                    "type": "string",
+                    "maxChars": 18
+                  },
+                  "note": {
+                    "role": "body",
+                    "type": "string",
+                    "maxChars": 36
+                  }
+                }
+              }
+            ],
+            "media": []
+          }
+        },
+        {
+          "id": "v4",
+          "kind": "bespoke",
+          "adjustable": false,
+          "designTask": {
+            "status": "generated",
+            "instruction": "保留 scaffold 生成的 composition 结构与 projection bindings；业务值只修改 slide.content.presentation，不写回 composition。"
+          }
+        }
+      ]
+    }
+  ]
+}
