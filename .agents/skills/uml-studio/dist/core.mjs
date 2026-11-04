@@ -98038,6 +98038,7 @@ var base = {
 var themes = {
   ocean: { ...base },
   white: { ...base, background: "#ffffff", surface: "#ffffff", text: "#193b56", muted: "#526b7d", border: "#9bb7cc" },
+  industrial: { ...base, background: "#ffffff", surface: "#fff4e8", text: "#333333", muted: "#666666", primary: "#555555", secondary: "#d7a777", border: "#808080", radius: 2, lineWidth: 1.3 },
   paper: { ...base, background: "#faf8f3", text: "#253248", muted: "#667286", primary: "#b35231", secondary: "#327781", border: "#cbd2d9" },
   forest: { ...base, background: "#f4f7ef", text: "#283b31", muted: "#67765d", primary: "#3b7153", secondary: "#99713b", border: "#c3d0bc" },
   blueprint: { ...base, background: "#edf3fc", surface: "#f9fbff", text: "#183f74", muted: "#567296", primary: "#245ba3", secondary: "#557ab4", border: "#9bb7d6", radius: 0, lineWidth: 1.3 },
@@ -98051,6 +98052,7 @@ var themes = {
 var themeLabels = {
   ocean: "\u6D77\u6D0B\u84DD",
   white: "\u7EAF\u767D",
+  industrial: "\u5DE5\u4E1A\u6C47\u62A5",
   paper: "\u6696\u7EB8",
   forest: "\u68EE\u6797\u7EFF",
   blueprint: "\u5DE5\u7A0B\u84DD\u56FE",

@@ -10,6 +10,7 @@ export async function createGallery() {
   const scenarios = await Promise.all(scenarioTypes.map(type => readJson(`examples/scenarios/${type}.json`)))
   const extras = await Promise.all(['activity-parallel', 'component-folding'].map(name => readJson(`examples/scenarios/${name}.json`)))
   const quickstart = await readJson('examples/documents/quickstart.json')
+  const industrial = await readJson('examples/industrial.json')
   const find = type => structuredClone(scenarios.find(spec => spec.type === type))
   const horizontal = find('activity')
   Object.assign(horizontal, { id: 'login-compact-lr', title: '登录认证 · 紧凑横向对照', theme: 'mint', direction: 'LR', layout: { mode: 'compact' } })
@@ -22,7 +23,7 @@ export async function createGallery() {
     style: { background: 'transparent', fontSize: 20, fontWeight: 500 },
     layout: { mode: 'spacious', showTitle: true, nodeMaxWidth: 240, maxWidth: 1600, maxHeight: 1800, maxPerColumn: 4 },
   })
-  return { version: 1, title: 'UML Studio · 场景与布局验证册', diagrams: [...scenarios, ...extras, horizontal, grid, typography, ...quickstart.diagrams] }
+  return { version: 1, title: 'UML Studio · 场景与布局验证册', diagrams: [...scenarios, ...extras, horizontal, grid, typography, industrial, ...quickstart.diagrams] }
 }
 
 export async function writeGallery() {

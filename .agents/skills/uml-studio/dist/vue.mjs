@@ -6744,6 +6744,7 @@ const base = {
 const themes = {
   ocean: { ...base },
   white: { ...base, background: "#ffffff", surface: "#ffffff", text: "#193b56", muted: "#526b7d", border: "#9bb7cc" },
+  industrial: { ...base, background: "#ffffff", surface: "#fff4e8", text: "#333333", muted: "#666666", primary: "#555555", secondary: "#d7a777", border: "#808080", radius: 2, lineWidth: 1.3 },
   paper: { ...base, background: "#faf8f3", text: "#253248", muted: "#667286", primary: "#b35231", secondary: "#327781", border: "#cbd2d9" },
   forest: { ...base, background: "#f4f7ef", text: "#283b31", muted: "#67765d", primary: "#3b7153", secondary: "#99713b", border: "#c3d0bc" },
   blueprint: { ...base, background: "#edf3fc", surface: "#f9fbff", text: "#183f74", muted: "#567296", primary: "#245ba3", secondary: "#557ab4", border: "#9bb7d6", radius: 0, lineWidth: 1.3 },
@@ -6757,6 +6758,7 @@ const themes = {
 const themeLabels = {
   ocean: "海洋蓝",
   white: "纯白",
+  industrial: "工业汇报",
   paper: "暖纸",
   forest: "森林绿",
   blueprint: "工程蓝图",

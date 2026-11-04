@@ -3328,6 +3328,96 @@
     },
     {
       "version": 1,
+      "id": "industrial-equipment-model",
+      "type": "class",
+      "title": "工业设备监测 · 领域模型",
+      "description": "面向工业技术汇报的类图，展示设备继承、通道组合、采集接口及实现关系。",
+      "theme": "industrial",
+      "direction": "LR",
+      "nodes": [
+        {
+          "id": "equipment",
+          "label": "设备",
+          "kind": "class",
+          "attributes": [
+            "- id: string",
+            "+ status: DeviceState"
+          ],
+          "operations": [
+            "+ start(): void"
+          ]
+        },
+        {
+          "id": "pump",
+          "label": "变频泵",
+          "kind": "class",
+          "attributes": [
+            "+ speed: number"
+          ],
+          "operations": [
+            "+ setSpeed(rpm): void"
+          ]
+        },
+        {
+          "id": "channel",
+          "label": "测量通道",
+          "kind": "class",
+          "attributes": [
+            "+ unit: string",
+            "+ value: number"
+          ],
+          "operations": [
+            "+ read(): number"
+          ]
+        },
+        {
+          "id": "collector",
+          "label": "采集接口",
+          "kind": "interface",
+          "operations": [
+            "+ collect(): Sample"
+          ]
+        },
+        {
+          "id": "plc",
+          "label": "PLC 采集器",
+          "kind": "class",
+          "attributes": [
+            "+ address: string"
+          ],
+          "operations": [
+            "+ collect(): Sample"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "pump",
+          "to": "equipment",
+          "kind": "inheritance"
+        },
+        {
+          "from": "equipment",
+          "to": "channel",
+          "kind": "composition",
+          "fromLabel": "1",
+          "toLabel": "1..*"
+        },
+        {
+          "from": "pump",
+          "to": "collector",
+          "kind": "dependency",
+          "label": "读取状态"
+        },
+        {
+          "from": "plc",
+          "to": "collector",
+          "kind": "realization"
+        }
+      ]
+    },
+    {
+      "version": 1,
       "id": "delivery-causes",
       "type": "fishbone",
       "title": "交付延期 · 原因分析",

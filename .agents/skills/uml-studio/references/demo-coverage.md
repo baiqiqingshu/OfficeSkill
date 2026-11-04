@@ -1,8 +1,8 @@
 # Demo 场景与验证
 
-离线入口是 `demo-dist/index.html`，开发入口是 `npm run dev`。两者都载入 `examples/documents/gallery.json` 的完整 26 图集合。
+离线入口是 `demo-dist/index.html`，开发入口是 `npm run dev`。两者都载入 `examples/documents/gallery.json` 的完整 27 图集合。
 
-`examples/<type>.json` 保留 13 类 UML / 系统设计的简明入门模板；4+1 视图（logical / development / process / physical / scenario）不设入门模板，直接参考 `examples/scenarios/` 同名文件。复杂场景的源数据在 `examples/scenarios/`；`scripts/gallery.mjs` 按固定顺序组合 20 个场景、3 个布局对照与 `examples/documents/quickstart.json` 的原有 3 张图。修改源文件后运行 `npm run demo:refresh`，不要手改生成的 `gallery.json`。`npm run build` 也会先刷新设计册，再打包运行资源和离线 HTML。
+`examples/<type>.json` 保留 13 类 UML / 系统设计的简明入门模板；4+1 视图（logical / development / process / physical / scenario）不设入门模板，直接参考 `examples/scenarios/` 同名文件。复杂场景的源数据在 `examples/scenarios/`；`scripts/gallery.mjs` 按固定顺序组合 20 个场景、3 个布局对照、`examples/industrial.json` 的工业汇报示例与 `examples/documents/quickstart.json` 的原有 3 张图。修改源文件后运行 `npm run demo:refresh`，不要手改生成的 `gallery.json`。`npm run build` 也会先刷新设计册，再打包运行资源和离线 HTML。
 
 ## 场景索引
 
@@ -31,6 +31,8 @@
 
 另外 3 张对照图分别验证：登录图 `compact + LR`；嵌套组件 `grid + maxPerColumn:2`；数据导入 `spacious + 20px + transparent + showTitle + 尺寸上限`。它们与原图独立保存，适合比较模式和验证保存后重新打开。
 
+工业汇报示例 `examples/industrial.json` 以“工业设备监测 · 领域模型”展示 `industrial` 主题：白底、浅杏色图元、灰色线条与小圆角。5 个类/接口保留属性与方法分区，包含继承、组合、依赖、实现四种 UML 关系及两端基数；无节点样式覆盖，适合直接查看和复用主题效果。
+
 ## 自动验证
 
 在本 SKILL 目录运行：
@@ -47,7 +49,7 @@ npm run test:editor
 - 20 个复杂场景中的节点图都在 4 种模式 × TB/LR 下重复检查；已有 `edge-labels.test.mjs` 进一步验证登录分支归属、共用干线避让和端点基数位置。
 - `tests/layout.test.mjs` 以进程视图验证角色、服务器、数据库、组件及队列高度不同时，横向主链仍共用中心线、无多余折点；同时保留分支、自环和反馈关系。
 - `tests/usecase-layout.test.mjs` 验证书店、登录认证和多角色交易平台的直线无交叉、无无关用例穿越；同时检查同行 / 同列、角色共用端口、边界外角色、TB/LR、四种模式，以及循环依赖、断开节点、嵌套与空边界。
-- 时序验证消息箭头、4 种片段、两个数据库圆柱及任务生命周期；鱼骨在全部 10 个主题下验证递归原因无遗漏。
+- 时序验证消息箭头、4 种片段、两个数据库圆柱及任务生命周期；鱼骨在全部 12 个主题下验证递归原因无遗漏。
 - HTML 往返验证完整集合、重复图类型和独立设置；4 类复杂图实际导出 SVG/PNG/JPEG/WebP，检查编码、尺寸限制、透明通道与 JPEG 白底。
 - `tests/raster-markers.test.mjs` 实际栅格化 7 类箭头 / 菱形，在 8 个方向检查符号位于关系的正确一侧；原生尺寸测试验证 SVG 原始视口与位图向上取整规则，防止浏览器和原生导出产生尺寸偏差。
 - `tests/crossings.test.mjs` 验证默认拱桥与直接交叉、斜线交叉、共用端点/干线排除、密集交叉合并、节点/文字避让，以及透明背景下拱桥与下穿线的实际像素间隙；同时检查各图独立设置和 HTML 往返保存。

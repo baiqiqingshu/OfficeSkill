@@ -41,6 +41,7 @@ node scripts/diagram.mjs input.json --out output.html --image output.png --scale
 node scripts/diagram.mjs input.json --image output.svg
 node scripts/diagram.mjs input.json --image output.jpeg --quality 0.92
 node scripts/diagram.mjs input.json --image output.webp --theme ocean
+node scripts/diagram.mjs examples/industrial.json --out industrial.html --image industrial.png
 node scripts/diagram.mjs saved.html --diagram 2 --image selected.png
 node scripts/diagram.mjs saved.html --all --out-dir images --format webp --scale 1
 node scripts/diagram.mjs examples/documents/gallery.json --out design-book.html
@@ -86,7 +87,7 @@ SVG、PNG、JPEG、WebP 均可在 Node 中直接导出，不安装、不启动�
 npm install
 # 修改组件源码后才需要重新构建
 npm run build
-# 开发 26 图场景册，覆盖全部 18 类与复杂布局对照
+# 开发 27 图场景册，覆盖全部 18 类与复杂布局对照
 npm run dev
 # 导出逐图 SVG / PNG、检查报告和视觉拼图至工作区 temp/
 npm run demo:verify
@@ -103,7 +104,7 @@ npm run demo:verify
 ## JSON 规则
 
 - 主结构见 schema。除通用元数据外，图节点、时序和鱼骨数据不可混用；未知字段会报错，不静默丢弃。
-- 默认 `theme:"ocean"`；还支持 `white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint`。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
+- 默认 `theme:"ocean"`；还支持 `white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/industrial.json`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
 - 色值支持十六进制 `#RGB` / `#RRGGBB` 和 `transparent`。网页支持粘贴色值、系统拾色器与精选色板。PNG / WebP / SVG 可保留透明；JPEG 无透明通道，铺白底。字体使用本机字体；Node 导出可重复传入 `--font-file path.ttf`，不下载远程字体。
 - `direction: "TB" | "LR"` 控制图布局；用例图默认 `LR`，其它节点图默认 `TB`。开始 / 结束节点使用独立的顶部 / 底部留白带；单开始、单结束的符号中心固定同轴，不通过横移结束节点挤占其它节点。显式 `LR` 时对应左 / 右及同一水平轴。起止带位于区域容器外，节点的 `group/lane` 数据仍保留。普通节点关系按正交折线路由，用例图关系按 UML 常见的直线路由，交叉处再按 `layout.edgeCrossing` 绘制。时序顺序由 `messages` 顺序决定，鱼骨分类按数组顺序排列。
 - `layout.edgeCrossing: "bridge" | "plain"` 控制当前节点图的连线交叉表示。默认 `bridge` 在穿越处画拱桥形跳线（小半圆弧），表示不相连；`plain` 保留直接交叉，正交线形成无圆点的十字，也表示不相连，不改变用例图斜线方向。共用端点、共线重合不添加跳线；密集交叉合并相邻拱桥，端点或折角附近空间不足、两侧均被节点/文字阻挡时保留原线。设置不改变拓扑，时序图生命线和鱼骨分支不使用此选项。网页“连线”表单和“布局与尺寸”均可设置，保存 HTML / JSON 与图片导出保留该选择。真实连通必须显式建节点并让连线引用它；不可将几何交叉自动解释为连接，或给所有交叉加实心圆点。

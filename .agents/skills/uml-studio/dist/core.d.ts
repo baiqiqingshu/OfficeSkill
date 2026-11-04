@@ -22,7 +22,7 @@ export const diagramTypes: readonly [
     "fishbone"
 ];
 export type DiagramType = typeof diagramTypes[number];
-export type ThemeName = 'paper' | 'ocean' | 'white' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint';
+export type ThemeName = 'paper' | 'ocean' | 'white' | 'industrial' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint';
 export interface Theme {
     background: string;
     surface: string;

@@ -46,6 +46,7 @@
       "enum": [
         "ocean",
         "white",
+        "industrial",
         "paper",
         "forest",
         "blueprint",

@@ -15,7 +15,7 @@ test('demo sources cover every type and generate the committed gallery without d
   assert.deepEqual([...scenarioTypes].sort(), [...diagramSchema.properties.type.enum].sort())
   const committed = JSON.parse(await readFile(new URL('../examples/documents/gallery.json', import.meta.url), 'utf8'))
   assert.deepEqual(committed, gallery, 'run npm run demo:refresh after editing scenario sources')
-  assert.equal(gallery.diagrams.length, 26)
+  assert.equal(gallery.diagrams.length, 27)
   for (const type of scenarioTypes) assert.ok(gallery.diagrams.some(spec => spec.type === type))
   const nodeKinds = new Set(gallery.diagrams.flatMap(spec => spec.nodes?.map(node => node.kind) ?? []))
   for (const kind of ['decision', 'fork', 'join', 'actor', 'interface', 'database', 'queue', 'server', 'note']) assert.ok(nodeKinds.has(kind), kind)
