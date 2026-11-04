@@ -121,9 +121,27 @@ export interface FishboneData {
         causes: FishboneCause[];
     }[];
 }
+export interface DiagramPoint {
+    x: number;
+    y: number;
+}
+/** Logical layout coordinates; offsets follow the automatic layout, positions pin an element. */
+export type ElementAdjustment = {
+    dx: number;
+    dy: number;
+} | DiagramPoint;
+export interface EdgeAdjustment {
+    waypoints: DiagramPoint[];
+}
+export interface DiagramAdjustments {
+    elements?: Record<string, ElementAdjustment>;
+    edges?: Record<string, EdgeAdjustment>;
+}
 export interface DiagramLayoutOptions {
     mode?: 'compact' | 'balanced' | 'spacious' | 'grid';
     edgeCrossing?: 'bridge' | 'plain';
+    horizontalStagger?: boolean;
+    adjustments?: DiagramAdjustments;
     showTitle?: boolean;
     maxWidth?: number;
     maxHeight?: number;
@@ -463,6 +481,14 @@ export import fishboneHeadStyles = __Uml_1_types_d_ts.fishboneHeadStyles;
 export import FishboneHeadStyle = __Uml_1_types_d_ts.FishboneHeadStyle;
 
 export import FishboneData = __Uml_1_types_d_ts.FishboneData;
+
+export import DiagramPoint = __Uml_1_types_d_ts.DiagramPoint;
+
+export import ElementAdjustment = __Uml_1_types_d_ts.ElementAdjustment;
+
+export import EdgeAdjustment = __Uml_1_types_d_ts.EdgeAdjustment;
+
+export import DiagramAdjustments = __Uml_1_types_d_ts.DiagramAdjustments;
 
 export import DiagramLayoutOptions = __Uml_1_types_d_ts.DiagramLayoutOptions;
 

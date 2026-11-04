@@ -177,7 +177,8 @@ function resetDraft(): void {
   root.value?.querySelectorAll(".uml-editor-selected").forEach(item => item.classList.remove("uml-editor-selected"));
   error.value = "";
 }
-defineExpose({ hasChanges, resetDraft, focusElement });
+function getDraft(): DiagramSpec { return clone(draft.value); }
+defineExpose({ hasChanges, resetDraft, focusElement, getDraft });
 function apply(): void {
   error.value = "";
   try {

@@ -16,9 +16,20 @@ const style = object({
   fontSize: num(8, 48), fontWeight: integer(100, 900), fontStyle: en('normal', 'italic'), textDecoration: en('none', 'underline'),
   lineWidth: num(0.5, 8), radius: num(0, 32), nodeWidth: num(80, 600), nodeHeight: num(32, 300), gap: num(24, 240),
 })
+const coordinate = num(-1000000, 1000000)
+const point = object({ x: coordinate, y: coordinate }, ['x', 'y'])
+const adjustmentMap = (values: unknown) => ({
+  type: 'object', propertyNames: { type: 'string', minLength: 1, pattern: '^[A-Za-z0-9_./:-]+$' }, additionalProperties: values,
+})
+const adjustments = object({
+  elements: adjustmentMap({ oneOf: [object({ dx: coordinate, dy: coordinate }, ['dx', 'dy']), point] }),
+  edges: adjustmentMap(object({ waypoints: array(point) }, ['waypoints'])),
+})
 const layout = object({
   mode: { ...en(...layoutModes.map(mode => mode.value)), default: 'balanced' },
   edgeCrossing: { ...en('bridge', 'plain'), default: 'bridge', description: '节点图连线交叉表示：bridge 为拱桥形跳线，plain 为无圆点直接交叉；两者都表示不相连。' },
+  horizontalStagger: { type: 'boolean', default: false, description: '流程、活动、泳道图中，跨列相连元素沿流程方向错开；false 保持水平对齐优先。' },
+  adjustments,
   showTitle: { type: 'boolean', default: false }, maxWidth: num(0, 100000), maxHeight: num(0, 100000),
   regionGap: num(0, 600), elementGap: num(8, 400), maxPerColumn: integer(0, 30),
   nodeMaxWidth: num(0, 100000), nodeMaxHeight: num(0, 100000),

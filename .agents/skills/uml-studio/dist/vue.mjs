@@ -6858,9 +6858,22 @@ const style = object({
   nodeHeight: num(32, 300),
   gap: num(24, 240)
 });
+const coordinate = num(-1e6, 1e6);
+const point = object({ x: coordinate, y: coordinate }, ["x", "y"]);
+const adjustmentMap = (values) => ({
+  type: "object",
+  propertyNames: { type: "string", minLength: 1, pattern: "^[A-Za-z0-9_./:-]+$" },
+  additionalProperties: values
+});
+const adjustments = object({
+  elements: adjustmentMap({ oneOf: [object({ dx: coordinate, dy: coordinate }, ["dx", "dy"]), point] }),
+  edges: adjustmentMap(object({ waypoints: array(point) }, ["waypoints"]))
+});
 const layout = object({
   mode: { ...en(...layoutModes.map((mode) => mode.value)), default: "balanced" },
   edgeCrossing: { ...en("bridge", "plain"), default: "bridge", description: "节点图连线交叉表示：bridge 为拱桥形跳线，plain 为无圆点直接交叉；两者都表示不相连。" },
+  horizontalStagger: { type: "boolean", default: false, description: "流程、活动、泳道图中，跨列相连元素沿流程方向错开；false 保持水平对齐优先。" },
+  adjustments,
   showTitle: { type: "boolean", default: false },
   maxWidth: num(0, 1e5),
   maxHeight: num(0, 1e5),
@@ -6924,6 +6937,13 @@ function validateSpec(value) {
   const spec = value;
   const nodes = unique(spec.nodes ?? [], "节点"), groups = unique(spec.groups ?? [], "分组"), lanes = unique(spec.lanes ?? [], "泳道");
   unique((spec.edges ?? []).filter((edge) => !!edge.id), "连线");
+  unique((spec.edges ?? []).map((edge, index) => ({ id: edge.id ?? `edge-${index}` })), "连线调整键");
+  for (const [key, adjustment] of Object.entries(spec.layout?.adjustments?.elements ?? {})) {
+    if (Object.values(adjustment).some((number2) => !Number.isFinite(number2))) throw new Error(`元素调整 ${key} 必须使用有限坐标`);
+  }
+  for (const [key, adjustment] of Object.entries(spec.layout?.adjustments?.edges ?? {})) {
+    if (adjustment.waypoints.some((point2) => !Number.isFinite(point2.x) || !Number.isFinite(point2.y))) throw new Error(`连线调整 ${key} 必须使用有限坐标`);
+  }
   for (const group of spec.groups ?? []) {
     if (nodes.has(group.id) || lanes.has(group.id)) throw new Error(`分组 ID 与节点或泳道冲突：${group.id}`);
     const seen = /* @__PURE__ */ new Set([group.id]);
@@ -97991,7 +98011,7 @@ function frame(spec, theme, width, height, body) {
   return { svg, width: physicalWidth, height: physicalHeight };
 }
 const n = (value) => String(Math.round(value * 1e3) / 1e3);
-const xy = (point) => `${n(point.x)} ${n(point.y)}`;
+const xy = (point2) => `${n(point2.x)} ${n(point2.y)}`;
 const cross = (ax, ay, bx, by) => ax * by - ay * bx;
 function crossingPaths(paths, mode, lineWidth, obstacles = []) {
   const data = paths.map((path) => path.points.map((p, i) => `${i ? "L" : "M"}${xy(p)}`).join(" "));
@@ -98221,7 +98241,7 @@ ${label2}` : tag;
     const metrics = measure$1(value, size);
     labels.push({ id: `${id2}-${role}`, value, role, size, width: metrics.width + 14, height: metrics.height + 10 });
   }
-  return { id: id2, edge, labels };
+  return { id: id2, key: edge.id ?? `edge-${index}`, edge, labels };
 }
 function layoutOptions(direction, padding, spec) {
   return {
@@ -98598,12 +98618,12 @@ function obstacleRouter(start, end, obstacles, used) {
 }
 function simplify(points) {
   const result = [];
-  for (const point of points) {
+  for (const point2 of points) {
     const last = result[result.length - 1];
-    if (last && Math.abs(last.x - point.x) < 1e-3 && Math.abs(last.y - point.y) < 1e-3) continue;
+    if (last && Math.abs(last.x - point2.x) < 1e-3 && Math.abs(last.y - point2.y) < 1e-3) continue;
     const before = result[result.length - 2];
-    if (before && last && (Math.abs(before.x - last.x) < 1e-3 && Math.abs(last.x - point.x) < 1e-3 || Math.abs(before.y - last.y) < 1e-3 && Math.abs(last.y - point.y) < 1e-3)) result.pop();
-    result.push({ ...point });
+    if (before && last && (Math.abs(before.x - last.x) < 1e-3 && Math.abs(last.x - point2.x) < 1e-3 || Math.abs(before.y - last.y) < 1e-3 && Math.abs(last.y - point2.y) < 1e-3)) result.pop();
+    result.push({ ...point2 });
   }
   return result;
 }
@@ -98779,7 +98799,7 @@ function layoutUsecases(refs, edges, spec, theme) {
     }
     for (let index = 0; index < lines.length; index++) for (const other of lines.slice(index + 1)) {
       const line2 = lines[index];
-      const turn = (first, last, point) => (last.x - first.x) * (point.y - first.y) - (last.y - first.y) * (point.x - first.x);
+      const turn = (first, last, point2) => (last.x - first.x) * (point2.y - first.y) - (last.y - first.y) * (point2.x - first.x);
       if (turn(line2.start, line2.end, other.start) * turn(line2.start, line2.end, other.end) < -0.01 && turn(other.start, other.end, line2.start) * turn(other.start, other.end, line2.end) < -0.01) cost += 1e4;
     }
     return cost;
@@ -98830,7 +98850,7 @@ function layoutUsecases(refs, edges, spec, theme) {
   }
   return { nodes, containers, routes: [], width: placed.width, height: placed.height };
 }
-function routeEdges(edges, result, direction, theme, type2) {
+function routeEdges(edges, result, direction, theme, type2, adjustments2) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
   const obstacles = result.nodes.map((box) => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
@@ -98858,7 +98878,8 @@ function routeEdges(edges, result, direction, theme, type2) {
   const seen = /* @__PURE__ */ new Map();
   const used = result.routes.flatMap((route) => route.paths);
   for (const item of assignments) {
-    if (type2 === "usecase" && item.source !== item.target) {
+    const waypoints = adjustments2?.edges?.[item.ref.key]?.waypoints ?? [];
+    if (type2 === "usecase" && item.source !== item.target && !waypoints.length) {
       const route2 = [directEndpoint(item.source, item.target), directEndpoint(item.target, item.source)];
       result.routes.push({ ref: item.ref, paths: [route2] });
       used.push(route2);
@@ -98904,8 +98925,18 @@ function routeEdges(edges, result, direction, theme, type2) {
           });
         });
         if (!clear) continue;
-        const middle = obstacleRouter(anchors[0].stub, anchors[1].stub, obstacles, used);
-        if (!middle) continue;
+        const stops = [anchors[0].stub, ...waypoints, anchors[1].stub];
+        const middle = [];
+        let reachable = true;
+        for (let index = 1; index < stops.length; index++) {
+          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used);
+          if (!section) {
+            reachable = false;
+            break;
+          }
+          middle.push(...index === 1 ? section : section.slice(1));
+        }
+        if (!reachable) continue;
         const candidate = simplify([anchors[0].port, ...middle, anchors[1].port]);
         let length = 0, overlaps = 0, crossings = 0;
         for (let i = 1; i < candidate.length; i++) {
@@ -98930,52 +98961,52 @@ function routeEdges(edges, result, direction, theme, type2) {
         }
       }
     }
-    if (!route) throw new Error(`Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
+    if (!route) throw new Error(waypoints.length ? `连线 ${item.ref.edge.from} → ${item.ref.edge.to} 无法经过指定途经点；请将点移出节点、标题或过窄的间隙。` : `Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
     used.push(route);
     result.routes.push({ ref: item.ref, paths: [route] });
   }
 }
-function clipEndpoint(point, neighbor, box) {
+function clipEndpoint(point2, neighbor, box) {
   if (box.width !== box.ref.renderWidth || box.height !== box.ref.renderHeight) {
     const scaleX = box.width / box.ref.renderWidth, scaleY = box.height / box.ref.renderHeight;
-    const local = { x: (point.x - box.x) / scaleX, y: (point.y - box.y) / scaleY };
+    const local = { x: (point2.x - box.x) / scaleX, y: (point2.y - box.y) / scaleY };
     const localNeighbor = { x: (neighbor.x - box.x) / scaleX, y: (neighbor.y - box.y) / scaleY };
     clipEndpoint(local, localNeighbor, { ...box, x: 0, y: 0, width: box.ref.renderWidth, height: box.ref.renderHeight });
-    point.x = box.x + local.x * scaleX;
-    point.y = box.y + local.y * scaleY;
+    point2.x = box.x + local.x * scaleX;
+    point2.y = box.y + local.y * scaleY;
     neighbor.x = box.x + localNeighbor.x * scaleX;
     neighbor.y = box.y + localNeighbor.y * scaleY;
     return;
   }
   if (box.ref.symbol) {
     const symbol = box.ref.symbol;
-    if (Math.abs(point.y - neighbor.y) < 0.01) point.y = neighbor.y = box.y + symbol.y + symbol.height / 2;
-    else point.x = neighbor.x = box.x + symbol.x + symbol.width / 2;
-    clipEndpoint(point, neighbor, { ...box, x: box.x + symbol.x, y: box.y + symbol.y, width: symbol.width, height: symbol.height, ref: { ...box.ref, symbol: void 0, renderWidth: symbol.width, renderHeight: symbol.height } });
+    if (Math.abs(point2.y - neighbor.y) < 0.01) point2.y = neighbor.y = box.y + symbol.y + symbol.height / 2;
+    else point2.x = neighbor.x = box.x + symbol.x + symbol.width / 2;
+    clipEndpoint(point2, neighbor, { ...box, x: box.x + symbol.x, y: box.y + symbol.y, width: symbol.width, height: symbol.height, ref: { ...box.ref, symbol: void 0, renderWidth: symbol.width, renderHeight: symbol.height } });
     return;
   }
   const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
   const rx = box.width / 2, ry = box.height / 2;
-  const horizontal = Math.abs(point.y - neighbor.y) < 0.01;
+  const horizontal = Math.abs(point2.y - neighbor.y) < 0.01;
   const kind = box.ref.kind;
   if (kind === "usecase" || kind === "start" || kind === "end") {
-    if (horizontal) point.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.sqrt(Math.max(0, 1 - ((point.y - cy) / ry) ** 2));
-    else point.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2));
+    if (horizontal) point2.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.sqrt(Math.max(0, 1 - ((point2.y - cy) / ry) ** 2));
+    else point2.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.sqrt(Math.max(0, 1 - ((point2.x - cx) / rx) ** 2));
   } else if (kind === "decision") {
-    if (horizontal) point.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.max(0, 1 - Math.abs(point.y - cy) / ry);
-    else point.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.max(0, 1 - Math.abs(point.x - cx) / rx);
+    if (horizontal) point2.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.max(0, 1 - Math.abs(point2.y - cy) / ry);
+    else point2.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.max(0, 1 - Math.abs(point2.x - cx) / rx);
   } else if (kind === "actor" && horizontal) {
-    const localY = point.y - box.y;
+    const localY = point2.y - box.y;
     let halfWidth = box.width / 2 - 12;
     if (localY <= 24) halfWidth = 11 * Math.sqrt(Math.max(0, 1 - ((localY - 13) / 11) ** 2));
     else if (Math.abs(localY - 35) < 1) halfWidth = 25;
     else if (localY <= 54) halfWidth = 0;
     else if (localY <= 78) halfWidth = (localY - 54) * 21 / 24;
-    point.x = cx + (neighbor.x < cx ? -1 : 1) * halfWidth;
-  } else if (kind === "actor" && neighbor.y < box.y && Math.abs(point.x - cx) <= 11) {
-    point.y = box.y + 13 - 11 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / 11) ** 2));
+    point2.x = cx + (neighbor.x < cx ? -1 : 1) * halfWidth;
+  } else if (kind === "actor" && neighbor.y < box.y && Math.abs(point2.x - cx) <= 11) {
+    point2.y = box.y + 13 - 11 * Math.sqrt(Math.max(0, 1 - ((point2.x - cx) / 11) ** 2));
   } else if (kind === "database" && !horizontal) {
-    point.y = neighbor.y < cy ? box.y + 10 - 10 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2)) : box.y + box.height - 10 + 10 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2));
+    point2.y = neighbor.y < cy ? box.y + 10 - 10 * Math.sqrt(Math.max(0, 1 - ((point2.x - cx) / rx) ** 2)) : box.y + box.height - 10 + 10 * Math.sqrt(Math.max(0, 1 - ((point2.x - cx) / rx) ** 2));
   }
 }
 function markerDefinitions(prefix, theme) {
@@ -99002,7 +99033,7 @@ function renderContainer(box, theme, direction) {
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref2.kind}" data-${ref2.kind === "lane" ? "lane" : "group"}-id="${esc(ref2.originalId)}"${ref2.lane && ref2.kind !== "lane" ? ` data-lane-id="${esc(ref2.lane)}"` : ""}><title>${esc(ref2.label)}</title>${shape}${text(labelX, labelY, ref2.label, theme, { anchor: "start", weight: 650 })}</g>`;
+  return `<g class="uml-container uml-${ref2.kind}" data-adjustment-key="${ref2.kind === "lane" ? "lanes" : "groups"}/${esc(ref2.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref2.kind === "lane" ? "lane" : "group"}-id="${esc(ref2.originalId)}"${ref2.lane && ref2.kind !== "lane" ? ` data-lane-id="${esc(ref2.lane)}"` : ""}><title>${esc(ref2.label)}</title>${shape}${text(labelX, labelY, ref2.label, theme, { anchor: "start", weight: 650 })}</g>`;
 }
 function centeredContent(ref2, x, y, width, height) {
   const { node, theme, kind } = ref2;
@@ -99021,14 +99052,15 @@ function centeredContent(ref2, x, y, width, height) {
   if (node.detail) value += text(x + width / 2, top + labelHeight + 6 + small, node.detail, theme, { size: small, fill: theme.muted });
   return value;
 }
-function renderNode(box, spec) {
+function renderNode(box, spec, adjustmentMetadata = true) {
   const { x, y, width: w, height: h, ref: ref2 } = box;
   const { theme, kind, node } = ref2;
+  const metadata2 = adjustmentMetadata ? ` data-adjustment-key="nodes/${esc(node.id)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}"` : "";
   if (w !== ref2.renderWidth || h !== ref2.renderHeight) {
     const scaleX = w / ref2.renderWidth, scaleY = h / ref2.renderHeight;
     const virtual = { ...box, x: 0, y: 0, width: ref2.renderWidth, height: ref2.renderHeight, caption: void 0 };
     const caption = box.caption ? text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted }) : "";
-    return `<g transform="translate(${numeric(x)} ${numeric(y)}) scale(${scaleX} ${scaleY})">${renderNode(virtual, spec)}</g>${caption}`;
+    return `<g${metadata2}><g transform="translate(${numeric(x)} ${numeric(y)}) scale(${scaleX} ${scaleY})">${renderNode(virtual, spec, false)}</g>${caption}</g>`;
   }
   const stroke = esc(node.style?.primary && !node.style.border ? theme.primary : theme.border), surface = esc(theme.surface), ink = esc(theme.primary);
   const common = `fill="${surface}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"`;
@@ -99097,7 +99129,7 @@ function renderNode(box, spec) {
     content += text(x + caption.x + caption.width / 2, y + caption.y + 2 + caption.size, caption.value, theme, { size: caption.size, fill: theme.muted });
   }
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
-  return `<g class="uml-node uml-node-${kind}" data-editor-key="nodes/${spec.nodes.indexOf(ref2.sourceNode)}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([ref2.sourceNode.label, ref2.sourceNode.detail, ...ref2.sourceNode.attributes ?? [], ...ref2.sourceNode.operations ?? []].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
+  return `<g class="uml-node uml-node-${kind}"${metadata2} data-editor-key="nodes/${spec.nodes.indexOf(ref2.sourceNode)}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ""}${node.group ? ` data-group-id="${esc(node.group)}"` : ""}><title>${esc([ref2.sourceNode.label, ref2.sourceNode.detail, ...ref2.sourceNode.attributes ?? [], ...ref2.sourceNode.operations ?? []].filter(Boolean).join("\n"))}</title>${shape}${content}</g>`;
 }
 function segmentIntersectsRect(a, b, box, margin = 0) {
   let low = 0, high = 1;
@@ -99125,11 +99157,11 @@ function segmentRectDistance(a, b, box) {
     { x: box.x, y: box.y + box.height },
     { x: box.x + box.width, y: box.y + box.height }
   ];
-  const distances = corners.map((point) => {
-    const fraction = squared ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / squared)) : 0;
-    return Math.hypot(point.x - a.x - dx * fraction, point.y - a.y - dy * fraction);
+  const distances = corners.map((point2) => {
+    const fraction = squared ? Math.max(0, Math.min(1, ((point2.x - a.x) * dx + (point2.y - a.y) * dy) / squared)) : 0;
+    return Math.hypot(point2.x - a.x - dx * fraction, point2.y - a.y - dy * fraction);
   });
-  for (const point of [a, b]) distances.push(Math.hypot(Math.max(box.x - point.x, 0, point.x - box.x - box.width), Math.max(box.y - point.y, 0, point.y - box.y - box.height)));
+  for (const point2 of [a, b]) distances.push(Math.hypot(Math.max(box.x - point2.x, 0, point2.x - box.x - box.width), Math.max(box.y - point2.y, 0, point2.y - box.y - box.height)));
   return Math.min(...distances);
 }
 function labelIntersectsNode(label2, node) {
@@ -99165,7 +99197,7 @@ function placeLabels(routes, nodes, containers, direction, finalPass = false) {
       const { a, b, length, offset } = segment;
       const ux = (b.x - a.x) / length, uy = (b.y - a.y) / length;
       const overlaps = others.flatMap((other) => {
-        const cross2 = (point) => Math.abs((point.x - a.x) * uy - (point.y - a.y) * ux);
+        const cross2 = (point2) => Math.abs((point2.x - a.x) * uy - (point2.y - a.y) * ux);
         if (cross2(other.a) > 0.01 || cross2(other.b) > 0.01) return [];
         const first = (other.a.x - a.x) * ux + (other.a.y - a.y) * uy;
         const last = (other.b.x - a.x) * ux + (other.b.y - a.y) * uy;
@@ -99260,6 +99292,9 @@ function occupiedNode(box) {
     height: Math.max(box.height, caption ? caption.y + caption.height : 0) - top
   };
 }
+function staggerConnections(spec) {
+  return spec.layout?.horizontalStagger === true && ["activity", "flowchart", "swimlane"].includes(spec.type);
+}
 function alignLaneFlow(result, edges, spec, theme) {
   if (!spec.lanes?.length || result.containers.some((box) => box.ref.kind !== "lane") || (spec.layout?.maxPerColumn ?? 0) > 0) return false;
   const horizontal = spec.direction === "LR", axis = horizontal ? "x" : "y", cross2 = horizontal ? "y" : "x";
@@ -99320,7 +99355,7 @@ function alignLaneFlow(result, edges, spec, theme) {
   };
   for (const edge of forward) {
     const from = byId.get(edge.edge.from), to = byId.get(edge.edge.to);
-    constrain(from, to, laneOf(from) === laneOf(to) ? separation(from, to, Math.max(0, ...edge.labels.map((label2) => label2[size] + 16))) : 0);
+    constrain(from, to, laneOf(from) === laneOf(to) ? separation(from, to, Math.max(0, ...edge.labels.map((label2) => label2[size] + 16))) : staggerConnections(spec) ? Math.max(24, gap) : 0);
   }
   const previous = /* @__PURE__ */ new Map();
   for (const node of ordered) {
@@ -99366,6 +99401,7 @@ function equalizeLaneExtents(result, direction) {
   for (const lane of lanes) lane[size] = end - lane[axis];
 }
 function alignConnectedNodes(result, edges, columns, spec) {
+  const stagger = staggerConnections(spec);
   const horizontal = Boolean(spec.lanes?.length) && spec.direction === "LR";
   const axis = horizontal ? "x" : "y", cross2 = horizontal ? "y" : "x";
   const size = horizontal ? "width" : "height", crossSize = horizontal ? "height" : "width";
@@ -99443,11 +99479,21 @@ function alignConnectedNodes(result, edges, columns, spec) {
     }
   }
   candidates.sort((a, b) => a.difference - b.difference);
-  for (const candidate of candidates) {
-    const from = find(candidate.from), to = find(candidate.to);
-    if (from === to) continue;
-    const graph = adjacency();
-    if (!reachable(graph, from, to) && !reachable(graph, to, from)) parents[to] = from;
+  if (stagger) {
+    for (const edge of edges) {
+      const from = index.get(edge.edge.from), to = index.get(edge.edge.to);
+      if (from === void 0 || to === void 0 || from === to) continue;
+      if (columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id) && Math.abs(center(from) - center(to)) >= 0.01) continue;
+      if (reachable(adjacency(), to, from)) continue;
+      constraints.push({ from, to, distance: Math.max(24, gap) });
+    }
+  } else {
+    for (const candidate of candidates) {
+      const from = find(candidate.from), to = find(candidate.to);
+      if (from === to) continue;
+      const graph = adjacency();
+      if (!reachable(graph, from, to) && !reachable(graph, to, from)) parents[to] = from;
+    }
   }
   const values = /* @__PURE__ */ new Map(), indegrees = /* @__PURE__ */ new Map();
   const outgoing = /* @__PURE__ */ new Map();
@@ -99531,6 +99577,80 @@ function placeFlowTerminals(result, edges, direction, gap) {
     }
   }
 }
+function adjustmentDelta(box, adjustment) {
+  if (!adjustment) return { x: 0, y: 0 };
+  return "dx" in adjustment ? { x: adjustment.dx, y: adjustment.dy } : { x: adjustment.x - box.x, y: adjustment.y - box.y };
+}
+function applyManualElements(result, spec, direction) {
+  const adjustments2 = spec.layout?.adjustments?.elements;
+  if (!adjustments2 || !Object.keys(adjustments2).length) return;
+  const parents = new Map((spec.groups ?? []).map((group) => [group.id, group.parent]));
+  const withinGroup = (id2, ancestor) => {
+    while (id2) {
+      if (id2 === ancestor) return true;
+      id2 = parents.get(id2);
+    }
+    return false;
+  };
+  const nodeWithin = (node, container) => {
+    if (container.ref.kind !== "lane") return withinGroup(node.ref.node.group, container.ref.originalId);
+    const lane = node.ref.node.lane ?? result.containers.find((box) => box.ref.kind !== "lane" && box.ref.originalId === node.ref.node.group)?.ref.lane;
+    return lane === container.ref.originalId || !lane && container.ref.originalId.startsWith("__uml_unassigned_lane__");
+  };
+  const containerWithin = (child, container) => child !== container && (container.ref.kind === "lane" ? child.ref.lane === container.ref.originalId : withinGroup(parents.get(child.ref.originalId), container.ref.originalId));
+  let moved = false;
+  for (const container of [...result.containers].sort((a, b) => a.depth - b.depth)) {
+    const key = `${container.ref.kind === "lane" ? "lanes" : "groups"}/${container.ref.originalId}`;
+    const delta = adjustmentDelta(container, adjustments2[key]);
+    if (!delta.x && !delta.y) continue;
+    moved = true;
+    container.x += delta.x;
+    container.y += delta.y;
+    for (const child of result.containers) if (containerWithin(child, container)) {
+      child.x += delta.x;
+      child.y += delta.y;
+    }
+    for (const node of result.nodes) if (nodeWithin(node, container)) {
+      node.x += delta.x;
+      node.y += delta.y;
+    }
+  }
+  for (const node of result.nodes) {
+    const delta = adjustmentDelta(node, adjustments2[`nodes/${node.ref.node.id}`]);
+    if (delta.x || delta.y) moved = true;
+    node.x += delta.x;
+    node.y += delta.y;
+  }
+  if (!moved) return;
+  for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) {
+    const members = result.nodes.filter((node) => !["start", "end"].includes(node.ref.kind) && nodeWithin(node, container)).map(occupiedNode);
+    members.push(...result.containers.filter((child) => containerWithin(child, container)));
+    if (!members.length) continue;
+    const headerX = container.ref.kind === "lane" && direction === "LR" ? container.ref.header : 0;
+    const headerY = container.ref.kind === "lane" && direction === "LR" ? 0 : container.ref.header;
+    const right = Math.max(container.x + container.width, ...members.map((box) => box.x + box.width + 24));
+    const bottom = Math.max(container.y + container.height, ...members.map((box) => box.y + box.height + 24));
+    container.x = Math.min(container.x, ...members.map((box) => box.x - 24 - headerX));
+    container.y = Math.min(container.y, ...members.map((box) => box.y - 24 - headerY));
+    container.width = right - container.x;
+    container.height = bottom - container.y;
+  }
+}
+function preserveWaypoints(path, pins) {
+  const points = simplify(path);
+  if (!pins.length) return points;
+  const result = points.length ? [{ ...points[0] }] : [];
+  for (let index = 1; index < points.length; index++) {
+    const a = points[index - 1], b = points[index];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const along = pins.filter((point2) => {
+      const distance = Math.hypot(point2.x - a.x, point2.y - a.y) + Math.hypot(b.x - point2.x, b.y - point2.y);
+      return Math.abs(distance - length) < 1e-3 && Math.hypot(point2.x - a.x, point2.y - a.y) > 1e-3 && Math.hypot(point2.x - b.x, point2.y - b.y) > 1e-3;
+    }).sort((first, second) => Math.hypot(first.x - a.x, first.y - a.y) - Math.hypot(second.x - a.x, second.y - a.y));
+    result.push(...along.map((point2) => ({ ...point2 })), { ...b });
+  }
+  return result;
+}
 async function renderGraph(spec, suppliedTheme) {
   return renderGraphWithSpacing(spec, suppliedTheme, 0);
 }
@@ -99606,6 +99726,36 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   if (spec.type !== "usecase" && !alignLaneFlow(result, edges, spec, theme)) alignConnectedNodes(result, edges, columns, spec);
   if (spec.lanes?.length) equalizeLaneExtents(result, direction);
   placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
+  const routeResult = (adjustments2) => {
+    result.routes = [];
+    routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type, adjustments2);
+    const nodeById = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
+    for (const route of result.routes) {
+      const first = route.paths[0], last = route.paths[route.paths.length - 1];
+      const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
+      if (spec.type !== "usecase") {
+        if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
+        if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+      }
+    }
+  };
+  const manual = spec.layout?.adjustments;
+  const hasManualPositions = !!(Object.keys(manual?.elements ?? {}).length || Object.keys(manual?.edges ?? {}).length);
+  routeResult();
+  const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
+  if (!baselineLabels) {
+    return renderGraphWithSpacing({ ...requestedSpec, layout: {
+      ...requestedSpec.layout,
+      elementGap: Math.ceil((spec.layout?.elementGap ?? 48) * 1.5),
+      regionGap: Math.ceil((spec.layout?.regionGap ?? 72) * 1.5)
+    } }, suppliedTheme, labelPass + 1);
+  }
+  let labels = baselineLabels;
+  if (hasManualPositions) {
+    applyManualElements(result, spec, direction);
+    routeResult(manual);
+    labels = placeLabels(result.routes, result.nodes, result.containers, direction, true);
+  }
   result.width = Math.max(0, ...result.nodes.map((box) => {
     const occupied = occupiedNode(box);
     return occupied.x + occupied.width;
@@ -99614,26 +99764,15 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
     const occupied = occupiedNode(box);
     return occupied.y + occupied.height;
   }), ...result.containers.map((box) => box.y + box.height));
-  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type);
-  const nodeById = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
-  for (const route of result.routes) {
-    const first = route.paths[0], last = route.paths[route.paths.length - 1];
-    const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
-    if (spec.type !== "usecase") {
-      if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
-      if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
-    }
-  }
-  const labels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
-  if (!labels) {
-    return renderGraphWithSpacing({ ...requestedSpec, layout: {
-      ...requestedSpec.layout,
-      elementGap: Math.ceil((spec.layout?.elementGap ?? 48) * 1.5),
-      regionGap: Math.ceil((spec.layout?.regionGap ?? 72) * 1.5)
-    } }, suppliedTheme, labelPass + 1);
+  for (const label2 of labels) {
+    const adjustment = manual?.elements?.[`edge-labels/${label2.ref.key}/${label2.role}`];
+    const delta = adjustmentDelta(label2, adjustment);
+    label2.x += delta.x;
+    label2.y += delta.y;
+    if (adjustment) label2.leader = true;
   }
   const prefix = `uml-graph-${++graphNumber}`;
-  const displayed = result.routes.flatMap((route, owner) => route.paths.map((points) => ({ points: simplify(points), owner })));
+  const displayed = result.routes.flatMap((route, owner) => route.paths.map((points) => ({ points: preserveWaypoints(points, manual?.edges?.[route.ref.key]?.waypoints ?? []), owner })));
   const crossings = crossingPaths(
     displayed,
     spec.layout?.edgeCrossing ?? "bridge",
@@ -99654,7 +99793,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
     const dashed = route.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
     const end = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
     const start = kind === "aggregation" || kind === "composition" ? kind : "";
-    paths += `<g class="uml-edge uml-edge-${kind}" data-editor-key="edges/${spec.edges.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" → "))}</title>`;
+    paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" → "))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : "";
@@ -99666,7 +99805,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
   const labelShapes = labels.map((label2) => {
     const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
-    return `<g class="uml-edge-label" data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`;
+    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label2.ref.key)}/${label2.role}" data-layout-x="${numeric(label2.x)}" data-layout-y="${numeric(label2.y)}" data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`;
   }).join("");
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) {
@@ -99681,11 +99820,11 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
     maxX = Math.max(maxX, box.x + box.caption.x + box.caption.width);
     maxY = Math.max(maxY, box.y + box.caption.y + box.caption.height);
   }
-  for (const route of result.routes) for (const path of route.paths) for (const point of path) {
-    minX = Math.min(minX, point.x - 14);
-    minY = Math.min(minY, point.y - 14);
-    maxX = Math.max(maxX, point.x + 14);
-    maxY = Math.max(maxY, point.y + 14);
+  for (const route of result.routes) for (const path of route.paths) for (const point2 of path) {
+    minX = Math.min(minX, point2.x - 14);
+    minY = Math.min(minY, point2.y - 14);
+    maxX = Math.max(maxX, point2.x + 14);
+    maxY = Math.max(maxY, point2.y + 14);
   }
   const showTitle = spec.layout?.showTitle === true;
   const titleMetrics = showTitle ? measure$1(spec.title, 24) : { width: 0, lines: 0 };
@@ -99695,8 +99834,42 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const heading2 = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: "start", weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: "start", fill: theme.muted }) : "") : "";
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading2}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading2}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
+}
+class SpecialPositions {
+  constructor(spec) {
+    this.spec = spec;
+  }
+  spec;
+  minX = 0;
+  minY = 0;
+  maxX = 0;
+  maxY = 0;
+  at(key, x, y) {
+    const adjustment = this.spec.layout?.adjustments?.elements?.[key];
+    const nx = adjustment && "x" in adjustment ? adjustment.x : x + (adjustment?.dx ?? 0);
+    const ny = adjustment && "y" in adjustment ? adjustment.y : y + (adjustment?.dy ?? 0);
+    return { x: nx, y: ny, dx: nx - x, dy: ny - y };
+  }
+  attrs(key, x, y) {
+    return `data-adjustment-key="${esc(key)}" data-layout-x="${x}" data-layout-y="${y}"`;
+  }
+  include(x, y, width, height) {
+    this.minX = Math.min(this.minX, x - 16);
+    this.minY = Math.min(this.minY, y - 16);
+    this.maxX = Math.max(this.maxX, x + width + 16);
+    this.maxY = Math.max(this.maxY, y + height + 16);
+  }
+  finish(theme, width, height, body) {
+    return frame(
+      this.spec,
+      theme,
+      Math.max(width, this.maxX) - this.minX,
+      Math.max(height, this.maxY) - this.minY,
+      `<g data-layout-root="" transform="translate(${-this.minX} ${-this.minY})">${body}</g>`
+    );
+  }
 }
 function measure(value, size) {
   return Array.from(value).reduce(
@@ -99748,6 +99921,7 @@ function heading(spec, theme, width, eyebrow) {
 }
 function renderSequence(spec, theme) {
   spec = { ...spec, layout: resolveLayout(spec) };
+  const positions = new SpecialPositions(spec);
   const participants = spec.participants ?? [];
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
@@ -99777,7 +99951,7 @@ function renderSequence(spec, theme) {
     )
   );
   const x = new Map(
-    participants.map((p, i) => [p.id, 70 + participantWidth / 2 + i * column])
+    participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x])
   );
   const ys = [];
   const rowLines = [], labelTops = [];
@@ -99864,7 +100038,14 @@ function renderSequence(spec, theme) {
       cursor = boundary + 4;
     }
   }
-  const bottom = cursor + 36;
+  const messagePositions = messages.map((message, index) => {
+    const sx = x.get(message.from), tx = x.get(message.to);
+    const position = positions.at(`messages/${index}`, message.from === message.to ? sx + 18 : (sx + tx) / 2, ys[index]);
+    ys[index] = position.y;
+    labelTops[index] = labelTops[index] + position.dy;
+    return position;
+  });
+  const bottom = Math.max(cursor + 36, ...ys.map((y) => y + messageGap + 36));
   const height = bottom + 56;
   const createAt = /* @__PURE__ */ new Map();
   const destroyAt = /* @__PURE__ */ new Map();
@@ -99872,7 +100053,10 @@ function renderSequence(spec, theme) {
     if (m.kind === "create" && !createAt.has(m.to)) createAt.set(m.to, i);
     if (m.kind === "destroy" && !destroyAt.has(m.to)) destroyAt.set(m.to, i);
   });
-  const headerY = (p) => createAt.has(p.id) ? ys[createAt.get(p.id)] - boxHeight / 2 : top;
+  const headerY = (p) => {
+    const original = createAt.has(p.id) ? ys[createAt.get(p.id)] - boxHeight / 2 : top;
+    return positions.at(`participants/${p.id}`, 0, original).y;
+  };
   let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
   let fragmentAnnotations = "";
   const guard = (left, top2, lines) => {
@@ -99885,8 +100069,12 @@ function renderSequence(spec, theme) {
   };
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
-    body += `<g data-editor-key="fragments/${spec.fragments.indexOf(fragment)}"><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<g data-editor-key="fragments/${spec.fragments.indexOf(fragment)}"><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    const index = spec.fragments.indexOf(fragment), key = `fragments/${index}`;
+    const position = positions.at(key, left, frameTop);
+    const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
+    positions.include(position.x, position.y, right - left, frameBottom - frameTop);
+    body += `<g data-editor-key="fragments/${index}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    fragmentAnnotations += `<g data-editor-key="fragments/${index}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
     fragmentAnnotations += text(
       left + 10,
       frameTop + 18,
@@ -99912,9 +100100,10 @@ function renderSequence(spec, theme) {
   }
   for (const p of participants) {
     const cx = x.get(p.id);
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, headerY(p))}>`;
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)] : bottom;
+    positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
     body += line(
       cx,
       start,
@@ -99961,7 +100150,7 @@ function renderSequence(spec, theme) {
   body += activationShapes.join("");
   for (const p of participants) {
     const cx = x.get(p.id), py = headerY(p);
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
     if (p.kind === "actor") {
       const cy = py + 13;
@@ -99994,7 +100183,7 @@ function renderSequence(spec, theme) {
   }
   body += fragmentAnnotations;
   messages.forEach((m, i) => {
-    body += `<g data-editor-key="messages/${i}">`;
+    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, messagePositions[i].x, ys[i])}>`;
     const sx = x.get(m.from), tx = x.get(m.to), y = ys[i];
     const self2 = m.from === m.to;
     const sign = tx >= sx ? 1 : -1;
@@ -100006,9 +100195,12 @@ function renderSequence(spec, theme) {
     const path = self2 ? `M ${start} ${y} H ${sx + Math.min(80, column / 3)} Q ${sx + Math.min(80, column / 3) + 8} ${y} ${sx + Math.min(80, column / 3) + 8} ${y + 8} V ${y + 22} Q ${sx + Math.min(80, column / 3) + 8} ${y + 30} ${sx + Math.min(80, column / 3)} ${y + 30} H ${sx + targetOffsets[i]}` : `M ${start} ${y} H ${end}`;
     body += `<path d="${path}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""} marker-end="url(#${open ? "seq-open" : "seq-filled"})"/>`;
     const labelLines = rowLines[i];
-    const lx = self2 ? sx + 18 : (start + end) / 2;
+    const lx = (self2 ? sx + 18 : (start + end) / 2) + messagePositions[i].dx;
     const ly = labelTops[i] + size * 1.1;
     const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
+    const labelLeft = self2 ? lx - 4 : lx - lw / 2;
+    const messageLeft = Math.min(start, end, labelLeft);
+    positions.include(messageLeft, labelTops[i], Math.max(start, end, labelLeft + lw, self2 ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
     body += `<rect x="${self2 ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
     body += text(lx, ly, labelLines.join("\n"), theme, {
       anchor: self2 ? "start" : "middle"
@@ -100024,7 +100216,7 @@ function renderSequence(spec, theme) {
     theme,
     { anchor: "start", size: 11, fill: theme.muted }
   );
-  return frame(spec, theme, width, height, body);
+  return positions.finish(theme, width, height, body);
 }
 function fishHeadMetrics(style2) {
   const tall = ["roundfish", "carp", "sunfish", "triangle"].includes(style2);
@@ -100083,6 +100275,7 @@ function fishHeadSvg(style2, x, y, w, h, theme) {
 }
 function renderFishbone(spec, theme) {
   spec = { ...spec, layout: resolveLayout(spec) };
+  const positions = new SpecialPositions(spec);
   const data = spec.fishbone;
   const size = theme.fontSize;
   const leading = size * 1.4;
@@ -100183,21 +100376,28 @@ function renderFishbone(spec, theme) {
       const upper = item.index % 2 === 0;
       const direction = upper ? -1 : 1;
       const span = upper ? topSpan : bottomSpan;
-      const outerY = spineY + direction * span;
-      const attachX = left + colWidth - 20;
+      const baseOuterY = spineY + direction * span;
       const categoryWidth = Math.min(
         colWidth - 36,
         Math.max(130, measure(item.category.label, size + 1) + 34)
       );
-      const tipX = left + colWidth - categoryWidth / 2 - 18;
+      const baseTipX = left + colWidth - categoryWidth / 2 - 18;
       const categoryLines = wrap(
         item.category.label,
         categoryWidth - 24,
         size + 1
       );
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
-      const categoryY = upper ? outerY - categoryHeight : outerY;
-      body += `<g data-editor-key="categories/${item.index}">`;
+      const baseCategoryY = upper ? baseOuterY - categoryHeight : baseOuterY;
+      const categoryKey = `fishbone/categories/${item.category.id}`;
+      const categoryPosition = positions.at(categoryKey, baseTipX - categoryWidth / 2, baseCategoryY);
+      const tipX = baseTipX + categoryPosition.dx;
+      const categoryY = baseCategoryY + categoryPosition.dy;
+      const outerY = baseOuterY + categoryPosition.dy;
+      const attachX = left + colWidth - 20 + categoryPosition.dx;
+      positions.include(categoryPosition.x, categoryPosition.y, categoryWidth, categoryHeight);
+      positions.include(attachX - 8, Math.min(spineY, outerY), 16, Math.abs(outerY - spineY));
+      body += `<g data-editor-key="categories/${item.index}" ${positions.attrs(categoryKey, categoryPosition.x, categoryPosition.y)}>`;
       body += line(
         attachX,
         spineY,
@@ -100206,29 +100406,36 @@ function renderFishbone(spec, theme) {
         theme.secondary,
         theme.lineWidth + 0.5
       );
-      const centers = item.rows.map(
-        (row) => (upper ? outerY : spineY) + 35 + row.offset + row.height / 2
-      );
+      const rowPositions = item.rows.map((row) => positions.at(
+        `fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf("/causes/") + 1)}`,
+        left + 12 + row.depth * 26 + categoryPosition.dx,
+        (upper ? baseOuterY : spineY) + 35 + row.offset + row.height / 2 + categoryPosition.dy
+      ));
       item.rows.forEach((row, ri) => {
-        body += `<g data-editor-key="${row.path}">`;
-        const ry = centers[ri];
-        const labelX = left + 12 + row.depth * 26;
+        const causeKey = `fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf("/causes/") + 1)}`;
+        const rowPosition = rowPositions[ri];
+        body += `<g data-editor-key="${row.path}" ${positions.attrs(causeKey, rowPosition.x, rowPosition.y)}>`;
+        const ry = rowPosition.y;
+        const labelX = rowPosition.x;
         const lineY = ry + row.lines.length * leading / 2 + 6;
+        positions.include(labelX - 6, ry - row.lines.length * leading / 2, Math.max(...row.lines.map((value) => measure(value, size))) + 20, row.lines.length * leading + 20);
         if (row.parent < 0) {
-          const ratio = Math.abs(lineY - spineY) / span;
+          const ratio = Math.max(0, Math.min(1, (lineY - spineY) / (outerY - spineY || 1)));
           const boneX = attachX + (tipX - attachX) * ratio;
+          const boneY = spineY + (outerY - spineY) * ratio;
+          positions.include(Math.min(labelX, boneX), Math.min(lineY, boneY), Math.abs(labelX - boneX), Math.abs(lineY - boneY));
           body += line(
             labelX,
             lineY,
             boneX,
-            lineY,
+            boneY,
             theme.border,
             theme.lineWidth
           );
         } else {
           const parentRow = item.rows[row.parent];
-          const parentX = left + 12 + parentRow.depth * 26;
-          const parentY = centers[row.parent] + parentRow.lines.length * leading / 2 + 6;
+          const parentX = rowPositions[row.parent].x;
+          const parentY = rowPositions[row.parent].y + parentRow.lines.length * leading / 2 + 6;
           body += `<path d="M ${parentX + 8} ${parentY} V ${lineY} H ${labelX}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
         }
         body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? theme.secondary : theme.muted)}"/>`;
@@ -100258,8 +100465,18 @@ function renderFishbone(spec, theme) {
     }
     left += colWidth + regionGap;
   }
-  body += `<g data-editor-key="effect">`;
   const headY = spineY - headHeight / 2;
+  const headPosition = positions.at("fishbone/effect", headX, headY);
+  positions.include(headPosition.x, headPosition.y - headHeight * 0.15, headWidth, headHeight * 1.3);
+  if (headPosition.dx || headPosition.dy) body += line(
+    classicHead ? headX + 28 : headX + headWidth * 0.15,
+    spineY,
+    (classicHead ? headX + 28 : headX + headWidth * 0.15) + headPosition.dx,
+    spineY + headPosition.dy,
+    theme.primary,
+    theme.lineWidth + 2
+  );
+  body += `<g data-editor-key="effect" ${positions.attrs("fishbone/effect", headPosition.x, headPosition.y)} transform="translate(${headPosition.dx} ${headPosition.dy})">`;
   if (classicHead) {
     body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `<path d="M ${headX + 43} ${spineY - headHeight * 0.3} Q ${headX + 61} ${spineY} ${headX + 43} ${spineY + headHeight * 0.3}" fill="none" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
@@ -100282,7 +100499,7 @@ function renderFishbone(spec, theme) {
     theme,
     { anchor: "start", size: 11, fill: theme.muted }
   );
-  return frame(spec, theme, width, height, body);
+  return positions.finish(theme, width, height, body);
 }
 async function renderDiagram(input) {
   const spec = validateSpec(input), theme = resolveTheme(spec);
@@ -100471,25 +100688,38 @@ const _hoisted_7 = { class: "zoom-value" };
 const _hoisted_8 = ["disabled"];
 const _hoisted_9 = ["disabled"];
 const _hoisted_10 = ["disabled"];
-const _hoisted_11 = ["innerHTML"];
+const _hoisted_11 = {
+  key: 0,
+  class: "canvas-position-tools",
+  role: "status"
+};
 const _hoisted_12 = {
+  key: 0,
+  class: "canvas-waypoint-actions"
+};
+const _hoisted_13 = ["disabled"];
+const _hoisted_14 = ["disabled"];
+const _hoisted_15 = ["aria-label"];
+const _hoisted_16 = ["innerHTML"];
+const _hoisted_17 = {
   key: 1,
   class: "canvas-empty"
 };
-const _hoisted_13 = {
-  key: 0,
+const _hoisted_18 = {
+  key: 1,
   class: "canvas-error",
   role: "status"
 };
-const _hoisted_14 = { class: "canvas-footer" };
+const _hoisted_19 = { class: "canvas-footer" };
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "DiagramCanvas",
   props: {
     spec: {},
     runtime: {},
-    elementSelection: { type: Boolean }
+    elementSelection: { type: Boolean },
+    positionEditing: { type: Boolean }
   },
-  emits: ["rendered", "error", "loading", "selectElement"],
+  emits: ["rendered", "error", "loading", "selectElement", "adjustElement", "adjustWaypoints"],
   setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const emit = __emit;
@@ -100505,6 +100735,11 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     const zoomValue = computed(() => zoom.value === "fit" ? Math.min(1, Math.max(0.05, Math.min(availableWidth.value / (diagram.value?.width ?? 900), availableHeight.value / (diagram.value?.height ?? 600)))) : zoom.value);
     const transparent = computed(() => applied.value ? resolveTheme(applied.value).background === "transparent" : false);
     const dragging = ref$1(false);
+    const selectedEdge = ref$1("");
+    const selectedPoint = ref$1(-1);
+    const selectedWaypoints = computed(() => applied.value?.layout?.adjustments?.edges?.[selectedEdge.value]?.waypoints ?? []);
+    const supportsWaypoints = computed(() => props.spec.type !== "sequence" && props.spec.type !== "fishbone");
+    let positionDrag;
     let pan;
     let request = 0;
     let zoomRequest = 0;
@@ -100519,6 +100754,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     void ready.catch(() => {
     });
     async function setSpec(input) {
+      finishPositionDrag();
       const ticket = ++request;
       pending.value = true;
       failure.value = "";
@@ -100529,6 +100765,9 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         if (ticket !== request) return;
         diagram.value = rendered;
         applied.value = candidate;
+        await nextTick();
+        if (ticket !== request) return;
+        refreshPositionHandles();
         emit("rendered", rendered, structuredClone(candidate));
         if (firstRender) {
           firstRender = false;
@@ -100572,18 +100811,18 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       const board = artboard.value;
       if (!viewport || !board || !diagram.value) return;
       const viewportRect = viewport.getBoundingClientRect();
-      const point = anchor ?? { x: viewportRect.left + viewport.clientWidth / 2, y: viewportRect.top + viewport.clientHeight / 2 };
+      const point2 = anchor ?? { x: viewportRect.left + viewport.clientWidth / 2, y: viewportRect.top + viewport.clientHeight / 2 };
       const before = board.getBoundingClientRect();
       const oldScale = before.width / diagram.value.width;
-      const localX = (point.x - before.left) / oldScale;
-      const localY = (point.y - before.top) / oldScale;
+      const localX = (point2.x - before.left) / oldScale;
+      const localY = (point2.y - before.top) / oldScale;
       const ticket = ++zoomRequest;
       zoom.value = Math.min(4, Math.max(0.05, value));
       await nextTick();
       if (ticket !== zoomRequest || !artboard.value || !stage.value) return;
       const after = artboard.value.getBoundingClientRect();
-      stage.value.scrollLeft += after.left + localX * zoomValue.value - point.x;
-      stage.value.scrollTop += after.top + localY * zoomValue.value - point.y;
+      stage.value.scrollLeft += after.left + localX * zoomValue.value - point2.x;
+      stage.value.scrollTop += after.top + localY * zoomValue.value - point2.y;
     }
     function changeZoom(delta) {
       void setZoom(Math.round((zoomValue.value + delta) * 100) / 100);
@@ -100604,28 +100843,215 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       const pixels = event.deltaY * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? availableHeight.value : 1);
       void setZoom(zoomValue.value * Math.exp(-Math.max(-300, Math.min(300, pixels)) * 15e-4), { x: event.clientX, y: event.clientY });
     }
+    function layoutRoot() {
+      return artboard.value?.querySelector("[data-layout-root]") ?? artboard.value?.querySelector("svg") ?? void 0;
+    }
+    function layoutPoint(clientX, clientY) {
+      const root = layoutRoot();
+      const matrix = root?.getScreenCTM();
+      if (!matrix) return;
+      const point2 = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+      return { x: point2.x, y: point2.y };
+    }
+    function refreshPositionHandles() {
+      const root = layoutRoot();
+      if (!root) return;
+      root.querySelector("[data-position-handles]")?.remove();
+      artboard.value?.querySelectorAll("[data-selected-waypoint-edge]").forEach((element) => element.removeAttribute("data-selected-waypoint-edge"));
+      if (!props.positionEditing) {
+        artboard.value?.querySelectorAll(".canvas-edge-hit").forEach((element) => element.remove());
+        return;
+      }
+      const namespace = "http://www.w3.org/2000/svg";
+      artboard.value?.querySelectorAll("[data-waypoint-key]").forEach((edge) => {
+        if (edge.getAttribute("data-waypoint-key") === selectedEdge.value) edge.setAttribute("data-selected-waypoint-edge", "");
+        if (edge.querySelector(".canvas-edge-hit")) return;
+        edge.querySelectorAll("path").forEach((path) => {
+          const hit = document.createElementNS(namespace, "path");
+          hit.setAttribute("d", path.getAttribute("d") ?? "");
+          hit.setAttribute("class", "canvas-edge-hit");
+          hit.setAttribute("fill", "none");
+          hit.setAttribute("stroke", "transparent");
+          hit.setAttribute("stroke-width", "16");
+          hit.setAttribute("vector-effect", "non-scaling-stroke");
+          path.parentElement?.append(hit);
+        });
+      });
+      if (!selectedEdge.value) return;
+      const overlay = document.createElementNS(namespace, "g");
+      overlay.setAttribute("data-position-handles", "");
+      selectedWaypoints.value.forEach((point2, index) => {
+        const circle = document.createElementNS(namespace, "circle");
+        circle.setAttribute("cx", String(point2.x));
+        circle.setAttribute("cy", String(point2.y));
+        circle.setAttribute("r", "7");
+        circle.setAttribute("class", `canvas-waypoint${selectedPoint.value === index ? " is-selected" : ""}`);
+        circle.setAttribute("data-waypoint-index", String(index));
+        circle.setAttribute("vector-effect", "non-scaling-stroke");
+        circle.setAttribute("tabindex", "0");
+        circle.setAttribute("role", "button");
+        circle.setAttribute("aria-label", `途经点 ${index + 1}，拖动调整，Delete 删除`);
+        overlay.append(circle);
+      });
+      root.append(overlay);
+    }
+    function selectWaypointEdge(key) {
+      selectedEdge.value = key;
+      selectedPoint.value = -1;
+      refreshPositionHandles();
+    }
+    function beginPositionDrag(event) {
+      if (!props.positionEditing || pending.value || !(event.target instanceof Element)) return false;
+      const handle = event.target.closest("[data-waypoint-index]");
+      const element = event.target.closest("[data-adjustment-key]");
+      const origin = layoutPoint(event.clientX, event.clientY);
+      if (!handle && !element || !origin) return false;
+      stage.value?.focus({ preventScroll: true });
+      stage.value?.setPointerCapture(event.pointerId);
+      if (handle) {
+        const index = Number(handle.getAttribute("data-waypoint-index"));
+        selectedPoint.value = index;
+        positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: selectedEdge.value, pointIndex: index, points: selectedWaypoints.value.map((point2) => ({ ...point2 })), dx: 0, dy: 0 };
+        refreshPositionHandles();
+      } else if (element) {
+        positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: element.getAttribute("data-adjustment-key"), element, originalTransform: element.getAttribute("transform"), dx: 0, dy: 0 };
+      }
+      dragging.value = true;
+      event.preventDefault();
+      return true;
+    }
+    function movePositionDrag(event) {
+      if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
+      const point2 = layoutPoint(event.clientX, event.clientY);
+      if (!point2) return true;
+      const drag = positionDrag;
+      if (Math.hypot(event.clientX - drag.clientX, event.clientY - drag.clientY) > 4) drag.moved = true;
+      drag.dx = Math.round((point2.x - drag.origin.x) * 100) / 100;
+      drag.dy = Math.round((point2.y - drag.origin.y) * 100) / 100;
+      if (drag.element) drag.element.setAttribute("transform", `translate(${drag.dx} ${drag.dy}) ${drag.originalTransform ?? ""}`);
+      if (drag.pointIndex !== void 0 && drag.points) {
+        const original = drag.points[drag.pointIndex];
+        const circle = layoutRoot()?.querySelector(`[data-waypoint-index="${drag.pointIndex}"]`);
+        circle?.setAttribute("cx", String(original.x + drag.dx));
+        circle?.setAttribute("cy", String(original.y + drag.dy));
+      }
+      return true;
+    }
+    function finishPositionDrag(event) {
+      if (!positionDrag || event && event.pointerId !== positionDrag.pointerId) return false;
+      const drag = positionDrag;
+      const commit = event?.type === "pointerup" && drag.moved;
+      positionDrag = void 0;
+      dragging.value = false;
+      if (drag.element) {
+        if (drag.originalTransform === null || drag.originalTransform === void 0) drag.element.removeAttribute("transform");
+        else drag.element.setAttribute("transform", drag.originalTransform);
+      }
+      if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
+      if (commit) {
+        if (drag.pointIndex !== void 0 && drag.points) {
+          const points = drag.points;
+          points[drag.pointIndex] = { x: points[drag.pointIndex].x + drag.dx, y: points[drag.pointIndex].y + drag.dy };
+          emit("adjustWaypoints", { key: drag.key, waypoints: points });
+        } else emit("adjustElement", { key: drag.key, dx: drag.dx, dy: drag.dy });
+      }
+      refreshPositionHandles();
+      return true;
+    }
+    function addWaypoint(event) {
+      if (!props.positionEditing || pending.value || !(event.target instanceof Element) || event.target.closest("[data-waypoint-index]")) return;
+      const edge = event.target.closest("[data-waypoint-key]");
+      if (!edge) return;
+      const key = edge.getAttribute("data-waypoint-key");
+      const point2 = layoutPoint(event.clientX, event.clientY);
+      if (!point2) return;
+      const points = (applied.value?.layout?.adjustments?.edges?.[key]?.waypoints ?? []).map((value) => ({ ...value }));
+      const path = edge.querySelector("path:not(.canvas-edge-hit)");
+      let insertAt = points.length;
+      if (path) {
+        const first = path.getPointAtLength(0), last = path.getPointAtLength(path.getTotalLength());
+        const chain = [first, ...points, last];
+        let closest = Infinity;
+        for (let index = 0; index < chain.length - 1; index++) {
+          const start = chain[index], end = chain[index + 1];
+          const vx = end.x - start.x, vy = end.y - start.y;
+          const t = Math.max(0, Math.min(1, ((point2.x - start.x) * vx + (point2.y - start.y) * vy) / (vx * vx + vy * vy || 1)));
+          const distance = Math.hypot(point2.x - start.x - t * vx, point2.y - start.y - t * vy);
+          if (distance < closest) {
+            closest = distance;
+            insertAt = index;
+          }
+        }
+      }
+      points.splice(insertAt, 0, { x: Math.round(point2.x * 100) / 100, y: Math.round(point2.y * 100) / 100 });
+      selectedEdge.value = key;
+      selectedPoint.value = insertAt;
+      emit("adjustWaypoints", { key, waypoints: points });
+      event.preventDefault();
+    }
+    function removeWaypoint() {
+      if (!selectedEdge.value || selectedPoint.value < 0 || pending.value) return;
+      const points = selectedWaypoints.value.filter((_, index) => index !== selectedPoint.value).map((point2) => ({ ...point2 }));
+      selectedPoint.value = -1;
+      emit("adjustWaypoints", { key: selectedEdge.value, waypoints: points });
+    }
+    function clearWaypoints() {
+      if (!selectedEdge.value || !selectedWaypoints.value.length || pending.value) return;
+      selectedPoint.value = -1;
+      emit("adjustWaypoints", { key: selectedEdge.value, waypoints: [] });
+    }
+    function positionKeydown(event) {
+      if (!props.positionEditing || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      if (event.key === "Escape") {
+        finishPositionDrag();
+        endPan();
+        selectedEdge.value = "";
+        selectedPoint.value = -1;
+        refreshPositionHandles();
+        event.preventDefault();
+      } else if ((event.key === "Delete" || event.key === "Backspace") && selectedPoint.value >= 0) {
+        removeWaypoint();
+        event.preventDefault();
+      }
+    }
     function startPan(event) {
       const viewport = stage.value;
-      if (!viewport || !diagram.value || pan || !event.isPrimary || event.button !== 0) return;
+      if (!viewport || !diagram.value || pan || positionDrag || !event.isPrimary || event.button !== 0) return;
       if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
       const rect = viewport.getBoundingClientRect();
       if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
+      if (beginPositionDrag(event)) return;
+      if (props.positionEditing && event.target instanceof Element) {
+        const edge = event.target.closest("[data-waypoint-key]");
+        if (edge) {
+          selectWaypointEdge(edge.getAttribute("data-waypoint-key"));
+          stage.value?.focus({ preventScroll: true });
+          event.preventDefault();
+          return;
+        } else {
+          selectedEdge.value = "";
+          selectedPoint.value = -1;
+          refreshPositionHandles();
+        }
+      }
       viewport.setPointerCapture(event.pointerId);
       pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : void 0, moved: false };
       dragging.value = true;
       event.preventDefault();
     }
     function movePan(event) {
+      if (movePositionDrag(event)) return;
       if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
       if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
       stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
       stage.value.scrollTop = pan.top - (event.clientY - pan.y);
     }
     function endPan(event) {
+      if (finishPositionDrag(event)) return;
       if (!pan || event && pan.pointerId !== event.pointerId) return;
       const pointerId = pan.pointerId;
       const target = pan.target;
-      const selected = event?.type === "pointerup" && !pan.moved && props.elementSelection && !pending.value;
+      const selected = event?.type === "pointerup" && !pan.moved && props.elementSelection && !props.positionEditing && !pending.value;
       if (selected && target) {
         const element = target.closest("[data-editor-key], .uml-container");
         let key = element?.getAttribute("data-editor-key");
@@ -100653,6 +101079,13 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       void setSpec(value).catch(() => {
       });
     }, { immediate: true, deep: true });
+    watch(() => props.positionEditing, () => {
+      finishPositionDrag();
+      endPan();
+      selectedEdge.value = "";
+      selectedPoint.value = -1;
+      refreshPositionHandles();
+    });
     onMounted(() => {
       if (!stage.value) return;
       measureStage();
@@ -100775,96 +101208,120 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             }, "适应画布", 10, _hoisted_10)
           ])
         ]),
-        createElementVNode(
-          "div",
-          {
-            ref_key: "stage",
-            ref: stage,
-            class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "can-select-elements": __props.elementSelection }]),
-            tabindex: "0",
-            "aria-label": "图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览",
-            onPointerdown: startPan,
-            onPointermove: movePan,
-            onPointerup: endPan,
-            onPointercancel: endPan,
-            onLostpointercapture: endPan
-          },
-          [
-            diagram.value ? (openBlock(), createElementBlock(
-              "div",
+        __props.positionEditing ? (openBlock(), createElementBlock("div", _hoisted_11, [
+          createElementVNode(
+            "span",
+            null,
+            toDisplayString(supportsWaypoints.value ? "拖动元素调整位置；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。" : "拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。"),
+            1
+            /* TEXT */
+          ),
+          selectedEdge.value ? (openBlock(), createElementBlock("div", _hoisted_12, [
+            createElementVNode(
+              "span",
+              null,
+              toDisplayString(selectedWaypoints.value.length) + " 个途经点",
+              1
+              /* TEXT */
+            ),
+            createElementVNode("button", {
+              type: "button",
+              disabled: selectedPoint.value < 0 || pending.value,
+              onClick: removeWaypoint
+            }, "删除选中点", 8, _hoisted_13),
+            createElementVNode("button", {
+              type: "button",
+              disabled: !selectedWaypoints.value.length || pending.value,
+              onClick: clearWaypoints
+            }, "清空此连线途经点", 8, _hoisted_14)
+          ])) : createCommentVNode("v-if", true)
+        ])) : createCommentVNode("v-if", true),
+        createElementVNode("div", {
+          ref_key: "stage",
+          ref: stage,
+          class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "can-select-elements": __props.elementSelection && !__props.positionEditing, "is-position-editing": __props.positionEditing }]),
+          tabindex: "0",
+          "aria-label": __props.positionEditing ? "位置调整画布，拖动元素调整，双击连线添加途经点，Esc 取消" : "图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览",
+          onPointerdown: startPan,
+          onPointermove: movePan,
+          onPointerup: endPan,
+          onPointercancel: endPan,
+          onLostpointercapture: endPan,
+          onDblclick: addWaypoint,
+          onKeydown: positionKeydown
+        }, [
+          diagram.value ? (openBlock(), createElementBlock(
+            "div",
+            {
+              key: 0,
+              ref_key: "artboard",
+              ref: artboard,
+              class: normalizeClass(["canvas-artboard", { "is-transparent": transparent.value }]),
+              style: normalizeStyle({ width: `${diagram.value.width * zoomValue.value}px`, height: `${diagram.value.height * zoomValue.value}px` })
+            },
+            [
+              createElementVNode("div", {
+                class: "canvas-svg",
+                style: normalizeStyle({ width: `${diagram.value.width}px`, height: `${diagram.value.height}px`, transform: `scale(${zoomValue.value})` }),
+                innerHTML: diagram.value.svg
+              }, null, 12, _hoisted_16)
+            ],
+            6
+            /* CLASS, STYLE */
+          )) : (openBlock(), createElementBlock("div", _hoisted_17, [
+            _cache[6] || (_cache[6] = createElementVNode(
+              "svg",
               {
-                key: 0,
-                ref_key: "artboard",
-                ref: artboard,
-                class: normalizeClass(["canvas-artboard", { "is-transparent": transparent.value }]),
-                style: normalizeStyle({ width: `${diagram.value.width * zoomValue.value}px`, height: `${diagram.value.height * zoomValue.value}px` })
+                class: "loading-ring",
+                viewBox: "0 0 24 24",
+                fill: "none",
+                "stroke-width": "1.7",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round",
+                "aria-hidden": "true"
               },
               [
-                createElementVNode("div", {
-                  class: "canvas-svg",
-                  style: normalizeStyle({ width: `${diagram.value.width}px`, height: `${diagram.value.height}px`, transform: `scale(${zoomValue.value})` }),
-                  innerHTML: diagram.value.svg
-                }, null, 12, _hoisted_11)
+                createElementVNode("circle", {
+                  cx: "12",
+                  cy: "12",
+                  r: "9"
+                }),
+                createElementVNode("path", { d: "M12 3a9 9 0 1 1-9 9" })
               ],
-              6
-              /* CLASS, STYLE */
-            )) : (openBlock(), createElementBlock("div", _hoisted_12, [
-              _cache[6] || (_cache[6] = createElementVNode(
-                "svg",
-                {
-                  class: "loading-ring",
-                  viewBox: "0 0 24 24",
-                  fill: "none",
-                  "stroke-width": "1.7",
-                  "stroke-linecap": "round",
-                  "stroke-linejoin": "round",
-                  "aria-hidden": "true"
-                },
-                [
-                  createElementVNode("circle", {
-                    cx: "12",
-                    cy: "12",
-                    r: "9"
-                  }),
-                  createElementVNode("path", { d: "M12 3a9 9 0 1 1-9 9" })
-                ],
-                -1
-                /* CACHED */
-              )),
-              createElementVNode(
-                "strong",
-                null,
-                toDisplayString(failure.value ? "暂时无法绘制图表" : "正在整理你的想法…"),
-                1
-                /* TEXT */
-              ),
-              createElementVNode(
-                "p",
-                null,
-                toDisplayString(failure.value || "布局引擎正在安排每一个节点与连接。"),
-                1
-                /* TEXT */
-              )
-            ]))
-          ],
-          34
-          /* CLASS, NEED_HYDRATION */
-        ),
+              -1
+              /* CACHED */
+            )),
+            createElementVNode(
+              "strong",
+              null,
+              toDisplayString(failure.value ? "暂时无法绘制图表" : "正在整理你的想法…"),
+              1
+              /* TEXT */
+            ),
+            createElementVNode(
+              "p",
+              null,
+              toDisplayString(failure.value || "布局引擎正在安排每一个节点与连接。"),
+              1
+              /* TEXT */
+            )
+          ]))
+        ], 42, _hoisted_15),
         failure.value && diagram.value ? (openBlock(), createElementBlock(
           "div",
-          _hoisted_13,
+          _hoisted_18,
           "未替换当前图表：" + toDisplayString(failure.value),
           1
           /* TEXT */
         )) : createCommentVNode("v-if", true),
-        createElementVNode("div", _hoisted_14, [
-          _cache[7] || (_cache[7] = createElementVNode(
+        createElementVNode("div", _hoisted_19, [
+          createElementVNode(
             "span",
             null,
-            "滚轮定位缩放 · 按住拖动画布 · 本地字体",
-            -1
-            /* CACHED */
-          )),
+            toDisplayString(__props.positionEditing ? "拖动元素调整 · 空白处拖动平移 · 调整后请保存 HTML" : "滚轮定位缩放 · 按住拖动画布 · 本地字体"),
+            1
+            /* TEXT */
+          ),
           createElementVNode(
             "span",
             null,

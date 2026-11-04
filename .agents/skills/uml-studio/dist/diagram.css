@@ -248,6 +248,46 @@
 .canvas-stage.is-dragging {
   cursor: grabbing;
 }
+.canvas-position-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.canvas-waypoint-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+}
+.canvas-waypoint-actions button {
+  padding: 5px 9px;
+  background: var(--paper);
+  color: var(--accent-deep);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-xs);
+  font-size: 12px;
+}
+.canvas-waypoint-actions button:hover:not(:disabled) { background: var(--accent-soft);
+}
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move;
+}
+.canvas-stage.is-position-editing [data-waypoint-key] { cursor: crosshair;
+}
+.canvas-stage.is-position-editing [data-selected-waypoint-edge] > path:not(.canvas-edge-hit) { stroke: var(--accent);
+}
+.canvas-stage.is-position-editing [data-adjustment-key]:hover { outline: 1px dashed var(--accent); outline-offset: 3px;
+}
+.canvas-edge-hit { pointer-events: stroke;
+}
+.canvas-waypoint { fill: #ffffff; stroke: var(--accent); stroke-width: 2; cursor: move;
+}
+.canvas-waypoint.is-selected, .canvas-waypoint:focus-visible { fill: var(--accent); stroke: #ffffff; outline: none;
+}
+.canvas-stage.is-position-editing .canvas-artboard { overflow: visible;
+}
 .canvas-stage.can-select-elements:not(.is-dragging) [data-editor-key],
 .canvas-stage.can-select-elements:not(.is-dragging) .uml-container {
   cursor: pointer;
@@ -448,7 +488,10 @@ to {
 }
 @media print {
 .canvas-toolbar,
-  .canvas-footer {
+  .canvas-footer,
+  .canvas-position-tools,
+  [data-position-handles],
+  .canvas-edge-hit {
     display: none !important;
 }
 .diagram-canvas {

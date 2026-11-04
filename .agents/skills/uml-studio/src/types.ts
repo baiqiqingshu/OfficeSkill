@@ -25,9 +25,19 @@ export interface FishboneCause { label: string; children?: FishboneCause[] }
 export const fishboneHeadStyles = ['classic', 'fish', 'slim', 'shark', 'roundfish', 'carp', 'sunfish', 'triangle', 'rounded', 'label'] as const
 export type FishboneHeadStyle = typeof fishboneHeadStyles[number]
 export interface FishboneData { effect: string; headStyle?: FishboneHeadStyle; categories: { id: string; label: string; causes: FishboneCause[] }[] }
+export interface DiagramPoint { x: number; y: number }
+/** Logical layout coordinates; offsets follow the automatic layout, positions pin an element. */
+export type ElementAdjustment = { dx: number; dy: number } | DiagramPoint
+export interface EdgeAdjustment { waypoints: DiagramPoint[] }
+export interface DiagramAdjustments {
+  elements?: Record<string, ElementAdjustment>
+  edges?: Record<string, EdgeAdjustment>
+}
 export interface DiagramLayoutOptions {
   mode?: 'compact' | 'balanced' | 'spacious' | 'grid'
   edgeCrossing?: 'bridge' | 'plain'
+  horizontalStagger?: boolean
+  adjustments?: DiagramAdjustments
   showTitle?: boolean; maxWidth?: number; maxHeight?: number
   regionGap?: number; elementGap?: number; maxPerColumn?: number
   nodeMaxWidth?: number; nodeMaxHeight?: number

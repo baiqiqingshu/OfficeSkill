@@ -15,6 +15,8 @@ export interface UmlStudioHandle {
   getSvg(): string;
   exportImage(options?: ExportOptions): Promise<Blob>;
   saveHtml(): string;
+  saveHtmlAsync(): Promise<string>;
+  saveToLocal(selectNew?: boolean): Promise<void>;
 }
 declare global {
   interface Window { UmlStudio: UmlStudioHandle }
@@ -69,4 +71,6 @@ window.UmlStudio = {
   getSvg: () => instance.getSvg(),
   exportImage: options => instance.exportImage(options),
   saveHtml: () => instance.saveHtml(),
+  saveHtmlAsync: () => instance.saveHtmlAsync(),
+  saveToLocal: selectNew => instance.saveToLocal(selectNew),
 };

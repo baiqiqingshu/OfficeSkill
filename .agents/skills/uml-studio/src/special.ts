@@ -9,6 +9,29 @@ import type {
 import { esc, text, frame } from "./svg";
 import { resolveLayout } from "./themes";
 
+/** Positions stay in renderer coordinates; the outer frame only expands to keep edits visible. */
+class SpecialPositions {
+  minX = 0; minY = 0; maxX = 0; maxY = 0;
+  constructor(private spec: DiagramSpec) {}
+  at(key: string, x: number, y: number) {
+    const adjustment = this.spec.layout?.adjustments?.elements?.[key];
+    const nx = adjustment && 'x' in adjustment ? adjustment.x : x + (adjustment?.dx ?? 0);
+    const ny = adjustment && 'y' in adjustment ? adjustment.y : y + (adjustment?.dy ?? 0);
+    return { x: nx, y: ny, dx: nx - x, dy: ny - y };
+  }
+  attrs(key: string, x: number, y: number): string {
+    return `data-adjustment-key="${esc(key)}" data-layout-x="${x}" data-layout-y="${y}"`;
+  }
+  include(x: number, y: number, width: number, height: number): void {
+    this.minX = Math.min(this.minX, x - 16); this.minY = Math.min(this.minY, y - 16);
+    this.maxX = Math.max(this.maxX, x + width + 16); this.maxY = Math.max(this.maxY, y + height + 16);
+  }
+  finish(theme: Theme, width: number, height: number, body: string): RenderedDiagram {
+    return frame(this.spec, theme, Math.max(width, this.maxX) - this.minX, Math.max(height, this.maxY) - this.minY,
+      `<g data-layout-root="" transform="translate(${-this.minX} ${-this.minY})">${body}</g>`);
+  }
+}
+
 // Character-aware sizing keeps CJK labels legible without requiring browser font metrics.
 function measure(value: string, size: number): number {
   return Array.from(value).reduce(
@@ -91,6 +114,7 @@ export function renderSequence(
   theme: Theme,
 ): RenderedDiagram {
   spec = { ...spec, layout: resolveLayout(spec) };
+  const positions = new SpecialPositions(spec);
   const participants = spec.participants ?? [];
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
@@ -123,7 +147,7 @@ export function renderSequence(
     ),
   );
   const x = new Map(
-    participants.map((p, i) => [p.id, 70 + participantWidth / 2 + i * column]),
+    participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x]),
   );
   const ys: number[] = [];
   const rowLines: string[][] = [],
@@ -236,7 +260,14 @@ export function renderSequence(
       cursor = boundary + 4;
     }
   }
-  const bottom = cursor + 36;
+  const messagePositions = messages.map((message, index) => {
+    const sx = x.get(message.from)!, tx = x.get(message.to)!;
+    const position = positions.at(`messages/${index}`, message.from === message.to ? sx + 18 : (sx + tx) / 2, ys[index]!);
+    ys[index] = position.y;
+    labelTops[index] = labelTops[index]! + position.dy;
+    return position;
+  });
+  const bottom = Math.max(cursor + 36, ...ys.map(y => y + messageGap + 36));
   const height = bottom + 56;
   const createAt = new Map<string, number>();
   const destroyAt = new Map<string, number>();
@@ -244,8 +275,10 @@ export function renderSequence(
     if (m.kind === "create" && !createAt.has(m.to)) createAt.set(m.to, i);
     if (m.kind === "destroy" && !destroyAt.has(m.to)) destroyAt.set(m.to, i);
   });
-  const headerY = (p: Participant): number =>
-    createAt.has(p.id) ? ys[createAt.get(p.id)!]! - boxHeight / 2 : top;
+  const headerY = (p: Participant): number => {
+    const original = createAt.has(p.id) ? ys[createAt.get(p.id)!]! - boxHeight / 2 : top;
+    return positions.at(`participants/${p.id}`, 0, original).y;
+  };
   let body =
     header.svg +
     `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
@@ -264,8 +297,12 @@ export function renderSequence(
   };
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
-    body += `<g data-editor-key="fragments/${spec.fragments!.indexOf(fragment)}"><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<g data-editor-key="fragments/${spec.fragments!.indexOf(fragment)}"><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    const index = spec.fragments!.indexOf(fragment), key = `fragments/${index}`;
+    const position = positions.at(key, left, frameTop);
+    const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
+    positions.include(position.x, position.y, right - left, frameBottom - frameTop);
+    body += `<g data-editor-key="fragments/${index}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    fragmentAnnotations += `<g data-editor-key="fragments/${index}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
     fragmentAnnotations += text(
       left + 10,
       frameTop + 18,
@@ -291,9 +328,10 @@ export function renderSequence(
   }
   for (const p of participants) {
     const cx = x.get(p.id)!;
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, headerY(p))}>`;
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)!]! : bottom;
+    positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
     body += line(
       cx,
       start,
@@ -348,7 +386,7 @@ export function renderSequence(
   for (const p of participants) {
     const cx = x.get(p.id)!,
       py = headerY(p);
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}">`;
+    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
     if (p.kind === "actor") {
       const cy = py + 13;
@@ -381,7 +419,7 @@ export function renderSequence(
   }
   body += fragmentAnnotations;
   messages.forEach((m, i) => {
-    body += `<g data-editor-key="messages/${i}">`;
+    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, messagePositions[i]!.x, ys[i]!)}>`;
     const sx = x.get(m.from)!,
       tx = x.get(m.to)!,
       y = ys[i]!;
@@ -400,9 +438,12 @@ export function renderSequence(
       : `M ${start} ${y} H ${end}`;
     body += `<path d="${path}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""} marker-end="url(#${open ? "seq-open" : "seq-filled"})"/>`;
     const labelLines = rowLines[i]!;
-    const lx = self ? sx + 18 : (start + end) / 2;
+    const lx = (self ? sx + 18 : (start + end) / 2) + messagePositions[i]!.dx;
     const ly = labelTops[i]! + size * 1.1;
     const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
+    const labelLeft = self ? lx - 4 : lx - lw / 2;
+    const messageLeft = Math.min(start, end, labelLeft);
+    positions.include(messageLeft, labelTops[i]!, Math.max(start, end, labelLeft + lw, self ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
     body += `<rect x="${self ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
     body += text(lx, ly, labelLines.join("\n"), theme, {
       anchor: self ? "start" : "middle",
@@ -418,7 +459,7 @@ export function renderSequence(
     theme,
     { anchor: "start", size: 11, fill: theme.muted },
   );
-  return frame(spec, theme, width, height, body);
+  return positions.finish(theme, width, height, body);
 }
 
 /** Fish-head proportions adapted from Fishbone Studio (MIT); see LICENSE. */
@@ -492,6 +533,7 @@ export function renderFishbone(
   theme: Theme,
 ): RenderedDiagram {
   spec = { ...spec, layout: resolveLayout(spec) };
+  const positions = new SpecialPositions(spec);
   const data = spec.fishbone!;
   const size = theme.fontSize;
   const leading = size * 1.4;
@@ -618,21 +660,28 @@ export function renderFishbone(
       const upper = item.index % 2 === 0;
       const direction = upper ? -1 : 1;
       const span = upper ? topSpan : bottomSpan;
-      const outerY = spineY + direction * span;
-      const attachX = left + colWidth - 20;
+      const baseOuterY = spineY + direction * span;
       const categoryWidth = Math.min(
         colWidth - 36,
         Math.max(130, measure(item.category.label, size + 1) + 34),
       );
-      const tipX = left + colWidth - categoryWidth / 2 - 18;
+      const baseTipX = left + colWidth - categoryWidth / 2 - 18;
       const categoryLines = wrap(
         item.category.label,
         categoryWidth - 24,
         size + 1,
       );
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
-      const categoryY = upper ? outerY - categoryHeight : outerY;
-      body += `<g data-editor-key="categories/${item.index}">`;
+      const baseCategoryY = upper ? baseOuterY - categoryHeight : baseOuterY;
+      const categoryKey = `fishbone/categories/${item.category.id}`;
+      const categoryPosition = positions.at(categoryKey, baseTipX - categoryWidth / 2, baseCategoryY);
+      const tipX = baseTipX + categoryPosition.dx;
+      const categoryY = baseCategoryY + categoryPosition.dy;
+      const outerY = baseOuterY + categoryPosition.dy;
+      const attachX = left + colWidth - 20 + categoryPosition.dx;
+      positions.include(categoryPosition.x, categoryPosition.y, categoryWidth, categoryHeight);
+      positions.include(attachX - 8, Math.min(spineY, outerY), 16, Math.abs(outerY - spineY));
+      body += `<g data-editor-key="categories/${item.index}" ${positions.attrs(categoryKey, categoryPosition.x, categoryPosition.y)}>`;
       body += line(
         attachX,
         spineY,
@@ -641,30 +690,35 @@ export function renderFishbone(
         theme.secondary,
         theme.lineWidth + 0.5,
       );
-      const centers = item.rows.map(
-        (row) => (upper ? outerY : spineY) + 35 + row.offset + row.height / 2,
-      );
+      const rowPositions = item.rows.map(row => positions.at(`fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf('/causes/') + 1)}`,
+        left + 12 + row.depth * 26 + categoryPosition.dx,
+        (upper ? baseOuterY : spineY) + 35 + row.offset + row.height / 2 + categoryPosition.dy));
       item.rows.forEach((row, ri) => {
-        body += `<g data-editor-key="${row.path}">`;
-        const ry = centers[ri]!;
-        const labelX = left + 12 + row.depth * 26;
+        const causeKey = `fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf('/causes/') + 1)}`;
+        const rowPosition = rowPositions[ri]!;
+        body += `<g data-editor-key="${row.path}" ${positions.attrs(causeKey, rowPosition.x, rowPosition.y)}>`;
+        const ry = rowPosition.y;
+        const labelX = rowPosition.x;
         const lineY = ry + (row.lines.length * leading) / 2 + 6;
+        positions.include(labelX - 6, ry - row.lines.length * leading / 2, Math.max(...row.lines.map(value => measure(value, size))) + 20, row.lines.length * leading + 20);
         if (row.parent < 0) {
-          const ratio = Math.abs(lineY - spineY) / span;
+          const ratio = Math.max(0, Math.min(1, (lineY - spineY) / (outerY - spineY || 1)));
           const boneX = attachX + (tipX - attachX) * ratio;
+          const boneY = spineY + (outerY - spineY) * ratio;
+          positions.include(Math.min(labelX, boneX), Math.min(lineY, boneY), Math.abs(labelX - boneX), Math.abs(lineY - boneY));
           body += line(
             labelX,
             lineY,
             boneX,
-            lineY,
+            boneY,
             theme.border,
             theme.lineWidth,
           );
         } else {
           const parentRow = item.rows[row.parent]!;
-          const parentX = left + 12 + parentRow.depth * 26;
+          const parentX = rowPositions[row.parent]!.x;
           const parentY =
-            centers[row.parent]! + (parentRow.lines.length * leading) / 2 + 6;
+            rowPositions[row.parent]!.y + (parentRow.lines.length * leading) / 2 + 6;
           body += `<path d="M ${parentX + 8} ${parentY} V ${lineY} H ${labelX}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
         }
         body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? theme.secondary : theme.muted)}"/>`;
@@ -694,8 +748,12 @@ export function renderFishbone(
     }
     left += colWidth + regionGap;
   }
-  body += `<g data-editor-key="effect">`;
   const headY = spineY - headHeight / 2;
+  const headPosition = positions.at('fishbone/effect', headX, headY);
+  positions.include(headPosition.x, headPosition.y - headHeight * 0.15, headWidth, headHeight * 1.3);
+  if (headPosition.dx || headPosition.dy) body += line(classicHead ? headX + 28 : headX + headWidth * 0.15, spineY,
+    (classicHead ? headX + 28 : headX + headWidth * 0.15) + headPosition.dx, spineY + headPosition.dy, theme.primary, theme.lineWidth + 2);
+  body += `<g data-editor-key="effect" ${positions.attrs('fishbone/effect', headPosition.x, headPosition.y)} transform="translate(${headPosition.dx} ${headPosition.dy})">`;
   if (classicHead) {
     // Preserve the original UML Studio silhouette, strokes and proportions.
     body += `<path d="M ${headX + 25} ${spineY} Q ${headX + 2} ${spineY - headHeight * 0.46} ${headX + 55} ${spineY - headHeight / 2} Q ${headX + headWidth * 0.76} ${spineY - headHeight * 0.63} ${headX + headWidth} ${spineY} Q ${headX + headWidth * 0.76} ${spineY + headHeight * 0.63} ${headX + 55} ${spineY + headHeight / 2} Q ${headX + 2} ${spineY + headHeight * 0.46} ${headX + 25} ${spineY} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
@@ -719,5 +777,5 @@ export function renderFishbone(
     theme,
     { anchor: "start", size: 11, fill: theme.muted },
   );
-  return frame(spec, theme, width, height, body);
+  return positions.finish(theme, width, height, body);
 }

@@ -7,12 +7,14 @@ import { createHtml, exportSvgImage } from './export';
 import type { StudioRuntime } from './export';
 import type { DiagramSpec, ExportOptions, RenderedDiagram } from './types';
 
-const props = defineProps<{ spec: DiagramSpec; runtime?: StudioRuntime; elementSelection?: boolean }>();
+const props = defineProps<{ spec: DiagramSpec; runtime?: StudioRuntime; elementSelection?: boolean; positionEditing?: boolean }>();
 const emit = defineEmits<{
   rendered: [diagram: RenderedDiagram, spec: DiagramSpec];
   error: [error: Error];
   loading: [loading: boolean];
   selectElement: [key: string];
+  adjustElement: [change: { key: string; dx: number; dy: number }];
+  adjustWaypoints: [change: { key: string; waypoints: { x: number; y: number }[] }];
 }>();
 const diagram = shallowRef<RenderedDiagram>();
 const applied = shallowRef<DiagramSpec>();
@@ -26,6 +28,12 @@ const zoom = ref<number | 'fit'>('fit');
 const zoomValue = computed(() => zoom.value === 'fit' ? Math.min(1, Math.max(0.05, Math.min(availableWidth.value / (diagram.value?.width ?? 900), availableHeight.value / (diagram.value?.height ?? 600)))) : zoom.value);
 const transparent = computed(() => applied.value ? resolveTheme(applied.value).background === 'transparent' : false);
 const dragging = ref(false);
+const selectedEdge = ref('');
+const selectedPoint = ref(-1);
+const selectedWaypoints = computed(() => applied.value?.layout?.adjustments?.edges?.[selectedEdge.value]?.waypoints ?? []);
+const supportsWaypoints = computed(() => props.spec.type !== 'sequence' && props.spec.type !== 'fishbone');
+type PositionPoint = { x: number; y: number };
+let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number } | undefined;
 let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean } | undefined;
 let request = 0;
 let zoomRequest = 0;
@@ -37,6 +45,7 @@ const ready = new Promise<void>((resolve, reject) => { resolveReady = resolve; r
 void ready.catch(() => {});
 
 async function setSpec(input: DiagramSpec): Promise<void> {
+  finishPositionDrag();
   const ticket = ++request;
   pending.value = true;
   failure.value = '';
@@ -47,6 +56,9 @@ async function setSpec(input: DiagramSpec): Promise<void> {
     if (ticket !== request) return;
     diagram.value = rendered;
     applied.value = candidate;
+    await nextTick();
+    if (ticket !== request) return;
+    refreshPositionHandles();
     emit('rendered', rendered, structuredClone(candidate));
     if (firstRender) { firstRender = false; resolveReady(); }
   } catch (reason) {
@@ -106,29 +118,205 @@ function wheelZoom(event: WheelEvent): void {
   const pixels = event.deltaY * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : event.deltaMode === WheelEvent.DOM_DELTA_PAGE ? availableHeight.value : 1);
   void setZoom(zoomValue.value * Math.exp(-Math.max(-300, Math.min(300, pixels)) * 0.0015), { x: event.clientX, y: event.clientY });
 }
+function layoutRoot(): SVGGraphicsElement | undefined {
+  return artboard.value?.querySelector<SVGGraphicsElement>('[data-layout-root]') ?? artboard.value?.querySelector<SVGSVGElement>('svg') ?? undefined;
+}
+function layoutPoint(clientX: number, clientY: number): PositionPoint | undefined {
+  const root = layoutRoot();
+  const matrix = root?.getScreenCTM();
+  if (!matrix) return;
+  const point = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+  return { x: point.x, y: point.y };
+}
+function refreshPositionHandles(): void {
+  const root = layoutRoot();
+  if (!root) return;
+  root.querySelector('[data-position-handles]')?.remove();
+  artboard.value?.querySelectorAll('[data-selected-waypoint-edge]').forEach(element => element.removeAttribute('data-selected-waypoint-edge'));
+  if (!props.positionEditing) {
+    artboard.value?.querySelectorAll('.canvas-edge-hit').forEach(element => element.remove());
+    return;
+  }
+  const namespace = 'http://www.w3.org/2000/svg';
+  artboard.value?.querySelectorAll<SVGGraphicsElement>('[data-waypoint-key]').forEach(edge => {
+    if (edge.getAttribute('data-waypoint-key') === selectedEdge.value) edge.setAttribute('data-selected-waypoint-edge', '');
+    if (edge.querySelector('.canvas-edge-hit')) return;
+    edge.querySelectorAll<SVGPathElement>('path').forEach(path => {
+      const hit = document.createElementNS(namespace, 'path');
+      hit.setAttribute('d', path.getAttribute('d') ?? '');
+      hit.setAttribute('class', 'canvas-edge-hit');
+      hit.setAttribute('fill', 'none');
+      hit.setAttribute('stroke', 'transparent');
+      hit.setAttribute('stroke-width', '16');
+      hit.setAttribute('vector-effect', 'non-scaling-stroke');
+      path.parentElement?.append(hit);
+    });
+  });
+  if (!selectedEdge.value) return;
+  const overlay = document.createElementNS(namespace, 'g');
+  overlay.setAttribute('data-position-handles', '');
+  selectedWaypoints.value.forEach((point, index) => {
+    const circle = document.createElementNS(namespace, 'circle');
+    circle.setAttribute('cx', String(point.x));
+    circle.setAttribute('cy', String(point.y));
+    circle.setAttribute('r', '7');
+    circle.setAttribute('class', `canvas-waypoint${selectedPoint.value === index ? ' is-selected' : ''}`);
+    circle.setAttribute('data-waypoint-index', String(index));
+    circle.setAttribute('vector-effect', 'non-scaling-stroke');
+    circle.setAttribute('tabindex', '0');
+    circle.setAttribute('role', 'button');
+    circle.setAttribute('aria-label', `途经点 ${index + 1}，拖动调整，Delete 删除`);
+    overlay.append(circle);
+  });
+  root.append(overlay);
+}
+function selectWaypointEdge(key: string): void {
+  selectedEdge.value = key;
+  selectedPoint.value = -1;
+  refreshPositionHandles();
+}
+function beginPositionDrag(event: PointerEvent): boolean {
+  if (!props.positionEditing || pending.value || !(event.target instanceof Element)) return false;
+  const handle = event.target.closest<SVGCircleElement>('[data-waypoint-index]');
+  const element = event.target.closest<SVGGraphicsElement>('[data-adjustment-key]');
+  const origin = layoutPoint(event.clientX, event.clientY);
+  if ((!handle && !element) || !origin) return false;
+  stage.value?.focus({ preventScroll: true });
+  stage.value?.setPointerCapture(event.pointerId);
+  if (handle) {
+    const index = Number(handle.getAttribute('data-waypoint-index'));
+    selectedPoint.value = index;
+    positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: selectedEdge.value, pointIndex: index, points: selectedWaypoints.value.map(point => ({ ...point })), dx: 0, dy: 0 };
+    refreshPositionHandles();
+  } else if (element) {
+    positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: element.getAttribute('data-adjustment-key')!, element, originalTransform: element.getAttribute('transform'), dx: 0, dy: 0 };
+  }
+  dragging.value = true;
+  event.preventDefault();
+  return true;
+}
+function movePositionDrag(event: PointerEvent): boolean {
+  if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
+  const point = layoutPoint(event.clientX, event.clientY);
+  if (!point) return true;
+  const drag = positionDrag;
+  if (Math.hypot(event.clientX - drag.clientX, event.clientY - drag.clientY) > 4) drag.moved = true;
+  drag.dx = Math.round((point.x - drag.origin.x) * 100) / 100;
+  drag.dy = Math.round((point.y - drag.origin.y) * 100) / 100;
+  if (drag.element) drag.element.setAttribute('transform', `translate(${drag.dx} ${drag.dy}) ${drag.originalTransform ?? ''}`);
+  if (drag.pointIndex !== undefined && drag.points) {
+    const original = drag.points[drag.pointIndex]!;
+    const circle = layoutRoot()?.querySelector(`[data-waypoint-index="${drag.pointIndex}"]`);
+    circle?.setAttribute('cx', String(original.x + drag.dx));
+    circle?.setAttribute('cy', String(original.y + drag.dy));
+  }
+  return true;
+}
+function finishPositionDrag(event?: PointerEvent): boolean {
+  if (!positionDrag || (event && event.pointerId !== positionDrag.pointerId)) return false;
+  const drag = positionDrag;
+  const commit = event?.type === 'pointerup' && drag.moved;
+  positionDrag = undefined;
+  dragging.value = false;
+  if (drag.element) {
+    if (drag.originalTransform === null || drag.originalTransform === undefined) drag.element.removeAttribute('transform');
+    else drag.element.setAttribute('transform', drag.originalTransform);
+  }
+  if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
+  if (commit) {
+    if (drag.pointIndex !== undefined && drag.points) {
+      const points = drag.points;
+      points[drag.pointIndex] = { x: points[drag.pointIndex]!.x + drag.dx, y: points[drag.pointIndex]!.y + drag.dy };
+      emit('adjustWaypoints', { key: drag.key, waypoints: points });
+    } else emit('adjustElement', { key: drag.key, dx: drag.dx, dy: drag.dy });
+  }
+  refreshPositionHandles();
+  return true;
+}
+function addWaypoint(event: MouseEvent): void {
+  if (!props.positionEditing || pending.value || !(event.target instanceof Element) || event.target.closest('[data-waypoint-index]')) return;
+  const edge = event.target.closest<SVGGraphicsElement>('[data-waypoint-key]');
+  if (!edge) return;
+  const key = edge.getAttribute('data-waypoint-key')!;
+  const point = layoutPoint(event.clientX, event.clientY);
+  if (!point) return;
+  const points = (applied.value?.layout?.adjustments?.edges?.[key]?.waypoints ?? []).map(value => ({ ...value }));
+  const path = edge.querySelector<SVGPathElement>('path:not(.canvas-edge-hit)');
+  let insertAt = points.length;
+  if (path) {
+    const first = path.getPointAtLength(0), last = path.getPointAtLength(path.getTotalLength());
+    const chain = [first, ...points, last];
+    let closest = Infinity;
+    for (let index = 0; index < chain.length - 1; index++) {
+      const start = chain[index]!, end = chain[index + 1]!;
+      const vx = end.x - start.x, vy = end.y - start.y;
+      const t = Math.max(0, Math.min(1, ((point.x - start.x) * vx + (point.y - start.y) * vy) / (vx * vx + vy * vy || 1)));
+      const distance = Math.hypot(point.x - start.x - t * vx, point.y - start.y - t * vy);
+      if (distance < closest) { closest = distance; insertAt = index; }
+    }
+  }
+  points.splice(insertAt, 0, { x: Math.round(point.x * 100) / 100, y: Math.round(point.y * 100) / 100 });
+  selectedEdge.value = key;
+  selectedPoint.value = insertAt;
+  emit('adjustWaypoints', { key, waypoints: points });
+  event.preventDefault();
+}
+function removeWaypoint(): void {
+  if (!selectedEdge.value || selectedPoint.value < 0 || pending.value) return;
+  const points = selectedWaypoints.value.filter((_, index) => index !== selectedPoint.value).map(point => ({ ...point }));
+  selectedPoint.value = -1;
+  emit('adjustWaypoints', { key: selectedEdge.value, waypoints: points });
+}
+function clearWaypoints(): void {
+  if (!selectedEdge.value || !selectedWaypoints.value.length || pending.value) return;
+  selectedPoint.value = -1;
+  emit('adjustWaypoints', { key: selectedEdge.value, waypoints: [] });
+}
+function positionKeydown(event: KeyboardEvent): void {
+  if (!props.positionEditing || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+  if (event.key === 'Escape') {
+    finishPositionDrag(); endPan(); selectedEdge.value = ''; selectedPoint.value = -1; refreshPositionHandles(); event.preventDefault();
+  } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedPoint.value >= 0) {
+    removeWaypoint(); event.preventDefault();
+  }
+}
 function startPan(event: PointerEvent): void {
   const viewport = stage.value;
-  if (!viewport || !diagram.value || pan || !event.isPrimary || event.button !== 0) return;
+  if (!viewport || !diagram.value || pan || positionDrag || !event.isPrimary || event.button !== 0) return;
   if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
   const rect = viewport.getBoundingClientRect();
   // Leave the native scrollbars draggable rather than capturing their pointer.
   if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
+  if (beginPositionDrag(event)) return;
+  if (props.positionEditing && event.target instanceof Element) {
+    const edge = event.target.closest('[data-waypoint-key]');
+    if (edge) {
+      selectWaypointEdge(edge.getAttribute('data-waypoint-key')!);
+      stage.value?.focus({ preventScroll: true });
+      // Keep clicks on the edge: pointer capture retargets dblclick to the viewport.
+      event.preventDefault();
+      return;
+    }
+    else { selectedEdge.value = ''; selectedPoint.value = -1; refreshPositionHandles(); }
+  }
   viewport.setPointerCapture(event.pointerId);
   pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : undefined, moved: false };
   dragging.value = true;
   event.preventDefault();
 }
 function movePan(event: PointerEvent): void {
+  if (movePositionDrag(event)) return;
   if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
   if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
   stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
   stage.value.scrollTop = pan.top - (event.clientY - pan.y);
 }
 function endPan(event?: PointerEvent): void {
+  if (finishPositionDrag(event)) return;
   if (!pan || (event && pan.pointerId !== event.pointerId)) return;
   const pointerId = pan.pointerId;
   const target = pan.target;
-  const selected = event?.type === 'pointerup' && !pan.moved && props.elementSelection && !pending.value;
+  const selected = event?.type === 'pointerup' && !pan.moved && props.elementSelection && !props.positionEditing && !pending.value;
   if (selected && target) {
     const element = target.closest('[data-editor-key], .uml-container');
     let key = element?.getAttribute('data-editor-key');
@@ -153,6 +341,9 @@ function measureStage(): void {
   availableHeight.value = Math.max(1, viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
 }
 watch(() => props.spec, value => { void setSpec(value).catch(() => {}); }, { immediate: true, deep: true });
+watch(() => props.positionEditing, () => {
+  finishPositionDrag(); endPan(); selectedEdge.value = ''; selectedPoint.value = -1; refreshPositionHandles();
+});
 onMounted(() => {
   if (!stage.value) return;
   measureStage();
@@ -186,14 +377,22 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
         <button type="button" class="fit-button" :class="{ active: zoom === 'fit' }" :disabled="!diagram" @click="fitCanvas">适应画布</button>
       </div>
     </div>
-    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': elementSelection }" tabindex="0" aria-label="图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan">
+    <div v-if="positionEditing" class="canvas-position-tools" role="status">
+      <span>{{ supportsWaypoints ? '拖动元素调整位置；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。' : '拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。' }}</span>
+      <div v-if="selectedEdge" class="canvas-waypoint-actions">
+        <span>{{ selectedWaypoints.length }} 个途经点</span>
+        <button type="button" :disabled="selectedPoint < 0 || pending" @click="removeWaypoint">删除选中点</button>
+        <button type="button" :disabled="!selectedWaypoints.length || pending" @click="clearWaypoints">清空此连线途经点</button>
+      </div>
+    </div>
+    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': elementSelection && !positionEditing, 'is-position-editing': positionEditing }" tabindex="0" :aria-label="positionEditing ? '位置调整画布，拖动元素调整，双击连线添加途经点，Esc 取消' : '图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @keydown="positionKeydown">
       <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${diagram.width * zoomValue}px`, height: `${diagram.height * zoomValue}px` }">
         <div class="canvas-svg" :style="{ width: `${diagram.width}px`, height: `${diagram.height}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>
       <div v-else class="canvas-empty"><svg class="loading-ring" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 1 1-9 9" /></svg><strong>{{ failure ? '暂时无法绘制图表' : '正在整理你的想法…' }}</strong><p>{{ failure || '布局引擎正在安排每一个节点与连接。' }}</p></div>
     </div>
     <div v-if="failure && diagram" class="canvas-error" role="status">未替换当前图表：{{ failure }}</div>
-    <div class="canvas-footer"><span>滚轮定位缩放 · 按住拖动画布 · 本地字体</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
+    <div class="canvas-footer"><span>{{ positionEditing ? '拖动元素调整 · 空白处拖动平移 · 调整后请保存 HTML' : '滚轮定位缩放 · 按住拖动画布 · 本地字体' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
   </section>
 </template>
 
@@ -447,6 +646,36 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
 .canvas-stage.is-dragging {
   cursor: grabbing;
 }
+.canvas-position-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.canvas-waypoint-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.canvas-waypoint-actions button {
+  padding: 5px 9px;
+  background: var(--paper);
+  color: var(--accent-deep);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-xs);
+  font-size: 12px;
+}
+.canvas-waypoint-actions button:hover:not(:disabled) { background: var(--accent-soft); }
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move; }
+.canvas-stage.is-position-editing [data-waypoint-key] { cursor: crosshair; }
+.canvas-stage.is-position-editing [data-selected-waypoint-edge] > path:not(.canvas-edge-hit) { stroke: var(--accent); }
+.canvas-stage.is-position-editing [data-adjustment-key]:hover { outline: 1px dashed var(--accent); outline-offset: 3px; }
+.canvas-edge-hit { pointer-events: stroke; }
+.canvas-waypoint { fill: #ffffff; stroke: var(--accent); stroke-width: 2; cursor: move; }
+.canvas-waypoint.is-selected, .canvas-waypoint:focus-visible { fill: var(--accent); stroke: #ffffff; outline: none; }
+.canvas-stage.is-position-editing .canvas-artboard { overflow: visible; }
 .canvas-stage.can-select-elements:not(.is-dragging) [data-editor-key],
 .canvas-stage.can-select-elements:not(.is-dragging) .uml-container {
   cursor: pointer;
@@ -647,7 +876,10 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
 }
 @media print {
   .canvas-toolbar,
-  .canvas-footer {
+  .canvas-footer,
+  .canvas-position-tools,
+  [data-position-handles],
+  .canvas-edge-hit {
     display: none !important;
   }
   .diagram-canvas {

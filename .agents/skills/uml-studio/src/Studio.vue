@@ -14,6 +14,8 @@ import ColorInput from "./ColorInput.vue";
 import VSelect from "./VSelect.vue";
 import { createHtml, downloadBlob } from "./export";
 import type { StudioRuntime } from "./export";
+import { canSaveLocalHtml, chooseLocalHtmlTarget, writeLocalHtml } from "./filesystem-save";
+import type { LocalHtmlTarget } from "./filesystem-save";
 import {
   fontPresets,
   layoutModes,
@@ -44,6 +46,7 @@ interface CanvasHandle {
 }
 interface FormHandle {
   hasChanges(): boolean;
+  getDraft(): DiagramSpec;
   resetDraft(): void;
   focusElement(key: string): Promise<void>;
 }
@@ -248,6 +251,14 @@ const error = ref(initialError);
 const notice = ref("");
 const editorOpen = ref(false);
 const styleOpen = ref(false);
+const positionEditing = ref(false);
+const adjustmentsOpen = ref(false);
+const savingHtml = ref(false);
+const localSaveSupported = canSaveLocalHtml();
+const localTargetName = ref("");
+let localTarget: LocalHtmlTarget | undefined;
+const adjustmentCount = computed(() => Object.keys(applied.value.layout?.adjustments?.elements ?? {}).length + Object.keys(applied.value.layout?.adjustments?.edges ?? {}).length);
+const adjustmentsJson = computed(() => json(applied.value.layout?.adjustments ?? { elements: {}, edges: {} }));
 const stylePanel = ref<HTMLDetailsElement>();
 const pendingSave = computed(() => json(collection.value) !== savedSnapshot.value);
 const formDirty = computed(() => !!formEditor.value?.hasChanges());
@@ -616,6 +627,45 @@ function layoutValue(key: keyof DiagramLayoutOptions): number {
   const value = resolveLayout(applied.value)[key];
   return typeof value === "number" ? value : 0;
 }
+async function applyPositionChange(change: (spec: DiagramSpec) => void): Promise<void> {
+  try {
+    if (savingHtml.value) throw new Error("正在保存 HTML，请保存结束后再调整位置。");
+    if (activeDirty.value || formEditor.value?.hasChanges())
+      throw new Error("请先应用当前表单或 JSON 草稿，再调整位置；草稿仍保留。");
+    const candidate = getSpec();
+    change(candidate);
+    await applySpec(candidate);
+  } catch (reason) {
+    // A rejected gesture must also discard its temporary SVG preview.
+    if (canvas.value) await canvas.value.setSpec(getSpec()).catch(() => {});
+    reportError(reason);
+  }
+}
+function adjustElement(change: { key: string; dx: number; dy: number }): void {
+  void applyPositionChange((spec) => {
+    const adjustments = spec.layout?.adjustments ?? {};
+    const elements = { ...adjustments.elements };
+    const old = elements[change.key];
+    elements[change.key] = old && "x" in old
+      ? { x: old.x + change.dx, y: old.y + change.dy }
+      : { dx: (old?.dx ?? 0) + change.dx, dy: (old?.dy ?? 0) + change.dy };
+    spec.layout = { ...spec.layout, adjustments: { ...adjustments, elements } };
+  });
+}
+function adjustWaypoints(change: { key: string; waypoints: { x: number; y: number }[] }): void {
+  void applyPositionChange((spec) => {
+    const adjustments = spec.layout?.adjustments ?? {};
+    const edges = { ...adjustments.edges };
+    if (change.waypoints.length) edges[change.key] = { waypoints: change.waypoints };
+    else delete edges[change.key];
+    spec.layout = { ...spec.layout, adjustments: { ...adjustments, edges } };
+  });
+}
+function clearAdjustments(): void {
+  void applyPositionChange((spec) => {
+    if (spec.layout) delete spec.layout.adjustments;
+  });
+}
 function renameDocument(event: Event): void {
   const title = (event.target as HTMLInputElement).value.trim();
   if (!title) {
@@ -649,6 +699,51 @@ function saveHtml(): string {
       "存在未应用的草稿。请先应用表单 / JSON，再保存整个文档；也可在源码模式下载草稿。",
     );
   return createHtml(getDocument(), runtime.value);
+}
+/** Validate every draft before committing, so a failed save never drops editing work. */
+async function applyDraftsForSave(): Promise<void> {
+  await ready;
+  const formChanged = !!formEditor.value?.hasChanges();
+  const dirtySources = collection.value.diagrams.map((spec, index) => sourceDrafts.value[index] !== json(spec));
+  if (documentDirty.value && (formChanged || dirtySources.some(Boolean)))
+    throw new Error("整个文档 JSON 与图表草稿同时有修改。请先应用要保留的版本，再保存 HTML；所有草稿仍保留。");
+  if (formChanged && dirtySources[activeIndex.value])
+    throw new Error("当前表单与图表 JSON 都有修改。请先应用要保留的版本，再保存 HTML；两份草稿仍保留。");
+  if (!documentDirty.value && !formChanged && !dirtySources.some(Boolean)) return;
+  const index = activeIndex.value;
+  const sourceSnapshot = sourceDrafts.value.slice();
+  const documentSnapshot = documentDraft.value;
+  const formSnapshot = formEditor.value ? json(formEditor.value.getDraft()) : undefined;
+  const next = structuredClone(validateDocument(documentDirty.value
+    ? normalizeDocument(JSON.parse(documentSnapshot))
+    : { ...getDocument(), diagrams: collection.value.diagrams.map((spec, position) =>
+      position === index && formChanged && formSnapshot !== undefined ? validateSpec(JSON.parse(formSnapshot))
+        : dirtySources[position] ? validateSpec(JSON.parse(sourceSnapshot[position]!)) : spec) }));
+  const nextIndex = Math.min(index, next.diagrams.length - 1);
+  const ticket = ++revision;
+  if (!(await renderCandidate(next.diagrams[nextIndex]!, ticket)))
+    throw new Error("保存期间图表发生变化，请再次保存。");
+  if (activeIndex.value !== index || documentDraft.value !== documentSnapshot ||
+      sourceDrafts.value.length !== sourceSnapshot.length ||
+      sourceDrafts.value.some((value, position) => value !== sourceSnapshot[position]) ||
+      (formEditor.value ? json(formEditor.value.getDraft()) : undefined) !== formSnapshot) {
+    await canvas.value?.setSpec(getSpec());
+    throw new Error("保存期间草稿发生变化，请再次保存；最新草稿仍保留。");
+  }
+  collection.value = next;
+  activeIndex.value = nextIndex;
+  sourceDrafts.value = next.diagrams.map(json);
+  documentDraft.value = json(next);
+  await nextTick();
+  formEditor.value?.resetDraft();
+}
+async function htmlSnapshot(): Promise<{ html: string; snapshot: string; count: number }> {
+  await applyDraftsForSave();
+  const document = getDocument();
+  return { html: createHtml(document, runtime.value), snapshot: json(document), count: document.diagrams.length };
+}
+async function saveHtmlAsync(): Promise<string> {
+  return (await htmlSnapshot()).html;
 }
 function filename(extension: string, wholeDocument = false): string {
   const title = (wholeDocument ? collection.value.title : applied.value.title)
@@ -734,28 +829,54 @@ function copyImage(): void {
     );
   }
 }
-function downloadHtml(): void {
+async function downloadHtml(): Promise<void> {
+  if (savingHtml.value) return;
+  savingHtml.value = true;
   try {
-    if (
-      hasUnsavedDrafts() &&
-      !window.confirm(
-        "有未应用的草稿，不会写入 HTML。继续仅保存全部已应用图表？草稿仍留在本工作台，可返回应用后重新保存。",
-      )
-    )
-      return;
+    const { html, snapshot, count } = await htmlSnapshot();
     downloadBlob(
-      new Blob([createHtml(getDocument(), runtime.value)], {
+      new Blob([html], {
         type: "text/html;charset=utf-8",
       }),
       filename("html", true),
     );
-    savedSnapshot.value = json(collection.value);
+    savedSnapshot.value = snapshot;
+    error.value = "";
     showNotice(
-      `已保存全部 ${collection.value.diagrams.length} 张图表，离线打开即可继续编辑`,
+      `已下载 HTML，包含全部 ${count} 张图表及编辑结果`,
     );
   } catch (reason) {
     reportError(reason);
+  } finally {
+    savingHtml.value = false;
   }
+}
+async function saveToLocal(selectNew = false): Promise<void> {
+  if (savingHtml.value) throw new Error("正在保存 HTML，请稍候。");
+  savingHtml.value = true;
+  try {
+    // Start the picker in the original user gesture, before draft rendering.
+    const targetPromise = chooseLocalHtmlTarget(filename("html", true), selectNew ? undefined : localTarget);
+    const target = await targetPromise;
+    localTarget = target;
+    localTargetName.value = target.name;
+    const { html, snapshot } = await htmlSnapshot();
+    await writeLocalHtml(target, html);
+    savedSnapshot.value = snapshot;
+    error.value = "";
+    showNotice(`已同步到本地文件 ${target.name}`);
+  } finally {
+    savingHtml.value = false;
+  }
+}
+function saveLocalHtml(selectNew = false): void {
+  void saveToLocal(selectNew).catch((reason) => {
+    if (reason instanceof DOMException && reason.name === "AbortError") {
+      showNotice("已取消本地保存，修改仍保留在工作台");
+      return;
+    }
+    reportError(reason);
+  });
 }
 async function copyJson(): Promise<void> {
   try {
@@ -909,6 +1030,8 @@ defineExpose({
   getSvg,
   exportImage,
   saveHtml,
+  saveHtmlAsync,
+  saveToLocal,
 });
 </script>
 
@@ -993,7 +1116,7 @@ defineExpose({
         <button
           class="button button-dark"
           type="button"
-          :disabled="!runtime || loading"
+          :disabled="!runtime || loading || savingHtml"
           :title="runtimeError || '保存全部图表为可离线编辑的单个 HTML 文件'"
           @click="downloadHtml"
         >
@@ -1013,6 +1136,13 @@ defineExpose({
           保存 HTML<span class="hide-small">
             · 全部 {{ collection.diagrams.length }} 张</span
           >
+        </button>
+        <button class="button button-outline local-save-button" type="button"
+          :disabled="!runtime || loading || savingHtml || !localSaveSupported"
+          :title="!localSaveSupported ? '当前浏览器不支持本地写入，请用保存 HTML 下载' : localTargetName ? `同步至 ${localTargetName}` : '选择本地 HTML 文件并授权保存；后续点击同步修改'"
+          @click="saveLocalHtml()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0V5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v2M12 12v6m-3-3 3 3 3-3" /></svg>
+          {{ savingHtml ? '正在保存…' : localTargetName ? '同步到本地' : '授权本地保存' }}
         </button>
       </div>
       <input
@@ -1284,6 +1414,9 @@ defineExpose({
             <p v-if="applied.description">{{ applied.description }}</p>
           </div>
           <div class="workspace-actions">
+          <button class="button button-outline" type="button" :aria-pressed="positionEditing" :disabled="loading || savingHtml" @click="positionEditing = !positionEditing">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" /></svg>{{ positionEditing ? '结束位置调整' : '调整位置' }}
+          </button>
           <button class="button button-outline" type="button" :aria-expanded="styleOpen" aria-controls="diagram-styles" @click="showStyles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>调整样式</button>
           <button
             class="button button-accent editor-toggle"
@@ -1413,6 +1546,8 @@ defineExpose({
           <details class="more-export">
             <summary>更多导出<svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></summary>
             <div class="more-export-content">
+              <button v-if="localSaveSupported && localTargetName" class="button button-outline" type="button" :disabled="savingHtml || loading" @click="saveLocalHtml(true)">另选本地 HTML 文件</button>
+              <p v-if="localTargetName" class="export-tip">本次页面会话同步至 {{ localTargetName }}。重新打开 HTML 后需重新授权。</p>
               <button class="button button-outline" type="button" @click="downloadDocumentJson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>下载整个文档 JSON</button>
               <p class="export-tip">图片导出当前图；HTML 与文档 JSON 包含全部图表。PNG / WebP 支持透明，JPEG 铺白底。</p>
             </div>
@@ -1462,11 +1597,25 @@ defineExpose({
               ref="canvas"
               :spec="initialSpec"
               :runtime="runtime"
+              :position-editing="positionEditing"
               :element-selection="editorOpen && editorMode === 'form'"
+              @adjust-element="adjustElement"
+              @adjust-waypoints="adjustWaypoints"
               @select-element="formEditor?.focusElement($event)"
               @loading="loading = $event"
               @error="reportError"
             />
+            <div v-if="positionEditing || adjustmentCount" class="position-adjustments">
+              <div class="position-adjustment-actions">
+                <span>{{ adjustmentCount ? `已记录 ${adjustmentCount} 项位置调整` : '位置调整会随 HTML / JSON 保存' }}</span>
+                <button class="text-button" type="button" :aria-expanded="adjustmentsOpen" aria-controls="position-parameters" @click="adjustmentsOpen = !adjustmentsOpen">{{ adjustmentsOpen ? '收起参数' : '查看参数' }}</button>
+                <button class="text-button" type="button" :disabled="!adjustmentCount || loading || savingHtml" @click="clearAdjustments">清空调整，恢复自动布局</button>
+              </div>
+              <div v-if="adjustmentsOpen" id="position-parameters">
+                <p class="control-hint">拖动默认记录相对自动布局的偏移；固定坐标和折线途经点也可在图表 JSON 的 layout.adjustments 中配置。</p>
+                <pre class="adjustment-json" tabindex="0" aria-label="当前图表位置调整参数">{{ adjustmentsJson }}</pre>
+              </div>
+            </div>
             <details id="diagram-styles" ref="stylePanel" class="preview-style-panel" :open="styleOpen" @toggle="styleOpen = ($event.target as HTMLDetailsElement).open">
               <summary>
                 <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>图形样式与布局 <span>展开调整配色、字体和布局参数</span>
@@ -1659,6 +1808,11 @@ defineExpose({
                     </summary>
                     <div class="advanced-inner">
                       <template v-if="graphDiagram">
+                        <label v-if="['activity', 'flowchart', 'swimlane'].includes(applied.type)" class="checkbox-control">
+                          <input type="checkbox" :checked="applied.layout?.horizontalStagger === true" @change="updateLayout('horizontalStagger', ($event.target as HTMLInputElement).checked)" />
+                          <span>横向相连元素沿流程方向错开</span>
+                        </label>
+                        <p v-if="['activity', 'flowchart', 'swimlane'].includes(applied.type)" class="field-hint">关闭时优先保持水平连接；横向泳道对应沿横轴错开。</p>
                         <label class="field-label" for="edge-crossing">连线交叉表示</label>
                         <span class="select-wrap"><VSelect id="edge-crossing" class="select-input"
                           :value="applied.layout?.edgeCrossing ?? 'bridge'"
@@ -2629,6 +2783,10 @@ summary::-webkit-details-marker { display: none; }
 .meta-dot { color: var(--faint); }
 .draft-indicator { padding: 3px 10px; border-radius: var(--r-pill); background: var(--warning-soft); color: var(--warning); font-size: 12px; font-weight: 500; }
 .save-state { color: var(--muted); margin-left: auto; }
+.position-adjustments { padding: 12px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 9px; margin-top: 12px; }
+.position-adjustment-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--muted); font-size: 12px; }
+.position-adjustment-actions > span { margin-right: auto; }
+.adjustment-json { max-height: 260px; overflow: auto; margin: 12px 0 0; padding: 12px; background: var(--paper-2); color: var(--ink); border-radius: 6px; font-size: 12px; line-height: 1.6; white-space: pre; }
 .export-toolbar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 14px; padding: 12px 14px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-sm); }
 .export-fields { display: flex; gap: 8px; }
 .export-fields > label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 500; }

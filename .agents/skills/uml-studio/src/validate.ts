@@ -12,6 +12,15 @@ export function validateSpec(value: unknown): DiagramSpec {
   const spec = value
   const nodes = unique(spec.nodes ?? [], '节点'), groups = unique(spec.groups ?? [], '分组'), lanes = unique(spec.lanes ?? [], '泳道')
   unique((spec.edges ?? []).filter((edge): edge is typeof edge & { id: string } => !!edge.id), '连线')
+  // Anonymous edges share this public persistence namespace with explicit edge IDs.
+  // A collision would apply one set of waypoints to two different relationships.
+  unique((spec.edges ?? []).map((edge, index) => ({ id: edge.id ?? `edge-${index}` })), '连线调整键')
+  for (const [key, adjustment] of Object.entries(spec.layout?.adjustments?.elements ?? {})) {
+    if (Object.values(adjustment).some(number => !Number.isFinite(number))) throw new Error(`元素调整 ${key} 必须使用有限坐标`)
+  }
+  for (const [key, adjustment] of Object.entries(spec.layout?.adjustments?.edges ?? {})) {
+    if (adjustment.waypoints.some(point => !Number.isFinite(point.x) || !Number.isFinite(point.y))) throw new Error(`连线调整 ${key} 必须使用有限坐标`)
+  }
   for (const group of spec.groups ?? []) {
     if (nodes.has(group.id) || lanes.has(group.id)) throw new Error(`分组 ID 与节点或泳道冲突：${group.id}`)
     const seen = new Set([group.id]); let parent = group.parent

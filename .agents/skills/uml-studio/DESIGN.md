@@ -3,13 +3,13 @@
 > 权威设计令牌与规则见 `docs/uml-studio-redesign.md`（本文件为其持久摘要；冲突以该文档为准）。
 
 ## Product
-UML Studio 是**离线优先的语义化 UML/架构绘图工作台**：输入结构化 JSON，输出可离线编辑的单文件 HTML 与 SVG/PNG/JPEG/WebP 图片。模型负责语义与结构，组件负责布局、图元、样式及导出；不生成坐标或 draw.io XML。
+UML Studio 是**离线优先的语义化 UML/架构绘图工作台**：输入结构化 JSON，输出可离线编辑的单文件 HTML 与 SVG/PNG/JPEG/WebP 图片。模型负责语义与结构，组件负责自动布局、图元、样式及导出；可用调整参数保存手动偏移、固定位置和途经点，不生成 draw.io XML。
 
 - 形态：Vue 3 + Vite 打包为 `assets/viewer.js/css`，内联进生成的 HTML；Node CLI（`scripts/diagram.mjs`）可脱离浏览器出图。
 - 用户与场景：中文工程师/架构师，内网或离线环境；桌面明亮办公为主，生成物常嵌入文档或随邮件分发。
 - 品牌承诺：名称 UML Studio，标语「把复杂，画清楚。」；`lang="zh-CN"`；数据不出浏览器（本地工作台）。
 - 离线约束：全部资源内联，无 CDN/远程字体/远程图片；字体仅本机栈；`color-scheme: light`；CSS 中禁 `url(`；纹理只用 `radial-gradient` 点阵、`conic-gradient` 棋盘/loading 等非 url 手段。
-- 非目标：非 draw.io 替代品——不做自由拖拽画布、不做模型执行/代码逆向、不做任意 SVG/HTML 注入。
+- 边界：以自动布局为基础，提供独立的位置调整模式与清空入口；不做模型执行/代码逆向，不做任意 SVG/HTML 注入。HTML 保存包含文字、样式与位置参数，本地写入由用户点击授权。
 - Surface：工作台单页 = 顶部导航 + 图表侧栏 + 预览画布 + 样式面板 + 表单/JSON 编辑器 + 导出工具条；模式 Operate（任务型工具界面）；图表主题（ocean 等 11 套）是数据特性，独立演进。
 
 ## Direction

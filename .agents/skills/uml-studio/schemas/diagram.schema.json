@@ -168,6 +168,111 @@
           "default": "bridge",
           "description": "节点图连线交叉表示：bridge 为拱桥形跳线，plain 为无圆点直接交叉；两者都表示不相连。"
         },
+        "horizontalStagger": {
+          "type": "boolean",
+          "default": false,
+          "description": "流程、活动、泳道图中，跨列相连元素沿流程方向错开；false 保持水平对齐优先。"
+        },
+        "adjustments": {
+          "type": "object",
+          "properties": {
+            "elements": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_./:-]+$"
+              },
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dx": {
+                        "type": "number",
+                        "minimum": -1000000,
+                        "maximum": 1000000
+                      },
+                      "dy": {
+                        "type": "number",
+                        "minimum": -1000000,
+                        "maximum": 1000000
+                      }
+                    },
+                    "required": [
+                      "dx",
+                      "dy"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "minimum": -1000000,
+                        "maximum": 1000000
+                      },
+                      "y": {
+                        "type": "number",
+                        "minimum": -1000000,
+                        "maximum": 1000000
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "edges": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_./:-]+$"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "waypoints": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number",
+                          "minimum": -1000000,
+                          "maximum": 1000000
+                        },
+                        "y": {
+                          "type": "number",
+                          "minimum": -1000000,
+                          "maximum": 1000000
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 0
+                  }
+                },
+                "required": [
+                  "waypoints"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
         "showTitle": {
           "type": "boolean",
           "default": false

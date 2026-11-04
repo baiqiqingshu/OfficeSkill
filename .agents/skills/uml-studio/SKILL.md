@@ -8,7 +8,7 @@ metadata:
 
 # UML Studio
 
-模型负责语义与结构，组件负责布局、图元、样式及导出。不要让模型生成节点坐标、SVG 路径或 draw.io XML。
+模型负责语义与结构，组件负责布局、图元、样式及导出。默认由组件自动布局；用户要求手动调整时，可在 `layout.adjustments` 中配置偏移、固定坐标及连线途经点。不要生成 SVG 路径或 draw.io XML。
 
 ## 选择图类型
 
@@ -32,7 +32,7 @@ metadata:
 
 1. 单图读取 `schemas/diagram.schema.json` 和对应 `examples/<type>.json`（4+1 视图读 `examples/scenarios/<type>.json`）；多图读取 `schemas/document.schema.json` 与 `examples/documents/gallery.json`。不照搬示例中的业务事实。
 2. 单图使用 `version:1,type,title`；多图使用 `version:1,title,diagrams:[...]`。同类图可以重复，每张独立保存主题、布局、数据；可选图形 `id` 在文档内唯一，节点 ID 只须在各自图内唯一。
-3. 验证再生成。默认海蓝主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。不要生成坐标或 SVG 路径。
+3. 验证再生成。默认海蓝主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。默认不配置坐标；明确需要手动调整时使用下方调整参数，不生成 SVG 路径。
 
 ```bash
 node scripts/diagram.mjs input.json --validate
@@ -130,6 +130,29 @@ npm run demo:verify
 
 可设置 `showTitle`、`maxWidth/maxHeight`（整图等比上限，不裁切）、`nodeMaxWidth/nodeMaxHeight`（节点换行后自适应缩放）、`elementGap`、`regionGap`、`maxPerColumn`。尺寸上限和显式每列数量为 0 表示不限；未设置每列数量仍允许上述不均衡区域自动折列。节点尺寸 / 每列数量只用于节点图，时序与鱼骨使用专用布局。不要用缩小字号代替删减用户要求的内容；极小节点上限会缩小文字，应按可读性设置。
 
+### 手动位置与途经点
+
+`layout.horizontalStagger` 默认 `false` 保留跨列水平对齐；在流程图、活动图、泳道图中设为 `true` 可让横向相连元素沿流程主轴错开。手动调整在自动布局之后应用：
+
+```json
+{
+  "layout": {
+    "horizontalStagger": false,
+    "adjustments": {
+      "elements": {
+        "nodes/review": { "dx": 20, "dy": 40 },
+        "nodes/approve": { "x": 320, "y": 180 }
+      },
+      "edges": {
+        "review-approve": { "waypoints": [{ "x": 300, "y": 140 }] }
+      }
+    }
+  }
+}
+```
+
+默认保存相对自动布局的 `dx/dy`，便于改文字、尺寸后继续使用自动布局；`x/y` 固定位置用于精确定位，两种模式互斥。图节点、分组、泳道键分别为 `nodes/<id>`、`groups/<id>`、`lanes/<id>`；连线键使用显式 `edge.id`，缺省为 `edge-<从0开始的序号>`。需要持久配置途经点时建议显式指定连线 id。坐标是图内逻辑坐标，不是屏幕像素。网页可拖动调整、查看参数或清空恢复自动布局；HTML、JSON 与原生图片导出保留调整。更多特殊元素键与限制见仓库 `docs/uml-studio-editing-persistence.md`。
+
 文字使用 `style.fontFamily,fontSize,fontWeight,fontStyle,textDecoration`；字形为 `normal/italic`，装饰为 `none/underline`。可从字体预设选择，也可输入自定义回退列表。
 
 最小流程示例：
@@ -156,11 +179,11 @@ npm run demo:verify
 ## 单个 HTML 契约
 
 - `#diagram-data` application/json 数据块保存单图或完整多图文档。多图用 `diagrams` 数组，不能以 `type` 为字典键，否则会丢失同类图。
-- 全部 Vue / 布局 JS、CSS、数据内联，无 CDN 与远程字体，断网后仍可打开；只保存当前已应用的数据，未应用草稿会明确提示。
-- 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。默认优先显示画布，点击“编辑图表”打开编辑器；点击“调整样式”展开预览下方的主题、配色及进阶参数。导出图片、复制图片及格式 / 倍率集中在画布上方，文档 JSON 位于“更多导出”，顶部“保存 HTML”保存全部已应用图表。窄屏图表列表为可关闭抽屉、编辑器整行显示。拖动的是预览画布，不改变结构化模型中的节点位置。
+- 全部 Vue / 布局 JS、CSS、数据内联，无 CDN 与远程字体，断网后仍可打开；保存按钮会先应用有效的编辑草稿，无效或冲突草稿会停止保存并提示。
+- 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。默认优先显示画布，点击“编辑图表”打开编辑器；点击“调整样式”展开主题、配色及进阶参数。“调整位置”开启元素拖动和途经点编辑，空白处拖动仍平移画布；调整参数写入结构化模型，可查看或清空。导出图片、复制图片及格式 / 倍率集中在画布上方，文档 JSON 位于“更多导出”。顶部“保存 HTML”先应用有效草稿，再下载完整文档；“保存到本地”在支持的浏览器中授权选择文件，本次会话可继续同步。窄屏图表列表为可关闭抽屉、编辑器整行显示。
 - 表单支持全部展开 / 全部折叠、按内容检索（仅显示命中元素及必要上级）和清空检索。表单编辑器打开时，点击预览中的元素会展开并滚动定位相应表单，突出显示目标；检索隐藏目标时会清空检索。拖动画布不会触发定位。此功能不更改图表数据或布局。旧 HTML 需用更新后的运行时重新生成才能获得这些功能。
 - 下载按钮下的“复制图片（PNG）”写入图片剪贴板，不下载、不复制 URL。需要支持 ClipboardItem 的安全页面环境与权限；不支持或权限被拒绝时明确报错。
-- `window.UmlStudio` 提供 `ready,getDocument,setDocument,selectDiagram,getSpec,setSpec,getSvg,exportImage,saveHtml`。选择序号在浏览器 API 中从 0 开始；`getSpec/setSpec/getSvg/exportImage` 只操作当前图，`saveHtml` 保存全部图。等待 `ready` 与异步编辑 / 导出方法。
+- `window.UmlStudio` 提供 `ready,getDocument,setDocument,selectDiagram,getSpec,setSpec,getSvg,exportImage,saveHtml,saveHtmlAsync,saveToLocal`。选择序号从 0 开始；`getSpec/setSpec/getSvg/exportImage` 只操作当前图。同步 `saveHtml()` 要求先应用全部草稿；异步 `saveHtmlAsync()` 先应用有效草稿，再返回完整多图 HTML。`saveToLocal(selectNew = false)` 授权写入本地文件，须从用户点击手势调用。等待 `ready` 与异步编辑 / 导出方法。
 - Node API `@office/uml-studio/node` 提供 `readDiagramFile,documentFromHtml,renderNativeImage`，可直接从保存的 HTML 导出图片；不依赖浏览器，但需要本地 SKILL / Node 及 npm 原生依赖。跨机器字体可能不同，不承诺浏览器 / 原生导出逐像素相同。
 - 位图单边最多 32,767 px，总计最多 4,000 万像素；超限必须降低倍率或改为 SVG，不静默裁切。
 
@@ -168,4 +191,4 @@ npm run demo:verify
 
 ## 边界
 
-这是语义化绘图和样式编辑器，不是自由拖拽的 draw.io 替代品。它自动布局结构化模型；没有 UML 模型执行、代码逆向工程或任意 SVG/HTML 注入功能。大型图应按视角拆分后分别输出，不省略用户要求的节点或关系。
+这是以自动布局为基础、支持手动微调的语义化绘图和样式编辑器。它没有 UML 模型执行、代码逆向工程或任意 SVG/HTML 注入功能。大型图应按视角拆分后分别输出，不省略用户要求的节点或关系。

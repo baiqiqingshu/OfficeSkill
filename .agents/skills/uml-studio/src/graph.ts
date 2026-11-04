@@ -1,6 +1,6 @@
 import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ElkLabel, ElkNode } from 'elkjs/lib/elk-api';
-import type { DiagramEdge, DiagramGroup, DiagramNode, DiagramSpec, RenderedDiagram, Theme } from './types';
+import type { DiagramAdjustments, DiagramEdge, DiagramGroup, DiagramNode, DiagramSpec, ElementAdjustment, RenderedDiagram, Theme } from './types';
 import { esc, frame, text } from './svg';
 import { resolveLayout } from './themes';
 import { crossingPaths } from './crossings';
@@ -37,7 +37,7 @@ interface ContainerRef {
   lane?: string;
 }
 interface ContainerBox extends Rect { ref: ContainerRef; depth: number }
-interface EdgeRef { id: string; edge: DiagramEdge; labels: { id: string; value: string; role: 'main' | 'from' | 'to'; width: number; height: number; size: number }[] }
+interface EdgeRef { id: string; key: string; edge: DiagramEdge; labels: { id: string; value: string; role: 'main' | 'from' | 'to'; width: number; height: number; size: number }[] }
 interface Route { ref: EdgeRef; paths: Point[][] }
 interface LabelBox extends Rect { value: string; size: number }
 interface EdgeLabelBox extends LabelBox { ref: EdgeRef; role: 'main' | 'from' | 'to'; anchor: Point; leader?: boolean }
@@ -197,7 +197,7 @@ function createEdge(edge: DiagramEdge, index: number, theme: Theme, type: Diagra
     const metrics = measure(value, size);
     labels.push({ id: `${id}-${role}`, value, role, size, width: metrics.width + 14, height: metrics.height + 10 });
   }
-  return { id, edge, labels };
+  return { id, key: edge.id ?? `edge-${index}`, edge, labels };
 }
 
 function layoutOptions(direction: 'TB' | 'LR', padding: string, spec: DiagramSpec): Record<string, string> {
@@ -760,7 +760,7 @@ function layoutUsecases(refs: NodeRef[], edges: EdgeRef[], spec: DiagramSpec, th
   return { nodes, containers, routes: [], width: placed.width, height: placed.height };
 }
 
-function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme, type: DiagramSpec['type']): void {
+function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme, type: DiagramSpec['type'], adjustments?: DiagramAdjustments): void {
   const byId = new Map(result.nodes.map(box => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
   const obstacles: Rect[] = result.nodes.map(box => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
@@ -791,7 +791,8 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
   const seen = new Map<string, number>();
   const used = result.routes.flatMap(route => route.paths);
   for (const item of assignments) {
-    if (type === 'usecase' && item.source !== item.target) {
+    const waypoints = adjustments?.edges?.[item.ref.key]?.waypoints ?? [];
+    if (type === 'usecase' && item.source !== item.target && !waypoints.length) {
       const route = [directEndpoint(item.source, item.target), directEndpoint(item.target, item.source)];
       result.routes.push({ ref: item.ref, paths: [route] });
       used.push(route);
@@ -833,8 +834,15 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
           });
         });
         if (!clear) continue;
-        const middle = obstacleRouter(anchors[0].stub, anchors[1].stub, obstacles, used);
-        if (!middle) continue;
+        const stops = [anchors[0].stub, ...waypoints, anchors[1].stub];
+        const middle: Point[] = [];
+        let reachable = true;
+        for (let index = 1; index < stops.length; index++) {
+          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used);
+          if (!section) { reachable = false; break; }
+          middle.push(...(index === 1 ? section : section.slice(1)));
+        }
+        if (!reachable) continue;
         const candidate = simplify([anchors[0].port, ...middle, anchors[1].port]);
         let length = 0, overlaps = 0, crossings = 0;
         for (let i = 1; i < candidate.length; i++) {
@@ -860,7 +868,9 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
         if (score < bestScore) { bestScore = score; route = candidate; }
       }
     }
-    if (!route) throw new Error(`Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
+    if (!route) throw new Error(waypoints.length
+      ? `连线 ${item.ref.edge.from} → ${item.ref.edge.to} 无法经过指定途经点；请将点移出节点、标题或过窄的间隙。`
+      : `Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
     used.push(route);
     result.routes.push({ ref: item.ref, paths: [route] });
   }
@@ -934,7 +944,7 @@ function renderContainer(box: ContainerBox, theme: Theme, direction: 'TB' | 'LR'
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref.kind}" data-${ref.kind === 'lane' ? 'lane' : 'group'}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== 'lane' ? ` data-lane-id="${esc(ref.lane)}"` : ''}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: 'start', weight: 650 })}</g>`;
+  return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === 'lane' ? 'lanes' : 'groups'}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === 'lane' ? 'lane' : 'group'}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== 'lane' ? ` data-lane-id="${esc(ref.lane)}"` : ''}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: 'start', weight: 650 })}</g>`;
 }
 
 function centeredContent(ref: NodeRef, x: number, y: number, width: number, height: number): string {
@@ -955,14 +965,15 @@ function centeredContent(ref: NodeRef, x: number, y: number, width: number, heig
   return value;
 }
 
-function renderNode(box: NodeBox, spec: DiagramSpec): string {
+function renderNode(box: NodeBox, spec: DiagramSpec, adjustmentMetadata = true): string {
   const { x, y, width: w, height: h, ref } = box;
   const { theme, kind, node } = ref;
+  const metadata = adjustmentMetadata ? ` data-adjustment-key="nodes/${esc(node.id)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}"` : '';
   if (w !== ref.renderWidth || h !== ref.renderHeight) {
     const scaleX = w / ref.renderWidth, scaleY = h / ref.renderHeight;
     const virtual = { ...box, x: 0, y: 0, width: ref.renderWidth, height: ref.renderHeight, caption: undefined };
     const caption = box.caption ? text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted }) : '';
-    return `<g transform="translate(${numeric(x)} ${numeric(y)}) scale(${scaleX} ${scaleY})">${renderNode(virtual, spec)}</g>${caption}`;
+    return `<g${metadata}><g transform="translate(${numeric(x)} ${numeric(y)}) scale(${scaleX} ${scaleY})">${renderNode(virtual, spec, false)}</g>${caption}</g>`;
   }
   const stroke = esc(node.style?.primary && !node.style.border ? theme.primary : theme.border), surface = esc(theme.surface), ink = esc(theme.primary);
   const common = `fill="${surface}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"`;
@@ -1031,7 +1042,7 @@ function renderNode(box: NodeBox, spec: DiagramSpec): string {
     content += text(x + caption.x + caption.width / 2, y + caption.y + 2 + caption.size, caption.value, theme, { size: caption.size, fill: theme.muted });
   }
   if (box.caption) content += text(x + box.caption.x + box.caption.width / 2, y + box.caption.y + 2 + box.caption.size, box.caption.value, theme, { size: box.caption.size, fill: theme.muted });
-  return `<g class="uml-node uml-node-${kind}" data-editor-key="nodes/${spec.nodes!.indexOf(ref.sourceNode)}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([ref.sourceNode.label, ref.sourceNode.detail, ...(ref.sourceNode.attributes ?? []), ...(ref.sourceNode.operations ?? [])].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
+  return `<g class="uml-node uml-node-${kind}"${metadata} data-editor-key="nodes/${spec.nodes!.indexOf(ref.sourceNode)}" data-node-id="${esc(node.id)}"${node.lane ? ` data-lane-id="${esc(node.lane)}"` : ''}${node.group ? ` data-group-id="${esc(node.group)}"` : ''}><title>${esc([ref.sourceNode.label, ref.sourceNode.detail, ...(ref.sourceNode.attributes ?? []), ...(ref.sourceNode.operations ?? [])].filter(Boolean).join('\n'))}</title>${shape}${content}</g>`;
 }
 
 function segmentIntersectsRect(a: Point, b: Point, box: Rect, margin = 0): boolean {
@@ -1180,6 +1191,10 @@ function occupiedNode(box: NodeBox): Rect {
     height: Math.max(box.height, caption ? caption.y + caption.height : 0) - top };
 }
 
+function staggerConnections(spec: DiagramSpec): boolean {
+  return spec.layout?.horizontalStagger === true && ['activity', 'flowchart', 'swimlane'].includes(spec.type);
+}
+
 /** A lane is one flow axis; disconnected local fragments still share its centre line. */
 function alignLaneFlow(result: LayoutResult, edges: EdgeRef[], spec: DiagramSpec, theme: Theme): boolean {
   if (!spec.lanes?.length || result.containers.some(box => box.ref.kind !== 'lane') || (spec.layout?.maxPerColumn ?? 0) > 0) return false;
@@ -1239,7 +1254,7 @@ function alignLaneFlow(result: LayoutResult, edges: EdgeRef[], spec: DiagramSpec
   };
   for (const edge of forward) {
     const from = byId.get(edge.edge.from)!, to = byId.get(edge.edge.to)!;
-    constrain(from, to, laneOf(from) === laneOf(to) ? separation(from, to, Math.max(0, ...edge.labels.map(label => label[size] + 16))) : 0);
+    constrain(from, to, laneOf(from) === laneOf(to) ? separation(from, to, Math.max(0, ...edge.labels.map(label => label[size] + 16))) : staggerConnections(spec) ? Math.max(24, gap) : 0);
   }
   const previous = new Map<string, NodeBox>();
   for (const node of ordered) {
@@ -1276,6 +1291,7 @@ function equalizeLaneExtents(result: LayoutResult, direction: 'TB' | 'LR'): void
 
 /** Same-row constraints are accepted only when they preserve every column's node order. */
 function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Map<string, string>, spec: DiagramSpec): void {
+  const stagger = staggerConnections(spec);
   const horizontal = Boolean(spec.lanes?.length) && spec.direction === 'LR';
   const axis = horizontal ? 'x' : 'y', cross = horizontal ? 'y' : 'x';
   const size = horizontal ? 'width' : 'height', crossSize = horizontal ? 'height' : 'width';
@@ -1354,11 +1370,24 @@ function alignConnectedNodes(result: LayoutResult, edges: EdgeRef[], columns: Ma
     }
   }
   candidates.sort((a, b) => a.difference - b.difference);
-  for (const candidate of candidates) {
-    const from = find(candidate.from), to = find(candidate.to);
-    if (from === to) continue;
-    const graph = adjacency();
-    if (!reachable(graph, from, to) && !reachable(graph, to, from)) parents[to] = from;
+  if (stagger) {
+    // Cross-column hand-offs advance along the flow axis rather than sharing a row.
+    // Reject a constraint that would invert a column's order or close a feedback loop.
+    for (const edge of edges) {
+      const from = index.get(edge.edge.from), to = index.get(edge.edge.to);
+      if (from === undefined || to === undefined || from === to) continue;
+      if (columns.get(nodes[from].ref.id) === columns.get(nodes[to].ref.id)
+        && Math.abs(center(from) - center(to)) >= 0.01) continue;
+      if (reachable(adjacency(), to, from)) continue;
+      constraints.push({ from, to, distance: Math.max(24, gap) });
+    }
+  } else {
+    for (const candidate of candidates) {
+      const from = find(candidate.from), to = find(candidate.to);
+      if (from === to) continue;
+      const graph = adjacency();
+      if (!reachable(graph, from, to) && !reachable(graph, to, from)) parents[to] = from;
+    }
   }
   const values = new Map<number, number>(), indegrees = new Map<number, number>();
   const outgoing = new Map<number, typeof constraints>();
@@ -1429,6 +1458,75 @@ function placeFlowTerminals(result: LayoutResult, edges: EdgeRef[], direction: '
   }
 }
 
+function adjustmentDelta(box: Point, adjustment?: ElementAdjustment): Point {
+  if (!adjustment) return { x: 0, y: 0 };
+  return 'dx' in adjustment ? { x: adjustment.dx, y: adjustment.dy } : { x: adjustment.x - box.x, y: adjustment.y - box.y };
+}
+
+/** Apply overrides after automatic placement; descendant offsets remain relative to their parent. */
+function applyManualElements(result: LayoutResult, spec: DiagramSpec, direction: 'TB' | 'LR'): void {
+  const adjustments = spec.layout?.adjustments?.elements;
+  if (!adjustments || !Object.keys(adjustments).length) return;
+  const parents = new Map((spec.groups ?? []).map(group => [group.id, group.parent]));
+  const withinGroup = (id: string | undefined, ancestor: string): boolean => {
+    while (id) { if (id === ancestor) return true; id = parents.get(id); }
+    return false;
+  };
+  const nodeWithin = (node: NodeBox, container: ContainerBox): boolean => {
+    if (container.ref.kind !== 'lane') return withinGroup(node.ref.node.group, container.ref.originalId);
+    const lane = node.ref.node.lane ?? result.containers.find(box => box.ref.kind !== 'lane' && box.ref.originalId === node.ref.node.group)?.ref.lane;
+    return lane === container.ref.originalId || (!lane && container.ref.originalId.startsWith('__uml_unassigned_lane__'));
+  };
+  const containerWithin = (child: ContainerBox, container: ContainerBox): boolean => child !== container && (
+    container.ref.kind === 'lane' ? child.ref.lane === container.ref.originalId : withinGroup(parents.get(child.ref.originalId), container.ref.originalId));
+  let moved = false;
+  for (const container of [...result.containers].sort((a, b) => a.depth - b.depth)) {
+    const key = `${container.ref.kind === 'lane' ? 'lanes' : 'groups'}/${container.ref.originalId}`;
+    const delta = adjustmentDelta(container, adjustments[key]);
+    if (!delta.x && !delta.y) continue;
+    moved = true;
+    container.x += delta.x; container.y += delta.y;
+    for (const child of result.containers) if (containerWithin(child, container)) { child.x += delta.x; child.y += delta.y; }
+    for (const node of result.nodes) if (nodeWithin(node, container)) { node.x += delta.x; node.y += delta.y; }
+  }
+  for (const node of result.nodes) {
+    const delta = adjustmentDelta(node, adjustments[`nodes/${node.ref.node.id}`]);
+    if (delta.x || delta.y) moved = true;
+    node.x += delta.x; node.y += delta.y;
+  }
+  if (!moved) return;
+  // Grow both sides when necessary. A manual move never clips a member at its old boundary.
+  for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) {
+    const members: Rect[] = result.nodes.filter(node => !['start', 'end'].includes(node.ref.kind) && nodeWithin(node, container)).map(occupiedNode);
+    members.push(...result.containers.filter(child => containerWithin(child, container)));
+    if (!members.length) continue;
+    const headerX = container.ref.kind === 'lane' && direction === 'LR' ? container.ref.header : 0;
+    const headerY = container.ref.kind === 'lane' && direction === 'LR' ? 0 : container.ref.header;
+    const right = Math.max(container.x + container.width, ...members.map(box => box.x + box.width + 24));
+    const bottom = Math.max(container.y + container.height, ...members.map(box => box.y + box.height + 24));
+    container.x = Math.min(container.x, ...members.map(box => box.x - 24 - headerX));
+    container.y = Math.min(container.y, ...members.map(box => box.y - 24 - headerY));
+    container.width = right - container.x; container.height = bottom - container.y;
+  }
+}
+
+/** Keep pinned collinear points as vertices so crossing bridges cannot bend away from them. */
+function preserveWaypoints(path: Point[], pins: Point[]): Point[] {
+  const points = simplify(path);
+  if (!pins.length) return points;
+  const result: Point[] = points.length ? [{ ...points[0] }] : [];
+  for (let index = 1; index < points.length; index++) {
+    const a = points[index - 1], b = points[index];
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const along = pins.filter(point => {
+      const distance = Math.hypot(point.x - a.x, point.y - a.y) + Math.hypot(b.x - point.x, b.y - point.y);
+      return Math.abs(distance - length) < 0.001 && Math.hypot(point.x - a.x, point.y - a.y) > 0.001 && Math.hypot(point.x - b.x, point.y - b.y) > 0.001;
+    }).sort((first, second) => Math.hypot(first.x - a.x, first.y - a.y) - Math.hypot(second.x - a.x, second.y - a.y));
+    result.push(...along.map(point => ({ ...point })), { ...b });
+  }
+  return result;
+}
+
 /** Layout every graph family with bundled ELK; sequence and fishbone have dedicated renderers. */
 export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Promise<RenderedDiagram> {
   return renderGraphWithSpacing(spec, suppliedTheme, 0);
@@ -1495,27 +1593,49 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   if (spec.type !== 'usecase' && !alignLaneFlow(result, edges, spec, theme)) alignConnectedNodes(result, edges, columns, spec);
   if (spec.lanes?.length) equalizeLaneExtents(result, direction);
   placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
-  result.width = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.x + occupied.width; }), ...result.containers.map(box => box.x + box.width));
-  result.height = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.y + occupied.height; }), ...result.containers.map(box => box.y + box.height));
-  routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type);
-  const nodeById = new Map(result.nodes.map(box => [box.ref.node.id, box]));
-  for (const route of result.routes) {
-    const first = route.paths[0], last = route.paths[route.paths.length - 1];
-    const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
-    if (spec.type !== 'usecase') {
-      if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
-      if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+  const routeResult = (adjustments?: DiagramAdjustments): void => {
+    result.routes = [];
+    routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type, adjustments);
+    const nodeById = new Map(result.nodes.map(box => [box.ref.node.id, box]));
+    for (const route of result.routes) {
+      const first = route.paths[0], last = route.paths[route.paths.length - 1];
+      const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
+      if (spec.type !== 'usecase') {
+        if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
+        if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
+      }
     }
-  }
-  const labels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
-  if (!labels) {
+  };
+  const manual = spec.layout?.adjustments;
+  const hasManualPositions = !!(Object.keys(manual?.elements ?? {}).length || Object.keys(manual?.edges ?? {}).length);
+  // First resolve exactly the spacing the unadjusted diagram uses. Otherwise adding its
+  // first offset could skip a label-driven reflow and unexpectedly move every other node.
+  routeResult();
+  const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
+  if (!baselineLabels) {
     return renderGraphWithSpacing({ ...requestedSpec, layout: { ...requestedSpec.layout,
       elementGap: Math.ceil((spec.layout?.elementGap ?? 48) * 1.5),
       regionGap: Math.ceil((spec.layout?.regionGap ?? 72) * 1.5),
     } }, suppliedTheme, labelPass + 1);
   }
+  let labels = baselineLabels;
+  if (hasManualPositions) {
+    applyManualElements(result, spec, direction);
+    routeResult(manual);
+    // Manual positions are applied on that stable baseline. Route/label changes may
+    // move annotations, but cannot trigger another automatic spacing change.
+    labels = placeLabels(result.routes, result.nodes, result.containers, direction, true)!;
+  }
+  result.width = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.x + occupied.width; }), ...result.containers.map(box => box.x + box.width));
+  result.height = Math.max(0, ...result.nodes.map(box => { const occupied = occupiedNode(box); return occupied.y + occupied.height; }), ...result.containers.map(box => box.y + box.height));
+  for (const label of labels) {
+    const adjustment = manual?.elements?.[`edge-labels/${label.ref.key}/${label.role}`];
+    const delta = adjustmentDelta(label, adjustment);
+    label.x += delta.x; label.y += delta.y;
+    if (adjustment) label.leader = true;
+  }
   const prefix = `uml-graph-${++graphNumber}`;
-  const displayed = result.routes.flatMap((route, owner) => route.paths.map(points => ({ points: simplify(points), owner })));
+  const displayed = result.routes.flatMap((route, owner) => route.paths.map(points => ({ points: preserveWaypoints(points, manual?.edges?.[route.ref.key]?.waypoints ?? []), owner })));
   const crossings = crossingPaths(displayed, spec.layout?.edgeCrossing ?? 'bridge', theme.lineWidth,
     [...result.nodes.map(occupiedNode), ...labels]);
   const maskDefinitions = crossings.masks.map((arcs, index) => {
@@ -1532,7 +1652,7 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
     const dashed = route.ref.edge.dashed || ['dependency', 'include', 'extend', 'realization'].includes(kind);
     const end = kind === 'flow' ? 'arrow' : ['dependency', 'include', 'extend'].includes(kind) ? 'open' : ['inheritance', 'realization'].includes(kind) ? 'triangle' : '';
     const start = kind === 'aggregation' || kind === 'composition' ? kind : '';
-    paths += `<g class="uml-edge uml-edge-${kind}" data-editor-key="edges/${spec.edges!.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
+    paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges!.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : '';
@@ -1544,7 +1664,7 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   const nodeShapes = result.nodes.map(box => renderNode(box, spec)).join('');
   const labelShapes = labels.map(label => {
     const leader = label.leader ? `<path class="uml-label-leader" d="M${numeric(label.anchor.x)} ${numeric(label.anchor.y)} L${numeric(Math.max(label.x, Math.min(label.x + label.width, label.anchor.x)))} ${numeric(Math.max(label.y, Math.min(label.y + label.height, label.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : '';
-    return `<g class="uml-edge-label" data-editor-key="edges/${spec.edges!.indexOf(label.ref.edge)}" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`;
+    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label.ref.key)}/${label.role}" data-layout-x="${numeric(label.x)}" data-layout-y="${numeric(label.y)}" data-editor-key="edges/${spec.edges!.indexOf(label.ref.edge)}" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`;
   }).join('');
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) { minX = Math.min(minX, box.x - theme.lineWidth); minY = Math.min(minY, box.y - theme.lineWidth); maxX = Math.max(maxX, box.x + box.width + theme.lineWidth); maxY = Math.max(maxY, box.y + box.height + theme.lineWidth); }
@@ -1561,6 +1681,6 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   const heading = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: 'start', weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: 'start', fill: theme.muted }) : '') : '';
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading}<g transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }

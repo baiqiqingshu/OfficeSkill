@@ -25,6 +25,7 @@ export type __VLS_Props = {
     spec: DiagramSpec;
     runtime?: StudioRuntime;
     elementSelection?: boolean;
+    positionEditing?: boolean;
 };
 export function setSpec(input: DiagramSpec): Promise<void>;
 export function getSpec(): DiagramSpec;
@@ -43,11 +44,35 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
     error: (error: Error) => any;
     loading: (loading: boolean) => any;
     selectElement: (key: string) => any;
+    adjustElement: (change: {
+        key: string;
+        dx: number;
+        dy: number;
+    }) => any;
+    adjustWaypoints: (change: {
+        key: string;
+        waypoints: {
+            x: number;
+            y: number;
+        }[];
+    }) => any;
 }, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
     onRendered?: ((diagram: RenderedDiagram, spec: DiagramSpec) => any) | undefined;
     onError?: ((error: Error) => any) | undefined;
     onLoading?: ((loading: boolean) => any) | undefined;
     onSelectElement?: ((key: string) => any) | undefined;
+    onAdjustElement?: ((change: {
+        key: string;
+        dx: number;
+        dy: number;
+    }) => any) | undefined;
+    onAdjustWaypoints?: ((change: {
+        key: string;
+        waypoints: {
+            x: number;
+            y: number;
+        }[];
+    }) => any) | undefined;
 }>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export const _default: typeof __VLS_export;
 }
@@ -115,6 +140,14 @@ export import fishboneHeadStyles = __Core.fishboneHeadStyles;
 export import FishboneHeadStyle = __Core.FishboneHeadStyle;
 
 export import FishboneData = __Core.FishboneData;
+
+export import DiagramPoint = __Core.DiagramPoint;
+
+export import ElementAdjustment = __Core.ElementAdjustment;
+
+export import EdgeAdjustment = __Core.EdgeAdjustment;
+
+export import DiagramAdjustments = __Core.DiagramAdjustments;
 
 export import DiagramLayoutOptions = __Core.DiagramLayoutOptions;
 
