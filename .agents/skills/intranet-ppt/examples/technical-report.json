@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "title": "技术进展汇报（示例）",
+  "pageCount": 3,
+  "pages": [
+    {
+      "id": "overview",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "技术进展概览"
+          }
+        },
+        {
+          "id": "summary",
+          "component": "builtin/text",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 160
+          },
+          "inputs": {
+            "text": [
+              {
+                "text": "本期",
+                "bold": true
+              },
+              {
+                "text": "完成核心链路原型，下一阶段进入联调。"
+              }
+            ]
+          }
+        },
+        {
+          "id": "milestones",
+          "component": "builtin/bullets",
+          "box": {
+            "x": 64,
+            "y": 340,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "items": [
+              "完成需求边界确认",
+              "核心接口与数据模型已评审",
+              "待完成：异常流程及容量验证"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "risks",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "风险与应对"
+          }
+        },
+        {
+          "id": "risk-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "风险",
+                "影响",
+                "应对措施"
+              ],
+              [
+                "外部接口未冻结",
+                "联调时间不确定",
+                "建立版本兼容清单"
+              ],
+              [
+                "缺少生产量级数据",
+                "容量结论待验证",
+                "准备脱敏压测数据"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "下一阶段计划"
+          }
+        },
+        {
+          "id": "plan",
+          "component": "builtin/steps",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 1152,
+            "h": 350
+          },
+          "inputs": {
+            "items": [
+              "确认接口契约和验收口径",
+              "完成端到端联调",
+              "复核容量及异常恢复方案",
+              "提交上线评审"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "title": "需求评审（示例）",
+  "pageCount": 3,
+  "pages": [
+    {
+      "id": "scope",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "需求范围与用户流程"
+          }
+        },
+        {
+          "id": "scope-list",
+          "component": "builtin/bullets",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 1152,
+            "h": 350
+          },
+          "inputs": {
+            "items": [
+              "用户提交申请并查看处理进展",
+              "审批人根据权限查看和处理待办",
+              "管理员维护审批规则与角色",
+              "本期不包含跨系统历史数据迁移"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "acceptance",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "验收条件"
+          }
+        },
+        {
+          "id": "criteria",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "场景",
+                "前置条件",
+                "预期结果"
+              ],
+              [
+                "提交申请",
+                "必填项完整",
+                "生成申请编号"
+              ],
+              [
+                "审批通过",
+                "具备处理权限",
+                "记录审批意见和时间"
+              ],
+              [
+                "重复提交",
+                "同一请求重复到达",
+                "避免生成重复记录"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "open-items",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "待确认事项"
+          }
+        },
+        {
+          "id": "questions",
+          "component": "builtin/card",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "title": "请业务方确认",
+            "text": "审批超时是否自动转派？\n撤回后是否允许重新提交？\n审计记录需要保留多长时间？"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "title": "技术方案评审（示例）",
+  "pageCount": 3,
+  "pages": [
+    {
+      "id": "goals",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "方案目标与边界"
+          }
+        },
+        {
+          "id": "goal",
+          "component": "builtin/card",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 552,
+            "h": 280
+          },
+          "inputs": {
+            "title": "建设目标",
+            "text": "统一数据入口，提供鉴权、限流与审计能力。"
+          }
+        },
+        {
+          "id": "scope",
+          "component": "builtin/card",
+          "box": {
+            "x": 664,
+            "y": 160,
+            "w": 552,
+            "h": 280
+          },
+          "inputs": {
+            "title": "本次范围",
+            "text": "覆盖内部服务间调用；历史接口迁移单独评审。"
+          }
+        },
+        {
+          "id": "decision",
+          "component": "builtin/text",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 160
+          },
+          "inputs": {
+            "text": [
+              {
+                "text": "评审事项：",
+                "bold": true,
+                "color": "#1476B8"
+              },
+              {
+                "text": "确认架构边界、数据流向和降级策略。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tradeoffs",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "备选方案对比"
+          }
+        },
+        {
+          "id": "options",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "维度",
+                "集中网关",
+                "各服务集成"
+              ],
+              [
+                "策略一致性",
+                "集中管理",
+                "依赖版本治理"
+              ],
+              [
+                "运行成本",
+                "需保障网关容量",
+                "分散在各服务"
+              ],
+              [
+                "建议",
+                "优先验证",
+                "作为备选"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "text": "实施与验收"
+          }
+        },
+        {
+          "id": "delivery-plan",
+          "component": "builtin/steps",
+          "box": {
+            "x": 64,
+            "y": 160,
+            "w": 1152,
+            "h": 350
+          },
+          "inputs": {
+            "items": [
+              "原型验证：鉴权、限流、日志字段",
+              "灰度接入：保留回退开关",
+              "验收：功能、性能、故障恢复",
+              "上线：明确责任人与观测指标"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

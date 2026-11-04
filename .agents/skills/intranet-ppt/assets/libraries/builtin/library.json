@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin",
+  "name": "内网技术汇报基础元素",
+  "components": [
+    {
+      "id": "title",
+      "name": "页面标题",
+      "description": "技术汇报、方案评审、需求评审的页面标题",
+      "size": {
+        "width": 1152,
+        "height": 72
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:36px;font-weight:bold;color:#17324D\"></div>"
+    },
+    {
+      "id": "text",
+      "name": "正文",
+      "description": "段落正文，可用换行或 runs 设置局部文字样式",
+      "size": {
+        "width": 1152,
+        "height": 160
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:24px;color:#263C50\"></div>"
+    },
+    {
+      "id": "bullets",
+      "name": "要点列表",
+      "description": "每个字符串为一个要点；少量要点适合结论或范围说明",
+      "size": {
+        "width": 1152,
+        "height": 300
+      },
+      "inputs": {
+        "items": {
+          "type": "list",
+          "required": true
+        }
+      },
+      "html": "<ul data-slot=\"items\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:25px;color:#263C50\"></ul>"
+    },
+    {
+      "id": "card",
+      "name": "信息卡片",
+      "description": "标题和正文组成的浅色卡片；可放置多张进行对比",
+      "size": {
+        "width": 552,
+        "height": 240
+      },
+      "inputs": {
+        "title": {
+          "type": "richtext",
+          "required": true
+        },
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF\"><h3 data-slot=\"title\" style=\"position:absolute;left:24px;top:20px;width:504px;height:44px;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#145D92\"></h3><p data-slot=\"text\" style=\"position:absolute;left:24px;top:80px;width:504px;height:140px;font-family:Microsoft YaHei;font-size:23px;color:#263C50\"></p></section>"
+    },
+    {
+      "id": "table",
+      "name": "评审表格",
+      "description": "二维数组表格；可对单元格使用 runs，首行是普通可编辑单元格",
+      "size": {
+        "width": 1152,
+        "height": 360
+      },
+      "inputs": {
+        "rows": {
+          "type": "table",
+          "required": true
+        }
+      },
+      "html": "<table data-slot=\"rows\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:22px;color:#263C50;background-color:#F5F8FB;border:1px solid #C5D3DF\"></table>"
+    },
+    {
+      "id": "image",
+      "name": "本地图片",
+      "description": "展示配置目录中的本地 PNG/JPEG 等图片，不拉伸比例",
+      "size": {
+        "width": 552,
+        "height": 360
+      },
+      "inputs": {
+        "src": {
+          "type": "image",
+          "required": true
+        }
+      },
+      "html": "<img data-slot=\"src\" style=\"position:absolute;left:0;top:0;width:100%;height:100%\"/>"
+    },
+    {
+      "id": "metric",
+      "name": "指标",
+      "description": "醒目的指标值和解释，用于进展、容量、性能等数据",
+      "size": {
+        "width": 360,
+        "height": 200
+      },
+      "inputs": {
+        "value": {
+          "type": "richtext",
+          "required": true
+        },
+        "label": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA\"><div data-slot=\"value\" style=\"position:absolute;left:24px;top:20px;width:312px;height:80px;font-family:Microsoft YaHei;font-size:48px;font-weight:bold;color:#1476B8\"></div><div data-slot=\"label\" style=\"position:absolute;left:24px;top:120px;width:312px;height:56px;font-family:Microsoft YaHei;font-size:22px;color:#52687A\"></div></section>"
+    },
+    {
+      "id": "steps",
+      "name": "实施步骤",
+      "description": "以编号列表展示实施计划；按顺序提供字符串数组",
+      "size": {
+        "width": 1152,
+        "height": 300
+      },
+      "inputs": {
+        "items": {
+          "type": "list",
+          "required": true
+        }
+      },
+      "html": "<ol data-slot=\"items\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:25px;color:#263C50\"></ol>"
+    }
+  ]
+}
