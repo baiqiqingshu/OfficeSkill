@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "title": "登录功能技术方案评审",
+  "pageCount": 6,
+  "pageSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "elementCount": 21,
+  "preview": "HTML 仅为内容预览，不显示原生 PPTX 母版；母版外观以 presentation.pptx 为准。",
+  "warnings": [
+    "请在本地 PowerPoint 或 LibreOffice 检查文字换行及最终版式。"
+  ],
+  "outputs": [
+    "presentation.pptx",
+    "preview.html",
+    "report.json"
+  ]
+}

@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "title": "登录功能技术方案评审",
+  "pageCount": 6,
+  "pages": [
+    {
+      "id": "goals",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+          "inputs": {
+            "text": [
+              {"text": "登录功能", "bold": true},
+              {"text": "技术方案评审"}
+            ]
+          }
+        },
+        {
+          "id": "goal",
+          "component": "builtin/card",
+          "box": {"x": 64, "y": 140, "w": 552, "h": 260},
+          "inputs": {
+            "title": "建设目标",
+            "text": "统一账号识别与身份核验入口，支持密码、验证码与 SSO，落地风险校验与可恢复失败提示。"
+          }
+        },
+        {
+          "id": "scope",
+          "component": "builtin/card",
+          "box": {"x": 664, "y": 140, "w": 552, "h": 260},
+          "inputs": {
+            "title": "本次范围",
+            "text": "覆盖 Web 端登录主路径、会话签发与锁定策略；注册、找回密码深度改造另案评审。"
+          }
+        },
+        {
+          "id": "decision",
+          "component": "builtin/text",
+          "box": {"x": 64, "y": 440, "w": 1152, "h": 200},
+          "inputs": {
+            "text": [
+              {"text": "评审事项：", "bold": true, "color": "#1476B8"},
+              {"text": "确认登录主链路、鉴权模型、风控阈值与灰度验收口径。"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "flow",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+          "inputs": {"text": "登录主链路"}
+        },
+        {
+          "id": "steps",
+          "component": "builtin/steps",
+          "box": {"x": 64, "y": 140, "w": 1152, "h": 280},
+          "inputs": {
+            "items": [
+              "进入登录页：加载可登录方式与风控探针",
+              "账号识别：邮箱 / 手机号 / SSO 汇入同一账号主体",
+              "身份核验：密码、短信验证码或 MFA 二次确认",
+              "风险校验：异常设备、失败次数、触发锁定",
+              "结果收束：签发会话进入工作台，或返回可恢复提示"
+            ]
+          }
+        },
+        {
+          "id": "note",
+          "component": "builtin/text",
+          "box": {"x": 64, "y": 460, "w": 1152, "h": 160},
+          "inputs": {
+            "text": [
+              {"text": "约束：", "bold": true, "color": "#1476B8"},
+              {"text": "识别与核验解耦；风控与认证并行决策；失败信息避免泄露账号是否存在。"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "identify-verify",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+          "inputs": {"text": "账号识别与身份核验"}
+        },
+        {
+          "id": "identify-img",
+          "component": "builtin/image",
+          "box": {"x": 64, "y": 140, "w": 552, "h": 300},
+          "inputs": {"src": "account-identify.png"}
+        },
+        {
+          "id": "verify-img",
+          "component": "builtin/image",
+          "box": {"x": 664, "y": 140, "w": 552, "h": 300},
+          "inputs": {"src": "identity-verify.png"}
+        },
+        {
+          "id": "caption",
+          "component": "builtin/text",
+          "box": {"x": 64, "y": 470, "w": 1152, "h": 160},
+          "inputs": {
+            "text": [
+              {"text": "左：", "bold": true},
+              {"text": "邮箱、手机号、SSO 汇入同一账号。"},
+              {"text": "  右：", "bold": true},
+              {"text": "密码、验证码、多因素按策略组合核验。"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tradeoffs",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+          "inputs": {"text": "鉴权方案对比"}
+        },
+        {
+          "id": "options",
+          "component": "builtin/table",
+          "box": {"x": 64, "y": 140, "w": 1152, "h": 420},
+          "inputs": {
+            "rows": [
+              ["维度", "密码+验证码", "企业 SSO", "强制 MFA"],
+              ["用户成本", "低，覆盖最广", "依赖 IdP 接入", "二次核验摩擦较高"],
+              ["安全水位", "中，需配合风控", "高，统一联邦身份", "高，抗撞库与盗号"],
+              ["实施成本", "低，复用现有能力", "中，需对接协议与映射", "中，需短信/TOTP 通道"],
+              ["建议", "默认主路径", "内网员工优先", "高敏操作与异常登录"]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "risks",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+          "inputs": {"text": "风险与应对"}
+        },
+        {
+          "id": "m1",
+          "component": "builtin/metric",
+          "box": {"x": 64, "y": 140, "w": 360, "h": 160},
+          "inputs": {"value": "5 次", "label": "连续失败触发锁定"}
+        },
+        {
+          "id": "m2",
+          "component": "builtin/metric",
+          "box": {"x": 460, "y": 140, "w": 360, "h": 160},
+          "inputs": {"value": "15 分钟", "label": "默认锁定冷却时长"}
+        },
+        {
+          "id": "m3",
+          "component": "builtin/metric",
+          "box": {"x": 856, "y": 140, "w": 360, "h": 160},
+          "inputs": {"value": "≤ 300ms", "label": "鉴权 P95 目标"}
+        },
+        {
+          "id": "risk-table",
+          "component": "builtin/table",
+          "box": {"x": 64, "y": 340, "w": 1152, "h": 280},
+          "inputs": {
+            "rows": [
+              ["风险", "影响", "应对"],
+              ["撞库与短信轰炸", "账号被锁、通道成本上升", "设备指纹 + 图形验证 + 限流"],
+              ["会话劫持", "未授权访问业务数据", "HttpOnly Cookie、短时 Token、设备绑定"],
+              ["SSO 映射错误", "串号或无法登录", "账号绑定审计与回退密码通道"]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+          "inputs": {"text": "实施与验收"}
+        },
+        {
+          "id": "plan",
+          "component": "builtin/steps",
+          "box": {"x": 64, "y": 140, "w": 1152, "h": 280},
+          "inputs": {
+            "items": [
+              "原型：密码登录、验证码登录、失败锁定与提示文案",
+              "联调：会话签发、风控回调、SSO 账号映射",
+              "灰度：按租户开启，保留密码回退开关",
+              "验收：主路径成功率、锁定误伤率、P95 时延与审计日志"
+            ]
+          }
+        },
+        {
+          "id": "checklist",
+          "component": "builtin/bullets",
+          "box": {"x": 64, "y": 450, "w": 1152, "h": 200},
+          "inputs": {
+            "items": [
+              "功能：成功进入工作台；失败给出可恢复提示",
+              "安全：失败不泄露账号存在性；锁定与解锁可审计",
+              "观测：登录成功率、失败原因分布、通道发送量看板就绪"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
