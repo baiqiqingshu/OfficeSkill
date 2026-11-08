@@ -36,9 +36,11 @@
 | richtext | 字符串或 runs 数组 | `div/p/span/h1` 等的 `data-slot` |
 | image | `"images/local.png"` 或 `{"src":"images/local.png","alt":"示意图"}` | `img data-slot="src"` |
 | table | 二维数组或 `{"rows":[["列A","列B"],["值A","值B"]]}` | `table data-slot="rows"` |
-| list | 字符串或 runs 构成的数组 | `ul/ol/div data-slot="items"` |
+| list | 字符串、runs 或 level 对象构成的数组 | `ul/ol/div data-slot="items"` |
 
 表格单元格和列表条目可使用 runs。单段 run 为 `{"text":"内容","bold":true,"italic":false,"fontFamily":"宋体","fontSize":24,"color":"#17324D","underline":false}`。遗漏样式时继承组件样式；字号单位是像素。
+
+列表条目还支持多级嵌套对象 `{"level":2,"text":"…"}`：`level` 为 1–4 的整数（省略按 1 级），`text` 可写字符串或 runs 数组，对象内可带 `bold`/`italic`/`underline`/`fontFamily`/`fontSize`/`color`，未知字段报错。1–4 级前缀依次为 `•`、`◦`、`▪`、`–`，每深一级在标记前加两个全角空格缩进；`check`/`dash`/`num` 等 class 只作用于 1 级。
 
 ## 支持的 HTML/CSS 子集
 
@@ -49,7 +51,7 @@
 - 文字：`font-family/font-size/font-weight/font-style/text-decoration/text-align/vertical-align`、`color`、`line-height`（无单位倍数 0.8–3.0）、`letter-spacing`（px，-5–20）。
 - 形状：`background-color`、`border:1px solid #RRGGBB`、`padding`、`border-radius`（`Npx` 或 `50%`，用于圆角卡片与圆形徽标）。
 - 列表：`ul/ol` 的 `class` 决定前缀，`check` → `✓`、`dash` → `—`、`num` → 数字；前缀加粗并沿用列表文字颜色，随主题换色。
-- 表格：组件 HTML 中用 `<thead><tr><th style="...">` 声明表头样式（填充、文字颜色、加粗、内边距、边框）；`data-slot="rows"` 只提供正文行，表头行数和样式来自 HTML。`th` 的表头样式会同时用于 HTML 预览和 PPTX。
+- 表格：组件 HTML 中用 `<thead><tr><th style="...">` 声明表头样式（填充、文字颜色、加粗、内边距、边框）；`data-slot="rows"` 只提供正文行，表头行数和样式来自 HTML。`th` 的表头样式会同时用于 HTML 预览和 PPTX。表格行高按内容紧凑排布：框架按等宽列、单元格内边距与边框估算每个单元格的换行行数，取行内最大行数乘以字号与 `line-height`（缺省 1.35）得到行高；单元格 runs 自带的 `fontSize` 也计入估算。因此 `box` 高度是上限而非等分高度；内容少时表格顶部对齐、下方留白，内容多时仍可能溢出，需精简或拆页。
 - 根组件按 `size` 设计，通过配置 `box` 缩放；字号按两个缩放方向的较小比例缩放。避免过度缩放，优先选择适合内容的元素尺寸。
 - 图片使用本地文件，维持宽高比。JSON 的图片相对于配置目录；HTML 中静态 `img src` 相对于库目录。
 
@@ -110,4 +112,4 @@ python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/libr
 
 ## 内置组件
 
-`builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
+`builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`、`outline`、`ui-frame`、`figure`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。

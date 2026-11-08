@@ -1,6 +1,6 @@
 ---
 name: intranet-ppt
-description: 面向内网技术汇报、技术方案评审和需求评审，用一份 JSON、原生 PPTX 母版及本地 HTML 元素库生成可编辑 PPTX。支持第三方元素库和从现有 PPTX 提取组件；全程离线，不适用于任意网页或复杂动画转换。
+description: 面向内网技术汇报、技术方案评审、需求评审和场景串讲，用一份 JSON、原生 PPTX 母版及本地 HTML 元素库生成可编辑 PPTX。支持第三方元素库和从现有 PPTX 提取组件；全程离线，不适用于任意网页或复杂动画转换。
 ---
 
 # 内网 PPT
@@ -10,7 +10,7 @@ description: 面向内网技术汇报、技术方案评审和需求评审，用�
 ## 生成
 
 1. 先查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。使用第三方库时追加 `--library 本地/library.json`。只使用目录中列出的组件 ID 和输入名。
-2. 写一份配置 JSON。优先参考 `examples/technical-proposal.json`：11 页完整技术方案，覆盖封面、议程、章节页、架构图、流程图、表格、指标、对比、时间线和结束页。短例可参考 `technical-report.json`、`solution-review.json`、`requirements-review.json`。默认内置母版和基础库，无需选择多套方案。
+2. 写一份配置 JSON。优先参考 `examples/technical-proposal.json`：11 页完整技术方案，覆盖封面、议程、章节页、架构图、流程图、表格、指标、对比、时间线和结束页。短例可参考 `technical-report.json`、`solution-review.json`、`requirements-review.json`；场景走查完整示例见 `examples/scenario-walkthrough.json`（多级要点、图示框、界面示意图与紧凑表格）。默认内置母版和基础库，无需选择多套方案。
 3. 执行：
 
    ```text
@@ -42,6 +42,10 @@ description: 面向内网技术汇报、技术方案评审和需求评审，用�
 
 每页可放多个元素。`box` 为页面像素坐标，默认页面 1280×720。`pageCount` 可省略；填写时必须等于 `pages` 数量。文字可以是字符串或 runs 数组，每段支持 `text`、`bold`、`italic`、`fontFamily`、`fontSize`、`color`、`underline`，例如 `[{"text":"重点","bold":true},{"text":"说明","fontFamily":"宋体","italic":true}]`。颜色用 `#RRGGBB`，字号用像素。
 
+`list` 输入（要点、清单、步骤、阶段、四象限等）除字符串或 runs 外，还接受 `{"level":1-4,"text":"…"}` 对象实现多级嵌套：2/3/4 级自动换用 ◦/▪/– 前缀并缩进两字，`text` 也可写 runs 数组，对象内可带 `bold`/`italic`/`underline`/`fontFamily`/`fontSize`/`color` 样式。场景描述优先用 `outline` 组件。
+
+表格行高按内容紧凑排布（含单元格 runs 自带字号）：`box` 高度是上限而非等分高度，内容少时表格顶部对齐、下方留白；单元格内容过多仍会溢出，需精简或拆页。
+
 配置顶层可加 `"theme":"主题id"` 整体换色，可选 `crimson`（默认，深红）、`blue`（政务蓝）、`emerald`（墨绿）、`mono`（黑白灰）、`graphite`（深色暗底）。只有组件规范色板内的色值参与换色，其余颜色原样保留。
 
 ## 元素库预览
@@ -59,7 +63,7 @@ python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo
 python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library 本地/library.json
 ```
 
-内置组件（`builtin/` 前缀）：`title` `eyebrow` `lead` `section-title` `text` `bullets` `checklist` `steps` `caption` `footnote` `divider` `cover` `section-break` `agenda-item` `thanks` `card` `feature-card` `panel` `metric` `stat-card` `person-card` `icon-badge` `table` `compare` `matrix2x2` `field` `api-item` `tag` `status` `quote` `callout` `callout-warn` `callout-danger` `conclusion` `flow-step` `flow-arrow` `layer` `arch-node` `arch-zone` `timeline-item` `timeline-h-item` `phase` `image` `image-frame` `code`。各组件的输入名、类型和必填性一律以 `catalog` 输出为准。
+内置组件（`builtin/` 前缀）：`title` `eyebrow` `lead` `section-title` `text` `bullets` `checklist` `steps` `caption` `footnote` `divider` `cover` `section-break` `agenda-item` `thanks` `card` `feature-card` `panel` `metric` `stat-card` `person-card` `icon-badge` `table` `compare` `matrix2x2` `field` `api-item` `tag` `status` `quote` `callout` `callout-warn` `callout-danger` `conclusion` `flow-step` `flow-arrow` `layer` `arch-node` `arch-zone` `timeline-item` `timeline-h-item` `phase` `image` `image-frame` `code` `outline` `ui-frame` `figure`。各组件的输入名、类型和必填性一律以 `catalog` 输出为准。
 
 ## 公司母版和外部库
 
@@ -82,4 +86,4 @@ python SKILL_DIR/scripts/ppt_tool.py render extracted/deck.json --out output/reb
 
 依赖 Python 3.10+、python-pptx、Pillow、lxml，版本范围见 `scripts/requirements.txt`。未安装时由内网环境准备 wheel，执行 `python -m pip install --no-index --find-links 本地wheel目录 -r SKILL_DIR/scripts/requirements.txt`。不自动联网安装，不上传模板或内容，不使用云端转换、外部字体、遥测。
 
-需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出四个场景示例（含 11 页完整技术方案）和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。
+需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出五个场景示例（含 11 页完整技术方案和 12 页场景串讲）和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。

@@ -161,6 +161,52 @@
         }
       ]
     },
+    "listItem": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/richtext"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "text"
+          ],
+          "properties": {
+            "level": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4,
+              "description": "Nesting level; omitted means level 1."
+            },
+            "text": {
+              "$ref": "#/$defs/richtext"
+            },
+            "bold": {
+              "type": "boolean"
+            },
+            "italic": {
+              "type": "boolean"
+            },
+            "fontFamily": {
+              "type": "string",
+              "minLength": 1
+            },
+            "fontSize": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "color": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$"
+            },
+            "underline": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
     "image": {
       "anyOf": [
         {
@@ -218,7 +264,7 @@
         {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/richtext"
+            "$ref": "#/$defs/listItem"
           }
         }
       ]

@@ -23,8 +23,12 @@ CSS_KEYS = set("position left top width height font-family font-size font-weight
 STYLE_KEYS = {"fontFamily", "fontSize", "color", "bold", "italic", "underline"}
 # Style fields a table's <th> may contribute; table cells only carry text and
 # shape properties, so alignment/padding/fill/border are included explicitly.
-HEADER_STYLE_KEYS = {"fontFamily", "fontSize", "color", "bold", "italic", "underline", "align", "verticalAlign", "padding", "fill", "borderColor", "borderWidth", "borderRadius"}
+HEADER_STYLE_KEYS = {"fontFamily", "fontSize", "color", "bold", "italic", "underline", "align", "verticalAlign", "padding", "fill", "borderColor", "borderWidth", "borderRadius", "lineHeight"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
+# Markers for nested list levels; level 1 keeps the class/tag marker so the
+# existing `check`/`dash`/`num` behavior stays intact.
+LIST_MARKERS = {1: "•  ", 2: "◦  ", 3: "▪  ", 4: "–  "}
+LIST_INDENT = "\u3000"  # full-width space, two per level beyond 1
 DEFAULT_STYLE = {"fontFamily": "Microsoft YaHei", "fontSize": 24, "color": "#17324D", "bold": False, "italic": False, "underline": False, "align": "left", "verticalAlign": "top", "padding": 0}
 
 
@@ -498,6 +502,39 @@ def _static_runs(node, inherited, inputs=None, specs=None):
     return result
 
 
+def _item_style(item):
+    """Validate and return the STYLE_KEYS subset carried by a level object."""
+    style = {key: item[key] for key in STYLE_KEYS if key in item}
+    if not style:
+        return {}
+    checked = _runs([{**style, "text": ""}])[0]
+    checked.pop("text", None)
+    return checked
+
+
+def _list_item(item):
+    """Return ``(level, runs)`` for one list entry.
+
+    An entry is a string or runs array (level 1) or a level object such as
+    ``{"level": 2, "text": "…", "bold": true}``; ``text`` may itself be a
+    string or runs array and the style keys apply to that entry's runs.
+    """
+    if isinstance(item, dict) and set(item) != {"runs"}:
+        unknown = set(item) - ({"level", "text"} | STYLE_KEYS)
+        if unknown:
+            _fail(f"list 条目存在未知字段：{', '.join(sorted(unknown))}")
+        if "text" not in item:
+            _fail("list 条目对象须包含 text")
+        if not isinstance(item["text"], (str, list)):
+            _fail("list 条目的 text 须为字符串或 runs 数组")
+        level = item.get("level", 1)
+        if isinstance(level, bool) or not isinstance(level, int) or not 1 <= level <= 4:
+            _fail("list 条目 level 须为 1..4 的整数")
+        style = _item_style(item)
+        return level, [{**style, **run} for run in _runs(item["text"])]
+    return 1, _runs(item)
+
+
 def _table_rows(value):
     if isinstance(value, dict) and set(value) == {"rows"}:
         value = value["rows"]
@@ -539,6 +576,109 @@ def _table_header(node, table_style):
         return 0, {}
     computed = _style(_css(first_th.attrs.get("style", "")), table_style, "th")
     return header_rows, {key: value for key, value in computed.items() if key in HEADER_STYLE_KEYS}
+
+
+_TABLE_SAFETY = 1.03
+_NARROW_PUNCT = set(".,:;'|!")
+_WIDE_PUNCT = set("MW@%&#")
+
+
+def _text_width(text, font_size):
+    """Estimate one line's rendered width in px (no newlines in ``text``)."""
+    units = 0.0
+    for char in text:
+        if char == " ":
+            units += 0.30
+        elif char in _NARROW_PUNCT:
+            units += 0.28
+        elif char in _WIDE_PUNCT:
+            units += 0.90
+        elif char.isascii():
+            units += 0.68 if char.isupper() else 0.56
+        else:
+            units += 1.0
+    return units * font_size
+
+
+def _cell_runs(cell, default_font):
+    """Return ``[(text, fontSize)]`` for a cell, honoring run-level sizes."""
+    if isinstance(cell, str):
+        return [(cell, default_font)]
+    if isinstance(cell, list):
+        runs = []
+        for run in cell:
+            if not isinstance(run, dict):
+                continue
+            size = run.get("fontSize", default_font)
+            if isinstance(size, bool) or not isinstance(size, (int, float)) or not math.isfinite(size) or size <= 0:
+                size = default_font
+            runs.append((str(run.get("text", "")), float(size)))
+        return runs
+    return [("" if cell is None else str(cell), default_font)]
+
+
+def _cell_lines(cell, default_font, available):
+    """Return ``(lineCount, maxFontSize)`` for a cell's wrapped content."""
+    runs = _cell_runs(cell, default_font)
+    if not runs:
+        return 1, default_font
+    max_font = max(size for _, size in runs)
+    if available <= 0:
+        return 1, max_font
+    lines, width = 0, 0.0
+    for text, size in runs:
+        for index, segment in enumerate(text.replace("\r\n", "\n").split("\n")):
+            if index:
+                lines += max(1, math.ceil(width * _TABLE_SAFETY / available))
+                width = 0.0
+            width += _text_width(segment, size)
+    lines += max(1, math.ceil(width * _TABLE_SAFETY / available))
+    return max(1, lines), max_font
+
+
+def _padding_parts(style):
+    """Return ``[top, right, bottom, left]`` padding in px from a style."""
+    padding = style.get("padding", 0)
+    if isinstance(padding, (list, tuple)):
+        parts = [float(part) for part in padding]
+        if not parts:
+            return [0.0] * 4
+        return parts if len(parts) == 4 else [parts[0]] * 4
+    return [float(padding or 0)] * 4
+
+
+def _table_row_heights(width, style, rows, header_rows, header_style):
+    """Estimate compact row heights (component px) for a table node.
+
+    Every column gets an equal width; each row is as tall as its tallest wrapped
+    cell. Rows therefore take content height only, so a short table stays
+    top-aligned inside its box instead of being stretched to fill it.
+    """
+    if not rows or width <= 0:
+        return []
+    columns = max(len(row) for row in rows)
+    if columns <= 0:
+        return []
+    column = width / columns
+    heights = []
+    for index, row in enumerate(rows):
+        cell_style = {**style, **header_style} if index < header_rows else style
+        top, right, bottom, left = _padding_parts(cell_style)
+        border = cell_style.get("borderWidth", 0) or 0
+        if isinstance(border, bool) or not isinstance(border, (int, float)) or not math.isfinite(border) or border < 0:
+            border = 0
+        font_size = cell_style.get("fontSize", 24)
+        if isinstance(font_size, bool) or not isinstance(font_size, (int, float)) or not math.isfinite(font_size) or font_size <= 0:
+            font_size = 24
+        line_height = cell_style.get("lineHeight", 1.35)
+        if isinstance(line_height, bool) or not isinstance(line_height, (int, float)) or not math.isfinite(line_height) or line_height <= 0:
+            line_height = 1.35
+        available = column - left - right - 2 * border
+        content = max((lines * font * line_height
+                       for lines, font in (_cell_lines(cell, font_size, available) for cell in row)),
+                      default=font_size * line_height)
+        heights.append(math.ceil(content + top + bottom + 2 * border))
+    return heights
 
 
 def _scale_style(style, rect, scale):
@@ -595,6 +735,9 @@ def compile_element(element, libraries, base_dir, page_size):
             content["rows"] = [[cell if isinstance(cell, str) else [{**run, **({"fontSize": run["fontSize"] * scale} if "fontSize" in run else {})} for run in cell] for cell in row] for row in content["rows"]]
         if "headerStyle" in content:
             content["headerStyle"] = _scale_style(content["headerStyle"], rect, scale)
+        if "rowHeights" in content:
+            # Content-based rows follow the font scale, not a stretched box.
+            content["rowHeights"] = [height * scale for height in content["rowHeights"]]
         output.append({"type": kind, "x": box["x"] + rect["x"] * sx, "y": box["y"] + rect["y"] * sy, "w": rect["w"] * sx, "h": rect["h"] * sy, "style": mapped, **content})
 
     def visit(node, parent, inherited):
@@ -605,7 +748,9 @@ def compile_element(element, libraries, base_dir, page_size):
         spec = component.get("inputs", {}).get(slot, {})
         value = inputs.get(slot)
         kind = spec.get("type")
-        if style.get("fill", "transparent") != "transparent" or style.get("borderWidth", 0) > 0:
+        # A table's fill and borders belong to its cells. A full-box rect would
+        # stay at the box height after compact rows shorten the grid.
+        if node.tag != "table" and kind != "table" and (style.get("fill", "transparent") != "transparent" or style.get("borderWidth", 0) > 0):
             emit("rect", rect, style)
         if node.tag == "img" or kind == "image":
             source = value if slot else node.attrs.get("src")
@@ -624,7 +769,9 @@ def compile_element(element, libraries, base_dir, page_size):
                 rows = [[_static_runs(cell, style, inputs, component.get("inputs", {})) for cell in tr.children if isinstance(cell, _Node) and cell.tag in {"td", "th"}] for tr in _walk(node) if tr.tag == "tr"]
                 rows = _table_rows(rows) if rows else []
             if rows:
-                emit("table", rect, style, rows=rows, headerRows=min(header_rows, len(rows)), headerStyle=header_style)
+                head = min(header_rows, len(rows))
+                emit("table", rect, style, rows=rows, headerRows=head, headerStyle=header_style,
+                     rowHeights=_table_row_heights(rect["w"], style, rows, head, header_style))
             return
         if slot:
             if kind == "list":
@@ -634,18 +781,25 @@ def compile_element(element, libraries, base_dir, page_size):
                     _fail("list 输入须为最多 100 项的数组")
                 classes = set(node.attrs.get("class", "").split())
                 color = style.get("color")
-                marker_style = {"bold": True, **({"color": color} if color else {})}
+                color_style = {"color": color} if color else {}
                 runs = []
                 for index, item in enumerate(value):
-                    if "check" in classes:
-                        marker = "✓  "
-                    elif "dash" in classes:
-                        marker = "—  "
-                    elif "num" in classes:
-                        marker = f"{index + 1}. "
+                    level, item_runs = _list_item(item)
+                    if level == 1:
+                        if "check" in classes:
+                            marker = "✓  "
+                        elif "dash" in classes:
+                            marker = "—  "
+                        elif "num" in classes:
+                            marker = f"{index + 1}. "
+                        else:
+                            marker = f"{index + 1}. " if node.tag == "ol" else "•  "
+                        marker_style = {"bold": True, **color_style}
                     else:
-                        marker = f"{index + 1}. " if node.tag == "ol" else "•  "
-                    runs += [{"text": ("\n" if index else "") + marker, **marker_style}, *_runs(item)]
+                        marker = LIST_MARKERS[level]
+                        marker_style = dict(color_style)
+                    indent = LIST_INDENT * (2 * (level - 1))
+                    runs += [{"text": ("\n" if index else "") + indent + marker, **marker_style}, *item_runs]
             elif kind in {"text", "richtext"}:
                 if kind == "text" and value is not None and not isinstance(value, str):
                     _fail("text 输入须为字符串；富文本请声明 richtext")
@@ -715,6 +869,7 @@ def _preview_cell_style(style, fallback_border="#C5D3DF"):
     width = style.get("borderWidth", 0) or 0
     border = f"border:{width:g}px solid {style.get('borderColor', fallback_border)}" if width > 0 else "border:0"
     return ";".join(part for part in (base, border, "padding:" + _padding_css(style.get("padding", 0)),
+                                      "vertical-align:" + str(style.get("verticalAlign", "top")),
                                       "white-space:pre-wrap;overflow-wrap:anywhere") if part)
 
 
@@ -757,7 +912,10 @@ def _preview_node_html(node):
         # Padding and borders belong to the cells; the table only carries the
         # font/background of the whole grid plus the collapsed-border model.
         css = positioning + _preview_style({key: value for key, value in style.items() if key not in {"padding", "borderWidth", "borderColor", "bold", "italic", "underline"}})
-        css += ";table-layout:fixed;border-collapse:collapse"
+        # height:auto overrides the node height so rows only take content
+        # height; a short table simply renders shorter than its box.
+        css += ";height:auto;table-layout:fixed;border-collapse:collapse"
+        row_heights = node.get("rowHeights") or []
         cells_html = []
         for index, row in enumerate(rows):
             head = index < header_rows
@@ -765,7 +923,11 @@ def _preview_node_html(node):
             tag = "th" if head else "td"
             attributes = f' style="{escape(_preview_cell_style(cell_style), quote=True)}"'
             cells = [f'<{tag}{attributes}>{_preview_runs([{"text": cell}] if isinstance(cell, str) else cell, cell_style)}</{tag}>' for cell in row]
-            cells_html.append("<tr>" + "".join(cells) + "</tr>")
+            height = row_heights[index] if index < len(row_heights) else None
+            row_style = (f' style="height:{float(height):g}px"'
+                         if isinstance(height, (int, float)) and not isinstance(height, bool)
+                         and math.isfinite(height) and height > 0 else "")
+            cells_html.append(f"<tr{row_style}>" + "".join(cells) + "</tr>")
         head_html = "".join(cells_html[:header_rows])
         body_html = "".join(cells_html[header_rows:])
         return (f'<table style="{escape(css, quote=True)}">'

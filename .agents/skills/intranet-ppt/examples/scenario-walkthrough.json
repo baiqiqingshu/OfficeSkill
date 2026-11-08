@@ -1,0 +1,977 @@
+{
+  "schemaVersion": 1,
+  "title": "统一认证平台 · 单点登录场景串讲",
+  "theme": "blue",
+  "pageSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "pageCount": 12,
+  "pages": [
+    {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-main",
+          "component": "builtin/cover",
+          "box": {
+            "x": 64,
+            "y": 170,
+            "w": 1152,
+            "h": 420
+          },
+          "inputs": {
+            "tag": "场景串讲",
+            "title": "统一认证平台\n单点登录场景串讲",
+            "subtitle": "从背景到后置状态：一次 SSO 登录的完整场景走查",
+            "meta": "汇报人：张伟 ｜ 平台研发部 ｜ 2026-03"
+          }
+        },
+        {
+          "id": "cover-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "内部资料 · 仅限场景评审使用 ｜ 统一认证平台"
+          }
+        }
+      ]
+    },
+    {
+      "id": "agenda",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "agenda-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "串讲结构"
+          }
+        },
+        {
+          "id": "agenda-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "按一次真实登录的时间顺序串讲：先交代背景与前置条件，再走主成功路径，最后覆盖分支、异常与后置状态。"
+          }
+        },
+        {
+          "id": "agenda-1",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 68
+          },
+          "inputs": {
+            "num": "01",
+            "title": "背景",
+            "desc": "登录入口分散、账号体系割裂，是统一认证要解决的问题"
+          }
+        },
+        {
+          "id": "agenda-2",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 292,
+            "w": 1152,
+            "h": 68
+          },
+          "inputs": {
+            "num": "02",
+            "title": "前置条件",
+            "desc": "账号、网络、终端、权限与时钟五项准备，缺一不可"
+          }
+        },
+        {
+          "id": "agenda-3",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 364,
+            "w": 1152,
+            "h": 68
+          },
+          "inputs": {
+            "num": "03",
+            "title": "主成功场景",
+            "desc": "访问、认证、建会话、回跳，四步走通一次登录"
+          }
+        },
+        {
+          "id": "agenda-4",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 436,
+            "w": 1152,
+            "h": 68
+          },
+          "inputs": {
+            "num": "04",
+            "title": "分支场景",
+            "desc": "已登录放行、多因素认证、账号锁定、租户切换与会话过期"
+          }
+        },
+        {
+          "id": "agenda-5",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 508,
+            "w": 1152,
+            "h": 68
+          },
+          "inputs": {
+            "num": "05",
+            "title": "异常场景",
+            "desc": "服务超时、令牌失效、下游不可用、主库故障与时钟漂移"
+          }
+        },
+        {
+          "id": "agenda-6",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 580,
+            "w": 1152,
+            "h": 68
+          },
+          "inputs": {
+            "num": "06",
+            "title": "后置状态",
+            "desc": "会话状态与审计通知如何收敛，以及五项验收检查"
+          }
+        }
+      ]
+    },
+    {
+      "id": "background",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "background-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "01 背景"
+          }
+        },
+        {
+          "id": "background-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "47 个业务系统各自维护登录入口，账号与口令策略分散。本次串讲以「员工首次访问 OA」为样本，把单点登录的完整场景走查一遍。"
+          }
+        },
+        {
+          "id": "background-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 260
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "现状：登录入口与账号体系分散"
+              },
+              {
+                "level": 2,
+                "text": "47 个业务系统各有一套登录页，员工平均记忆 6 套口令"
+              },
+              {
+                "level": 1,
+                "text": "痛点：安全与体验双重损耗"
+              },
+              {
+                "level": 2,
+                "text": "离职账号回收平均滞后 11 天，登录行为无法统一审计"
+              },
+              {
+                "level": 2,
+                "text": "跨系统办理需重复登录，单次业务平均多花 40 秒"
+              },
+              {
+                "level": 1,
+                "text": "目标：一次认证、全网通行"
+              },
+              {
+                "level": 2,
+                "text": "统一登录页 + 全局会话，令牌 2 小时有效并支持无感刷新"
+              }
+            ]
+          }
+        },
+        {
+          "id": "background-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 120
+          },
+          "inputs": {
+            "label": "说明",
+            "text": "串讲以 OA 系统首次登录为样本，编号 B/E 的分支与异常场景对应需求基线 REQ-2026-0187。"
+          }
+        },
+        {
+          "id": "background-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "数据来源：2026-02 内网系统普查与账号治理专项报告。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "preconditions",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "preconditions-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "02 前置条件"
+          }
+        },
+        {
+          "id": "preconditions-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "以下五项在主成功场景开始前必须就绪；任一项不满足时，登录会直接进入 05 异常场景。"
+          }
+        },
+        {
+          "id": "preconditions-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "前置项",
+                "具体要求",
+                "责任方",
+                "校验方式"
+              ],
+              [
+                "账号",
+                "工号已在账号中心启用且在职",
+                "HR 共享中心",
+                "账号中心日终对账"
+              ],
+              [
+                "网络",
+                "终端可访问认证域名 443 端口",
+                "网络运维组",
+                "每周探活拨测"
+              ],
+              [
+                "浏览器 / 终端",
+                "Chrome 或 Edge 100 以上，已装根证书",
+                "终端支持组",
+                "登录页 UA 校验"
+              ],
+              [
+                "权限",
+                "业务系统已登记回调地址与票据白名单",
+                "系统接入方",
+                "接入配置巡检"
+              ],
+              [
+                "时钟",
+                "各节点 NTP 同步，偏差小于 30 秒",
+                "基础设施组",
+                "监控告警 + 每日核对"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "preconditions-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "前置项未就绪时登录直接失败，需联系对应责任方处理；本清单每季度复核一次。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "main-success",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "main-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "03 主成功场景"
+          }
+        },
+        {
+          "id": "main-step-1",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "1",
+            "title": "用户访问",
+            "desc": "打开 OA 页面，未登录触发跳转"
+          }
+        },
+        {
+          "id": "main-arrow-1",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 304,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "main-step-2",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 352,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "2",
+            "title": "统一认证",
+            "desc": "校验工号口令，必要时二次验证"
+          }
+        },
+        {
+          "id": "main-arrow-2",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 592,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "main-step-3",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 640,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "3",
+            "title": "会话建立",
+            "desc": "签发令牌与票据，写入会话"
+          }
+        },
+        {
+          "id": "main-arrow-3",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 880,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "main-step-4",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 928,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "4",
+            "title": "跳转回业务",
+            "desc": "带票据回跳，恢复原访问页面"
+          }
+        },
+        {
+          "id": "main-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 330,
+            "w": 1152,
+            "h": 260
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "用户访问业务系统"
+              },
+              {
+                "level": 2,
+                "text": "无有效会话时 302 跳转认证中心，携带业务标识与回跳地址"
+              },
+              {
+                "level": 1,
+                "text": "统一认证"
+              },
+              {
+                "level": 2,
+                "text": "校验工号口令，命中风险策略时追加短信或动态令牌验证"
+              },
+              {
+                "level": 1,
+                "text": "会话建立"
+              },
+              {
+                "level": 2,
+                "text": "签发全局令牌与业务票据，写入分布式会话（TTL 2 小时）"
+              },
+              {
+                "level": 1,
+                "text": "跳转回业务系统，恢复用户原访问页面"
+              }
+            ]
+          }
+        },
+        {
+          "id": "main-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "以上为主成功路径；任一步失败进入 04 分支场景或 05 异常场景。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "branch",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "branch-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "04 分支场景"
+          }
+        },
+        {
+          "id": "branch-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 130,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "触发条件",
+                "处理策略",
+                "结果"
+              ],
+              [
+                "B1",
+                "全局会话有效且业务票据未过期",
+                "跳过认证，直接下发业务票据",
+                "无感进入业务系统"
+              ],
+              [
+                "B2",
+                "新终端、异地登录或指纹变化",
+                "追加短信或动态令牌二次验证",
+                "通过后建立会话"
+              ],
+              [
+                "B3",
+                "连续 5 次口令错误",
+                "锁定 30 分钟并通知账号责任人，记录审计",
+                "拒绝登录并提示剩余次数"
+              ],
+              [
+                "B4",
+                "同一账号绑定多租户",
+                "选择租户后按租户签发会话",
+                "会话按租户隔离"
+              ],
+              [
+                "B5",
+                "空闲超过 30 分钟",
+                "静默续期一次，失败则要求重新认证",
+                "返回统一登录页"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "branch-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 510,
+            "w": 1152,
+            "h": 120
+          },
+          "inputs": {
+            "label": "提示",
+            "text": "分支不改变主流程结构：B1 与 B5 在进入认证页前判定，B2—B4 在认证页内完成。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "exception",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "exception-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "05 异常场景"
+          }
+        },
+        {
+          "id": "exception-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 130,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "异常",
+                "检测方式",
+                "处理与恢复"
+              ],
+              [
+                "E1",
+                "认证服务超时",
+                "网关 3 秒未收到响应，健康检查同时失败",
+                "重试一次并降级到备用节点，仍失败则提示稍后再试"
+              ],
+              [
+                "E2",
+                "令牌校验失败",
+                "网关校验签名或有效期不通过",
+                "清理本地缓存后重新拉取，必要时强制重新登录"
+              ],
+              [
+                "E3",
+                "下游系统不可用",
+                "健康检查连续 3 次失败",
+                "摘除节点并返回维护页，恢复后自动回切"
+              ],
+              [
+                "E4",
+                "数据库主库故障",
+                "主从切换告警触发，写入失败率上升",
+                "切至备库，写请求排队，5 分钟内恢复"
+              ],
+              [
+                "E5",
+                "时钟漂移",
+                "NTP 偏差大于 30 秒",
+                "拒绝签发令牌并告警，校时后重新认证"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "exception-callout",
+          "component": "builtin/callout-warn",
+          "box": {
+            "x": 64,
+            "y": 510,
+            "w": 1152,
+            "h": 120
+          },
+          "inputs": {
+            "label": "注意",
+            "text": "异常恢复优先保证已建立的会话可用；跨机房切换需在 30 秒内完成，超时则提示重新登录。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "postconditions",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "post-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "06 后置状态"
+          }
+        },
+        {
+          "id": "post-session",
+          "component": "builtin/panel",
+          "box": {
+            "x": 64,
+            "y": 130,
+            "w": 552,
+            "h": 300
+          },
+          "inputs": {
+            "title": "会话状态",
+            "text": "登录成功后写入全局会话，浏览器持有 HttpOnly 会话 Cookie。\n会话 TTL 2 小时，空闲 30 分钟自动续期一次。\n同一账号最多 3 个并发会话，超出时踢出最早会话。\n登出或吊销后，30 秒内同步到全部网关。"
+          }
+        },
+        {
+          "id": "post-audit",
+          "component": "builtin/panel",
+          "box": {
+            "x": 664,
+            "y": 130,
+            "w": 552,
+            "h": 300
+          },
+          "inputs": {
+            "title": "审计与通知",
+            "text": "登录、登出、令牌刷新与失败尝试全量写入审计日志。\n每次认证生成事件 ID，可按人、系统与时间检索。\n高风险登录实时推送安全值班群，并抄送账号责任人。\n审计日志保留 180 天，支持导出只读报表。"
+          }
+        },
+        {
+          "id": "post-checklist",
+          "component": "builtin/checklist",
+          "box": {
+            "x": 64,
+            "y": 450,
+            "w": 1152,
+            "h": 180
+          },
+          "inputs": {
+            "items": [
+              "全局会话可查：认证中心会话列表能看到本次登录记录",
+              "审计留痕完整：登录事件含工号、终端、IP 与事件 ID",
+              "单点登出生效：任一系统登出后其余系统同步失效",
+              "分支可复现：B1—B5 五类分支均有对应测试记录",
+              "异常可恢复：E1—E5 均有告警与恢复演练结论"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ui",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ui-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "界面示意图"
+          }
+        },
+        {
+          "id": "ui-frame",
+          "component": "builtin/ui-frame",
+          "box": {
+            "x": 64,
+            "y": 140,
+            "w": 640,
+            "h": 440
+          },
+          "inputs": {
+            "title": "统一认证 · 登录页",
+            "src": "images/login-ui.png",
+            "caption": "图 9-1 登录页界面示意"
+          }
+        },
+        {
+          "id": "ui-notes",
+          "component": "builtin/panel",
+          "box": {
+            "x": 736,
+            "y": 150,
+            "w": 480,
+            "h": 300
+          },
+          "inputs": {
+            "title": "界面标注",
+            "text": "• 账号输入：工号 + 内网口令，可记住工号\n• 多因素认证：异常登录时追加短信或令牌验证\n• 错误提示：口令错误与锁定状态在按钮上方提示\n• 单点登出入口：右上角统一登出，全局会话同步失效\n• 忘记密码：跳转账号中心自助重置"
+          }
+        },
+        {
+          "id": "ui-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 736,
+            "y": 470,
+            "w": 480,
+            "h": 120
+          },
+          "inputs": {
+            "label": "提示",
+            "text": "登录页只做身份认证，不承载业务入口；业务系统列表在登录后由门户展示。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "flow-diagram",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "flow-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "流程图"
+          }
+        },
+        {
+          "id": "flow-figure",
+          "component": "builtin/figure",
+          "box": {
+            "x": 64,
+            "y": 140,
+            "w": 704,
+            "h": 480
+          },
+          "inputs": {
+            "label": "流程图",
+            "title": "单点登录主流程",
+            "src": "images/scenario-flow.png",
+            "caption": "图 10-1 单点登录主流程"
+          }
+        },
+        {
+          "id": "flow-notes",
+          "component": "builtin/panel",
+          "box": {
+            "x": 800,
+            "y": 160,
+            "w": 416,
+            "h": 380
+          },
+          "inputs": {
+            "title": "流程要点",
+            "text": "• 步骤 1—3 是用户可见的跳转，地址栏会变化\n• 步骤 4—5 在服务端完成，用户无感知\n• 已登录用户走「是」分支，直接复用会话\n• 票据一次性使用，5 分钟内有效\n• 重定向使用 302，避免浏览器缓存登录页\n• 口令与多因素认证在同一页面完成\n• 任一步失败按 05 异常场景回退\n• 会话建立后立即写入登录审计事件\n• 全链路留痕，可在审计日志中回放"
+          }
+        }
+      ]
+    },
+    {
+      "id": "uml",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "uml-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "UML 时序图"
+          }
+        },
+        {
+          "id": "uml-figure",
+          "component": "builtin/figure",
+          "box": {
+            "x": 64,
+            "y": 130,
+            "w": 704,
+            "h": 480
+          },
+          "inputs": {
+            "label": "UML 时序图",
+            "title": "浏览器与认证中心交互",
+            "src": "images/sequence-uml.png",
+            "caption": "图 11-1 单点登录时序"
+          }
+        },
+        {
+          "id": "uml-text",
+          "component": "builtin/panel",
+          "box": {
+            "x": 800,
+            "y": 150,
+            "w": 416,
+            "h": 380
+          },
+          "inputs": {
+            "title": "时序说明",
+            "text": "①② 是浏览器与业务系统之间的重定向往返；③④⑤ 由认证中心调用用户目录，校验凭证与账号状态；⑥ 认证中心下发全局令牌，浏览器随后携带业务票据回跳业务系统 ⑦。\n图中实线为请求、虚线为返回，竖向灰条表示该节点的处理窗口。\n⑦ 之后业务系统按票据建立本地会话，后续请求不再经过认证中心。\n业务票据由业务系统校验，认证中心只保存全局会话，不保存业务数据。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "closing-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "场景要点回顾"
+          }
+        },
+        {
+          "id": "closing-conclusion",
+          "component": "builtin/conclusion",
+          "box": {
+            "x": 64,
+            "y": 170,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "单点登录的价值在于把认证收敛成一条可观测的链路：会话、审计与异常恢复都有明确归属。"
+          }
+        },
+        {
+          "id": "closing-thanks",
+          "component": "builtin/thanks",
+          "box": {
+            "x": 64,
+            "y": 320,
+            "w": 1152,
+            "h": 240
+          },
+          "inputs": {
+            "title": "谢谢",
+            "subtitle": "欢迎就分支与异常场景补充用例",
+            "meta": "平台研发部 · 张伟 · zhangwei@intranet.local"
+          }
+        }
+      ]
+    }
+  ]
+}

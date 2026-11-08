@@ -99,10 +99,30 @@
   },
   "table": {
     "rows": [
-      ["优先级", "需求项", "负责人", "计划版本"],
-      ["P0", "统一登录与会话管理", "张伟", "V1.0"],
-      ["P1", "多因素认证接入", "李婷", "V1.1"],
-      ["P2", "审计日志报表", "王磊", "V1.2"]
+      [
+        "优先级",
+        "需求项",
+        "负责人",
+        "计划版本"
+      ],
+      [
+        "P0",
+        "统一登录与会话管理",
+        "张伟",
+        "V1.0"
+      ],
+      [
+        "P1",
+        "多因素认证接入",
+        "李婷",
+        "V1.1"
+      ],
+      [
+        "P2",
+        "审计日志报表",
+        "王磊",
+        "V1.2"
+      ]
     ]
   },
   "compare": {
@@ -113,13 +133,23 @@
   },
   "matrix2x2": {
     "titleTL": "重要且紧急",
-    "itemsTL": ["统一登录上线", "存量会话迁移"],
+    "itemsTL": [
+      "统一登录上线",
+      "存量会话迁移"
+    ],
     "titleTR": "重要不紧急",
-    "itemsTR": ["多因素认证", "审计日志报表"],
+    "itemsTR": [
+      "多因素认证",
+      "审计日志报表"
+    ],
     "titleBL": "紧急不重要",
-    "itemsBL": ["旧门户兼容改造"],
+    "itemsBL": [
+      "旧门户兼容改造"
+    ],
     "titleBR": "不重要不紧急",
-    "itemsBR": ["登录页皮肤定制"]
+    "itemsBR": [
+      "登录页皮肤定制"
+    ]
   },
   "field": {
     "name": "需求编号",
@@ -188,7 +218,11 @@
   "phase": {
     "name": "一期",
     "period": "2026 Q2",
-    "items": ["统一登录上线", "47 个系统接入", "旧认证通道下线"]
+    "items": [
+      "统一登录上线",
+      "47 个系统接入",
+      "旧认证通道下线"
+    ]
   },
   "image": {
     "src": "images/placeholder.png"
@@ -200,5 +234,48 @@
   "code": {
     "label": "Bash 灰度发布命令",
     "code": "kubectl set image deploy/auth-gw \\\n  auth-gw=registry.local/auth-gw:v1.4.2\nkubectl rollout status deploy/auth-gw"
+  },
+  "outline": {
+    "items": [
+      {
+        "level": 1,
+        "text": "现状与痛点"
+      },
+      {
+        "level": 2,
+        "text": "47 个业务系统各自维护账号体系"
+      },
+      {
+        "level": 3,
+        "text": "登录入口分散，账号开通平均耗时 3 天"
+      },
+      {
+        "level": 2,
+        "text": "审计留痕缺失，越权访问难以追溯"
+      },
+      {
+        "level": 1,
+        "text": "本期建设内容"
+      },
+      {
+        "level": 2,
+        "text": "统一认证网关"
+      },
+      {
+        "level": 3,
+        "text": "协议适配：OAuth2.0 / CAS / LDAP"
+      }
+    ]
+  },
+  "ui-frame": {
+    "title": "统一认证控制台",
+    "src": "images/placeholder.png",
+    "caption": "图 4-1 会话管理与强制下线界面"
+  },
+  "figure": {
+    "label": "图 2-1",
+    "title": "统一认证平台总体架构",
+    "src": "images/placeholder.png",
+    "caption": "来源：平台架构组 2026-03 评审稿"
   }
 }

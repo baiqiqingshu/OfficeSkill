@@ -71,8 +71,8 @@
 实际交付：
 
 - 五个固定命令：`catalog`、`validate`、`render`、`starter`、`extract`。
-- 内置组件库（当前 45 个，见下节），覆盖标题、正文、要点、卡片、表格、图片、指标、封面、章节、目录、流程、架构、时间线、对比、结论等。
-- 三类可直接生成的配置示例：技术汇报、技术方案评审、需求评审。
+- 内置组件库（当前 48 个，见下节），覆盖标题、正文、要点、卡片、表格、图片、指标、封面、章节、目录、流程、架构、时间线、对比、结论、场景串讲等。
+- 四类可直接生成的配置示例（5 份示例）：技术汇报、技术方案评审、需求评审、场景串讲。
 - 配置 JSON Schema、第三方库格式和提取/安全边界说明。所有运行代码与资源在 skill 内自包含，可整体复制到内网，不依赖其他 skill。
 - 图片为本地 PNG/JPEG/GIF/BMP/WebP；输出 HTML 内嵌 PNG，预览页仅含内联交互脚本，无远程依赖。表格和文字为原生 PowerPoint 可编辑对象。
 - 输出目录事务发布，失败不发布半成品；覆盖仅限有本工具标记的专用产物目录，且禁止输出目录包含本次输入。
@@ -116,3 +116,15 @@
 - `deck.schema.json` 增加 `theme` 枚举；`library-format.md` 增补规范色板、samples.json、demo 用法；`SKILL.md` 增补元素库预览说明。
 - 新增 `examples/technical-proposal.json`（11 页完整技术方案），作为 starter 与 demo 的整页示例来源。
 - v2 框架扩展：圆角/圆形、行距、字距、表头、单元格边框、列表标记；预览页增加工具栏、缩放、页码导航与键盘翻页；默认母版随主题生成。详见 [intranet-ppt-library-v2.md](intranet-ppt-library-v2.md)。
+
+## 场景串讲与紧凑表格（本轮追加交付）
+
+- 内置库扩至 48 个组件，新增 `outline`（多级要点，1–4 级）、`ui-frame`（界面示意图窗口框）、`figure`（流程图/UML/架构图通用图示框）。
+- `list` 输入统一支持 `{"level":1-4,"text":"…"}` 条目：2/3/4 级使用 `◦/▪/–` 前缀并缩进两个全角空格，`text` 可为字符串或 runs；`bullets`、`checklist`、`steps`、`phase`、`matrix2x2` 等组件同时受益。
+- 表格行高改为内容驱动：编译期按等宽列、内边距、边框和字符宽度估算换行行数，逐行写入 `rowHeights`；HTML 预览使用 `height:auto` + `<tr>` 最小高度，PPTX 写入 `table.rows[i].height` 并把 GraphicFrame 高度收缩为行高之和。`box.h` 由“等分总高”变为“上限”，短表格顶部对齐。
+- 修复紧凑化后暴露的整框背景问题：表格不再额外输出覆盖整个 `box` 的矩形，填充与边框只由单元格承载，避免表格下方出现空白边框带。
+- 新增 `examples/scenario-walkthrough.json`（12 页）与 `examples/images/` 三张本地示意图，覆盖背景、前置条件、主成功场景、分支场景、异常场景、后置状态，以及界面示意图、流程图、UML 时序图、表格、多级分点与说明文本；示例使用 `blue` 主题以匹配图片。
+- `SKILL.md`、`references/library-format.md` 已同步组件清单、多级 list 约定、表格紧凑行高与示例入口；`assets/demo/library-demo.html` 重新生成（48 组件、5 份示例、32 页，无跳过页）。
+- 验收：5 份示例 `validate` 全部通过；`scenario-walkthrough` 与 `technical-proposal` 的 PPTX 表格行高之和等于 GraphicFrame 高度，且明显小于原等分高度；HTML 预览截图无空白边框带、无内容溢出。
+
+验收阶段补充修复：表格行高估算计入单元格 runs 的 `fontSize`；`starter` 复制 `examples/images/`，避免场景串讲示例缺少图片。

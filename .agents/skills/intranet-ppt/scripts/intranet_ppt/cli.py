@@ -218,6 +218,9 @@ def starter(destination, overwrite):
         theme = themes.THEMES[themes.DEFAULT_THEME]
         pptx_backend.create_default_master(stage / "master.pptx", DEFAULT_SIZE, background=theme["canvas"],
                                           accent=theme["colors"]["ACCENT"], line=theme["colors"]["BORDER_L"])
+        images = SKILL_ROOT / "examples/images"
+        if images.is_dir():
+            shutil.copytree(images, stage / "images")
         filenames = []
         for source in sorted((SKILL_ROOT / "examples").glob("*.json")):
             config = _read_json(source)

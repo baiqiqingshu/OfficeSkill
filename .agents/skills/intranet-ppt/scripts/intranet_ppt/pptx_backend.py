@@ -500,6 +500,24 @@ def _render_node(slide, node, sx, sy):
                 cell.fill.solid()
                 cell.fill.fore_color.rgb = _color(fill if fill and fill != "transparent" else "FFFFFF", "FFFFFF")
                 _cell_borders(cell, cell_style, scale)
+        # Compact, content-based row heights: the estimator lives in
+        # components.py and returns page-px values.
+        row_heights = node.get("rowHeights")
+        if isinstance(row_heights, list):
+            total = count = 0
+            for index, value in enumerate(row_heights[:len(rows)]):
+                if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                    continue
+                emu = int(round(float(value) * sy))
+                if emu <= 0:
+                    continue
+                table.rows[index].height = emu
+                total += emu
+                count += 1
+            # Shrink the frame only when every row got an explicit height;
+            # otherwise the unset rows would extend past the frame.
+            if total > 0 and count == len(rows):
+                shape.height = total
     else:
         raise ValueError(f"不支持的 scene 类型：{kind}")
     if node.get("id"):

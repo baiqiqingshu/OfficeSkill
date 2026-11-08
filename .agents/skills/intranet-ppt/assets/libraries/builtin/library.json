@@ -427,7 +427,7 @@
     {
       "id": "table",
       "name": "评审表格",
-      "description": "数据表格：深主色表头（白字加粗）+ 白底正文 + 细网格，18px 文字。首行为表头，二维数组每行列数一致；单元格可用 runs。适合需求清单、风险清单、接口清单。",
+      "description": "数据表格：深主色表头（白字加粗）+ 白底正文 + 细网格，18px 文字，行高按内容紧凑排布。首行为表头，二维数组每行列数一致；单元格可用 runs。适合需求清单、风险清单、接口清单。",
       "size": {
         "width": 1152,
         "height": 360
@@ -438,7 +438,7 @@
           "required": true
         }
       },
-      "html": "<table data-slot='rows' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:18px;color:#263C50;background-color:#FDFDFD;border:1px solid #C5D3DF;padding:8px 14px'><thead><tr><th style='background-color:#145D93;color:#FFFFFF;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;padding:10px 14px;border:1px solid #145D93'></th></tr></thead></table>"
+      "html": "<table data-slot='rows' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:18px;color:#263C50;background-color:#FDFDFD;border:1px solid #C5D3DF;padding:6px 12px;line-height:1.35;vertical-align:middle'><thead><tr><th style='background-color:#145D93;color:#FFFFFF;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;padding:8px 12px;border:1px solid #145D93;line-height:1.35;vertical-align:middle'></th></tr></thead></table>"
     },
     {
       "id": "compare",
@@ -904,6 +904,74 @@
         }
       },
       "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#212B36;border:1px solid #3A4A5C;border-radius:8px'><div data-slot='label' style='position:absolute;left:20px;top:12px;width:400px;height:22px;font-family:Microsoft YaHei;font-size:13px;color:#8496A8'></div><div data-slot='code' style='position:absolute;left:0;top:40px;width:100%;height:148px;font-family:Consolas;font-size:14px;color:#D9E4EF;line-height:1.6;padding:0 20px'></div></div>"
+    },
+    {
+      "id": "outline",
+      "name": "多级要点",
+      "description": "多级要点列表：19px、1.75 行距，支持 1–4 级嵌套。条目为字符串或 {\"level\":2,\"text\":\"…\"} 对象，2/3/4 级自动换用 ◦/▪/– 前缀并按级缩进。适合场景描述、方案分层说明；level 省略时按 1 级处理。",
+      "size": {
+        "width": 1152,
+        "height": 260
+      },
+      "inputs": {
+        "items": {
+          "type": "list",
+          "required": true
+        }
+      },
+      "html": "<ul data-slot='items' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:19px;color:#263C50;line-height:1.75'></ul>"
+    },
+    {
+      "id": "ui-frame",
+      "name": "界面示意图",
+      "description": "窗口示意图（640×440）：40px 顶栏（三个圆点 + 标题）+ 图片区 + 底部说明条。src 放本地界面截图，title 填窗口标题，caption 填图注；适合系统截图、控制台界面。",
+      "size": {
+        "width": 640,
+        "height": 440
+      },
+      "inputs": {
+        "title": {
+          "type": "text",
+          "description": "窗口标题，如“统一认证控制台”"
+        },
+        "src": {
+          "type": "image",
+          "required": true
+        },
+        "caption": {
+          "type": "text",
+          "description": "底部图注，如“图 4-1 会话管理界面”"
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:0;width:100%;height:40px;background-color:#F5F8FB'></div><div style='position:absolute;left:0;top:39px;width:100%;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:16px;top:16px;width:8px;height:8px;background-color:#C5D3DF;border-radius:50%'></div><div style='position:absolute;left:30px;top:16px;width:8px;height:8px;background-color:#C5D3DF;border-radius:50%'></div><div style='position:absolute;left:44px;top:16px;width:8px;height:8px;background-color:#C5D3DF;border-radius:50%'></div><div data-slot='title' style='position:absolute;left:64px;top:8px;width:552px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#52687A;vertical-align:middle'></div><img data-slot='src' style='position:absolute;left:1px;top:41px;width:638px;height:362px'/><div style='position:absolute;left:0;top:404px;width:100%;height:36px;background-color:#F5F8FB'></div><p data-slot='caption' style='position:absolute;left:16px;top:404px;width:608px;height:36px;font-family:Microsoft YaHei;font-size:13px;color:#52687A;vertical-align:middle'></p></section>"
+    },
+    {
+      "id": "figure",
+      "name": "图示框",
+      "description": "图文说明框（704×480）：12px 小标签 + 18px 标题 + 大图 + 底部图注条。用于架构图、流程图、界面截图；label 留空则不显示，title 与 caption 说明图意。",
+      "size": {
+        "width": 704,
+        "height": 480
+      },
+      "inputs": {
+        "label": {
+          "type": "text",
+          "description": "左上角小标签，如“图 2-1”"
+        },
+        "title": {
+          "type": "text",
+          "description": "图示标题，如“统一认证平台总体架构”"
+        },
+        "src": {
+          "type": "image",
+          "required": true
+        },
+        "caption": {
+          "type": "text",
+          "description": "底部图注，如“来源：平台架构组 2026-03”"
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='label' style='position:absolute;left:20px;top:14px;width:160px;height:22px;font-family:Microsoft YaHei;font-size:12px;font-weight:bold;color:#1476B8;letter-spacing:1px'></div><div data-slot='title' style='position:absolute;left:20px;top:38px;width:664px;height:32px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D'></div><img data-slot='src' style='position:absolute;left:1px;top:77px;width:702px;height:366px'/><div style='position:absolute;left:0;top:444px;width:100%;height:36px;background-color:#F5F8FB'></div><p data-slot='caption' style='position:absolute;left:16px;top:444px;width:672px;height:36px;font-family:Microsoft YaHei;font-size:13px;color:#52687A;vertical-align:middle'></p></section>"
     }
   ]
 }
