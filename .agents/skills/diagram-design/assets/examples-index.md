@@ -1,6 +1,6 @@
 # Examples index
 
-`examples.zip` packs all 210 finished example diagrams, stored flat under
+`examples.zip` packs all 213 finished example diagrams, stored flat under
 their original names. Docs reference members as `assets/examples.zip/<name>`.
 Naming: `example-<type>.html` light · `-dark` · `-full` · `-animated` · `-terminal`.
 
@@ -13,11 +13,11 @@ Loose for quick reference (also in zip): `example-architecture{,-dark}.html`,
 
 ## Contents by variant
 
-- Light + dark + full per stem (65 stems × 3 = 195 files):
+- Light + dark + full per stem (66 stems × 3 = 198 files):
   architecture{,-containment,-delta}, axonometric-plan{,-campus,-coffee-shop,-warehouse},
   exploded{,-ai-stack,-keyboard,-phone,-unboxing}, high-level{,-vertical},
   sequence{,-oauth}, state{,-lifecycle}, tree{,-block-decomposition}, bar,
-  beeswarm, bubble, bump, data-flow, datalake, db-schema, dependency, deployment,
+  beeswarm, box-plot, bubble, bump, data-flow, datalake, db-schema, dependency, deployment,
   dp-integration, dp-security-matrix, er, fishbone, flowchart, gantt, heatmap,
   it-state, journey, kanban, layers, line, loop, marimekko, medallion, nested,
   org-chart, polar, process, pyramid, quadrant, radar, ridgeline, sankey,
