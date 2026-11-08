@@ -96,7 +96,7 @@ def prepare(config_path):
     if "pageCount" in config and (type(config["pageCount"]) is not int or config["pageCount"] != len(pages)):
         raise ValueError("pageCount 必须与 pages 数量一致")
     base = config_path.parent
-    theme = config.get("theme", "blue")
+    theme = config.get("theme", themes.DEFAULT_THEME)
     if not isinstance(theme, str) or theme not in themes.THEMES:
         raise ValueError(f"theme 必须是以下主题之一：{', '.join(themes.theme_ids())}")
     library_paths = config.get("libraries", [])
@@ -195,7 +195,7 @@ def render(config_path, destination, overwrite):
         master = prepared["master"]
         if master is None:
             master = stage / "default-master.pptx"
-            theme = themes.THEMES[prepared["config"].get("theme", "blue")]
+            theme = themes.THEMES[prepared["config"].get("theme", themes.DEFAULT_THEME)]
             pptx_backend.create_default_master(master, prepared["pageSize"], background=theme["canvas"],
                                               accent=theme["colors"]["ACCENT"], line=theme["colors"]["BORDER_L"])
         pptx_backend.render_pptx(master, prepared["pages"], prepared["pageSize"], stage / "presentation.pptx")
@@ -213,9 +213,11 @@ def render(config_path, destination, overwrite):
 
 
 def starter(destination, overwrite):
-    from . import pptx_backend
+    from . import pptx_backend, themes
     def writer(stage):
-        pptx_backend.create_default_master(stage / "master.pptx", DEFAULT_SIZE)
+        theme = themes.THEMES[themes.DEFAULT_THEME]
+        pptx_backend.create_default_master(stage / "master.pptx", DEFAULT_SIZE, background=theme["canvas"],
+                                          accent=theme["colors"]["ACCENT"], line=theme["colors"]["BORDER_L"])
         filenames = []
         for source in sorted((SKILL_ROOT / "examples").glob("*.json")):
             config = _read_json(source)

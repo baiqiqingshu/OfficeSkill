@@ -42,7 +42,7 @@ description: 面向内网技术汇报、技术方案评审和需求评审，用�
 
 每页可放多个元素。`box` 为页面像素坐标，默认页面 1280×720。`pageCount` 可省略；填写时必须等于 `pages` 数量。文字可以是字符串或 runs 数组，每段支持 `text`、`bold`、`italic`、`fontFamily`、`fontSize`、`color`、`underline`，例如 `[{"text":"重点","bold":true},{"text":"说明","fontFamily":"宋体","italic":true}]`。颜色用 `#RRGGBB`，字号用像素。
 
-配置顶层可加 `"theme":"主题id"` 整体换色，可选 `blue`（默认，政务蓝）、`emerald`（墨绿）、`crimson`（深红）、`mono`（黑白灰）、`graphite`（深色暗底）。只有组件规范色板内的色值参与换色，其余颜色原样保留。
+配置顶层可加 `"theme":"主题id"` 整体换色，可选 `crimson`（默认，深红）、`blue`（政务蓝）、`emerald`（墨绿）、`mono`（黑白灰）、`graphite`（深色暗底）。只有组件规范色板内的色值参与换色，其余颜色原样保留。
 
 ## 元素库预览
 

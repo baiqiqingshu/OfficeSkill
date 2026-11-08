@@ -34,6 +34,9 @@ CANONICAL = {
 }
 
 
+DEFAULT_THEME = "crimson"
+
+
 def _derived(**overrides):
     colors = dict(CANONICAL)
     colors.update(overrides)

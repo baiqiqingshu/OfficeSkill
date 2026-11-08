@@ -158,7 +158,7 @@ v2 新增三个语义色，避免暗色主题下语义冲突：
 4. `render_preview` 重做为带工具栏、页码导航、缩放、键盘翻页和打印样式的离线预览页。
 5. `demo.py` 重做：整页示例分页签 + 2 列幻灯片网格 + 灯箱翻页，组件库分组卡片 + 搜索 + 复制元素 JSON + 5 主题换色；侧栏深色、主区浅色。
 6. 新增 `examples/technical-proposal.json`（11 页完整技术方案），同时作为 starter 示例和 demo 整页示例来源。
-7. 新增主题语义色 `SURFACE`（卡片/表格白底）、`ACCENT_FILL` / `ACCENT_FILL_D`（白字填充），修复 `graphite` 暗色主题下白卡浅字、浅填充白字不可读的问题；默认母版背景/主色条/页脚线随主题生成。
+7. 新增主题语义色 `SURFACE`（卡片/表格白底）、`ACCENT_FILL` / `ACCENT_FILL_D`（白字填充），修复 `graphite` 暗色主题下白卡浅字、浅填充白字不可读的问题；默认主题改为 `crimson`（深红），默认母版背景/主色条/页脚线随主题生成。
 8. `SKILL.md`、`references/library-format.md` 已同步组件清单、CSS 子集、表头/列表约定、主题色板与 demo 说明。
 
 ## 验收记录
@@ -167,5 +167,5 @@ v2 新增三个语义色，避免暗色主题下语义冲突：
 - `validate` / `render`：`technical-proposal`（11 页）、`technical-report`、`solution-review`、`requirements-review` 全部通过。
 - `starter`：输出 4 个示例和默认母版。
 - `demo`：4 个 deck、20 页整页示例、45 个组件，无跳过页；搜索、主题往返切换、灯箱、复制、键盘导航均通过 headless Chrome 验证，无控制台错误、无外部请求。
-- 本机 PowerPoint 导出 PNG 抽查：蓝色与石墨黑主题的封面、架构、表格、指标、计划页均正常；圆角、表头、行距、字距生效；石墨黑默认母版为深色。
+- 默认主题为 `crimson`（深红）；本机 PowerPoint 导出 PNG 抽查深红与石墨黑主题的封面、架构、表格、指标、计划页均正常；圆角、表头、行距、字距生效；石墨黑默认母版为深色。
 - 已知限制：不支持 flex/grid、渐变、图表脚本和任意网页转换；行距倍数在不同渲染器中有轻微差异；第三方库若仍把 `#FFFFFF` 当卡片底色，在 `graphite` 下不会自动变深，应改用 `SURFACE`。

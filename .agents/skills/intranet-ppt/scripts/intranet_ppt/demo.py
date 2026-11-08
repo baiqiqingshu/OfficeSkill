@@ -456,6 +456,7 @@ body.lb-open{overflow:hidden}
 _SCRIPT = """(function () {
   "use strict";
   var THEMES = __THEMES__;
+  var BASE = __CANONICAL__;
   var WARNINGS = __WARNINGS__;
   if (WARNINGS.length && window.console && window.console.warn) {
     WARNINGS.forEach(function (item) { window.console.warn("[library-demo] " + item); });
@@ -470,13 +471,12 @@ _SCRIPT = """(function () {
   function applyTheme(tid) {
     var target = THEMES[tid];
     if (!target) return;
-    // Components are compiled with the default blue palette, so the swap
-    // source is always THEMES.blue; iterating every theme would let a token
-    // shared by two themes overwrite the correct mapping.
+    // Component HTML is compiled with the canonical palette; map those source
+    // hexes to the target theme. Using one canonical source avoids collisions
+    // between tokens that share a color inside a specific theme.
     var map = {};
-    var base = THEMES.blue.colors;
-    for (var token in base) {
-      if (Object.prototype.hasOwnProperty.call(base, token)) map[base[token].toUpperCase()] = target.colors[token];
+    for (var token in BASE) {
+      if (Object.prototype.hasOwnProperty.call(BASE, token)) map[BASE[token].toUpperCase()] = target.colors[token];
     }
     // Read the raw attribute: CSSOM (style.cssText) serializes colors as
     // rgb(...), which would hide every hex token from the swap. Keep the
@@ -731,6 +731,7 @@ _SCRIPT = """(function () {
   }, { passive: true });
 
   /* ---------- boot ---------- */
+  applyTheme(document.body.getAttribute("data-theme") || __DEFAULT_THEME__);
   var firstTab = document.querySelector("[data-deck-tab]");
   if (firstTab) showDeck(firstTab.getAttribute("data-deck-tab")); else fitAll();
   syncNav();
@@ -772,7 +773,7 @@ def render_gallery(libraries, decks, warnings, stage):
     component_total = len(libraries)
     page_total = sum(len(deck["pages"]) for deck in decks)
     theme_total = len(themes.THEMES)
-    default_theme = next(iter(themes.THEMES), "blue")
+    default_theme = themes.DEFAULT_THEME
 
     nav_links = [f'<a href="#decks">整页示例<span class="n">{page_total}</span></a>']
     group_sections = []
@@ -832,7 +833,9 @@ def render_gallery(libraries, decks, warnings, stage):
     style = _STYLE + "\n" + _theme_css() + "\n"
     script = (_SCRIPT
               .replace("__THEMES__", json.dumps(themes.THEMES, ensure_ascii=False).replace("</", "<\\/"))
-              .replace("__WARNINGS__", json.dumps(warnings, ensure_ascii=False).replace("</", "<\\/")))
+              .replace("__CANONICAL__", json.dumps(themes.CANONICAL, ensure_ascii=False).replace("</", "<\\/"))
+              .replace("__WARNINGS__", json.dumps(warnings, ensure_ascii=False).replace("</", "<\\/"))
+              .replace("__DEFAULT_THEME__", json.dumps(themes.DEFAULT_THEME)))
     return (
         '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
         '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; '

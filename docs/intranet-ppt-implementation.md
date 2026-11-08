@@ -111,7 +111,7 @@
 ## 元素库扩展与主题换色（本轮追加交付）
 
 - 内置库扩至 45 个组件（流程、架构、分层、目录、引用、提示框、代码块、时间线、四象限、指标卡、人员卡、接口行等），同目录 `samples.json` 提供演示输入，`images/` 放库内静态图。
-- `themes.py` 提供 5 套主题（blue/emerald/crimson/mono/graphite），`load_libraries(palette=)` 在组件 HTML 解析前做规范色板 hex 全词替换；deck JSON 顶层 `"theme"` 生效于 render 链路。
+- `themes.py` 提供 5 套主题（crimson 默认、blue、emerald、mono、graphite），`load_libraries(palette=)` 在组件 HTML 解析前做规范色板 hex 全词替换；deck JSON 顶层 `"theme"` 生效于 render 链路。
 - 新增 `demo` 命令：`demo --out DIR [--library x.json] [--overwrite]` 生成单文件离线 `library-demo.html`。v2 改为「整页示例优先」：读取 `examples/*.json`，按 1280×720 完整页面展示并支持灯箱翻页；组件库分组卡片支持搜索、示例 JSON、复制元素 JSON 和 5 主题换色。预生成产物在 `assets/demo/`。
 - `deck.schema.json` 增加 `theme` 枚举；`library-format.md` 增补规范色板、samples.json、demo 用法；`SKILL.md` 增补元素库预览说明。
 - 新增 `examples/technical-proposal.json`（11 页完整技术方案），作为 starter 与 demo 的整页示例来源。
