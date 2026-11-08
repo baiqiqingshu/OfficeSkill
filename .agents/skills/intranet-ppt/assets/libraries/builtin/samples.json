@@ -277,5 +277,10 @@
     "title": "统一认证平台总体架构",
     "src": "images/placeholder.png",
     "caption": "来源：平台架构组 2026-03 评审稿"
+  },
+  "ar-header": {
+    "crumb": "SR-01 · AR-01 · 主成功场景",
+    "title": "员工登录与全局会话",
+    "meta": "场景 2/6"
   }
 }

@@ -74,7 +74,7 @@ v2 新增三个语义色，避免暗色主题下语义冲突：
    - 单元格显式写四边 `a:lnL/lnR/lnT/lnB`，颜色取 `borderColor`，宽度取 `borderWidth`，避免默认表格样式干扰。
 5. 形状默认关闭主题阴影（`shadow.inherit = False`），保持扁平。
 
-## 组件清单（v2 为 45，当前 48）
+## 组件清单（v2 为 45，当前 49）
 
 保留并重做（34）：`title` `text` `bullets` `card` `table` `image` `metric` `steps` `cover` `section-break` `agenda-item` `section-title` `caption` `footnote` `quote` `callout` `callout-warn` `callout-danger` `conclusion` `divider` `tag` `status` `field` `feature-card` `panel` `code` `image-frame` `flow-step` `flow-arrow` `timeline-item` `phase` `layer` `compare` `matrix2x2`。
 
@@ -94,13 +94,14 @@ v2 新增三个语义色，避免暗色主题下语义冲突：
 | arch-zone | 架构分区 | 带标题的分层容器背景 | 1152×240 |
 | timeline-h-item | 横向时间线节点 | 日期 + 标题 + 说明，横向排布 | 264×160 |
 
-场景串讲追加（3）：
+场景串讲 / IPD 追加（4）：
 
 | id | 名称 | 用途 | 尺寸 |
 | --- | --- | --- | --- |
 | outline | 多级要点 | 1–4 级嵌套要点，`{"level":2,"text":"…"}` | 1152×260 |
 | ui-frame | 界面示意图 | 窗口标题条 + 界面截图 + 图注 | 640×440 |
 | figure | 图示框 | 小标签 + 标题 + 流程图/UML/架构图 + 图注 | 704×480 |
+| ar-header | AR 页头 | SR/AR/场景面包屑 + AR 标题 + 场景序号 | 1152×100 |
 
 ## 整页示例
 
@@ -143,7 +144,7 @@ v2 新增三个语义色，避免暗色主题下语义冲突：
 
 ## 验证
 
-1. `python scripts/ppt_tool.py catalog` 零错误，组件数 48（v2 时 45）。
+1. `python scripts/ppt_tool.py catalog` 零错误，组件数 49（v2 时 45，场景/IPD 扩展后 49）。
 2. `python scripts/ppt_tool.py validate examples/*.json` 全部通过。
 3. `python scripts/ppt_tool.py render examples/technical-proposal.json --out output/technical-proposal` 生成 PPTX 与 preview。
 4. `python scripts/ppt_tool.py demo --out output/library-demo` 生成 demo；用 headless Chrome 截图检查整页示例和组件卡片。
@@ -185,3 +186,10 @@ v2 新增三个语义色，避免暗色主题下语义冲突：
 - 表格改为内容驱动行高：编译期输出 `rowHeights`，HTML 使用 `height:auto`，PPTX 逐行写 `table.rows[i].height` 并收缩 GraphicFrame；表格不再额外绘制整框背景矩形。
 - 新增 `examples/scenario-walkthrough.json`（12 页）和 `examples/images/` 三张本地示意图，覆盖背景、前置条件、主成功、分支、异常、后置状态，以及界面示意图、流程图、UML、表格、多级分点和说明文本。
 - 验收：`catalog` 48 个组件；5 份示例 `validate` 全部通过；`demo` 输出 5 个 deck、32 页、48 个组件、无跳过页；PPTX 表格行高之和等于 GraphicFrame 高度。
+
+## IPD IR/SR/AR 需求串讲扩展（2026-11-08 追加）
+
+- 组件 48 → 49，新增 `ar-header`（AR 页头，1152×100）：面包屑 + 32px AR 标题 + 右侧场景序号。
+- 新增 `examples/ipd-walkthrough.json`（31 页）：封面、IR 概述、SR 列表、AR 列表，2 个 SR 标题页，每个 SR 下 2 个 AR × 6 个场景页（背景、主成功、异常、后置、前置、分支），最后回顾页。
+- 每个 AR 页标题统一为 AR 名称；场景类型由 `ar-header.crumb` 标注。
+- 验收：`catalog` 49 个组件；6 份示例 `validate` 全部通过；`demo` 输出 6 个 deck、63 页、49 个组件、无跳过页。

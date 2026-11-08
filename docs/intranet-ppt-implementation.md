@@ -71,8 +71,8 @@
 实际交付：
 
 - 五个固定命令：`catalog`、`validate`、`render`、`starter`、`extract`。
-- 内置组件库（当前 48 个，见下节），覆盖标题、正文、要点、卡片、表格、图片、指标、封面、章节、目录、流程、架构、时间线、对比、结论、场景串讲等。
-- 四类可直接生成的配置示例（5 份示例）：技术汇报、技术方案评审、需求评审、场景串讲。
+- 内置组件库（当前 49 个，见下节），覆盖标题、正文、要点、卡片、表格、图片、指标、封面、章节、目录、流程、架构、时间线、对比、结论、场景串讲、IPD IR/SR/AR 需求串讲等。
+- 五类可直接生成的配置示例（6 份示例）：技术汇报、技术方案评审、需求评审、场景串讲、IPD 需求串讲。
 - 配置 JSON Schema、第三方库格式和提取/安全边界说明。所有运行代码与资源在 skill 内自包含，可整体复制到内网，不依赖其他 skill。
 - 图片为本地 PNG/JPEG/GIF/BMP/WebP；输出 HTML 内嵌 PNG，预览页仅含内联交互脚本，无远程依赖。表格和文字为原生 PowerPoint 可编辑对象。
 - 输出目录事务发布，失败不发布半成品；覆盖仅限有本工具标记的专用产物目录，且禁止输出目录包含本次输入。
@@ -128,3 +128,11 @@
 - 验收：5 份示例 `validate` 全部通过；`scenario-walkthrough` 与 `technical-proposal` 的 PPTX 表格行高之和等于 GraphicFrame 高度，且明显小于原等分高度；HTML 预览截图无空白边框带、无内容溢出。
 
 验收阶段补充修复：表格行高估算计入单元格 runs 的 `fontSize`；`starter` 复制 `examples/images/`，避免场景串讲示例缺少图片。
+
+## IPD IR/SR/AR 需求串讲（本轮追加交付）
+
+- 内置库 48 → 49，新增 `ar-header`（1152×100）：`crumb` 写 `SR-01 · AR-01 · 背景`，`title` 统一填 AR 名称，`meta` 写场景序号。
+- 新增 `examples/ipd-walkthrough.json`（31 页）：封面、IR 概述、SR 列表、AR 列表，随后每个 SR 一页标题页，再按该 SR 下每个 AR 展开六页——背景、主成功场景、异常场景、后置状态、前置条件、分支场景；示例为 2 个 SR × 2 个 AR。
+- 每个 AR 内容页只使用 `ar-header` 作页头，页面标题即 AR 名称，场景类型由面包屑区分；SR 列表页用表格 + IR/SR/AR 三层 `layer` 条展示层级，AR 列表页用表格 + 串讲顺序 callout。
+- `SKILL.md` 增加 IPD 串讲推荐结构，`references/library-format.md` 增加 `ar-header` 约定；`starter` 帮助文本改为“全部场景示例（含示例图片）”。
+- 验收：`catalog` 49 个组件；6 份示例 `validate`/`render` 全部通过；IPD 示例 31 页；SR/AR 列表页位于所有 SR 详细页之前；每个 AR 六页顺序正确且标题为 AR 名称。

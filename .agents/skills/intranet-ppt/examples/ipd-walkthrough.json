@@ -1,0 +1,3104 @@
+{
+  "schemaVersion": 1,
+  "title": "统一身份与访问管理 IR / SR / AR 需求串讲",
+  "theme": "blue",
+  "pageSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "pageCount": 31,
+  "pages": [
+    {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-main",
+          "component": "builtin/cover",
+          "box": {
+            "x": 64,
+            "y": 170,
+            "w": 1152,
+            "h": 420
+          },
+          "inputs": {
+            "tag": "需求串讲",
+            "title": "统一身份与访问管理\nIR / SR / AR 需求串讲",
+            "subtitle": "从 IR 目标到 AR 场景：4 个 AR 的完整需求走查",
+            "meta": "汇报人：张伟 ｜ 平台研发部 ｜ 2026-03"
+          }
+        },
+        {
+          "id": "cover-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "内部资料 · 仅限需求评审使用 ｜ IR-2026-0187 统一身份与访问管理"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ir-overview",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ir-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "IR 概述"
+          }
+        },
+        {
+          "id": "ir-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "IR-2026-0187 统一身份与访问管理（IAM）覆盖 47 个内网业务系统，目标是一次认证、全网通行。"
+          }
+        },
+        {
+          "id": "ir-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 270
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "背景：账号与入口分散"
+              },
+              {
+                "level": 2,
+                "text": "47 个业务系统各自维护登录页，员工平均记忆 6 套口令"
+              },
+              {
+                "level": 1,
+                "text": "目标：一次认证、全网通行"
+              },
+              {
+                "level": 2,
+                "text": "单点登录覆盖率 ≥95%，登录 P95 ≤800ms，审计留存 180 天"
+              },
+              {
+                "level": 1,
+                "text": "范围：认证、账号与审计"
+              },
+              {
+                "level": 2,
+                "text": "统一认证、全局会话、多因素认证、账号全生命周期与登录审计"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ir-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 505,
+            "w": 1152,
+            "h": 120
+          },
+          "inputs": {
+            "label": "成功标准",
+            "text": "2026 年 Q3 前完成 47 个系统接入：单点登录覆盖率 ≥95%，登录 P95 ≤800ms，审计日志留存 180 天。"
+          }
+        },
+        {
+          "id": "ir-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "IR-2026-0187 · 统一身份与访问管理 ｜ 需求基线以本串讲为准"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sr-list",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "sr-list-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "SR 列表"
+          }
+        },
+        {
+          "id": "sr-list-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "IR 拆分为 2 个 SR：SR-01 收敛认证与会话，SR-02 收敛账号与审计；SR-01 为 P0 优先交付。"
+          }
+        },
+        {
+          "id": "sr-list-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "rows": [
+              [
+                "SR",
+                "SR 名称",
+                "AR 数",
+                "优先级",
+                "负责人"
+              ],
+              [
+                "SR-01",
+                "统一认证与单点登录",
+                "2",
+                "P0",
+                "张伟"
+              ],
+              [
+                "SR-02",
+                "账号治理与审计",
+                "2",
+                "P1",
+                "李婷"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "sr-list-layer-ir",
+          "component": "builtin/layer",
+          "box": {
+            "x": 64,
+            "y": 380,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "name": "IR",
+            "text": "IR-2026-0187 统一身份与访问管理"
+          }
+        },
+        {
+          "id": "sr-list-layer-sr",
+          "component": "builtin/layer",
+          "box": {
+            "x": 64,
+            "y": 472,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "name": "SR",
+            "text": "SR-01 统一认证与单点登录 ｜ SR-02 账号治理与审计"
+          }
+        },
+        {
+          "id": "sr-list-layer-ar",
+          "component": "builtin/layer",
+          "box": {
+            "x": 64,
+            "y": 564,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "name": "AR",
+            "text": "AR-01 员工登录与全局会话 ｜ AR-02 多因素认证与风险登录 ｜ AR-03 账号全生命周期管理 ｜ AR-04 登录审计与合规报表"
+          }
+        },
+        {
+          "id": "sr-list-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "SR 与 AR 编号对应需求基线 IR-2026-0187；优先级按上线批次排序。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar-list",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar-list-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "AR 列表"
+          }
+        },
+        {
+          "id": "ar-list-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "每个 SR 包含 2 个 AR；每个 AR 按背景、主成功、异常、后置、前置、分支六页展开。"
+          }
+        },
+        {
+          "id": "ar-list-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 360
+          },
+          "inputs": {
+            "rows": [
+              [
+                "SR",
+                "AR",
+                "AR 名称",
+                "优先级",
+                "场景页数"
+              ],
+              [
+                "SR-01",
+                "AR-01",
+                "员工登录与全局会话",
+                "P0",
+                "6"
+              ],
+              [
+                "SR-01",
+                "AR-02",
+                "多因素认证与风险登录",
+                "P0",
+                "6"
+              ],
+              [
+                "SR-02",
+                "AR-03",
+                "账号全生命周期管理",
+                "P1",
+                "6"
+              ],
+              [
+                "SR-02",
+                "AR-04",
+                "登录审计与合规报表",
+                "P1",
+                "6"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar-list-order",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 470,
+            "w": 1152,
+            "h": 120
+          },
+          "inputs": {
+            "label": "串讲顺序",
+            "text": "SR-01 → AR-01 → AR-02 → SR-02 → AR-03 → AR-04；每个 AR 固定六页：背景、主成功、异常、后置、前置、分支。"
+          }
+        },
+        {
+          "id": "ar-list-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "4 个 AR 共 24 个场景页；场景页统一按 ar-header 标注 SR/AR 与场景序号。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sr01-title",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "sr01-title-eyebrow",
+          "component": "builtin/eyebrow",
+          "box": {
+            "x": 64,
+            "y": 140,
+            "w": 1152,
+            "h": 28
+          },
+          "inputs": {
+            "text": "SR-01 · 统一认证与单点登录"
+          }
+        },
+        {
+          "id": "sr01-title-section",
+          "component": "builtin/section-break",
+          "box": {
+            "x": 64,
+            "y": 180,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "number": "01",
+            "title": "统一认证与单点登录",
+            "desc": "包含 2 个 AR：员工登录与全局会话、多因素认证与风险登录。"
+          }
+        },
+        {
+          "id": "sr01-title-agenda-1",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "1",
+            "title": "AR-01 · 员工登录与全局会话",
+            "desc": "一次登录、全局会话，单点登出 30 秒同步"
+          }
+        },
+        {
+          "id": "sr01-title-agenda-2",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 580,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "2",
+            "title": "AR-02 · 多因素认证与风险登录",
+            "desc": "按风险分级挑战，高风险拦截率 ≥90%"
+          }
+        },
+        {
+          "id": "sr01-title-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "SR-01 共 2 个 AR、12 个场景页；每页按六类场景展开。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar01-bg",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar01-bg-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-01 · 背景",
+            "title": "员工登录与全局会话",
+            "meta": "场景 1/6"
+          }
+        },
+        {
+          "id": "ar01-bg-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "47 个系统各自维护登录页，员工平均记忆 6 套口令，离职账号回收滞后 11 天，跨系统重复登录平均多花 40 秒。"
+          }
+        },
+        {
+          "id": "ar01-bg-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 240,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "现状：入口与口令分散"
+              },
+              {
+                "level": 2,
+                "text": "47 个系统各自维护登录页，员工平均记 6 套口令"
+              },
+              {
+                "level": 1,
+                "text": "痛点：安全与体验双重损耗"
+              },
+              {
+                "level": 2,
+                "text": "离职账号回收滞后 11 天，跨系统重复登录多花 40 秒"
+              },
+              {
+                "level": 1,
+                "text": "目标：全局会话与单点登出"
+              },
+              {
+                "level": 2,
+                "text": "全局会话 TTL 2 小时，单点登出 30 秒内同步到全部网关"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar01-bg-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "数据来源：2026-02 内网系统普查与账号治理专项报告。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar01-main",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar01-main-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-01 · 主成功场景",
+            "title": "员工登录与全局会话",
+            "meta": "场景 2/6"
+          }
+        },
+        {
+          "id": "ar01-main-step-1",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "1",
+            "title": "用户访问",
+            "desc": "打开 OA 未登录，触发跳转"
+          }
+        },
+        {
+          "id": "ar01-main-step-2",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 352,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "2",
+            "title": "统一认证",
+            "desc": "校验工号与口令"
+          }
+        },
+        {
+          "id": "ar01-main-step-3",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 640,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "3",
+            "title": "会话建立",
+            "desc": "签发令牌与票据"
+          }
+        },
+        {
+          "id": "ar01-main-step-4",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 928,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "4",
+            "title": "跳转回业务",
+            "desc": "带票据回跳恢复页面"
+          }
+        },
+        {
+          "id": "ar01-main-arrow-1",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 304,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar01-main-arrow-2",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 592,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar01-main-arrow-3",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 880,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar01-main-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 330,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "用户访问业务系统"
+              },
+              {
+                "level": 2,
+                "text": "未登录时 302 跳转认证中心，携带业务标识与回跳地址"
+              },
+              {
+                "level": 1,
+                "text": "统一认证"
+              },
+              {
+                "level": 2,
+                "text": "校验工号口令，命中风险策略时追加二次验证"
+              },
+              {
+                "level": 1,
+                "text": "会话建立"
+              },
+              {
+                "level": 2,
+                "text": "全局令牌与业务票据写入分布式会话，票据一次性 5 分钟有效"
+              },
+              {
+                "level": 1,
+                "text": "跳转回业务系统，恢复用户原访问页面"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar01-main-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "以上为主成功路径；任一步失败进入异常场景或分支场景。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar01-exc",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar01-exc-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-01 · 异常场景",
+            "title": "员工登录与全局会话",
+            "meta": "场景 3/6"
+          }
+        },
+        {
+          "id": "ar01-exc-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "异常",
+                "检测方式",
+                "处理与恢复"
+              ],
+              [
+                "E1",
+                "认证服务超时",
+                "网关 3 秒未响应",
+                "重试并降级备用节点"
+              ],
+              [
+                "E2",
+                "令牌校验失败",
+                "签名或有效期不通过",
+                "清缓存重拉，必要时重新登录"
+              ],
+              [
+                "E3",
+                "下游系统不可用",
+                "健康检查连续 3 次失败",
+                "摘除节点并返回维护页"
+              ],
+              [
+                "E4",
+                "时钟漂移",
+                "NTP 偏差 >30 秒",
+                "拒绝签发并告警，校时后重新认证"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar01-exc-warn",
+          "component": "builtin/callout-warn",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "注意",
+            "text": "异常恢复优先保证已建会话可用：跨机房切换需在 30 秒内完成，超时则提示重新登录。"
+          }
+        },
+        {
+          "id": "ar01-exc-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "员工登录与全局会话：异常恢复以保持已建会话可用为先。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar01-post",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar01-post-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-01 · 后置状态",
+            "title": "员工登录与全局会话",
+            "meta": "场景 4/6"
+          }
+        },
+        {
+          "id": "ar01-post-panel-1",
+          "component": "builtin/panel",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "会话状态",
+            "text": "浏览器持有 HttpOnly 会话 Cookie。\n会话 TTL 2 小时，空闲 30 分钟续期一次。\n同一账号最多 3 个并发会话。"
+          }
+        },
+        {
+          "id": "ar01-post-panel-2",
+          "component": "builtin/panel",
+          "box": {
+            "x": 664,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "审计与通知",
+            "text": "登录、登出、刷新与失败全量入审计。\n每次认证生成事件 ID，可按人检索。\n审计日志保留 180 天，支持只读导出。"
+          }
+        },
+        {
+          "id": "ar01-post-checklist",
+          "component": "builtin/checklist",
+          "box": {
+            "x": 64,
+            "y": 390,
+            "w": 1152,
+            "h": 200
+          },
+          "inputs": {
+            "items": [
+              "全局会话可查：会话列表能看到本次登录记录",
+              "审计留痕完整：事件含工号、终端、IP 与事件 ID",
+              "单点登出生效：任一系统登出后其余系统同步失效",
+              "会话上限生效：第 4 个并发会话按最早登出",
+              "异常可恢复：E1—E4 均有告警与恢复演练结论"
+            ]
+          }
+        },
+        {
+          "id": "ar01-post-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "后置状态以会话与审计可查、可回放为验收口径。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar01-pre",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar01-pre-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-01 · 前置条件",
+            "title": "员工登录与全局会话",
+            "meta": "场景 5/6"
+          }
+        },
+        {
+          "id": "ar01-pre-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "前置项",
+                "具体要求",
+                "责任方",
+                "校验方式"
+              ],
+              [
+                "账号",
+                "工号在账号中心启用且在职",
+                "HR 共享中心",
+                "账号中心日终对账"
+              ],
+              [
+                "网络",
+                "终端可访问认证域名 443",
+                "网络运维组",
+                "每周探活拨测"
+              ],
+              [
+                "浏览器",
+                "Chrome 或 Edge 100 以上",
+                "终端支持组",
+                "登录页 UA 校验"
+              ],
+              [
+                "权限",
+                "已登记回调地址与票据白名单",
+                "系统接入方",
+                "接入配置巡检"
+              ],
+              [
+                "时钟",
+                "节点 NTP 同步，偏差 <30 秒",
+                "基础设施组",
+                "监控告警 + 日核对"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar01-pre-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "前置",
+            "text": "前置项未就绪时登录直接失败，需联系对应责任方；本清单每季度复核一次。"
+          }
+        },
+        {
+          "id": "ar01-pre-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "员工登录与全局会话：前置项不满足时主成功场景无法开始。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar01-branch",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar01-branch-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-01 · 分支场景",
+            "title": "员工登录与全局会话",
+            "meta": "场景 6/6"
+          }
+        },
+        {
+          "id": "ar01-branch-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "触发条件",
+                "处理策略",
+                "结果"
+              ],
+              [
+                "B1",
+                "全局会话有效且票据未过期",
+                "跳过认证直接下发业务票据",
+                "无感进入业务系统"
+              ],
+              [
+                "B2",
+                "空闲超过 30 分钟",
+                "静默续期一次，失败则重新认证",
+                "返回统一登录页"
+              ],
+              [
+                "B3",
+                "同一账号绑定多个租户",
+                "选择租户后按租户签发会话",
+                "会话按租户隔离"
+              ],
+              [
+                "B4",
+                "管理员强制下线",
+                "吊销全局会话并推送网关",
+                "30 秒内全系统失效"
+              ],
+              [
+                "B5",
+                "用户勾选记住工号",
+                "本地保存工号，不保存口令",
+                "下次免输工号"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar01-branch-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "提示",
+            "text": "分支不改变主流程结构：B1 与 B2 在进入认证页前判定，B3—B5 在认证页内完成。"
+          }
+        },
+        {
+          "id": "ar01-branch-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "员工登录与全局会话：分支在异常场景之前判定，不改变主流程。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar02-bg",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar02-bg-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-02 · 背景",
+            "title": "多因素认证与风险登录",
+            "meta": "场景 1/6"
+          }
+        },
+        {
+          "id": "ar02-bg-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "静态口令不足以覆盖异地、新设备与撞库风险。本期按风险分级挑战，高风险登录拦截率 ≥90%，覆盖 Web 与移动端。"
+          }
+        },
+        {
+          "id": "ar02-bg-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 240,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "现状：静态口令防护不足"
+              },
+              {
+                "level": 2,
+                "text": "异地登录、新设备与撞库攻击缺少二次验证"
+              },
+              {
+                "level": 1,
+                "text": "目标：按风险分级挑战"
+              },
+              {
+                "level": 2,
+                "text": "低风险免挑战、中风险短信、高风险动态令牌"
+              },
+              {
+                "level": 2,
+                "text": "高风险登录拦截率 ≥90%"
+              },
+              {
+                "level": 1,
+                "text": "范围：Web 与移动端"
+              },
+              {
+                "level": 2,
+                "text": "两端共用一套风险策略与会话信任等级"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar02-bg-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "风险因子含设备指纹、IP 归属、登录时间与近期失败次数。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar02-main",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar02-main-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-02 · 主成功场景",
+            "title": "多因素认证与风险登录",
+            "meta": "场景 2/6"
+          }
+        },
+        {
+          "id": "ar02-main-step-1",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "1",
+            "title": "风险采集",
+            "desc": "设备指纹、IP、时间、失败次数"
+          }
+        },
+        {
+          "id": "ar02-main-step-2",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 352,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "2",
+            "title": "策略判定",
+            "desc": "低风险免挑战、中风险短信、高风险令牌"
+          }
+        },
+        {
+          "id": "ar02-main-step-3",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 640,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "3",
+            "title": "二次认证",
+            "desc": "验证码 5 分钟有效，3 次失败锁 30 分钟"
+          }
+        },
+        {
+          "id": "ar02-main-step-4",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 928,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "4",
+            "title": "高信任会话",
+            "desc": "信任等级写入会话"
+          }
+        },
+        {
+          "id": "ar02-main-arrow-1",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 304,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar02-main-arrow-2",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 592,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar02-main-arrow-3",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 880,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar02-main-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 330,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "风险采集"
+              },
+              {
+                "level": 2,
+                "text": "采集设备指纹、IP、登录时间与近期失败次数"
+              },
+              {
+                "level": 1,
+                "text": "策略判定"
+              },
+              {
+                "level": 2,
+                "text": "低风险免挑战、中风险短信、高风险动态令牌"
+              },
+              {
+                "level": 1,
+                "text": "二次认证"
+              },
+              {
+                "level": 2,
+                "text": "验证码 5 分钟有效，连续 3 次失败锁定 30 分钟"
+              },
+              {
+                "level": 1,
+                "text": "建立高信任会话并写入信任等级"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar02-main-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "挑战方式由策略判定，主流程四步结构不变。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar02-exc",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar02-exc-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-02 · 异常场景",
+            "title": "多因素认证与风险登录",
+            "meta": "场景 3/6"
+          }
+        },
+        {
+          "id": "ar02-exc-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "异常",
+                "检测方式",
+                "处理与恢复"
+              ],
+              [
+                "E1",
+                "短信网关不可用",
+                "5 分钟发送失败率 >20%",
+                "切备用通道，仍失败改用动态令牌"
+              ],
+              [
+                "E2",
+                "动态令牌失步",
+                "连续 3 次校验失败",
+                "提示校时或服务台重置种子"
+              ],
+              [
+                "E3",
+                "风控服务超时",
+                "调用 >500ms 或熔断",
+                "降级为中风险强制短信"
+              ],
+              [
+                "E4",
+                "用户放弃验证",
+                "5 分钟未完成挑战",
+                "关闭会话并记录审计"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar02-exc-warn",
+          "component": "builtin/callout-warn",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "注意",
+            "text": "二次认证失败不改变主流程结构：连续 3 次失败锁定 30 分钟，需服务台人工核身后解锁。"
+          }
+        },
+        {
+          "id": "ar02-exc-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "多因素认证与风险登录：异常恢复以保持已建会话可用为先。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar02-post",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar02-post-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-02 · 后置状态",
+            "title": "多因素认证与风险登录",
+            "meta": "场景 4/6"
+          }
+        },
+        {
+          "id": "ar02-post-panel-1",
+          "component": "builtin/panel",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "信任状态",
+            "text": "信任等级、挑战方式与验证时间写入会话。\n高信任会话有效期 2 小时。\n高风险操作前重新校验信任等级。"
+          }
+        },
+        {
+          "id": "ar02-post-panel-2",
+          "component": "builtin/panel",
+          "box": {
+            "x": 664,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "审计与通知",
+            "text": "认证事件记录风险因子与挑战方式。\n高风险登录实时推送安全值班群。\n挑战失败与锁定事件全量留痕。"
+          }
+        },
+        {
+          "id": "ar02-post-checklist",
+          "component": "builtin/checklist",
+          "box": {
+            "x": 64,
+            "y": 390,
+            "w": 1152,
+            "h": 200
+          },
+          "inputs": {
+            "items": [
+              "信任等级可查：会话详情能看到等级与挑战方式",
+              "挑战方式正确：低风险免挑战、中风险短信",
+              "锁定策略生效：连续 3 次失败锁定 30 分钟",
+              "高风险实时告警：安全值班群 1 分钟内收到",
+              "审计留痕完整：风险因子与结果可回溯"
+            ]
+          }
+        },
+        {
+          "id": "ar02-post-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "后置状态以会话与审计可查、可回放为验收口径。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar02-pre",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar02-pre-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-02 · 前置条件",
+            "title": "多因素认证与风险登录",
+            "meta": "场景 5/6"
+          }
+        },
+        {
+          "id": "ar02-pre-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "前置项",
+                "具体要求",
+                "责任方",
+                "校验方式"
+              ],
+              [
+                "手机号",
+                "员工已在 HR 系统登记本人号码",
+                "HR 共享中心",
+                "月度号码核对"
+              ],
+              [
+                "令牌",
+                "动态令牌已绑定并完成激活",
+                "账号中心",
+                "登录前状态校验"
+              ],
+              [
+                "风控",
+                "风险策略与名单已发布生效",
+                "安全运营组",
+                "策略版本核对"
+              ],
+              [
+                "短信",
+                "主用与备用短信通道均可用",
+                "基础设施组",
+                "每日发送拨测"
+              ],
+              [
+                "时钟",
+                "认证节点 NTP 偏差 <30 秒",
+                "基础设施组",
+                "监控告警核对"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar02-pre-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "前置",
+            "text": "手机号或令牌未绑定时走服务台人工核身，不跳过二次认证。"
+          }
+        },
+        {
+          "id": "ar02-pre-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "多因素认证与风险登录：前置项不满足时主成功场景无法开始。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar02-branch",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar02-branch-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-01 · AR-02 · 分支场景",
+            "title": "多因素认证与风险登录",
+            "meta": "场景 6/6"
+          }
+        },
+        {
+          "id": "ar02-branch-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "触发条件",
+                "处理策略",
+                "结果"
+              ],
+              [
+                "B1",
+                "可信网络 + 常用设备",
+                "低风险免挑战",
+                "直接建立会话"
+              ],
+              [
+                "B2",
+                "异地 + 常用设备",
+                "中风险短信验证码",
+                "验证通过建立会话"
+              ],
+              [
+                "B3",
+                "新设备 + 异地",
+                "高风险动态令牌",
+                "验证通过建高信任会话"
+              ],
+              [
+                "B4",
+                "连续 3 次验证失败",
+                "锁定 30 分钟并通知本人",
+                "拒绝登录"
+              ],
+              [
+                "B5",
+                "管理员标记可信终端",
+                "免挑战直接放行",
+                "白名单终端免验证"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar02-branch-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "提示",
+            "text": "分支不改变主流程：风险判定在采集后统一执行，仅挑战方式不同。"
+          }
+        },
+        {
+          "id": "ar02-branch-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "多因素认证与风险登录：分支在异常场景之前判定，不改变主流程。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sr02-title",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "sr02-title-eyebrow",
+          "component": "builtin/eyebrow",
+          "box": {
+            "x": 64,
+            "y": 140,
+            "w": 1152,
+            "h": 28
+          },
+          "inputs": {
+            "text": "SR-02 · 账号治理与审计"
+          }
+        },
+        {
+          "id": "sr02-title-section",
+          "component": "builtin/section-break",
+          "box": {
+            "x": 64,
+            "y": 180,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "number": "02",
+            "title": "账号治理与审计",
+            "desc": "包含 2 个 AR：账号全生命周期管理、登录审计与合规报表。"
+          }
+        },
+        {
+          "id": "sr02-title-agenda-1",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "1",
+            "title": "AR-03 · 账号全生命周期管理",
+            "desc": "HR 事件驱动，离职回收 ≤1 小时"
+          }
+        },
+        {
+          "id": "sr02-title-agenda-2",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 580,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "2",
+            "title": "AR-04 · 登录审计与合规报表",
+            "desc": "5 分钟入湖、留存 180 天、T+1 报表"
+          }
+        },
+        {
+          "id": "sr02-title-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "SR-02 共 2 个 AR、12 个场景页；每页按六类场景展开。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar03-bg",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar03-bg-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-03 · 背景",
+            "title": "账号全生命周期管理",
+            "meta": "场景 1/6"
+          }
+        },
+        {
+          "id": "ar03-bg-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "入转调离依赖人工邮件：入职开通平均 3 天，离职回收滞后 11 天，转岗旧权限未回收。目标改为 HR 事件驱动，离职回收 ≤1 小时。"
+          }
+        },
+        {
+          "id": "ar03-bg-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 240,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "现状：账号变更依赖人工邮件"
+              },
+              {
+                "level": 2,
+                "text": "入职开通平均 3 天，离职回收滞后 11 天"
+              },
+              {
+                "level": 1,
+                "text": "痛点：权限只增不减"
+              },
+              {
+                "level": 2,
+                "text": "转岗后旧岗位权限未回收，存在越权风险"
+              },
+              {
+                "level": 1,
+                "text": "目标：HR 事件驱动全生命周期"
+              },
+              {
+                "level": 2,
+                "text": "入转调离由 HR 事件自动触发，离职回收 ≤1 小时"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar03-bg-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "数据来源：2026-01 账号治理专项审计与 HR 主数据对账结果。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar03-main",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar03-main-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-03 · 主成功场景",
+            "title": "账号全生命周期管理",
+            "meta": "场景 2/6"
+          }
+        },
+        {
+          "id": "ar03-main-step-1",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "1",
+            "title": "HR 事件",
+            "desc": "入职、转岗、兼职返聘、离职"
+          }
+        },
+        {
+          "id": "ar03-main-step-2",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 352,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "2",
+            "title": "账号同步",
+            "desc": "创建、变更或停用账号"
+          }
+        },
+        {
+          "id": "ar03-main-step-3",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 640,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "3",
+            "title": "权限下发",
+            "desc": "按岗位模板授予或回收"
+          }
+        },
+        {
+          "id": "ar03-main-step-4",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 928,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "4",
+            "title": "通知与确认",
+            "desc": "通知本人与经理，失败转人工"
+          }
+        },
+        {
+          "id": "ar03-main-arrow-1",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 304,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar03-main-arrow-2",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 592,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar03-main-arrow-3",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 880,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar03-main-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 330,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "HR 事件触发"
+              },
+              {
+                "level": 2,
+                "text": "入职、转岗、兼职返聘、离职四类事件驱动"
+              },
+              {
+                "level": 1,
+                "text": "账号同步与权限下发"
+              },
+              {
+                "level": 2,
+                "text": "按事件创建、变更或停用账号，并按岗位模板授予或回收"
+              },
+              {
+                "level": 1,
+                "text": "通知与确认"
+              },
+              {
+                "level": 2,
+                "text": "通知本人与直线经理，失败转人工工单"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar03-main-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "事件 ID 幂等：同一 HR 事件重复投递不重复执行。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar03-exc",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar03-exc-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-03 · 异常场景",
+            "title": "账号全生命周期管理",
+            "meta": "场景 3/6"
+          }
+        },
+        {
+          "id": "ar03-exc-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "异常",
+                "检测方式",
+                "处理与恢复"
+              ],
+              [
+                "E1",
+                "HR 接口超时",
+                "连续 3 次失败或 >5 秒",
+                "重试队列 30 分钟后转人工"
+              ],
+              [
+                "E2",
+                "重复工号",
+                "工号在账号中心已存在",
+                "合并或更正主数据后重放"
+              ],
+              [
+                "E3",
+                "权限模板缺失",
+                "岗位未配置权限模板",
+                "按最小权限开通并补模板"
+              ],
+              [
+                "E4",
+                "离职仍有活跃会话",
+                "停用后会话未失效",
+                "强制吊销并通知安全值班"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar03-exc-warn",
+          "component": "builtin/callout-warn",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "注意",
+            "text": "离职停用后必须同步吊销会话，最长不超过 1 小时；未吊销视为回收失败并升级处理。"
+          }
+        },
+        {
+          "id": "ar03-exc-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "账号全生命周期管理：异常恢复以保持已建会话可用为先。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar03-post",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar03-post-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-03 · 后置状态",
+            "title": "账号全生命周期管理",
+            "meta": "场景 4/6"
+          }
+        },
+        {
+          "id": "ar03-post-panel-1",
+          "component": "builtin/panel",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "账号状态",
+            "text": "账号状态与 HR 主数据保持一致。\n离职 1 小时内停用，转岗保留工号。\n兼职与返聘按有效期自动到期。"
+          }
+        },
+        {
+          "id": "ar03-post-panel-2",
+          "component": "builtin/panel",
+          "box": {
+            "x": 664,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "审计与通知",
+            "text": "变更事件记录操作人与前后快照。\n失败转人工工单并跟踪闭环。\n工单结果回写审计日志。"
+          }
+        },
+        {
+          "id": "ar03-post-checklist",
+          "component": "builtin/checklist",
+          "box": {
+            "x": 64,
+            "y": 390,
+            "w": 1152,
+            "h": 200
+          },
+          "inputs": {
+            "items": [
+              "账号一致：与 HR 主数据日终对账无差异",
+              "离职回收：停用与吊销会话 1 小时内完成",
+              "转岗收敛：旧岗位权限全部回收",
+              "模板生效：模板缺失时有最小权限兜底",
+              "工单闭环：失败事件 100% 转人工并回写"
+            ]
+          }
+        },
+        {
+          "id": "ar03-post-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "后置状态以会话与审计可查、可回放为验收口径。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar03-pre",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar03-pre-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-03 · 前置条件",
+            "title": "账号全生命周期管理",
+            "meta": "场景 5/6"
+          }
+        },
+        {
+          "id": "ar03-pre-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "前置项",
+                "具体要求",
+                "责任方",
+                "校验方式"
+              ],
+              [
+                "主数据",
+                "HR 主数据完整且工号唯一",
+                "HR 共享中心",
+                "日终对账 + 抽检"
+              ],
+              [
+                "接口",
+                "HR 事件接口可用并有重试队列",
+                "集成平台组",
+                "每日接口拨测"
+              ],
+              [
+                "模板",
+                "岗位与权限模板已发布",
+                "权限治理组",
+                "模板版本核对"
+              ],
+              [
+                "通知",
+                "邮件与 IM 通知通道可用",
+                "基础设施组",
+                "发送拨测"
+              ],
+              [
+                "审批",
+                "特殊权限有审批单与有效期",
+                "业务系统负责人",
+                "审批单抽查"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar03-pre-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "前置",
+            "text": "主数据不完整时按最小权限开通，待数据补齐后再增量授予。"
+          }
+        },
+        {
+          "id": "ar03-pre-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "账号全生命周期管理：前置项不满足时主成功场景无法开始。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar03-branch",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar03-branch-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-03 · 分支场景",
+            "title": "账号全生命周期管理",
+            "meta": "场景 6/6"
+          }
+        },
+        {
+          "id": "ar03-branch-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "触发条件",
+                "处理策略",
+                "结果"
+              ],
+              [
+                "B1",
+                "入职事件",
+                "创建账号并授予岗位模板",
+                "当日可登录"
+              ],
+              [
+                "B2",
+                "转岗事件",
+                "先回收旧权限再授予新模板",
+                "权限与岗位一致"
+              ],
+              [
+                "B3",
+                "兼职返聘",
+                "按有效期授予，到期自动回收",
+                "到期自动停用"
+              ],
+              [
+                "B4",
+                "离职事件",
+                "停用账号并吊销全部会话",
+                "1 小时内完成回收"
+              ],
+              [
+                "B5",
+                "HR 事件重复投递",
+                "按事件 ID 幂等去重",
+                "不产生重复账号"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar03-branch-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "提示",
+            "text": "分支共用同一套事件处理链路：事件 ID 幂等，重复投递不重复执行。"
+          }
+        },
+        {
+          "id": "ar03-branch-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "账号全生命周期管理：分支在异常场景之前判定，不改变主流程。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar04-bg",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar04-bg-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-04 · 背景",
+            "title": "登录审计与合规报表",
+            "meta": "场景 1/6"
+          }
+        },
+        {
+          "id": "ar04-bg-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "登录日志分散在 47 个系统，合规报表靠手工整理需 3 天，跨系统无法按人串联，敏感字段缺少脱敏。目标 5 分钟入湖、留存 180 天、T+1 出报表。"
+          }
+        },
+        {
+          "id": "ar04-bg-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 240,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "现状：日志分散、口径不一"
+              },
+              {
+                "level": 2,
+                "text": "47 个系统各自留存日志，字段与时间口径不同"
+              },
+              {
+                "level": 1,
+                "text": "痛点：报表靠手工、追溯困难"
+              },
+              {
+                "level": 2,
+                "text": "合规报表手工整理 3 天，跨系统无法按人串联"
+              },
+              {
+                "level": 2,
+                "text": "敏感字段缺少脱敏，存在合规风险"
+              },
+              {
+                "level": 1,
+                "text": "目标：5 分钟入湖、180 天留存"
+              },
+              {
+                "level": 2,
+                "text": "T+1 出合规报表，高风险登录实时告警"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar04-bg-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "数据来源：2026-02 合规检查问题清单与日志接入现状盘点。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar04-main",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar04-main-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-04 · 主成功场景",
+            "title": "登录审计与合规报表",
+            "meta": "场景 2/6"
+          }
+        },
+        {
+          "id": "ar04-main-step-1",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "1",
+            "title": "采集",
+            "desc": "认证中心、网关与业务推送"
+          }
+        },
+        {
+          "id": "ar04-main-step-2",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 352,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "2",
+            "title": "归一化",
+            "desc": "统一工号、终端 IP、系统与事件 ID"
+          }
+        },
+        {
+          "id": "ar04-main-step-3",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 640,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "3",
+            "title": "存储",
+            "desc": "按天分区保留 180 天，脱敏入湖"
+          }
+        },
+        {
+          "id": "ar04-main-step-4",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 928,
+            "y": 150,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "4",
+            "title": "报表",
+            "desc": "T+1 合规报表与实时告警"
+          }
+        },
+        {
+          "id": "ar04-main-arrow-1",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 304,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar04-main-arrow-2",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 592,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar04-main-arrow-3",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 880,
+            "y": 150,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "ar04-main-outline",
+          "component": "builtin/outline",
+          "box": {
+            "x": 64,
+            "y": 330,
+            "w": 1152,
+            "h": 300
+          },
+          "inputs": {
+            "items": [
+              {
+                "level": 1,
+                "text": "采集与归一化"
+              },
+              {
+                "level": 2,
+                "text": "认证中心、网关与业务系统推送，统一工号、IP、结果与事件 ID"
+              },
+              {
+                "level": 1,
+                "text": "存储"
+              },
+              {
+                "level": 2,
+                "text": "按天分区保留 180 天，敏感字段脱敏后入湖"
+              },
+              {
+                "level": 1,
+                "text": "报表与告警"
+              },
+              {
+                "level": 2,
+                "text": "T+1 生成合规报表，高风险登录实时告警"
+              }
+            ]
+          }
+        },
+        {
+          "id": "ar04-main-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "归一化后的同一份数据同时支撑检索、报表与告警。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar04-exc",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar04-exc-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-04 · 异常场景",
+            "title": "登录审计与合规报表",
+            "meta": "场景 3/6"
+          }
+        },
+        {
+          "id": "ar04-exc-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "异常",
+                "检测方式",
+                "处理与恢复"
+              ],
+              [
+                "E1",
+                "日志丢失",
+                "断点或序号不连续",
+                "补采并标记缺口，>5% 告警"
+              ],
+              [
+                "E2",
+                "存储容量不足",
+                "分区使用率 >85%",
+                "扩容或归档冷数据"
+              ],
+              [
+                "E3",
+                "报表超时",
+                "T+1 报表超过 30 分钟",
+                "重试并降级分系统报表"
+              ],
+              [
+                "E4",
+                "脱敏失败",
+                "脱敏规则未命中字段",
+                "阻断入湖并转人工"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar04-exc-warn",
+          "component": "builtin/callout-warn",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "注意",
+            "text": "日志缺口超过 5% 视为审计不完整，须在 T+1 报表中标注并补齐，不得静默跳过。"
+          }
+        },
+        {
+          "id": "ar04-exc-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "登录审计与合规报表：异常恢复以保持已建会话可用为先。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar04-post",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar04-post-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-04 · 后置状态",
+            "title": "登录审计与合规报表",
+            "meta": "场景 4/6"
+          }
+        },
+        {
+          "id": "ar04-post-panel-1",
+          "component": "builtin/panel",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "数据状态",
+            "text": "登录事件 5 分钟内入湖，按天分区。\n热数据保留 180 天，超期归档。\n补采任务记录缺口与补齐结果。"
+          }
+        },
+        {
+          "id": "ar04-post-panel-2",
+          "component": "builtin/panel",
+          "box": {
+            "x": 664,
+            "y": 150,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "title": "报表与告警",
+            "text": "T+1 出合规报表，支持按人检索。\n报表只读并带水印。\n高风险登录实时推送值班群。"
+          }
+        },
+        {
+          "id": "ar04-post-checklist",
+          "component": "builtin/checklist",
+          "box": {
+            "x": 64,
+            "y": 390,
+            "w": 1152,
+            "h": 200
+          },
+          "inputs": {
+            "items": [
+              "入湖及时：95% 事件 5 分钟内可查",
+              "留存达标：热数据覆盖 180 天",
+              "缺口可见：补采缺口在报表中标注",
+              "报表可用：T+1 报表 30 分钟内产出",
+              "脱敏有效：敏感字段不可见原文"
+            ]
+          }
+        },
+        {
+          "id": "ar04-post-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "后置状态以会话与审计可查、可回放为验收口径。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar04-pre",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar04-pre-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-04 · 前置条件",
+            "title": "登录审计与合规报表",
+            "meta": "场景 5/6"
+          }
+        },
+        {
+          "id": "ar04-pre-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "前置项",
+                "具体要求",
+                "责任方",
+                "校验方式"
+              ],
+              [
+                "规范",
+                "日志字段与事件 ID 规范已发布",
+                "安全运营组",
+                "规范评审记录"
+              ],
+              [
+                "采集",
+                "47 个系统完成日志接入",
+                "系统接入方",
+                "接入清单核对"
+              ],
+              [
+                "存储",
+                "数据湖分区与容量已就绪",
+                "基础设施组",
+                "容量水位监控"
+              ],
+              [
+                "脱敏",
+                "敏感字段脱敏规则已生效",
+                "数据治理组",
+                "抽样比对校验"
+              ],
+              [
+                "报表",
+                "报表模板与口径已确认",
+                "合规审计部",
+                "模板评审记录"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar04-pre-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "前置",
+            "text": "未完成接入的系统需在月度评审说明原因，并纳入下月接入计划。"
+          }
+        },
+        {
+          "id": "ar04-pre-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "登录审计与合规报表：前置项不满足时主成功场景无法开始。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ar04-branch",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "ar04-branch-header",
+          "component": "builtin/ar-header",
+          "box": {
+            "x": 64,
+            "y": 32,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "crumb": "SR-02 · AR-04 · 分支场景",
+            "title": "登录审计与合规报表",
+            "meta": "场景 6/6"
+          }
+        },
+        {
+          "id": "ar04-branch-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 150,
+            "w": 1152,
+            "h": 330
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "触发条件",
+                "处理策略",
+                "结果"
+              ],
+              [
+                "B1",
+                "高风险登录实时告警",
+                "命中规则即时推送",
+                "1 分钟内到达值班群"
+              ],
+              [
+                "B2",
+                "按人检索",
+                "输入工号查询全链路登录",
+                "返回跨系统记录"
+              ],
+              [
+                "B3",
+                "按系统检索",
+                "按系统与时间段聚合",
+                "输出系统维度报表"
+              ],
+              [
+                "B4",
+                "监管抽查导出",
+                "提交导出申请并审批",
+                "只读带水印文件"
+              ],
+              [
+                "B5",
+                "历史归档恢复",
+                "恢复 180 天前归档分区",
+                "24 小时内可查"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "ar04-branch-callout",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 1152,
+            "h": 100
+          },
+          "inputs": {
+            "label": "提示",
+            "text": "分支复用同一份归一化数据：告警、检索与导出口径一致。"
+          }
+        },
+        {
+          "id": "ar04-branch-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "登录审计与合规报表：分支在异常场景之前判定，不改变主流程。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "closing-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "串讲回顾"
+          }
+        },
+        {
+          "id": "closing-conclusion",
+          "component": "builtin/conclusion",
+          "box": {
+            "x": 64,
+            "y": 170,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "统一身份与访问管理把认证、账号与审计收敛成一条链路：4 个 AR 各 6 页场景，覆盖背景、主成功、异常、后置、前置与分支。"
+          }
+        },
+        {
+          "id": "closing-thanks",
+          "component": "builtin/thanks",
+          "box": {
+            "x": 64,
+            "y": 320,
+            "w": 1152,
+            "h": 240
+          },
+          "inputs": {
+            "title": "谢谢",
+            "subtitle": "欢迎就场景与异常用例补充意见",
+            "meta": "平台研发部 · 张伟 · zhangwei@intranet.local"
+          }
+        },
+        {
+          "id": "closing-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "内部资料 · 仅限需求评审使用 ｜ IR-2026-0187 统一身份与访问管理"
+          }
+        }
+      ]
+    }
+  ]
+}

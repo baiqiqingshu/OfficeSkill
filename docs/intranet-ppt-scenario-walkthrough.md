@@ -106,3 +106,8 @@
 
 - 表格行高估算把单元格 runs 自带的 `fontSize` 计入，避免大字号单元格被按表级字号低估而溢出。
 - `starter` 现在同时复制 `examples/images/`，生成的场景串讲配置可直接 `validate`/`render`。
+
+## IPD 扩展后的规模（2026-11-08）
+
+- 组件 48 → 49，新增 `ar-header`；示例 5 → 6，新增 31 页 `examples/ipd-walkthrough.json`。
+- `assets/demo/library-demo.html` 重新生成后为 49 组件、6 份示例、63 页、无跳过页；本文此前记录的 48/5/32 为 IPD 扩展前的规模。

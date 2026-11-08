@@ -244,7 +244,7 @@ def parser():
     demo.add_argument("--out", required=True)
     demo.add_argument("--library", action="append", default=[], help="本地 library.json，可重复")
     demo.add_argument("--overwrite", action="store_true")
-    for command in (render_cmd, commands.add_parser("starter", help="生成默认母版和三个场景示例"),
+    for command in (render_cmd, commands.add_parser("starter", help="生成默认母版和全部场景示例（含示例图片）"),
                     commands.add_parser("extract", help="从现有 PPTX 提取元素库、母版和配置")):
         if command.prog.endswith("extract"):
             command.add_argument("source")
