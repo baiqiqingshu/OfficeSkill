@@ -191,10 +191,13 @@ def render(config_path, destination, overwrite):
     if any(source.is_relative_to(destination) for source in sources):
         raise ValueError("输出目录不能包含输入母版、库或图片，请使用独立目录")
     def writer(stage):
+        from . import themes
         master = prepared["master"]
         if master is None:
             master = stage / "default-master.pptx"
-            pptx_backend.create_default_master(master, prepared["pageSize"])
+            theme = themes.THEMES[prepared["config"].get("theme", "blue")]
+            pptx_backend.create_default_master(master, prepared["pageSize"], background=theme["canvas"],
+                                              accent=theme["colors"]["ACCENT"], line=theme["colors"]["BORDER_L"])
         pptx_backend.render_pptx(master, prepared["pages"], prepared["pageSize"], stage / "presentation.pptx")
         (stage / "preview.html").write_text(components.render_preview(prepared["pages"], prepared["pageSize"], prepared["title"]), encoding="utf-8")
         report = {"schemaVersion": 1, "title": prepared["title"], "pageCount": len(prepared["pages"]),

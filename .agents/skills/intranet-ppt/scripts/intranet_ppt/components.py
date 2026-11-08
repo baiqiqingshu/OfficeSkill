@@ -19,8 +19,11 @@ from typing import Any
 TAGS = set("div section article p h1 h2 h3 h4 h5 h6 span strong b em i u br img table thead tbody tr th td ul ol li".split())
 INLINE = set("span strong b em i u br".split())
 INPUT_TYPES = {"text", "richtext", "image", "table", "list"}
-CSS_KEYS = set("position left top width height font-family font-size font-weight font-style text-decoration color background background-color padding border border-width border-style border-color text-align vertical-align white-space box-sizing".split())
+CSS_KEYS = set("position left top width height font-family font-size font-weight font-style text-decoration color background background-color padding border border-width border-style border-color border-radius text-align vertical-align white-space box-sizing line-height letter-spacing".split())
 STYLE_KEYS = {"fontFamily", "fontSize", "color", "bold", "italic", "underline"}
+# Style fields a table's <th> may contribute; table cells only carry text and
+# shape properties, so alignment/padding/fill/border are included explicitly.
+HEADER_STYLE_KEYS = {"fontFamily", "fontSize", "color", "bold", "italic", "underline", "align", "verticalAlign", "padding", "fill", "borderColor", "borderWidth", "borderRadius"}
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
 DEFAULT_STYLE = {"fontFamily": "Microsoft YaHei", "fontSize": 24, "color": "#17324D", "bold": False, "italic": False, "underline": False, "align": "left", "verticalAlign": "top", "padding": 0}
 
@@ -338,7 +341,7 @@ def catalog(libraries):
 
 
 def _style(css, inherited, tag):
-    style = {key: value for key, value in inherited.items() if key not in {"fill", "borderColor", "borderWidth", "padding"}}
+    style = {key: value for key, value in inherited.items() if key not in {"fill", "borderColor", "borderWidth", "padding", "borderRadius"}}
     style["padding"] = 0
     if tag in {"b", "strong", "th"}:
         style["bold"] = True
@@ -399,6 +402,31 @@ def _style(css, inherited, tag):
                 _fail("border-style 仅支持 solid/none")
             if value == "none":
                 style["borderWidth"] = 0
+        elif key == "border-radius":
+            match = re.fullmatch(r"(\d+(?:\.\d*)?|\.\d+)(px|%)?", value)
+            if not match:
+                _fail("border-radius 仅支持 '<半径>px' 或 50%")
+            radius = float(match.group(1))
+            if not math.isfinite(radius) or not 0 <= radius <= 999:
+                _fail("border-radius 须为 0..999px")
+            if match.group(2) == "%" and abs(radius - 50) > 1e-9:
+                _fail("border-radius 百分比仅支持 50%")
+            style["borderRadius"] = value
+        elif key == "line-height":
+            if not re.fullmatch(r"\d+(?:\.\d*)?|\.\d+", value):
+                _fail("line-height 仅支持无单位倍数（如 1、1.5）")
+            ratio = float(value)
+            if not 0.8 <= ratio <= 3:
+                _fail("line-height 须为 0.8..3.0 的倍数")
+            style["lineHeight"] = ratio
+        elif key == "letter-spacing":
+            match = re.fullmatch(r"(-?(?:\d+(?:\.\d*)?|\.\d+))(px)?", value)
+            if not match:
+                _fail("letter-spacing 仅支持 '<值>px' 或无单位数字")
+            spacing = float(match.group(1))
+            if not -5 <= spacing <= 20:
+                _fail("letter-spacing 须为 -5..20px")
+            style["letterSpacing"] = spacing
         elif key == "text-align":
             if value not in {"left", "center", "right", "justify"}:
                 _fail("text-align 无效")
@@ -490,6 +518,46 @@ def _table_rows(value):
     return result
 
 
+def _table_header(node, table_style):
+    """Return ``(headerRows, headerStyle)`` described by a table's thead/th markup.
+
+    The header row count comes from ``<thead>`` (or from a first row made only of
+    ``<th>``); the style comes from the first ``<th>`` so a data-slot table can
+    borrow the header look without carrying its own row content.
+    """
+    thead = next((child for child in node.children if isinstance(child, _Node) and child.tag == "thead"), None)
+    header_rows, first_th = 0, None
+    if thead is not None:
+        header_rows = sum(1 for row in thead.children if isinstance(row, _Node) and row.tag == "tr")
+        first_th = next((cell for cell in _walk(thead) if cell.tag == "th"), None)
+    else:
+        first_row = next((row for row in _walk(node) if row.tag == "tr"), None)
+        cells = [cell for cell in first_row.children if isinstance(cell, _Node) and cell.tag in {"td", "th"}] if first_row is not None else []
+        if cells and all(cell.tag == "th" for cell in cells):
+            header_rows, first_th = 1, cells[0]
+    if not header_rows or first_th is None:
+        return 0, {}
+    computed = _style(_css(first_th.attrs.get("style", "")), table_style, "th")
+    return header_rows, {key: value for key, value in computed.items() if key in HEADER_STYLE_KEYS}
+
+
+def _scale_style(style, rect, scale):
+    """Resolve a component-coordinate style into page pixels.
+
+    ``border-radius`` is resolved against the element's own box (``50%`` becomes
+    half of the shorter side, i.e. a circle) and then scaled with the other
+    length-valued fields.
+    """
+    mapped = dict(style)
+    if "borderRadius" in mapped:
+        limit = min(rect["w"], rect["h"])
+        mapped["borderRadius"] = min(_length(mapped["borderRadius"], limit), limit / 2)
+    for name in {"fontSize", "padding", "borderWidth", "borderRadius", "letterSpacing"} & mapped.keys():
+        value = mapped[name]
+        mapped[name] = [part * scale for part in value] if isinstance(value, list) else value * scale
+    return mapped
+
+
 def compile_element(element, libraries, base_dir, page_size):
     """Compile one placed component to pixel-based native scene nodes."""
     if not isinstance(element, dict) or set(element) - {"id", "component", "box", "inputs"}:
@@ -520,13 +588,13 @@ def compile_element(element, libraries, base_dir, page_size):
             _fail(f"{element['id']} 的 HTML 元素宽高须大于 0")
         if rect["x"] < -.01 or rect["y"] < -.01 or rect["x"] + rect["w"] > component["size"]["width"] + .01 or rect["y"] + rect["h"] > component["size"]["height"] + .01:
             _fail(f"{element['id']} 的 HTML 元素超出组件原始 size")
-        mapped = dict(style)
-        for name in {"fontSize", "padding", "borderWidth"} & mapped.keys():
-            mapped[name] = [value * scale for value in mapped[name]] if isinstance(mapped[name], list) else mapped[name] * scale
+        mapped = _scale_style(style, rect, scale)
         if "runs" in content:
             content["runs"] = [{**run, **({"fontSize": run["fontSize"] * scale} if "fontSize" in run else {})} for run in content["runs"]]
         if "rows" in content:
             content["rows"] = [[cell if isinstance(cell, str) else [{**run, **({"fontSize": run["fontSize"] * scale} if "fontSize" in run else {})} for run in cell] for cell in row] for row in content["rows"]]
+        if "headerStyle" in content:
+            content["headerStyle"] = _scale_style(content["headerStyle"], rect, scale)
         output.append({"type": kind, "x": box["x"] + rect["x"] * sx, "y": box["y"] + rect["y"] * sy, "w": rect["w"] * sx, "h": rect["h"] * sy, "style": mapped, **content})
 
     def visit(node, parent, inherited):
@@ -549,13 +617,14 @@ def compile_element(element, libraries, base_dir, page_size):
                 emit("image", rect, style, src=str(_resource(source, Path(base_dir) if slot else component["_root"], image=True)))
             return
         if node.tag == "table" or kind == "table":
+            header_rows, header_style = _table_header(node, style)
             if slot:
                 rows = _table_rows(value)
             else:
                 rows = [[_static_runs(cell, style, inputs, component.get("inputs", {})) for cell in tr.children if isinstance(cell, _Node) and cell.tag in {"td", "th"}] for tr in _walk(node) if tr.tag == "tr"]
                 rows = _table_rows(rows) if rows else []
             if rows:
-                emit("table", rect, style, rows=rows)
+                emit("table", rect, style, rows=rows, headerRows=min(header_rows, len(rows)), headerStyle=header_style)
             return
         if slot:
             if kind == "list":
@@ -563,10 +632,20 @@ def compile_element(element, libraries, base_dir, page_size):
                     return
                 if not isinstance(value, list) or len(value) > 100:
                     _fail("list 输入须为最多 100 项的数组")
+                classes = set(node.attrs.get("class", "").split())
+                color = style.get("color")
+                marker_style = {"bold": True, **({"color": color} if color else {})}
                 runs = []
                 for index, item in enumerate(value):
-                    marker = f"{index + 1}. " if node.tag == "ol" else "• "
-                    runs += [{"text": ("\n" if index else "") + marker}, *_runs(item)]
+                    if "check" in classes:
+                        marker = "✓  "
+                    elif "dash" in classes:
+                        marker = "—  "
+                    elif "num" in classes:
+                        marker = f"{index + 1}. "
+                    else:
+                        marker = f"{index + 1}. " if node.tag == "ol" else "•  "
+                    runs += [{"text": ("\n" if index else "") + marker, **marker_style}, *_runs(item)]
             elif kind in {"text", "richtext"}:
                 if kind == "text" and value is not None and not isinstance(value, str):
                     _fail("text 输入须为字符串；富文本请声明 richtext")
@@ -596,6 +675,13 @@ def compile_element(element, libraries, base_dir, page_size):
     return output
 
 
+def _padding_css(value):
+    """Serialize a padding value (number or 1/2/4-length list) to a CSS shorthand."""
+    if isinstance(value, (list, tuple)):
+        return " ".join(f"{float(part):g}px" for part in value)
+    return f"{float(value or 0):g}px"
+
+
 def _preview_style(style):
     names = {"fontFamily": "font-family", "fontSize": "font-size", "color": "color", "fill": "background-color", "align": "text-align", "padding": "padding"}
     values = []
@@ -611,9 +697,25 @@ def _preview_style(style):
         values.append("font-style:" + ("italic" if style["italic"] else "normal"))
     if "underline" in style:
         values.append("text-decoration:" + ("underline" if style["underline"] else "none"))
+    if "borderRadius" in style:
+        radius = style["borderRadius"]
+        values.append(f"border-radius:{radius:g}px" if isinstance(radius, (int, float)) else f"border-radius:{radius}")
+    if "lineHeight" in style:
+        values.append(f"line-height:{float(style['lineHeight']):g}")
+    if "letterSpacing" in style:
+        values.append(f"letter-spacing:{float(style['letterSpacing']):g}px")
     if style.get("borderWidth", 0):
         values.append(f"border:{style['borderWidth']:g}px solid {style.get('borderColor', '#000000')}")
     return ";".join(values)
+
+
+def _preview_cell_style(style, fallback_border="#C5D3DF"):
+    """Cell-level CSS: font/fill from the style, border and padding on the cell."""
+    base = _preview_style({key: value for key, value in style.items() if key not in {"padding", "borderWidth", "borderColor"}})
+    width = style.get("borderWidth", 0) or 0
+    border = f"border:{width:g}px solid {style.get('borderColor', fallback_border)}" if width > 0 else "border:0"
+    return ";".join(part for part in (base, border, "padding:" + _padding_css(style.get("padding", 0)),
+                                      "white-space:pre-wrap;overflow-wrap:anywhere") if part)
 
 
 def _preview_runs(runs, inherited=None):
@@ -648,12 +750,27 @@ def _preview_node_html(node):
         uri = "data:image/png;base64," + base64.b64encode(stream.getvalue()).decode("ascii")
         return f'<img alt="" style="{escape(css, quote=True)};object-fit:contain" src="{uri}">'
     if kind == "table":
-        css = positioning + _preview_style({key: value for key, value in node.get("style", {}).items() if key not in {"bold", "italic", "underline"}})
-        rows = []
-        for row in node.get("rows", []):
-            cells = [f'<td>{_preview_runs([{"text": cell}] if isinstance(cell, str) else cell, node.get("style", {}))}</td>' for cell in row]
-            rows.append("<tr>" + "".join(cells) + "</tr>")
-        return f'<table style="{escape(css, quote=True)}">' + "".join(rows) + "</table>"
+        style = node.get("style", {})
+        rows = node.get("rows", [])
+        header_rows = min(int(node.get("headerRows") or 0), len(rows))
+        header_style = node.get("headerStyle") or {}
+        # Padding and borders belong to the cells; the table only carries the
+        # font/background of the whole grid plus the collapsed-border model.
+        css = positioning + _preview_style({key: value for key, value in style.items() if key not in {"padding", "borderWidth", "borderColor", "bold", "italic", "underline"}})
+        css += ";table-layout:fixed;border-collapse:collapse"
+        cells_html = []
+        for index, row in enumerate(rows):
+            head = index < header_rows
+            cell_style = {**style, **header_style} if head else style
+            tag = "th" if head else "td"
+            attributes = f' style="{escape(_preview_cell_style(cell_style), quote=True)}"'
+            cells = [f'<{tag}{attributes}>{_preview_runs([{"text": cell}] if isinstance(cell, str) else cell, cell_style)}</{tag}>' for cell in row]
+            cells_html.append("<tr>" + "".join(cells) + "</tr>")
+        head_html = "".join(cells_html[:header_rows])
+        body_html = "".join(cells_html[header_rows:])
+        return (f'<table style="{escape(css, quote=True)}">'
+                + (f"<thead>{head_html}</thead>" if head_html else "")
+                + (f"<tbody>{body_html}</tbody>" if body_html else "") + "</table>")
     if kind == "line":
         return f'<div style="{escape(css, quote=True)};border-top:1px solid #17324D"></div>'
     if kind == "rect":
@@ -661,20 +778,161 @@ def _preview_node_html(node):
     return ""
 
 
+_PREVIEW_CSS = """*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#eef2f7;color:#17324d;font-family:"Microsoft YaHei","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 20px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid #dbe4ee}
+.tb-title{display:flex;align-items:baseline;gap:10px;min-width:0;font-size:15px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-meta{font-size:12px;font-weight:normal;color:#6b7f93;white-space:nowrap}
+.tb-tools{display:flex;align-items:center;gap:8px;flex:none}
+.zoom{display:flex;background:#fff;border:1px solid #dbe4ee;border-radius:2px;overflow:hidden}
+.zoom button{border:0;border-left:1px solid #eef2f7;background:#fff;color:#33506c;font:inherit;font-size:12px;padding:6px 12px;cursor:pointer}
+.zoom button:first-child{border-left:0}
+.zoom button:hover{background:#f2f7fc}
+.zoom button.active{background:#1476b8;color:#fff}
+.action{border:1px solid #dbe4ee;background:#fff;color:#33506c;font:inherit;font-size:12px;padding:6px 14px;border-radius:2px;cursor:pointer}
+.action:hover{background:#f2f7fc}
+.pager{position:fixed;left:0;top:0;bottom:0;z-index:20;width:64px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:74px 8px 24px;overflow:auto;background:#f8fbfe;border-right:1px solid #dbe4ee}
+.pager button{width:38px;height:32px;flex:none;border:1px solid transparent;border-radius:2px;background:transparent;color:#4a6b88;font:inherit;font-size:12px;cursor:pointer}
+.pager button:hover{background:#e8f1f9;border-color:#d3e2ee}
+.pager button.active{background:#1476b8;border-color:#1476b8;color:#fff}
+.stage{margin-left:64px;padding:24px 28px 64px;display:flex;flex-direction:column;align-items:center;gap:26px}
+.slide-block{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;scroll-margin-top:74px}
+.slide-holder{position:relative}
+section.slide{position:relative;overflow:hidden;background:#fff;border:1px solid #d9e3ee;border-radius:2px;box-shadow:0 6px 22px rgba(23,50,77,.1);transform-origin:top left}
+.caption{margin:0;font-size:12px;color:#7c8fa3}
+.text{white-space:pre-wrap;overflow:hidden;line-height:1.2}
+table{table-layout:fixed;border-collapse:collapse}
+td,th{padding:0;white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:899px){.pager{display:none}.stage{margin-left:0;padding:16px 12px 48px}}
+@media print{body{background:#fff}.topbar,.pager,.caption{display:none}.stage{margin:0;padding:0;gap:0}.slide-block{width:auto;gap:0}.slide-holder{width:auto!important;height:auto!important}section.slide{transform:none!important;box-shadow:none;border:0;border-radius:0;break-after:page;page-break-after:always}}
+"""
+
+_PREVIEW_JS = """(function () {
+  var PAGE_W = __PAGE_W__, PAGE_H = __PAGE_H__;
+  var holder = Array.prototype.slice.call(document.querySelectorAll('.slide-holder'));
+  var slide = Array.prototype.slice.call(document.querySelectorAll('section.slide'));
+  var block = Array.prototype.slice.call(document.querySelectorAll('.slide-block'));
+  var zoomButton = Array.prototype.slice.call(document.querySelectorAll('[data-zoom]'));
+  var navButton = Array.prototype.slice.call(document.querySelectorAll('[data-goto]'));
+  var stage = document.querySelector('.stage');
+  var STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2];
+  var mode = 'fit', scale = 1, active = 1;
+
+  function fitScale() {
+    var available = stage ? stage.clientWidth - 56 : PAGE_W;
+    if (available <= 0) available = PAGE_W;
+    return Math.max(0.1, Math.min(1, available / PAGE_W));
+  }
+  function paint() {
+    scale = mode === 'fit' ? fitScale() : parseFloat(mode);
+    holder.forEach(function (node) {
+      node.style.width = Math.round(PAGE_W * scale) + 'px';
+      node.style.height = Math.round(PAGE_H * scale) + 'px';
+    });
+    slide.forEach(function (node) { node.style.transform = 'scale(' + scale + ')'; });
+    zoomButton.forEach(function (node) { node.classList.toggle('active', node.dataset.zoom === mode); });
+  }
+  function mark(page) {
+    active = page;
+    navButton.forEach(function (node) {
+      var on = parseInt(node.dataset.goto, 10) === page;
+      node.classList.toggle('active', on);
+      if (on) node.setAttribute('aria-current', 'true'); else node.removeAttribute('aria-current');
+    });
+  }
+  function goTo(index) {
+    var target = block[Math.max(0, Math.min(block.length - 1, index))];
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function step(direction) {
+    var next = null;
+    STEPS.forEach(function (value) {
+      if (direction > 0 && value > scale + 0.001 && next === null) next = value;
+    });
+    if (direction < 0) STEPS.slice().reverse().forEach(function (value) {
+      if (value < scale - 0.001 && next === null) next = value;
+    });
+    if (next !== null) { mode = String(next); paint(); }
+  }
+
+  zoomButton.forEach(function (node) {
+    node.addEventListener('click', function () { mode = node.dataset.zoom; paint(); });
+  });
+  navButton.forEach(function (node) {
+    node.addEventListener('click', function () { goTo(parseInt(node.dataset.goto, 10) - 1); });
+  });
+  var print = document.querySelector('[data-print]');
+  if (print) print.addEventListener('click', function () { window.print(); });
+
+  document.addEventListener('keydown', function (event) {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    var key = event.key;
+    if (key === '+' || key === '=') { event.preventDefault(); step(1); }
+    else if (key === '-' || key === '_') { event.preventDefault(); step(-1); }
+    else if (key === 'ArrowDown' || key === 'PageDown') { event.preventDefault(); goTo(active); }
+    else if (key === 'ArrowUp' || key === 'PageUp') { event.preventDefault(); goTo(active - 2); }
+    else if (key === 'Home') { event.preventDefault(); goTo(0); }
+    else if (key === 'End') { event.preventDefault(); goTo(block.length - 1); }
+  });
+
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) mark(parseInt(entry.target.dataset.page, 10));
+      });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+    block.forEach(function (node) { observer.observe(node); });
+  } else {
+    window.addEventListener('scroll', function () {
+      var middle = window.scrollY + window.innerHeight / 2;
+      block.forEach(function (node) {
+        if (node.offsetTop <= middle && node.offsetTop + node.offsetHeight > middle) mark(parseInt(node.dataset.page, 10));
+      });
+    });
+  }
+  window.addEventListener('resize', function () { if (mode === 'fit') paint(); });
+  mark(1);
+  paint();
+}());
+"""
+
+
 def render_preview(pages, page_size, title):
-    """Render a self-contained, script-free offline content preview."""
+    """Render a self-contained, interactive offline content preview.
+
+    The page shell (toolbar, page rail, zoom, keyboard paging) is inline
+    JavaScript/CSS with no external requests; the slide sections themselves keep
+    the absolute-positioned scene nodes produced by :func:`_preview_node_html`.
+    """
     width, height = page_size["width"], page_size["height"]
-    slides = []
+    total = len(pages)
+    blocks = []
     for index, page in enumerate(pages, 1):
         elements = []
         for node in page["nodes"]:
             fragment = _preview_node_html(node)
             if fragment:
                 elements.append(fragment)
-        slides.append(f'<section aria-label="第 {index} 页" style="width:{width:g}px;height:{height:g}px">' + "".join(elements) + "</section>")
+        blocks.append(f'<div class="slide-block" id="page-{index}" data-page="{index}">'
+                      f'<div class="slide-holder" style="width:{width:g}px;height:{height:g}px">'
+                      f'<section class="slide" aria-label="第 {index} 页" style="width:{width:g}px;height:{height:g}px">'
+                      + "".join(elements) + "</section></div>"
+                      f'<p class="caption">第 {index} 页 / 共 {total} 页</p></div>')
+    nav = "".join(f'<button type="button" data-goto="{index}" aria-label="跳到第 {index} 页">{index}</button>'
+                  for index in range(1, total + 1))
+    script = (_PREVIEW_JS.replace("__PAGE_W__", f"{width:g}").replace("__PAGE_H__", f"{height:g}"))
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
-            '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'">'
+            '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(str(title))}</title>'
-            '<style>*{box-sizing:border-box}body{margin:0;padding:28px;background:#e9edf2;color:#17324d;font-family:Microsoft YaHei,sans-serif}header{max-width:1200px;margin:0 auto 20px}header p{color:#627184;font-size:14px}section{position:relative;overflow:hidden;background:#fff;margin:0 auto 28px;box-shadow:0 4px 22px #17324d1a}.text{white-space:pre-wrap;overflow:hidden;line-height:1.2}table{table-layout:fixed;border-collapse:collapse}td{border:1px solid #cbd5e1;padding:8px;white-space:pre-wrap;overflow-wrap:anywhere}@media print{body{padding:0;background:#fff}header{display:none}section{margin:0;box-shadow:none;break-after:page}}</style></head>'
-            f'<body><header><h1>{escape(str(title))}</h1><p>离线内容预览。企业 PPTX 母版的固定背景与装饰以最终 PPTX 文件为准。</p></header>'
-            + "".join(slides) + '</body></html>')
+            f'<style>{_PREVIEW_CSS}</style></head><body>'
+            f'<header class="topbar"><div class="tb-title">{escape(str(title))}<span class="tb-meta">共 {total} 页</span></div>'
+            '<div class="tb-tools"><div class="zoom" role="group" aria-label="缩放">'
+            '<button type="button" data-zoom="fit" class="active">适应窗口</button>'
+            '<button type="button" data-zoom="1">100%</button>'
+            '<button type="button" data-zoom="0.75">75%</button>'
+            '<button type="button" data-zoom="0.5">50%</button></div>'
+            '<button type="button" class="action" data-print>打印</button></div></header>'
+            f'<nav class="pager" aria-label="页码导航">{nav}</nav>'
+            '<main class="stage">' + "".join(blocks) + "</main>"
+            f'<script>{script}</script></body></html>')

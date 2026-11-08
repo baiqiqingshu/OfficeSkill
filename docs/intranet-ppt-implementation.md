@@ -58,7 +58,7 @@
 
 ## 安全约束
 
-拒绝网络/UNC 路径、脚本、外部资源、事件属性、非白名单 HTML/CSS、PPTX 外链、宏、ActiveX、DTD/实体。库内资源限制在库目录；配置资源限制在配置目录，拒绝路径穿越与符号链接逃逸。不上传、不自动联网安装、不执行库内代码。预览不带脚本或远程资源；公司母版的固定视觉只以 PPTX 为准。
+拒绝网络/UNC 路径、脚本、外部资源、事件属性、非白名单 HTML/CSS、PPTX 外链、宏、ActiveX、DTD/实体。库内资源限制在库目录；配置资源限制在配置目录，拒绝路径穿越与符号链接逃逸。不上传、不自动联网安装、不执行库内代码。组件库 HTML 禁止脚本；预览页只含内联交互脚本（缩放/翻页），不加载外部脚本或远程资源。公司母版的固定视觉只以 PPTX 为准。
 
 ## 并行实施与验收
 
@@ -71,16 +71,16 @@
 实际交付：
 
 - 五个固定命令：`catalog`、`validate`、`render`、`starter`、`extract`。
-- 八个内置组件：标题、正文、要点、卡片、表格、图片、指标、步骤。
+- 内置组件库（当前 45 个，见下节），覆盖标题、正文、要点、卡片、表格、图片、指标、封面、章节、目录、流程、架构、时间线、对比、结论等。
 - 三类可直接生成的配置示例：技术汇报、技术方案评审、需求评审。
 - 配置 JSON Schema、第三方库格式和提取/安全边界说明。所有运行代码与资源在 skill 内自包含，可整体复制到内网，不依赖其他 skill。
-- 图片为本地 PNG/JPEG/GIF/BMP/WebP；输出 HTML 内嵌 PNG，无脚本和远程依赖。表格和文字为原生 PowerPoint 可编辑对象。
+- 图片为本地 PNG/JPEG/GIF/BMP/WebP；输出 HTML 内嵌 PNG，预览页仅含内联交互脚本，无远程依赖。表格和文字为原生 PowerPoint 可编辑对象。
 - 输出目录事务发布，失败不发布半成品；覆盖仅限有本工具标记的专用产物目录，且禁止输出目录包含本次输入。
 
 与初始方案的具体收敛：
 
 - 提取出的组件 HTML 内联保存在 `library/library.json`，图片位于 `library/assets/`；第三方库仍支持 `htmlFile`，不要求为每个提取组件额外创建文件。
-- HTML/CSS 支持绝对坐标、有限字体/颜色/边框和 1/2/4 值 padding。明确拒绝 flex/grid、样式表、脚本和 `line-height`；不承诺任意网页转换。
+- HTML/CSS 支持绝对坐标、有限字体/颜色/边框、1/2/4 值 padding、`border-radius`、`line-height`、`letter-spacing`、`thead` 表头和列表标记 class。明确拒绝 flex/grid、样式表、脚本、渐变和任意网页转换。
 - 普通文字、非裁剪图片、非合并表格、简单矩形可提取。组合、图表、旋转、复杂形状等保留为原生静态对象并报告；混合静态对象时需检查层叠顺序。主题色/字体及表格复杂效果属于近似映射，不能承诺往返像素一致。
 - 库最多 200 个组件；提取超出组件容量、页面边界或支持范围的对象会保留在母版并报告。含嵌入附件/工作簿的 PPTX 也会被包安全检查拒绝。
 - 自定义母版保持原页面尺寸；JSON 的像素画布映射到原生尺寸。`box` 缩放会缩放组件字号，不会根据内容自动缩小字体或截断正文；最终应本地检查文字溢出。
@@ -110,7 +110,9 @@
 
 ## 元素库扩展与主题换色（本轮追加交付）
 
-- 内置库扩至 34 个组件（流程、分层、目录、引用、提示框、代码块、时间线、四象限等），同目录 `samples.json` 提供演示输入，`images/` 放库内静态图。
+- 内置库扩至 45 个组件（流程、架构、分层、目录、引用、提示框、代码块、时间线、四象限、指标卡、人员卡、接口行等），同目录 `samples.json` 提供演示输入，`images/` 放库内静态图。
 - `themes.py` 提供 5 套主题（blue/emerald/crimson/mono/graphite），`load_libraries(palette=)` 在组件 HTML 解析前做规范色板 hex 全词替换；deck JSON 顶层 `"theme"` 生效于 render 链路。
-- 新增 `demo` 命令：`demo --out DIR [--library x.json] [--overwrite]` 生成单文件离线 `library-demo.html`，含组件卡片、示例 JSON、5 主题即时换色与固定组合示例；预生成产物在 `assets/demo/`。
+- 新增 `demo` 命令：`demo --out DIR [--library x.json] [--overwrite]` 生成单文件离线 `library-demo.html`。v2 改为「整页示例优先」：读取 `examples/*.json`，按 1280×720 完整页面展示并支持灯箱翻页；组件库分组卡片支持搜索、示例 JSON、复制元素 JSON 和 5 主题换色。预生成产物在 `assets/demo/`。
 - `deck.schema.json` 增加 `theme` 枚举；`library-format.md` 增补规范色板、samples.json、demo 用法；`SKILL.md` 增补元素库预览说明。
+- 新增 `examples/technical-proposal.json`（11 页完整技术方案），作为 starter 与 demo 的整页示例来源。
+- v2 框架扩展：圆角/圆形、行距、字距、表头、单元格边框、列表标记；预览页增加工具栏、缩放、页码导航与键盘翻页；默认母版随主题生成。详见 [intranet-ppt-library-v2.md](intranet-ppt-library-v2.md)。

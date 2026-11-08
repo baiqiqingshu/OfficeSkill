@@ -252,6 +252,55 @@ def _style_shape(shape, style, scale):
         shape.line.fill.background()
 
 
+def _flat(shape):
+    """Disable the theme shadow so generated shapes stay flat like the scene."""
+    try:
+        shape.shadow.inherit = False
+    except (AttributeError, NotImplementedError, TypeError, ValueError):
+        # GraphicFrames (tables) and other shapes without spPr keep their default.
+        pass
+
+
+def _radius(style, width, height, scale):
+    """Return the border radius in EMU, clamped to half the shorter side."""
+    value = style.get("borderRadius")
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return 0
+    if not math.isfinite(value) or value <= 0:
+        return 0
+    return min(float(value) * scale, min(width, height) / 2)
+
+
+def _geometry(style, width, height, scale):
+    """Pick the preset geometry that matches the style's corner radius."""
+    radius = _radius(style, width, height, scale)
+    if radius <= 0:
+        return MSO_SHAPE.RECTANGLE
+    if radius >= min(width, height) / 2:
+        return MSO_SHAPE.OVAL
+    return MSO_SHAPE.ROUNDED_RECTANGLE
+
+
+def _apply_radius(shape, style, width, height, scale):
+    """Translate the radius into the roundRect adjustment (fraction of the short side)."""
+    radius = _radius(style, width, height, scale)
+    side = min(width, height)
+    if radius <= 0 or side <= 0 or radius >= side / 2:
+        return
+    try:
+        shape.adjustments[0] = radius / side
+    except (IndexError, KeyError, TypeError, ValueError):
+        pass
+
+
+def _line_spacing(style):
+    value = style.get("lineHeight")
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    value = float(value)
+    return value if math.isfinite(value) and 0 < value <= 10 else None
+
+
 def _font(run, style, scale):
     font = run.font
     family = style.get("fontFamily", "Microsoft YaHei")
@@ -268,6 +317,10 @@ def _font(run, style, scale):
             child = OxmlElement(f"a:{tag}")
             rpr.append(child)
         child.set("typeface", family)
+    spacing = style.get("letterSpacing")
+    if isinstance(spacing, (int, float)) and not isinstance(spacing, bool) and math.isfinite(spacing):
+        # DrawingML character spacing is in 1/100 pt; px -> pt is 72/96.
+        rpr.set("spc", str(int(round(float(spacing) * 75))))
 
 
 def _runs(value):
@@ -291,11 +344,14 @@ def _text(tf, value, style, scale):
         paddings = [padding] * 4
     tf.margin_top, tf.margin_right, tf.margin_bottom, tf.margin_left = [int(float(p) * scale) for p in paddings]
     tf.vertical_anchor = {"top": MSO_ANCHOR.TOP, "middle": MSO_ANCHOR.MIDDLE, "center": MSO_ANCHOR.MIDDLE, "bottom": MSO_ANCHOR.BOTTOM}.get(style.get("verticalAlign"), MSO_ANCHOR.TOP)
+    line_spacing = _line_spacing(style)
     paragraph = tf.paragraphs[0]
     align = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT, "justify": PP_ALIGN.JUSTIFY}.get(style.get("align"), PP_ALIGN.LEFT)
     paragraph.alignment = align
     paragraph.space_before = Pt(0)
     paragraph.space_after = Pt(0)
+    if line_spacing:
+        paragraph.line_spacing = line_spacing
     for spec in _runs(value):
         merged = {**style, **spec.get("style", {}), **{k: v for k, v in spec.items() if k not in {"text", "style"}}}
         for index, chunk in enumerate(str(spec.get("text", "")).replace("\r\n", "\n").split("\n")):
@@ -303,6 +359,8 @@ def _text(tf, value, style, scale):
                 paragraph = tf.add_paragraph()
                 paragraph.alignment = align
                 paragraph.space_before = paragraph.space_after = Pt(0)
+                if line_spacing:
+                    paragraph.line_spacing = line_spacing
             run = paragraph.add_run()
             run.text = chunk
             _font(run, merged, scale)
@@ -325,6 +383,57 @@ def _image(path):
         raise ValueError(f"无法读取本地图片：{path.name}") from exc
 
 
+_BORDER_TAGS = ("lnL", "lnR", "lnT", "lnB")
+
+
+def _hex(value, default="C5D3DF"):
+    """Normalize a scene color to the uppercase hex DrawingML expects."""
+    value = str(value if value is not None else default).lstrip("#")
+    if len(value) == 3:
+        value = "".join(char * 2 for char in value)
+    if not re.fullmatch(r"[0-9A-Fa-f]{6}", value):
+        raise ValueError(f"颜色必须为 #RRGGBB：{value}")
+    return value.upper()
+
+
+def _cell_borders(cell, style, scale):
+    """Write explicit four-side borders on a table cell.
+
+    ``a:lnL/lnR/lnT/lnB`` must precede the fill elements inside ``a:tcPr``, so the
+    lines are inserted at the front of the property element in schema order; any
+    inherited line elements are removed first to keep the result deterministic.
+    A zero width writes explicit ``noFill`` lines so the default table style's
+    grid cannot reappear (the HTML preview renders such cells with ``border:0``).
+    """
+    tc_pr = cell._tc.get_or_add_tcPr()
+    for tag in _BORDER_TAGS:
+        existing = tc_pr.find(f"{{{A}}}{tag}")
+        if existing is not None:
+            tc_pr.remove(existing)
+    width = style.get("borderWidth") or 0
+    solid = not (isinstance(width, bool) or not isinstance(width, (int, float)) or not math.isfinite(width) or width <= 0)
+    emu = max(1, int(round(float(width) * scale))) if solid else 0  # scale is EMU per scene px
+    color = _hex(style.get("borderColor"), "C5D3DF")
+    for offset, tag in enumerate(_BORDER_TAGS):
+        line = OxmlElement(f"a:{tag}")
+        line.set("w", str(emu))
+        line.set("cap", "flat")
+        line.set("cmpd", "sng")
+        line.set("algn", "ctr")
+        if solid:
+            fill = OxmlElement("a:solidFill")
+            swatch = OxmlElement("a:srgbClr")
+            swatch.set("val", color)
+            fill.append(swatch)
+            line.append(fill)
+            dash = OxmlElement("a:prstDash")
+            dash.set("val", "solid")
+            line.append(dash)
+        else:
+            line.append(OxmlElement("a:noFill"))
+        tc_pr.insert(offset, line)
+
+
 def _render_node(slide, node, sx, sy):
     x, y, w, h = [float(node.get(k, 0)) for k in ("x", "y", "w", "h")]
     if not all(math.isfinite(v) for v in (x, y, w, h)) or w < 0 or h < 0:
@@ -334,14 +443,26 @@ def _render_node(slide, node, sx, sy):
     scale = min(sx, sy)
     kind = node["type"]
     if kind == "text":
-        shape = slide.shapes.add_textbox(left, top, width, height)
-        _style_shape(shape, style, scale)
-        _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale)
+        if _radius(style, width, height, scale) > 0:
+            # Rounded/flat text panels need a real shape to carry the fill.
+            shape = slide.shapes.add_shape(_geometry(style, width, height, scale), left, top, width, height)
+            _flat(shape)
+            _apply_radius(shape, style, width, height, scale)
+            _style_shape(shape, style, scale)
+            _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale)
+        else:
+            shape = slide.shapes.add_textbox(left, top, width, height)
+            _flat(shape)
+            _style_shape(shape, style, scale)
+            _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale)
     elif kind == "rect":
-        shape = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, left, top, width, height)
+        shape = slide.shapes.add_shape(_geometry(style, width, height, scale), left, top, width, height)
+        _flat(shape)
+        _apply_radius(shape, style, width, height, scale)
         _style_shape(shape, style, scale)
     elif kind == "line":
         shape = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, left, top, left + width, top + height)
+        _flat(shape)
         shape.line.color.rgb = _color(style.get("borderColor", style.get("color", "2A64D6")))
         shape.line.width = int(style.get("borderWidth", 1) * scale)
     elif kind == "image":
@@ -349,40 +470,51 @@ def _render_node(slide, node, sx, sy):
         ratio = min(width / iw, height / ih)
         nw, nh = int(iw * ratio), int(ih * ratio)
         shape = slide.shapes.add_picture(stream, left + (width - nw) // 2, top + (height - nh) // 2, nw, nh)
+        _flat(shape)
     elif kind == "table":
         rows = node.get("rows", [])
         if not rows or not isinstance(rows, list) or not isinstance(rows[0], list) or not rows[0] or any(not isinstance(r, list) or len(r) != len(rows[0]) for r in rows):
             raise ValueError("表格 rows 必须是非空矩形二维数组")
+        header_rows = node.get("headerRows") or 0
+        if isinstance(header_rows, bool) or not isinstance(header_rows, int) or header_rows < 0:
+            header_rows = 0
+        header_rows = min(header_rows, len(rows))
+        header_style = node.get("headerStyle") or {}
         shape = slide.shapes.add_table(len(rows), len(rows[0]), left, top, width, height)
+        _flat(shape)
         table = shape.table
         table.first_row = False
+        table.first_col = False
+        table.last_row = False
+        table.last_col = False
         table.horz_banding = False
+        table.vert_banding = False
         for ri, row in enumerate(rows):
             for ci, cell_value in enumerate(row):
                 cell = table.cell(ri, ci)
-                cell_style = {**style}
-                if ri == 0:
-                    cell_style.update(node.get("headerStyle", {}))
+                cell_style = {**style, **header_style} if ri < header_rows else {**style}
                 if isinstance(cell_value, dict) and "runs" in cell_value:
                     cell_style.update(cell_value.get("style", {}))
                 _text(cell.text_frame, cell_value, cell_style, scale)
+                fill = cell_style.get("fill")
                 cell.fill.solid()
-                cell.fill.fore_color.rgb = _color(cell_style.get("fill", "FFFFFF"), "FFFFFF")
+                cell.fill.fore_color.rgb = _color(fill if fill and fill != "transparent" else "FFFFFF", "FFFFFF")
+                _cell_borders(cell, cell_style, scale)
     else:
         raise ValueError(f"不支持的 scene 类型：{kind}")
     if node.get("id"):
         shape.name = str(node["id"])
 
 
-def create_default_master(path, page_size=None):
+def create_default_master(path, page_size=None, background=None, accent=None, line=None):
     width, height = _page_size(page_size)
     prs = Presentation()
     prs.slide_width, prs.slide_height = int(width * EMU_PX), int(height * EMU_PX)
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     slide.background.fill.solid()
-    slide.background.fill.fore_color.rgb = _color("F7F9FD")
-    _render_node(slide, {"type": "rect", "x": 0, "y": 0, "w": 12, "h": height, "style": {"fill": "1748A6"}}, EMU_PX, EMU_PX)
-    _render_node(slide, {"type": "line", "x": 48, "y": height - 36, "w": width - 96, "h": 0, "style": {"borderColor": "D5DDEA", "borderWidth": 1}}, EMU_PX, EMU_PX)
+    slide.background.fill.fore_color.rgb = _color(background or "F7F9FD")
+    _render_node(slide, {"type": "rect", "x": 0, "y": 0, "w": 12, "h": height, "style": {"fill": accent or "1748A6"}}, EMU_PX, EMU_PX)
+    _render_node(slide, {"type": "line", "x": 48, "y": height - 36, "w": width - 96, "h": 0, "style": {"borderColor": line or "D5DDEA", "borderWidth": 1}}, EMU_PX, EMU_PX)
     out = _save(prs, path)
     return {"output": str(out), "pageCount": 1, "pageSize": {"width": width, "height": height}}
 

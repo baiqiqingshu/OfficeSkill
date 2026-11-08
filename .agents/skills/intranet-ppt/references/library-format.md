@@ -46,8 +46,10 @@
 
 - 标签：`div section article p h1 h2 h3 h4 h5 h6 span strong b em i u br img table thead tbody tr th td ul ol li`。
 - 布局：内联样式，`position:absolute/relative`、`left/top/width/height`，尺寸使用 `px`、`%` 或零。建议所有可见叶子明确给出位置和高度；不使用 flex、grid、自动流式网页布局。
-- 文字：`font-family/font-size/font-weight/font-style/text-decoration/text-align/vertical-align`、`color`。
-- 形状：`background-color`、`border:1px solid #RRGGBB`、`padding`。
+- 文字：`font-family/font-size/font-weight/font-style/text-decoration/text-align/vertical-align`、`color`、`line-height`（无单位倍数 0.8–3.0）、`letter-spacing`（px，-5–20）。
+- 形状：`background-color`、`border:1px solid #RRGGBB`、`padding`、`border-radius`（`Npx` 或 `50%`，用于圆角卡片与圆形徽标）。
+- 列表：`ul/ol` 的 `class` 决定前缀，`check` → `✓`、`dash` → `—`、`num` → 数字；前缀加粗并沿用列表文字颜色，随主题换色。
+- 表格：组件 HTML 中用 `<thead><tr><th style="...">` 声明表头样式（填充、文字颜色、加粗、内边距、边框）；`data-slot="rows"` 只提供正文行，表头行数和样式来自 HTML。`th` 的表头样式会同时用于 HTML 预览和 PPTX。
 - 根组件按 `size` 设计，通过配置 `box` 缩放；字号按两个缩放方向的较小比例缩放。避免过度缩放，优先选择适合内容的元素尺寸。
 - 图片使用本地文件，维持宽高比。JSON 的图片相对于配置目录；HTML 中静态 `img src` 相对于库目录。
 
@@ -63,15 +65,18 @@
 | BODY 正文 | #263C50 |
 | MUTED 次要 | #52687A |
 | FAINT 弱文字 | #8496A8 |
-| ACCENT_D 深主色 | #145D92 |
-| ACCENT 主色 | #1476B8 |
+| ACCENT_D 深主色（文字/描边） | #145D92 |
+| ACCENT_FILL_D 深主色填充（白字） | #145D93 |
+| ACCENT 主色（文字/描边） | #1476B8 |
+| ACCENT_FILL 主色填充（白字） | #1476B9 |
 | ACCENT_L 浅主色 | #3F92CC |
 | SOFT_A 主色浅底 | #E4EFF8 |
 | BG_SOFT 卡片底 | #F0F5FA |
 | BG_SOFT2 表格底 | #F5F8FB |
 | BORDER 边框 | #C5D3DF |
 | BORDER_L 浅边框 | #D8E4EF |
-| WHITE 反白文字 | #FFFFFF |
+| WHITE 反白文字（白字） | #FFFFFF |
+| SURFACE 白色卡片/表格底 | #FDFDFD |
 | OK / OK_BG | #1E7A46 / #E5F3EA |
 | WARN / WARN_BG | #A86A00 / #FBF0DC |
 | DANGER / DANGER_BG | #B3372F / #F9E9E7 |
@@ -79,6 +84,8 @@
 例外（不属于色板、不参与换色）：代码块深底 `#212B36`、代码文字 `#D9E4EF`、代码边框 `#3A4A5C`。
 
 换色发生在库加载阶段：组件 HTML 字符串进入解析器前，对 `#RRGGBB`/`#RGB` 做大小写不敏感的全词替换。`graphite` 为暗底主题，文字系 token 换浅色、底色系 token 换深色；各主题的状态色（OK/WARN/DANGER）可保持恒定或微调。
+
+`SURFACE` 与 `WHITE` 必须分开：`SURFACE` 用于白色卡片、表格正文和图片框背景，暗色主题会换成深色面；`WHITE` 只用于主色填充上的反白文字，暗色主题仍保持白色。同理，主色填充块（表头、结论条、徽标、方法标签）使用 `ACCENT_FILL` / `ACCENT_FILL_D`，避免暗色主题把填充换成浅色后白字不可读。
 
 ## 示例输入 samples.json
 
@@ -99,8 +106,8 @@ key 推荐 `库ID/组件ID`（不带前缀的组件 ID 亦可）；value 直接�
 python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/library.json] [--overwrite]
 ```
 
-生成 `output/library-demo/library-demo.html`：单文件离线页面，按原始尺寸渲染全部组件，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）和可折叠的示例 JSON；页头按钮可在 5 套主题间即时换色，文件顶部另有固定编排的组合示例（流程图、分层架构、目录、指标行，缺组件自动跳过）。
+生成 `output/library-demo/library-demo.html`：单文件离线页面。顶部「整页示例」按 deck 分页签，把组件放进 1280×720 完整页面展示，可点击放大与左右翻页；下方「组件库」按库分组，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）、缩放预览、可折叠示例 JSON 和复制元素 JSON 按钮。左侧支持搜索过滤，5 套主题可即时给预览换色。
 
 ## 内置组件
 
-`builtin/`：`title`、`text`、`bullets`、`card`、`table`、`image`、`metric`、`steps`、`cover`、`section-break`、`agenda-item`、`section-title`、`caption`、`footnote`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`divider`、`tag`、`status`、`field`、`feature-card`、`panel`、`code`、`image-frame`、`flow-step`、`flow-arrow`、`timeline-item`、`phase`、`layer`、`compare`、`matrix2x2`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
+`builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。

@@ -10,7 +10,7 @@ description: 面向内网技术汇报、技术方案评审和需求评审，用�
 ## 生成
 
 1. 先查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。使用第三方库时追加 `--library 本地/library.json`。只使用目录中列出的组件 ID 和输入名。
-2. 写一份配置 JSON。可参考 `examples/technical-report.json`、`solution-review.json`、`requirements-review.json`。默认内置母版和基础库，无需选择多套方案。
+2. 写一份配置 JSON。优先参考 `examples/technical-proposal.json`：11 页完整技术方案，覆盖封面、议程、章节页、架构图、流程图、表格、指标、对比、时间线和结束页。短例可参考 `technical-report.json`、`solution-review.json`、`requirements-review.json`。默认内置母版和基础库，无需选择多套方案。
 3. 执行：
 
    ```text
@@ -46,14 +46,20 @@ description: 面向内网技术汇报、技术方案评审和需求评审，用�
 
 ## 元素库预览
 
-直接双击打开 `SKILL_DIR/assets/demo/library-demo.html`，可离线浏览元素库全部组件：中文名、`库ID/组件ID`、原始尺寸、inputs 签名、示例输入 JSON 及按原尺寸渲染的效果；页头按钮可在 5 套主题间即时换色，顶部另有流程图、分层架构、目录、指标行等组合编排示例。该文件为预生成产物，库变更后可用命令重新生成（第三方库用 `--library` 一并纳入）：
+直接双击打开 `SKILL_DIR/assets/demo/library-demo.html`，可离线浏览元素库：
+
+- 「整页示例」按 deck 分页签，把组件放进 1280×720 完整页面展示（封面、议程、架构、流程、表格、指标、对比、计划等），点击可放大并左右翻页。
+- 「组件库」按库分组，显示中文名、`库ID/组件ID`、原始尺寸、inputs 签名、缩放预览和示例输入 JSON，可一键复制可直接粘贴的元素 JSON。
+- 左侧搜索框按名称/ID/描述过滤，5 套主题色板可即时给整页示例和组件预览换色。
+
+该文件为预生成产物，库或示例变更后可用命令重新生成（第三方库用 `--library` 一并纳入）：
 
 ```text
 python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo
 python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library 本地/library.json
 ```
 
-内置组件（`builtin/` 前缀）：`title` `text` `bullets` `card` `table` `image` `metric` `steps` `cover` `section-break` `agenda-item` `section-title` `caption` `footnote` `quote` `callout` `callout-warn` `callout-danger` `conclusion` `divider` `tag` `status` `field` `feature-card` `panel` `code` `image-frame` `flow-step` `flow-arrow` `timeline-item` `phase` `layer` `compare` `matrix2x2`。各组件的输入名、类型和必填性一律以 `catalog` 输出为准。
+内置组件（`builtin/` 前缀）：`title` `eyebrow` `lead` `section-title` `text` `bullets` `checklist` `steps` `caption` `footnote` `divider` `cover` `section-break` `agenda-item` `thanks` `card` `feature-card` `panel` `metric` `stat-card` `person-card` `icon-badge` `table` `compare` `matrix2x2` `field` `api-item` `tag` `status` `quote` `callout` `callout-warn` `callout-danger` `conclusion` `flow-step` `flow-arrow` `layer` `arch-node` `arch-zone` `timeline-item` `timeline-h-item` `phase` `image` `image-frame` `code`。各组件的输入名、类型和必填性一律以 `catalog` 输出为准。
 
 ## 公司母版和外部库
 
@@ -76,4 +82,4 @@ python SKILL_DIR/scripts/ppt_tool.py render extracted/deck.json --out output/reb
 
 依赖 Python 3.10+、python-pptx、Pillow、lxml，版本范围见 `scripts/requirements.txt`。未安装时由内网环境准备 wheel，执行 `python -m pip install --no-index --find-links 本地wheel目录 -r SKILL_DIR/scripts/requirements.txt`。不自动联网安装，不上传模板或内容，不使用云端转换、外部字体、遥测。
 
-需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出三个场景示例和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。
+需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出四个场景示例（含 11 页完整技术方案）和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。

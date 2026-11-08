@@ -1,0 +1,1185 @@
+{
+  "schemaVersion": 1,
+  "title": "统一认证平台技术方案评审（整页示例）",
+  "pageSize": {
+    "width": 1280,
+    "height": 720
+  },
+  "theme": "blue",
+  "pageCount": 11,
+  "pages": [
+    {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-main",
+          "component": "builtin/cover",
+          "box": {
+            "x": 64,
+            "y": 170,
+            "w": 1152,
+            "h": 420
+          },
+          "inputs": {
+            "tag": "技术方案评审",
+            "title": "统一认证平台\n技术方案评审",
+            "subtitle": "内网身份基础设施升级与 47 个业务系统接入",
+            "meta": "汇报人：张伟 ｜ 平台研发部 ｜ 2026-03"
+          }
+        },
+        {
+          "id": "cover-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "内部资料 · 仅限评审使用 ｜ 统一认证平台技术方案"
+          }
+        }
+      ]
+    },
+    {
+      "id": "agenda",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "agenda-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "汇报议程"
+          }
+        },
+        {
+          "id": "agenda-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "本次评审围绕现状、总体架构、核心流程与实施计划四部分展开，重点确认接入边界与上线节奏。"
+          }
+        },
+        {
+          "id": "agenda-1",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "01",
+            "title": "现状与目标",
+            "desc": "47 个系统登录入口分散，账号体系与审计口径待统一"
+          }
+        },
+        {
+          "id": "agenda-2",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 312,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "02",
+            "title": "总体架构",
+            "desc": "认证网关、账号中心、令牌服务与审计日志四个核心模块"
+          }
+        },
+        {
+          "id": "agenda-3",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 404,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "03",
+            "title": "核心流程",
+            "desc": "统一登录、票据校验、会话建立与单点登出时序"
+          }
+        },
+        {
+          "id": "agenda-4",
+          "component": "builtin/agenda-item",
+          "box": {
+            "x": 64,
+            "y": 496,
+            "w": 1152,
+            "h": 72
+          },
+          "inputs": {
+            "num": "04",
+            "title": "实施计划",
+            "desc": "分三批灰度推进，2026 Q2 完成全量切换与旧通道下线"
+          }
+        }
+      ]
+    },
+    {
+      "id": "section-architecture",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "section-eyebrow",
+          "component": "builtin/eyebrow",
+          "box": {
+            "x": 64,
+            "y": 140,
+            "w": 320,
+            "h": 28
+          },
+          "inputs": {
+            "text": "PART 02 · 总体设计"
+          }
+        },
+        {
+          "id": "section-panel",
+          "component": "builtin/section-break",
+          "box": {
+            "x": 64,
+            "y": 180,
+            "w": 1152,
+            "h": 280
+          },
+          "inputs": {
+            "number": "02",
+            "title": "总体架构设计",
+            "desc": "认证网关、账号中心、令牌服务与审计日志四个核心模块，按接入、服务、数据三层部署"
+          }
+        },
+        {
+          "id": "section-quote",
+          "component": "builtin/quote",
+          "box": {
+            "x": 64,
+            "y": 500,
+            "w": 768,
+            "h": 110
+          },
+          "inputs": {
+            "text": "本章回答两个问题：系统如何分层，模块之间如何协作。",
+            "source": "—— 总体设计说明"
+          }
+        }
+      ]
+    },
+    {
+      "id": "context",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "context-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "现状与目标"
+          }
+        },
+        {
+          "id": "context-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 124,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "当前 47 个业务系统各自维护账号与登录页，存在口令策略不一致、离职账号回收滞后、登录行为无法统一审计三类问题。"
+          }
+        },
+        {
+          "id": "goal-1",
+          "component": "builtin/feature-card",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 360,
+            "h": 220
+          },
+          "inputs": {
+            "badge": "01",
+            "title": "统一入口",
+            "text": "全部业务系统收敛到统一登录页，支持口令、证书与票据三种认证方式。"
+          }
+        },
+        {
+          "id": "goal-2",
+          "component": "builtin/feature-card",
+          "box": {
+            "x": 460,
+            "y": 220,
+            "w": 360,
+            "h": 220
+          },
+          "inputs": {
+            "badge": "02",
+            "title": "统一账号",
+            "text": "以人事系统为主数据源，账号创建、变更、离职回收全流程自动化。"
+          }
+        },
+        {
+          "id": "goal-3",
+          "component": "builtin/feature-card",
+          "box": {
+            "x": 856,
+            "y": 220,
+            "w": 360,
+            "h": 220
+          },
+          "inputs": {
+            "badge": "03",
+            "title": "统一审计",
+            "text": "登录、登出、令牌刷新与权限变更统一留痕，支持按人与系统检索。"
+          }
+        },
+        {
+          "id": "principle",
+          "component": "builtin/callout",
+          "box": {
+            "x": 64,
+            "y": 470,
+            "w": 552,
+            "h": 120
+          },
+          "inputs": {
+            "label": "建设原则",
+            "text": "先收敛入口再统一账号，认证链路保持无状态；任何单点故障不影响已建立的在线会话。"
+          }
+        },
+        {
+          "id": "boundary",
+          "component": "builtin/callout-warn",
+          "box": {
+            "x": 664,
+            "y": 470,
+            "w": 552,
+            "h": 120
+          },
+          "inputs": {
+            "label": "边界说明",
+            "text": "本期不改造业务系统内部权限模型，仅统一身份认证与会话；权限仍由各系统自行管理。"
+          }
+        },
+        {
+          "id": "context-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "数据来源：2026-02 内网系统普查与账号治理专项报告。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "arch-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "总体架构"
+          }
+        },
+        {
+          "id": "zone-access",
+          "component": "builtin/arch-zone",
+          "box": {
+            "x": 64,
+            "y": 120,
+            "w": 1152,
+            "h": 160
+          },
+          "inputs": {
+            "title": "接入层 ACCESS"
+          }
+        },
+        {
+          "id": "node-portal",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 84,
+            "y": 166,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "统一门户",
+            "desc": "登录页、密码找回与多因素认证"
+          }
+        },
+        {
+          "id": "node-gateway",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 372,
+            "y": 166,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "API 网关",
+            "desc": "统一路由、限流与灰度流量染色"
+          }
+        },
+        {
+          "id": "node-waf",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 660,
+            "y": 166,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "WAF",
+            "desc": "登录接口防护与异常请求拦截"
+          }
+        },
+        {
+          "id": "node-authgw",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 948,
+            "y": 166,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "认证网关",
+            "desc": "协议适配、令牌签发与会话校验"
+          }
+        },
+        {
+          "id": "zone-service",
+          "component": "builtin/arch-zone",
+          "box": {
+            "x": 64,
+            "y": 292,
+            "w": 1152,
+            "h": 160
+          },
+          "inputs": {
+            "title": "服务层 SERVICE"
+          }
+        },
+        {
+          "id": "node-account",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 84,
+            "y": 338,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "账号中心",
+            "desc": "账号主数据、组织关系与生命周期"
+          }
+        },
+        {
+          "id": "node-token",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 372,
+            "y": 338,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "令牌服务",
+            "desc": "OAuth2.0 与 CAS 令牌签发、刷新"
+          }
+        },
+        {
+          "id": "node-policy",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 660,
+            "y": 338,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "策略引擎",
+            "desc": "口令策略、登录限制与风险规则"
+          }
+        },
+        {
+          "id": "node-audit",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 948,
+            "y": 338,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "审计服务",
+            "desc": "登录行为留痕与审计报表输出"
+          }
+        },
+        {
+          "id": "zone-data",
+          "component": "builtin/arch-zone",
+          "box": {
+            "x": 64,
+            "y": 464,
+            "w": 1152,
+            "h": 160
+          },
+          "inputs": {
+            "title": "数据层 DATA"
+          }
+        },
+        {
+          "id": "node-userdb",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 84,
+            "y": 510,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "用户库",
+            "desc": "账号、凭证与多因素绑定关系"
+          }
+        },
+        {
+          "id": "node-orgdb",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 372,
+            "y": 510,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "组织架构",
+            "desc": "部门、岗位与汇报关系同步"
+          }
+        },
+        {
+          "id": "node-session",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 660,
+            "y": 510,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "会话缓存",
+            "desc": "分布式会话与令牌吊销列表"
+          }
+        },
+        {
+          "id": "node-logdb",
+          "component": "builtin/arch-node",
+          "box": {
+            "x": 948,
+            "y": 510,
+            "w": 240,
+            "h": 96
+          },
+          "inputs": {
+            "title": "日志库",
+            "desc": "审计日志与登录指标明细"
+          }
+        },
+        {
+          "id": "arch-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "注：同层模块无强依赖，任一节点故障由负载均衡自动摘除。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "flow",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "flow-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "核心流程"
+          }
+        },
+        {
+          "id": "flow-1",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 64,
+            "y": 190,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "1",
+            "title": "统一登录",
+            "desc": "用户访问业务系统，跳转统一认证页"
+          }
+        },
+        {
+          "id": "flow-arrow-1",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 304,
+            "y": 190,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "flow-2",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 352,
+            "y": 190,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "2",
+            "title": "票据校验",
+            "desc": "网关校验令牌并回传用户身份"
+          }
+        },
+        {
+          "id": "flow-arrow-2",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 592,
+            "y": 190,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "flow-3",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 640,
+            "y": 190,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "3",
+            "title": "会话建立",
+            "desc": "写入分布式会话并返回业务页面"
+          }
+        },
+        {
+          "id": "flow-arrow-3",
+          "component": "builtin/flow-arrow",
+          "box": {
+            "x": 880,
+            "y": 190,
+            "w": 48,
+            "h": 160
+          },
+          "inputs": {
+            "arrow": "→"
+          }
+        },
+        {
+          "id": "flow-4",
+          "component": "builtin/flow-step",
+          "box": {
+            "x": 928,
+            "y": 190,
+            "w": 240,
+            "h": 160
+          },
+          "inputs": {
+            "num": "4",
+            "title": "单点登出",
+            "desc": "任一系统登出，全局会话同步失效"
+          }
+        },
+        {
+          "id": "flow-points",
+          "component": "builtin/bullets",
+          "box": {
+            "x": 64,
+            "y": 410,
+            "w": 1152,
+            "h": 180
+          },
+          "inputs": {
+            "items": [
+              "令牌默认有效期 2 小时，支持无感刷新；吊销列表在 30 秒内同步到全部网关",
+              "认证页与业务页分离部署，业务系统仅保留登录回调，改造成本控制在 1 人日以内",
+              "灰度期间新旧通道并行，按系统白名单逐批切换，回退只需调整路由规则"
+            ]
+          }
+        },
+        {
+          "id": "flow-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "详细时序见《统一认证平台接口设计说明书》第 3.2 节。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "requirements",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "req-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "需求清单"
+          }
+        },
+        {
+          "id": "req-lead",
+          "component": "builtin/lead",
+          "box": {
+            "x": 64,
+            "y": 120,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "本期共 18 项需求，其中 P0 6 项、P1 7 项、P2 5 项；下表列出与本次评审直接相关的 4 项。"
+          }
+        },
+        {
+          "id": "req-table",
+          "component": "builtin/table",
+          "box": {
+            "x": 64,
+            "y": 220,
+            "w": 1152,
+            "h": 340
+          },
+          "inputs": {
+            "rows": [
+              [
+                "编号",
+                "需求项",
+                "优先级",
+                "负责人",
+                "计划版本"
+              ],
+              [
+                "REQ-0181",
+                "统一登录与会话管理",
+                "P0",
+                "张伟",
+                "V1.0"
+              ],
+              [
+                "REQ-0182",
+                "单点登出与强制下线",
+                "P0",
+                "张伟",
+                "V1.0"
+              ],
+              [
+                "REQ-0183",
+                "多因素认证接入",
+                "P1",
+                "李婷",
+                "V1.1"
+              ],
+              [
+                "REQ-0184",
+                "审计日志与报表",
+                "P2",
+                "王磊",
+                "V1.2"
+              ]
+            ]
+          }
+        },
+        {
+          "id": "req-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "需求基线：REQ-2026-0187；变更需走平台架构委员会评审流程。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "metrics",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "metrics-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "关键指标"
+          }
+        },
+        {
+          "id": "metric-systems",
+          "component": "builtin/stat-card",
+          "box": {
+            "x": 64,
+            "y": 140,
+            "w": 360,
+            "h": 180
+          },
+          "inputs": {
+            "label": "已接入业务系统",
+            "value": "47 个",
+            "delta": [
+              {
+                "text": "↑ 12 个",
+                "color": "#1E7A46",
+                "bold": true
+              },
+              {
+                "text": " 较上季度",
+                "color": "#8496A8",
+                "bold": false
+              }
+            ],
+            "note": "覆盖全部核心系统"
+          }
+        },
+        {
+          "id": "metric-qps",
+          "component": "builtin/stat-card",
+          "box": {
+            "x": 460,
+            "y": 140,
+            "w": 360,
+            "h": 180
+          },
+          "inputs": {
+            "label": "峰值认证 QPS",
+            "value": "8,000",
+            "delta": [
+              {
+                "text": "↑ 23%",
+                "color": "#1E7A46",
+                "bold": true
+              },
+              {
+                "text": " 压测结果",
+                "color": "#8496A8",
+                "bold": false
+              }
+            ],
+            "note": "P99 延迟 26ms"
+          }
+        },
+        {
+          "id": "metric-availability",
+          "component": "builtin/stat-card",
+          "box": {
+            "x": 856,
+            "y": 140,
+            "w": 360,
+            "h": 180
+          },
+          "inputs": {
+            "label": "年度可用性",
+            "value": "99.95%",
+            "delta": [
+              {
+                "text": "达成目标",
+                "color": "#1E7A46",
+                "bold": true
+              }
+            ],
+            "note": "不含计划维护窗口"
+          }
+        },
+        {
+          "id": "metrics-divider",
+          "component": "builtin/divider",
+          "box": {
+            "x": 64,
+            "y": 356,
+            "w": 1152,
+            "h": 2
+          },
+          "inputs": {}
+        },
+        {
+          "id": "metrics-subtitle",
+          "component": "builtin/section-title",
+          "box": {
+            "x": 64,
+            "y": 390,
+            "w": 1152,
+            "h": 48
+          },
+          "inputs": {
+            "text": "运行表现与改进项"
+          }
+        },
+        {
+          "id": "metrics-bullets",
+          "component": "builtin/bullets",
+          "box": {
+            "x": 64,
+            "y": 452,
+            "w": 1152,
+            "h": 160
+          },
+          "inputs": {
+            "items": [
+              "登录成功率 99.92%，失败集中在证书过期与口令错误两类，已补充自助排查页",
+              "令牌校验 P99 延迟 26ms，低于 30ms 目标；跨机房调用占比 8%，暂不构成瓶颈",
+              "下一步：补齐多因素认证覆盖率与异常登录拦截率两项指标"
+            ]
+          }
+        },
+        {
+          "id": "metrics-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "统计周期：2026-01-01 至 2026-03-31；数据来自认证网关与审计服务。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "comparison",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "compare-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "方案对比"
+          }
+        },
+        {
+          "id": "compare-main",
+          "component": "builtin/compare",
+          "box": {
+            "x": 64,
+            "y": 130,
+            "w": 1152,
+            "h": 320
+          },
+          "inputs": {
+            "titleLeft": "方案 A：中心化令牌",
+            "textLeft": "✓ 会话可控性强，支持管理员强制下线\n✓ 实现简单，业务系统改造成本低\n✓ 令牌吊销实时生效\n✗ 认证中心处于关键路径，需重点保障",
+            "titleRight": "方案 B：JWT 自包含",
+            "textRight": "✓ 无中心依赖，横向扩展性好\n✓ 跨机房校验延迟低\n✗ 令牌吊销困难，需短 TTL 兜底\n✗ 密钥轮换涉及全部接入方"
+          }
+        },
+        {
+          "id": "compare-conclusion",
+          "component": "builtin/conclusion",
+          "box": {
+            "x": 64,
+            "y": 490,
+            "w": 1152,
+            "h": 80
+          },
+          "inputs": {
+            "text": "建议采用方案 A：中心化令牌 + 本地缓存，兼顾会话可控性与校验性能；缓存 TTL 控制在 30 秒以内。"
+          }
+        },
+        {
+          "id": "compare-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "对比依据：2026-02 技术选型验证报告与两轮压测数据。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "plan",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "plan-title",
+          "component": "builtin/title",
+          "box": {
+            "x": 64,
+            "y": 40,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "text": "实施计划"
+          }
+        },
+        {
+          "id": "plan-t1",
+          "component": "builtin/timeline-h-item",
+          "box": {
+            "x": 64,
+            "y": 130,
+            "w": 288,
+            "h": 160
+          },
+          "inputs": {
+            "date": "2026-03",
+            "title": "联调与试点",
+            "desc": "核心链路联调完成，选取 5 个系统试点接入"
+          }
+        },
+        {
+          "id": "plan-t2",
+          "component": "builtin/timeline-h-item",
+          "box": {
+            "x": 352,
+            "y": 130,
+            "w": 288,
+            "h": 160
+          },
+          "inputs": {
+            "date": "2026-04",
+            "title": "批量接入",
+            "desc": "按部门分批接入 30 个系统，双通道并行"
+          }
+        },
+        {
+          "id": "plan-t3",
+          "component": "builtin/timeline-h-item",
+          "box": {
+            "x": 640,
+            "y": 130,
+            "w": 288,
+            "h": 160
+          },
+          "inputs": {
+            "date": "2026-05",
+            "title": "全量切换",
+            "desc": "剩余系统切换完成，旧登录入口只读保留"
+          }
+        },
+        {
+          "id": "plan-t4",
+          "component": "builtin/timeline-h-item",
+          "box": {
+            "x": 928,
+            "y": 130,
+            "w": 288,
+            "h": 160
+          },
+          "inputs": {
+            "date": "2026-06",
+            "title": "旧通道下线",
+            "desc": "完成回退演练与账号清理，旧认证通道下线"
+          }
+        },
+        {
+          "id": "plan-p1",
+          "component": "builtin/phase",
+          "box": {
+            "x": 64,
+            "y": 340,
+            "w": 264,
+            "h": 200
+          },
+          "inputs": {
+            "name": "一期",
+            "period": "2026 Q2",
+            "items": [
+              "统一登录上线",
+              "47 个系统接入",
+              "旧认证通道下线"
+            ]
+          }
+        },
+        {
+          "id": "plan-p2",
+          "component": "builtin/phase",
+          "box": {
+            "x": 360,
+            "y": 340,
+            "w": 264,
+            "h": 200
+          },
+          "inputs": {
+            "name": "二期",
+            "period": "2026 Q3",
+            "items": [
+              "多因素认证",
+              "异常登录拦截",
+              "审计报表"
+            ]
+          }
+        },
+        {
+          "id": "plan-p3",
+          "component": "builtin/phase",
+          "box": {
+            "x": 656,
+            "y": 340,
+            "w": 264,
+            "h": 200
+          },
+          "inputs": {
+            "name": "三期",
+            "period": "2026 Q4",
+            "items": [
+              "跨机房容灾",
+              "统一权限中心",
+              "开放平台接入"
+            ]
+          }
+        },
+        {
+          "id": "plan-p4",
+          "component": "builtin/phase",
+          "box": {
+            "x": 952,
+            "y": 340,
+            "w": 264,
+            "h": 200
+          },
+          "inputs": {
+            "name": "持续运营",
+            "period": "2027 起",
+            "items": [
+              "SLA 运营",
+              "容量评估",
+              "安全加固"
+            ]
+          }
+        },
+        {
+          "id": "plan-note",
+          "component": "builtin/footnote",
+          "box": {
+            "x": 64,
+            "y": 664,
+            "w": 1152,
+            "h": 24
+          },
+          "inputs": {
+            "text": "里程碑日期以项目周报为准；如遇账号中心迁移延期，整体计划顺延两周。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "closing-main",
+          "component": "builtin/thanks",
+          "box": {
+            "x": 64,
+            "y": 180,
+            "w": 1152,
+            "h": 240
+          },
+          "inputs": {
+            "title": "谢谢",
+            "subtitle": "敬请各位领导与同事批评指正",
+            "meta": "平台研发部 · 张伟 · zhangwei@intranet.local"
+          }
+        }
+      ]
+    }
+  ]
+}

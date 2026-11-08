@@ -1,9 +1,19 @@
 {
   "title": {
-    "text": "统一认证平台技术方案评审"
+    "text": "统一认证平台总体架构"
+  },
+  "eyebrow": {
+    "text": "技术方案评审 · 统一认证平台"
+  },
+  "lead": {
+    "text": "本期建设统一身份认证平台，收敛 47 个业务系统的登录入口，打通 IAM、OA 与人事系统账号体系，为后续多因素认证和审计留痕提供基础。"
+  },
+  "section-title": {
+    "num": "3.1 ",
+    "text": "认证流程时序"
   },
   "text": {
-    "text": "本次评审围绕统一认证平台的整体架构、核心流程与灰度发布计划展开，重点确认与现有 IAM、OA 系统的对接边界，以及上线后的可用性指标要求。"
+    "text": "认证服务以无状态集群部署，令牌校验采用本地缓存加短 TTL 策略，避免中心存储成为单点瓶颈。接入系统只需改造登录回调，无需关心令牌签发细节。"
   },
   "bullets": {
     "items": [
@@ -13,36 +23,32 @@
       "存量账号迁移分三批灰度推进"
     ]
   },
-  "card": {
-    "title": "目标架构",
-    "text": "认证服务以无状态集群部署，令牌校验采用本地缓存加短 TTL 策略，避免中心存储成为单点瓶颈。"
-  },
-  "table": {
-    "rows": [
-      ["优先级", "需求项", "负责人", "计划版本"],
-      ["P0", "统一登录与会话管理", "张伟", "V1.0"],
-      ["P1", "多因素认证接入", "李婷", "V1.1"],
-      ["P2", "审计日志报表", "王磊", "V1.2"]
+  "checklist": {
+    "items": [
+      "认证网关与账号中心联调通过",
+      "试点系统接入并完成 5% 灰度验证",
+      "压测达到峰值 8000 QPS，P99 延迟 26ms",
+      "回退脚本与旧认证通道保持可用"
     ]
-  },
-  "image": {
-    "src": "images/placeholder.png"
-  },
-  "metric": {
-    "value": "99.95%",
-    "label": "认证服务年度可用性目标"
   },
   "steps": {
     "items": [
-      "第 1-2 周：完成认证网关与账号中心联调",
-      "第 3-4 周：试点系统接入与灰度验证",
-      "第 5-6 周：全量系统切换与旧通道下线"
+      "完成认证网关与账号中心联调",
+      "试点系统接入并完成灰度验证",
+      "全量系统切换，旧认证通道下线",
+      "补齐审计报表与运维监控"
     ]
+  },
+  "caption": {
+    "text": "图 3-2 统一认证登录时序示意"
+  },
+  "footnote": {
+    "text": "注：可用性指标按自然年统计，不含计划内维护窗口；QPS 数据来自 2026-02 压测报告。"
   },
   "cover": {
     "tag": "技术方案评审",
     "title": "统一认证平台\n技术方案评审",
-    "subtitle": "—— 内网身份基础设施升级",
+    "subtitle": "内网身份基础设施升级与 47 个业务系统接入",
     "meta": "汇报人：张伟 ｜ 平台研发部 ｜ 2026-03"
   },
   "section-break": {
@@ -55,15 +61,81 @@
     "title": "核心流程设计",
     "desc": "登录、单点登出与令牌刷新时序"
   },
-  "section-title": {
-    "num": "3.1 ",
-    "text": "认证流程时序"
+  "thanks": {
+    "title": "谢谢",
+    "subtitle": "敬请各位领导与同事批评指正",
+    "meta": "平台研发部 · 张伟 · zhangwei@intranet.local"
   },
-  "caption": {
-    "text": "图 3-2 统一认证登录时序示意"
+  "card": {
+    "title": "目标架构",
+    "text": "认证服务以无状态集群部署，令牌校验采用本地缓存加短 TTL 策略，避免中心存储成为单点瓶颈。"
   },
-  "footnote": {
-    "text": "注：可用性指标按自然年统计，不含计划内维护窗口；QPS 数据来自 2026-02 压测报告。"
+  "feature-card": {
+    "badge": "01",
+    "title": "单点登录",
+    "text": "一次认证全局通行，支持跨系统会话共享与管理员强制下线。"
+  },
+  "panel": {
+    "title": "性能目标",
+    "text": "峰值 QPS 8000；令牌校验 P99 延迟 ≤ 30ms；集群任意单节点故障不影响在线会话。"
+  },
+  "metric": {
+    "label": "认证服务年度可用性目标",
+    "value": "99.95%"
+  },
+  "stat-card": {
+    "label": "已接入业务系统",
+    "value": "47 个",
+    "delta": "↑ 12 个 较上季度",
+    "note": "覆盖全部核心系统"
+  },
+  "person-card": {
+    "name": "张伟",
+    "role": "架构负责人",
+    "duty": "负责总体架构、认证协议选型与跨系统对接边界确认。"
+  },
+  "icon-badge": {
+    "symbol": "✓"
+  },
+  "table": {
+    "rows": [
+      ["优先级", "需求项", "负责人", "计划版本"],
+      ["P0", "统一登录与会话管理", "张伟", "V1.0"],
+      ["P1", "多因素认证接入", "李婷", "V1.1"],
+      ["P2", "审计日志报表", "王磊", "V1.2"]
+    ]
+  },
+  "compare": {
+    "titleLeft": "方案 A：中心化令牌",
+    "textLeft": "✓ 会话可控性强，支持强制下线\n✓ 实现简单，接入改造成本低\n✗ 认证中心成为关键路径",
+    "titleRight": "方案 B：JWT 自包含",
+    "textRight": "✓ 无中心依赖，横向扩展性好\n✓ 跨机房校验延迟低\n✗ 令牌吊销困难，需短 TTL 兜底"
+  },
+  "matrix2x2": {
+    "titleTL": "重要且紧急",
+    "itemsTL": ["统一登录上线", "存量会话迁移"],
+    "titleTR": "重要不紧急",
+    "itemsTR": ["多因素认证", "审计日志报表"],
+    "titleBL": "紧急不重要",
+    "itemsBL": ["旧门户兼容改造"],
+    "titleBR": "不重要不紧急",
+    "itemsBR": ["登录页皮肤定制"]
+  },
+  "field": {
+    "name": "需求编号",
+    "value": "REQ-2026-0187"
+  },
+  "api-item": {
+    "method": "POST",
+    "path": "/api/v1/auth/token",
+    "desc": "账号密码或票据换取访问令牌，有效期 2 小时"
+  },
+  "tag": {
+    "text": "微服务"
+  },
+  "status": {
+    "dot": "● ",
+    "text": "服务网格灰度发布进行中"
   },
   "quote": {
     "text": "“稳定压倒一切，认证链路不允许出现计划外中断。”",
@@ -84,35 +156,6 @@
   "conclusion": {
     "text": "方案整体可行，同意通过评审；请补充灾备切换演练计划后启动开发。"
   },
-  "divider": {},
-  "tag": {
-    "text": "微服务"
-  },
-  "status": {
-    "dot": "● ",
-    "text": "服务网格灰度发布进行中"
-  },
-  "field": {
-    "name": "需求编号",
-    "value": "REQ-2026-0187"
-  },
-  "feature-card": {
-    "badge": "01",
-    "title": "单点登录",
-    "text": "一次认证全局通行，支持跨系统会话共享与管理员强制下线。"
-  },
-  "panel": {
-    "title": "性能目标",
-    "text": "峰值 QPS 8000；令牌校验 P99 延迟 ≤ 30ms；集群任意单节点故障不影响在线会话。"
-  },
-  "code": {
-    "label": "Bash 灰度发布命令",
-    "code": "kubectl set image deploy/auth-gw \\\n  auth-gw=registry.local/auth-gw:v1.4.2\nkubectl rollout status deploy/auth-gw"
-  },
-  "image-frame": {
-    "src": "images/placeholder.png",
-    "caption": "图 2-1 统一认证平台总体架构"
-  },
   "flow-step": {
     "num": "1",
     "title": "流量染色",
@@ -121,48 +164,41 @@
   "flow-arrow": {
     "arrow": "→"
   },
+  "layer": {
+    "name": "接入层",
+    "text": "API 网关 / 负载均衡 / WAF / 统一认证网关"
+  },
+  "arch-node": {
+    "title": "认证网关",
+    "desc": "协议适配、限流与令牌签发"
+  },
+  "arch-zone": {
+    "title": "服务层"
+  },
   "timeline-item": {
     "date": "2026-03-10",
     "title": "完成全链路联调",
     "desc": "认证网关与账号中心联调通过，进入试点接入阶段"
   },
+  "timeline-h-item": {
+    "date": "2026-03",
+    "title": "联调与试点",
+    "desc": "完成核心链路联调，选取 5 个系统试点接入"
+  },
   "phase": {
     "name": "一期",
     "period": "2026 Q2",
-    "items": [
-      "统一登录上线",
-      "47 个系统接入",
-      "旧认证通道下线"
-    ]
+    "items": ["统一登录上线", "47 个系统接入", "旧认证通道下线"]
   },
-  "layer": {
-    "name": "接入层",
-    "text": "API 网关 / 负载均衡 / WAF / 统一认证网关"
+  "image": {
+    "src": "images/placeholder.png"
   },
-  "compare": {
-    "titleLeft": "方案 A：中心化令牌",
-    "textLeft": "✓ 会话可控性强，支持强制下线\n✓ 实现简单，接入改造成本低\n✗ 认证中心成为关键路径",
-    "titleRight": "方案 B：JWT 自包含",
-    "textRight": "✓ 无中心依赖，横向扩展性好\n✓ 跨机房校验延迟低\n✗ 令牌吊销困难，需短 TTL 兜底"
+  "image-frame": {
+    "src": "images/placeholder.png",
+    "caption": "图 2-1 统一认证平台总体架构"
   },
-  "matrix2x2": {
-    "titleTL": "重要且紧急",
-    "itemsTL": [
-      "统一登录上线",
-      "存量会话迁移"
-    ],
-    "titleTR": "重要不紧急",
-    "itemsTR": [
-      "多因素认证",
-      "审计日志报表"
-    ],
-    "titleBL": "紧急不重要",
-    "itemsBL": [
-      "旧门户兼容改造"
-    ],
-    "titleBR": "不重要不紧急",
-    "itemsBR": [
-      "登录页皮肤定制"
-    ]
+  "code": {
+    "label": "Bash 灰度发布命令",
+    "code": "kubectl set image deploy/auth-gw \\\n  auth-gw=registry.local/auth-gw:v1.4.2\nkubectl rollout status deploy/auth-gw"
   }
 }

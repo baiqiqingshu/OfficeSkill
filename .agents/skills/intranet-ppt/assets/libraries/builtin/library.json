@@ -6,10 +6,10 @@
     {
       "id": "title",
       "name": "页面标题",
-      "description": "技术汇报、方案评审、需求评审的页面标题",
+      "description": "正文页大标题：34px 粗体，下方带主色短条。放在页面顶部 (x=64,y=40,w=1152,h=64)；一页只用一个。",
       "size": {
         "width": 1152,
-        "height": 72
+        "height": 64
       },
       "inputs": {
         "text": {
@@ -17,15 +17,67 @@
           "required": true
         }
       },
-      "html": "<div data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:36px;font-weight:bold;color:#17324D\"></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><h1 data-slot='text' style='position:absolute;left:0;top:0;width:1152px;height:50px;font-family:Microsoft YaHei;font-size:34px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:56px;width:48px;height:4px;background-color:#1476B8;border-radius:2px'></div></div>"
+    },
+    {
+      "id": "eyebrow",
+      "name": "眉标",
+      "description": "页面顶部的栏目/方案名小标签：小方块 + 15px 字距文字。常放在标题上方 (y=40)，标题下移到 y=72。",
+      "size": {
+        "width": 320,
+        "height": 28
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:10px;width:8px;height:8px;background-color:#1476B8;border-radius:2px'></div><div data-slot='text' style='position:absolute;left:18px;top:0;width:302px;height:28px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;letter-spacing:1px;vertical-align:middle'></div></div>"
+    },
+    {
+      "id": "lead",
+      "name": "导语",
+      "description": "标题下的一句摘要或背景说明：22px 弱化文字、1.6 行距。放在标题下方 (y=124,w=1152,h=80)。",
+      "size": {
+        "width": 1152,
+        "height": 80
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:22px;color:#52687A;line-height:1.6'></p>"
+    },
+    {
+      "id": "section-title",
+      "name": "小节标题",
+      "description": "正文页内的小节标题：左侧主色竖条 + 26px 粗体标题。num 为可选编号（建议带尾随空格，如“3.1 ”）。",
+      "size": {
+        "width": 1152,
+        "height": 48
+      },
+      "inputs": {
+        "num": {
+          "type": "text",
+          "description": "可选编号，如“3.1 ”，带尾随空格"
+        },
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:9px;width:6px;height:30px;background-color:#1476B8;border-radius:3px'></div><h2 style='position:absolute;left:22px;top:0;width:1130px;height:48px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#17324D;vertical-align:middle'><span data-slot='num' style='color:#1476B8'></span><span data-slot='text'></span></h2></div>"
     },
     {
       "id": "text",
       "name": "正文",
-      "description": "段落正文，可用换行或 runs 设置局部文字样式",
+      "description": "段落正文：20px、1.7 行距，可用换行或 runs 设置局部强调。建议宽 552（双栏）或 1152（通栏）。",
       "size": {
         "width": 1152,
-        "height": 160
+        "height": 120
       },
       "inputs": {
         "text": {
@@ -33,15 +85,15 @@
           "required": true
         }
       },
-      "html": "<div data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:24px;color:#263C50\"></div>"
+      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:20px;color:#263C50;line-height:1.7'></p>"
     },
     {
       "id": "bullets",
       "name": "要点列表",
-      "description": "每个字符串为一个要点；少量要点适合结论或范围说明",
+      "description": "• 前缀要点列表：20px、1.8 行距，每个字符串一条。适合 3–6 条结论、范围、收益说明；条目过多时拆页。",
       "size": {
         "width": 1152,
-        "height": 300
+        "height": 200
       },
       "inputs": {
         "items": {
@@ -49,108 +101,95 @@
           "required": true
         }
       },
-      "html": "<ul data-slot=\"items\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:25px;color:#263C50\"></ul>"
+      "html": "<ul data-slot='items' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:20px;color:#263C50;line-height:1.8'></ul>"
     },
     {
-      "id": "card",
-      "name": "信息卡片",
-      "description": "标题和正文组成的浅色卡片；可放置多张进行对比",
+      "id": "checklist",
+      "name": "检查清单",
+      "description": "✓ 前缀的完成项/验收项列表，20px、1.8 行距。适合验收标准、上线检查、已完成事项。",
       "size": {
-        "width": 552,
-        "height": 240
+        "width": 1152,
+        "height": 200
       },
       "inputs": {
-        "title": {
-          "type": "richtext",
+        "items": {
+          "type": "list",
           "required": true
-        },
+        }
+      },
+      "html": "<ul data-slot='items' class='check' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:20px;color:#263C50;line-height:1.8'></ul>"
+    },
+    {
+      "id": "steps",
+      "name": "编号步骤",
+      "description": "1. 2. 3. 编号步骤列表，20px、1.9 行距。适合实施步骤、操作流程、评审顺序；每个字符串一步。",
+      "size": {
+        "width": 1152,
+        "height": 200
+      },
+      "inputs": {
+        "items": {
+          "type": "list",
+          "required": true
+        }
+      },
+      "html": "<ol data-slot='items' class='num' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:20px;color:#263C50;line-height:1.9'></ol>"
+    },
+    {
+      "id": "caption",
+      "name": "图注",
+      "description": "图片、表格、流程图下方的居中说明，16px 弱文字。建议按“图 2-1 ××架构示意”“表 3-1 ××对照”编号。",
+      "size": {
+        "width": 552,
+        "height": 26
+      },
+      "inputs": {
         "text": {
           "type": "richtext",
           "required": true
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF\"><h3 data-slot=\"title\" style=\"position:absolute;left:24px;top:20px;width:504px;height:44px;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#145D92\"></h3><p data-slot=\"text\" style=\"position:absolute;left:24px;top:80px;width:504px;height:140px;font-family:Microsoft YaHei;font-size:23px;color:#263C50\"></p></section>"
+      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:16px;color:#52687A;text-align:center'></p>"
     },
     {
-      "id": "table",
-      "name": "评审表格",
-      "description": "二维数组表格；可对单元格使用 runs，首行是普通可编辑单元格",
+      "id": "footnote",
+      "name": "页脚注释",
+      "description": "页面底部小字：数据口径、来源、缩写解释。15px 弱文字，通常放在 y=660 附近。",
       "size": {
         "width": 1152,
-        "height": 360
+        "height": 24
       },
       "inputs": {
-        "rows": {
-          "type": "table",
-          "required": true
-        }
-      },
-      "html": "<table data-slot=\"rows\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:22px;color:#263C50;background-color:#F5F8FB;border:1px solid #C5D3DF\"></table>"
-    },
-    {
-      "id": "image",
-      "name": "本地图片",
-      "description": "展示配置目录中的本地 PNG/JPEG 等图片，不拉伸比例",
-      "size": {
-        "width": 552,
-        "height": 360
-      },
-      "inputs": {
-        "src": {
-          "type": "image",
-          "required": true
-        }
-      },
-      "html": "<img data-slot=\"src\" style=\"position:absolute;left:0;top:0;width:100%;height:100%\"/>"
-    },
-    {
-      "id": "metric",
-      "name": "指标",
-      "description": "醒目的指标值和解释，用于进展、容量、性能等数据",
-      "size": {
-        "width": 360,
-        "height": 200
-      },
-      "inputs": {
-        "value": {
-          "type": "richtext",
-          "required": true
-        },
-        "label": {
+        "text": {
           "type": "richtext",
           "required": true
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA\"><div data-slot=\"value\" style=\"position:absolute;left:24px;top:20px;width:312px;height:80px;font-family:Microsoft YaHei;font-size:48px;font-weight:bold;color:#1476B8\"></div><div data-slot=\"label\" style=\"position:absolute;left:24px;top:120px;width:312px;height:56px;font-family:Microsoft YaHei;font-size:22px;color:#52687A\"></div></section>"
+      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:15px;color:#8496A8;line-height:1.5'></p>"
     },
     {
-      "id": "steps",
-      "name": "实施步骤",
-      "description": "以编号列表展示实施计划；按顺序提供字符串数组",
+      "id": "divider",
+      "name": "分隔线",
+      "description": "1px 浅色横线，用于标题与正文、模块之间分隔；无输入。",
       "size": {
         "width": 1152,
-        "height": 300
+        "height": 2
       },
-      "inputs": {
-        "items": {
-          "type": "list",
-          "required": true
-        }
-      },
-      "html": "<ol data-slot=\"items\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:25px;color:#263C50\"></ol>"
+      "inputs": {},
+      "html": "<div style='position:absolute;left:0;top:1px;width:100%;height:1px;background-color:#D8E4EF'></div>"
     },
     {
       "id": "cover",
       "name": "汇报封面",
-      "description": "首页封面：顶部标签 + 大标题 + 副标题 + 汇报人/日期元信息行。tag 可填“技术方案评审”“需求评审”等；meta 建议写成“汇报人：张三 ｜ 平台研发部 ｜ 2026-03”。",
+      "description": "首页封面：顶部标签 + 52px 大标题 + 副标题 + 主色短线 + 汇报人/日期元信息，右侧有几何装饰。tag 填“技术方案评审”“需求评审”等；meta 建议“汇报人：张三 ｜ 平台研发部 ｜ 2026-03”。",
       "size": {
         "width": 1152,
-        "height": 440
+        "height": 420
       },
       "inputs": {
         "tag": {
           "type": "text",
-          "description": "顶部小标签，如“技术方案评审”"
+          "description": "顶部标签，如“技术方案评审”"
         },
         "title": {
           "type": "richtext",
@@ -164,15 +203,15 @@
           "description": "汇报人、部门、日期等元信息行"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div style=\"position:absolute;left:0;top:4px;width:12px;height:32px;background-color:#1476B8\"></div><div data-slot=\"tag\" style=\"position:absolute;left:28px;top:0;width:560px;height:40px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92;vertical-align:middle\"></div><h1 data-slot=\"title\" style=\"position:absolute;left:0;top:88px;width:1152px;height:150px;font-family:Microsoft YaHei;font-size:58px;font-weight:bold;color:#17324D\"></h1><p data-slot=\"subtitle\" style=\"position:absolute;left:0;top:252px;width:1152px;height:44px;font-family:Microsoft YaHei;font-size:26px;color:#52687A\"></p><div style=\"position:absolute;left:0;top:326px;width:120px;height:6px;background-color:#1476B8\"></div><p data-slot=\"meta\" style=\"position:absolute;left:0;top:368px;width:1152px;height:40px;font-family:Microsoft YaHei;font-size:20px;color:#8496A8\"></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='tag' style='position:absolute;left:0;top:0;width:200px;height:34px;background-color:#E4EFF8;border-radius:6px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:64px;width:940px;height:150px;font-family:Microsoft YaHei;font-size:52px;font-weight:bold;color:#17324D;line-height:1.3'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:226px;width:940px;height:40px;font-family:Microsoft YaHei;font-size:22px;color:#52687A;line-height:1.5'></p><div style='position:absolute;left:0;top:290px;width:72px;height:4px;background-color:#1476B8;border-radius:2px'></div><p data-slot='meta' style='position:absolute;left:0;top:318px;width:940px;height:32px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8'></p><div style='position:absolute;left:980px;top:20px;width:172px;height:172px;border:1px solid #D8E4EF;border-radius:12px'></div><div style='position:absolute;left:1012px;top:52px;width:108px;height:108px;background-color:#E4EFF8;border-radius:8px'></div><div style='position:absolute;left:1044px;top:84px;width:44px;height:44px;background-color:#1476B8;border-radius:6px'></div><div style='position:absolute;left:980px;top:216px;width:172px;height:4px;background-color:#C5D3DF;border-radius:2px'></div></div>"
     },
     {
       "id": "section-break",
       "name": "章节过渡页",
-      "description": "章节封面：大号编号 + 大标题 + 一句说明，用于汇报分章（如“02 总体架构设计”）。number 可填 01/02 等编号，留空则只显示标题与说明。",
+      "description": "章节封面：浅底大圆角面板 + 76px 编号 + 38px 标题 + 一句说明，右侧三条装饰竖线。number 填 01/02；留空则只显示标题与说明。",
       "size": {
         "width": 1152,
-        "height": 320
+        "height": 280
       },
       "inputs": {
         "number": {
@@ -187,15 +226,15 @@
           "type": "richtext"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div data-slot=\"number\" style=\"position:absolute;left:0;top:0;width:480px;height:110px;font-family:Microsoft YaHei;font-size:88px;font-weight:bold;color:#3F92CC\"></div><h1 data-slot=\"title\" style=\"position:absolute;left:0;top:130px;width:1152px;height:66px;font-family:Microsoft YaHei;font-size:46px;font-weight:bold;color:#17324D\"></h1><div style=\"position:absolute;left:0;top:216px;width:80px;height:5px;background-color:#1476B8\"></div><p data-slot=\"desc\" style=\"position:absolute;left:0;top:240px;width:1152px;height:44px;font-family:Microsoft YaHei;font-size:22px;color:#52687A\"></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='number' style='position:absolute;left:40px;top:28px;width:220px;height:96px;font-family:Microsoft YaHei;font-size:76px;font-weight:bold;color:#3F92CC;line-height:1'></div><h1 data-slot='title' style='position:absolute;left:40px;top:132px;width:900px;height:54px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#17324D'></h1><div style='position:absolute;left:40px;top:198px;width:56px;height:4px;background-color:#1476B8;border-radius:2px'></div><p data-slot='desc' style='position:absolute;left:40px;top:218px;width:960px;height:36px;font-family:Microsoft YaHei;font-size:20px;color:#52687A'></p><div style='position:absolute;left:1012px;top:40px;width:4px;height:64px;background-color:#1476B8;border-radius:2px'></div><div style='position:absolute;left:1032px;top:40px;width:4px;height:64px;background-color:#3F92CC;border-radius:2px'></div><div style='position:absolute;left:1052px;top:40px;width:4px;height:64px;background-color:#C5D3DF;border-radius:2px'></div></div>"
     },
     {
       "id": "agenda-item",
       "name": "目录条目",
-      "description": "目录页的一行：编号 + 标题 + 说明。多个本组件按相同 x、高度 88px 递增 y 纵向摆放即成目录页；num 可填 01/02 等，留空为无编号条目。",
+      "description": "目录页一行：26px 编号 + 24px 标题 + 16px 说明 + 细分隔线。多个同 x、高度 72px 递增 y 纵向摆放即成目录页。num 填 01/02，留空为无编号条目。",
       "size": {
         "width": 1152,
-        "height": 88
+        "height": 72
       },
       "inputs": {
         "num": {
@@ -210,230 +249,58 @@
           "type": "text"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div data-slot=\"num\" style=\"position:absolute;left:0;top:16px;width:72px;height:48px;font-family:Microsoft YaHei;font-size:36px;font-weight:bold;color:#1476B8\"></div><h3 data-slot=\"title\" style=\"position:absolute;left:96px;top:12px;width:600px;height:44px;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#17324D\"></h3><p data-slot=\"desc\" style=\"position:absolute;left:96px;top:56px;width:640px;height:26px;font-family:Microsoft YaHei;font-size:18px;color:#52687A\"></p><div style=\"position:absolute;left:0;top:86px;width:100%;height:2px;background-color:#D8E4EF\"></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='num' style='position:absolute;left:0;top:14px;width:56px;height:40px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:72px;top:10px;width:760px;height:32px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:72px;top:42px;width:760px;height:24px;font-family:Microsoft YaHei;font-size:16px;color:#52687A'></p><div style='position:absolute;left:0;top:71px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
-      "id": "section-title",
-      "name": "小节标题",
-      "description": "正文页内的小节标题：左侧主色竖条 + 标题文字。num 为可选编号（建议带尾随空格，如“3.1 ”），不填时标题直接顶格。",
+      "id": "thanks",
+      "name": "结束页",
+      "description": "汇报结束页：主色短线 + 56px 标题 + 副标题 + 联系方式/致谢元信息。title 建议“谢谢”，subtitle 建议“敬请各位领导与同事批评指正”。",
       "size": {
         "width": 1152,
-        "height": 56
+        "height": 240
       },
       "inputs": {
-        "num": {
-          "type": "text",
-          "description": "可选编号，如“3.1 ”，带尾随空格"
-        },
-        "text": {
+        "title": {
           "type": "richtext",
           "required": true
+        },
+        "subtitle": {
+          "type": "richtext"
+        },
+        "meta": {
+          "type": "text",
+          "description": "联系方式、部门等元信息"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div style=\"position:absolute;left:0;top:6px;width:10px;height:44px;background-color:#1476B8\"></div><h2 style=\"position:absolute;left:32px;top:0;width:1120px;height:56px;font-family:Microsoft YaHei;font-size:30px;font-weight:bold;color:#17324D;vertical-align:middle\"><span data-slot=\"num\" style=\"color:#1476B8\"></span><span data-slot=\"text\"></span></h2></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:0;width:64px;height:4px;background-color:#1476B8;border-radius:2px'></div><h1 data-slot='title' style='position:absolute;left:0;top:36px;width:900px;height:80px;font-family:Microsoft YaHei;font-size:56px;font-weight:bold;color:#17324D'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:128px;width:900px;height:36px;font-family:Microsoft YaHei;font-size:22px;color:#52687A'></p><p data-slot='meta' style='position:absolute;left:0;top:190px;width:900px;height:28px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8'></p></div>"
     },
     {
-      "id": "caption",
-      "name": "图注",
-      "description": "图片、表格、流程图下方的居中说明文字，建议按“图 2-1 ××架构示意”“表 3-1 ××对照”编号。",
+      "id": "card",
+      "name": "信息卡片",
+      "description": "白底圆角卡片：左侧主色短条 + 23px 标题 + 18px 正文（1.7 行距）。宽 552 适合双栏并排；三栏请用 feature-card。",
       "size": {
         "width": 552,
-        "height": 32
+        "height": 220
       },
       "inputs": {
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<p data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:18px;color:#52687A;text-align:center\"></p>"
-    },
-    {
-      "id": "footnote",
-      "name": "页脚注释",
-      "description": "页面底部的小字注释，用于口径说明、数据来源、术语缩写解释等，通常摆放在页面最下方。",
-      "size": {
-        "width": 1152,
-        "height": 32
-      },
-      "inputs": {
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<p data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:16px;color:#8496A8\"></p>"
-    },
-    {
-      "id": "quote",
-      "name": "引用块",
-      "description": "左侧竖线 + 斜体引用文字，用于引用评审意见、会议纪要、行业规范条文。source 可填出处（如“—— ××会议纪要”）。",
-      "size": {
-        "width": 768,
-        "height": 120
-      },
-      "inputs": {
-        "text": {
+        "title": {
           "type": "richtext",
           "required": true
         },
-        "source": {
-          "type": "text",
-          "description": "引用出处"
-        }
-      },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div style=\"position:absolute;left:0;top:6px;width:6px;height:108px;background-color:#3F92CC\"></div><p data-slot=\"text\" style=\"position:absolute;left:28px;top:0;width:740px;height:82px;font-family:Microsoft YaHei;font-size:24px;font-style:italic;color:#263C50\"></p><p data-slot=\"source\" style=\"position:absolute;left:28px;top:88px;width:740px;height:26px;font-family:Microsoft YaHei;font-size:17px;color:#8496A8\"></p></div>"
-    },
-    {
-      "id": "callout",
-      "name": "提示框",
-      "description": "浅色底 + 主色左边条的提示块，用于补充说明、实现提示。label 可填“提示”“说明”“备注”，留空则不显示标签行。",
-      "size": {
-        "width": 552,
-        "height": 128
-      },
-      "inputs": {
-        "label": {
-          "type": "text",
-          "description": "标签文字，如“提示”“说明”"
-        },
         "text": {
           "type": "richtext",
           "required": true
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8\"><div style=\"position:absolute;left:0;top:0;width:8px;height:100%;background-color:#1476B8\"></div><div data-slot=\"label\" style=\"position:absolute;left:28px;top:14px;width:508px;height:28px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92\"></div><p data-slot=\"text\" style=\"position:absolute;left:28px;top:50px;width:508px;height:64px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p></section>"
-    },
-    {
-      "id": "callout-warn",
-      "name": "注意事项框",
-      "description": "橙色警示块，用于兼容性、灰度并行、数据口径等需要提醒注意的事项。label 可填“注意”“提醒”，留空则不显示标签行。",
-      "size": {
-        "width": 552,
-        "height": 128
-      },
-      "inputs": {
-        "label": {
-          "type": "text",
-          "description": "标签文字，如“注意”"
-        },
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FBF0DC\"><div style=\"position:absolute;left:0;top:0;width:8px;height:100%;background-color:#A86A00\"></div><div data-slot=\"label\" style=\"position:absolute;left:28px;top:14px;width:508px;height:28px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#A86A00\"></div><p data-slot=\"text\" style=\"position:absolute;left:28px;top:50px;width:508px;height:64px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p></section>"
-    },
-    {
-      "id": "callout-danger",
-      "name": "风险提示框",
-      "description": "红色风险块，用于延期风险、回退预案、安全合规红线等高风险事项。label 可填“风险”“阻塞”，留空则不显示标签行。",
-      "size": {
-        "width": 552,
-        "height": 128
-      },
-      "inputs": {
-        "label": {
-          "type": "text",
-          "description": "标签文字，如“风险”"
-        },
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F9E9E7\"><div style=\"position:absolute;left:0;top:0;width:8px;height:100%;background-color:#B3372F\"></div><div data-slot=\"label\" style=\"position:absolute;left:28px;top:14px;width:508px;height:28px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#B3372F\"></div><p data-slot=\"text\" style=\"position:absolute;left:28px;top:50px;width:508px;height:64px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p></section>"
-    },
-    {
-      "id": "conclusion",
-      "name": "评审结论条",
-      "description": "深主色底 + 白字 + 固定“结论”徽标的整行结论条，放在评审/方案页末尾给出评审结论或决策意见（如“同意通过评审，按计划立项”）。",
-      "size": {
-        "width": 1152,
-        "height": 96
-      },
-      "inputs": {
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#145D92\"><div style=\"position:absolute;left:24px;top:26px;width:88px;height:44px;background-color:#FFFFFF;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle\">结论</div><p data-slot=\"text\" style=\"position:absolute;left:136px;top:0;width:992px;height:96px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#FFFFFF;vertical-align:middle\"></p></section>"
-    },
-    {
-      "id": "divider",
-      "name": "分隔线",
-      "description": "整宽细横线，用于标题与正文之间、模块之间的视觉分隔；无输入。",
-      "size": {
-        "width": 1152,
-        "height": 8
-      },
-      "inputs": {},
-      "html": "<div style=\"position:absolute;left:0;top:3px;width:100%;height:2px;background-color:#C5D3DF\"></div>"
-    },
-    {
-      "id": "tag",
-      "name": "标签",
-      "description": "主色底白字小标签，用于技术栈、分类、优先级等短词标注（如“微服务”“P0”）；按文字长短调整 box 宽度并排摆放多个。",
-      "size": {
-        "width": 160,
-        "height": 40
-      },
-      "inputs": {
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<div data-slot=\"text\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#1476B8;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle\"></div>"
-    },
-    {
-      "id": "status",
-      "name": "状态标记",
-      "description": "状态符号 + 文字，用于进度、健康度标注。dot 可填“● ”“▶ ”“✓ ”等符号（带尾随空格，固定主色）；text 可用 runs 指定颜色表达状态，如红色 #B3372F 表异常。",
-      "size": {
-        "width": 360,
-        "height": 40
-      },
-      "inputs": {
-        "dot": {
-          "type": "text",
-          "description": "状态符号，如“● ”，带尾随空格"
-        },
-        "text": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<p style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:22px;color:#263C50;vertical-align:middle\"><span data-slot=\"dot\" style=\"color:#1476B8\"></span><span data-slot=\"text\"></span></p>"
-    },
-    {
-      "id": "field",
-      "name": "字段说明行",
-      "description": "左侧粗体字段名 + 右侧取值 + 底部细分隔线，多条同 x 递增 y 竖向叠放即成需求字段表、接口入参表。",
-      "size": {
-        "width": 552,
-        "height": 56
-      },
-      "inputs": {
-        "name": {
-          "type": "text",
-          "required": true
-        },
-        "value": {
-          "type": "richtext",
-          "required": true
-        }
-      },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div data-slot=\"name\" style=\"position:absolute;left:0;top:0;width:180px;height:56px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D;vertical-align:middle\"></div><div data-slot=\"value\" style=\"position:absolute;left:196px;top:0;width:356px;height:56px;font-family:Microsoft YaHei;font-size:22px;color:#263C50;vertical-align:middle\"></div><div style=\"position:absolute;left:0;top:54px;width:100%;height:2px;background-color:#D8E4EF\"></div></div>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8;border-radius:2px'></div><h3 data-slot='title' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:23px;font-weight:bold;color:#17324D'></h3><p data-slot='text' style='position:absolute;left:24px;top:72px;width:504px;height:124px;font-family:Microsoft YaHei;font-size:18px;color:#263C50;line-height:1.7'></p></section>"
     },
     {
       "id": "feature-card",
       "name": "特性卡片",
-      "description": "带序号/符号徽标的特性卡，3 张并排（宽 360）适合展示核心特性、建设要点。badge 可填 01/02 或 ✓ 等短字符，留空为纯色方块。",
+      "description": "三栏特性卡（宽 360）：40px 圆角序号徽标 + 21px 标题 + 17px 说明。适合核心能力、建设要点、目标拆解；badge 填 01/02 或 ✓。",
       "size": {
         "width": 360,
-        "height": 240
+        "height": 220
       },
       "inputs": {
         "badge": {
@@ -448,74 +315,381 @@
           "type": "richtext"
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF\"><div data-slot=\"badge\" style=\"position:absolute;left:24px;top:24px;width:48px;height:48px;background-color:#1476B8;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle\"></div><h3 data-slot=\"title\" style=\"position:absolute;left:88px;top:24px;width:248px;height:48px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#17324D;vertical-align:middle\"></h3><p data-slot=\"text\" style=\"position:absolute;left:24px;top:96px;width:312px;height:120px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='badge' style='position:absolute;left:24px;top:24px;width:40px;height:40px;background-color:#1476B9;border-radius:8px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:76px;top:26px;width:260px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><p data-slot='text' style='position:absolute;left:24px;top:88px;width:312px;height:108px;font-family:Microsoft YaHei;font-size:17px;color:#52687A;line-height:1.65'></p></section>"
     },
     {
       "id": "panel",
       "name": "分组面板",
-      "description": "顶部标题条 + 内容区的分组容器，用于把一段说明、指标口径、约束条件收拢成块；两张并排（宽 552）可做双栏说明。",
+      "description": "白底圆角分组容器：21px 标题 + 细分隔线 + 18px 内容。宽 552 双栏，宽 1152 通栏；适合把口径、约束、说明收拢成块。",
       "size": {
         "width": 552,
-        "height": 320
+        "height": 300
       },
       "inputs": {
         "title": {
-          "type": "text",
+          "type": "richtext",
           "required": true
         },
         "text": {
           "type": "richtext"
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF\"><div style=\"position:absolute;left:0;top:0;width:100%;height:56px;background-color:#E4EFF8\"></div><div data-slot=\"title\" style=\"position:absolute;left:24px;top:0;width:504px;height:56px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#145D92;vertical-align:middle\"></div><p data-slot=\"text\" style=\"position:absolute;left:24px;top:76px;width:504px;height:224px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><h3 data-slot='title' style='position:absolute;left:24px;top:20px;width:504px;height:32px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><div style='position:absolute;left:24px;top:60px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='text' style='position:absolute;left:24px;top:76px;width:504px;height:200px;font-family:Microsoft YaHei;font-size:18px;color:#263C50;line-height:1.7'></p></section>"
     },
     {
-      "id": "code",
-      "name": "代码块",
-      "description": "深底等宽字体块，用于命令行、SQL、配置、伪代码；label 可填语言或文件名（如“Bash”“schema.sql”）。code 中用换行分行。",
+      "id": "metric",
+      "name": "指标",
+      "description": "浅底圆角指标块：15px 标签 + 44px 主色数值 + 底部短条。宽 360 三栏并排；只放一个关键数字，不要塞长句。",
       "size": {
-        "width": 552,
-        "height": 220
+        "width": 360,
+        "height": 160
       },
       "inputs": {
         "label": {
-          "type": "text",
-          "description": "语言或文件名标签，如“Bash”"
+          "type": "richtext",
+          "required": true
         },
-        "code": {
+        "value": {
           "type": "richtext",
           "required": true
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#212B36;border:1px solid #3A4A5C\"><div data-slot=\"label\" style=\"position:absolute;left:20px;top:12px;width:400px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#8496A8\"></div><div data-slot=\"code\" style=\"position:absolute;left:0;top:44px;width:100%;height:176px;font-family:Consolas;font-size:18px;color:#D9E4EF;padding:0 20px\"></div></div>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'><p data-slot='label' style='position:absolute;left:24px;top:20px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#52687A'></p><div data-slot='value' style='position:absolute;left:24px;top:48px;width:312px;height:64px;font-family:Microsoft YaHei;font-size:44px;font-weight:bold;color:#145D92;line-height:1.1'></div><div style='position:absolute;left:24px;top:126px;width:40px;height:3px;background-color:#1476B8;border-radius:2px'></div></section>"
     },
     {
-      "id": "image-frame",
-      "name": "带框图片",
-      "description": "带细边框和底部图注条的图片框，用于架构图、流程图、截图；caption 可填“图 2-1 ××架构”，留空只保留底条。",
+      "id": "stat-card",
+      "name": "指标卡",
+      "description": "白底指标卡（360×180）：标签 + 40px 数值 + 变化说明 + 底部注释。delta 可用 runs 指定颜色，如 {\"text\":\"↑ 12%\",\"color\":\"#1E7A46\"}。",
       "size": {
-        "width": 552,
-        "height": 400
+        "width": 360,
+        "height": 180
       },
       "inputs": {
-        "src": {
-          "type": "image",
+        "label": {
+          "type": "richtext",
           "required": true
         },
-        "caption": {
-          "type": "text",
-          "description": "底部图注，如“图 2-1 总体架构”"
+        "value": {
+          "type": "richtext",
+          "required": true
+        },
+        "delta": {
+          "type": "richtext",
+          "description": "变化说明，如“↑ 12% 环比”"
+        },
+        "note": {
+          "type": "richtext",
+          "description": "口径或补充说明"
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;border:1px solid #C5D3DF\"><img data-slot=\"src\" style=\"position:absolute;left:0;top:0;width:100%;height:356px\"/><div style=\"position:absolute;left:0;top:356px;width:100%;height:44px;background-color:#F0F5FA\"></div><p data-slot=\"caption\" style=\"position:absolute;left:16px;top:356px;width:520px;height:44px;font-family:Microsoft YaHei;font-size:18px;color:#52687A;vertical-align:middle\"></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><p data-slot='label' style='position:absolute;left:24px;top:20px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#52687A'></p><div data-slot='value' style='position:absolute;left:24px;top:50px;width:312px;height:56px;font-family:Microsoft YaHei;font-size:40px;font-weight:bold;color:#145D92;line-height:1.2'></div><div data-slot='delta' style='position:absolute;left:24px;top:108px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#1E7A46'></div><div style='position:absolute;left:24px;top:146px;width:36px;height:3px;background-color:#1476B8;border-radius:2px'></div><p data-slot='note' style='position:absolute;left:72px;top:136px;width:264px;height:24px;font-family:Microsoft YaHei;font-size:14px;color:#8496A8'></p></section>"
+    },
+    {
+      "id": "person-card",
+      "name": "人员卡",
+      "description": "项目分工人员卡（360×180）：22px 姓名 + 15px 角色 + 16px 职责说明，左侧主色细条。三栏并排展示核心成员。",
+      "size": {
+        "width": 360,
+        "height": 180
+      },
+      "inputs": {
+        "name": {
+          "type": "richtext",
+          "required": true
+        },
+        "role": {
+          "type": "text",
+          "description": "角色/岗位，如“架构负责人”"
+        },
+        "duty": {
+          "type": "richtext",
+          "description": "职责说明"
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:148px;background-color:#1476B8;border-radius:2px'></div><h3 data-slot='name' style='position:absolute;left:24px;top:20px;width:312px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D'></h3><p data-slot='role' style='position:absolute;left:24px;top:54px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92'></p><p data-slot='duty' style='position:absolute;left:24px;top:88px;width:312px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#52687A;line-height:1.6'></p></section>"
+    },
+    {
+      "id": "icon-badge",
+      "name": "图标徽标",
+      "description": "48px 圆形浅色底 + 单字符符号（如 ✓、→、01、★）。用于卡片前的图标位或流程节点装饰；符号建议 1–2 个字符。",
+      "size": {
+        "width": 48,
+        "height": 48
+      },
+      "inputs": {
+        "symbol": {
+          "type": "text",
+          "required": true
+        }
+      },
+      "html": "<div data-slot='symbol' style='position:absolute;left:0;top:0;width:48px;height:48px;background-color:#E4EFF8;border-radius:50%;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'></div>"
+    },
+    {
+      "id": "table",
+      "name": "评审表格",
+      "description": "数据表格：深主色表头（白字加粗）+ 白底正文 + 细网格，18px 文字。首行为表头，二维数组每行列数一致；单元格可用 runs。适合需求清单、风险清单、接口清单。",
+      "size": {
+        "width": 1152,
+        "height": 360
+      },
+      "inputs": {
+        "rows": {
+          "type": "table",
+          "required": true
+        }
+      },
+      "html": "<table data-slot='rows' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:18px;color:#263C50;background-color:#FDFDFD;border:1px solid #C5D3DF;padding:8px 14px'><thead><tr><th style='background-color:#145D93;color:#FFFFFF;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;padding:10px 14px;border:1px solid #145D93'></th></tr></thead></table>"
+    },
+    {
+      "id": "compare",
+      "name": "双栏对比",
+      "description": "左右两栏对比（1152×320）：每栏浅底圆角 + 21px 标题 + 细分隔线 + 17px 逐行条目。用于方案 A/B、改造前后、自建/外采；行首建议带 ✓/✗/—。",
+      "size": {
+        "width": 1152,
+        "height": 320
+      },
+      "inputs": {
+        "titleLeft": {
+          "type": "text",
+          "required": true
+        },
+        "textLeft": {
+          "type": "richtext",
+          "description": "左栏逐行条目，换行分隔"
+        },
+        "titleRight": {
+          "type": "text",
+          "required": true
+        },
+        "textRight": {
+          "type": "richtext",
+          "description": "右栏逐行条目，换行分隔"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:600px;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8;border-radius:2px'></div><div style='position:absolute;left:624px;top:24px;width:4px;height:24px;background-color:#8496A8;border-radius:2px'></div><h3 data-slot='titleLeft' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><h3 data-slot='titleRight' style='position:absolute;left:640px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#52687A'></h3><div style='position:absolute;left:24px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:624px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='textLeft' style='position:absolute;left:24px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.8'></p><p data-slot='textRight' style='position:absolute;left:624px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.8'></p></div>"
+    },
+    {
+      "id": "matrix2x2",
+      "name": "四象限矩阵",
+      "description": "2×2 四象限（1152×520），浅底圆角分区。titleTL/TR/BL/BR 为象限标题，itemsXX 为条目数组（自动带 • 前缀）。适合需求优先级、SWOT。",
+      "size": {
+        "width": 1152,
+        "height": 520
+      },
+      "inputs": {
+        "titleTL": {
+          "type": "text",
+          "required": true
+        },
+        "itemsTL": {
+          "type": "list"
+        },
+        "titleTR": {
+          "type": "text",
+          "required": true
+        },
+        "itemsTR": {
+          "type": "list"
+        },
+        "titleBL": {
+          "type": "text",
+          "required": true
+        },
+        "itemsBL": {
+          "type": "list"
+        },
+        "titleBR": {
+          "type": "text",
+          "required": true
+        },
+        "itemsBR": {
+          "type": "list"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:584px;top:0;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:0;top:268px;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:584px;top:268px;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div data-slot='titleTL' style='position:absolute;left:24px;top:20px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsTL' style='position:absolute;left:24px;top:60px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#263C50;line-height:1.7'></ul><div data-slot='titleTR' style='position:absolute;left:608px;top:20px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsTR' style='position:absolute;left:608px;top:60px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#263C50;line-height:1.7'></ul><div data-slot='titleBL' style='position:absolute;left:24px;top:288px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsBL' style='position:absolute;left:24px;top:328px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#263C50;line-height:1.7'></ul><div data-slot='titleBR' style='position:absolute;left:608px;top:288px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsBR' style='position:absolute;left:608px;top:328px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#263C50;line-height:1.7'></ul></div>"
+    },
+    {
+      "id": "field",
+      "name": "字段说明行",
+      "description": "左侧 18px 粗体字段名 + 右侧 18px 取值 + 底部细分隔线，高 48px。多条同 x 递增 y 竖向叠放即成需求字段表、接口入参表。",
+      "size": {
+        "width": 552,
+        "height": 48
+      },
+      "inputs": {
+        "name": {
+          "type": "text",
+          "required": true
+        },
+        "value": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='name' style='position:absolute;left:0;top:0;width:140px;height:48px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></div><div data-slot='value' style='position:absolute;left:156px;top:0;width:396px;height:48px;font-family:Microsoft YaHei;font-size:18px;color:#263C50;vertical-align:middle'></div><div style='position:absolute;left:0;top:47px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+    },
+    {
+      "id": "api-item",
+      "name": "接口行",
+      "description": "接口清单一行（1152×56）：方法标签 + Consolas 路径 + 15px 说明 + 细分隔线。method 填 GET/POST/PUT/DELETE；多条递增 y 排成接口列表。",
+      "size": {
+        "width": 1152,
+        "height": 56
+      },
+      "inputs": {
+        "method": {
+          "type": "text",
+          "required": true
+        },
+        "path": {
+          "type": "text",
+          "required": true
+        },
+        "desc": {
+          "type": "richtext"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='method' style='position:absolute;left:0;top:12px;width:76px;height:30px;background-color:#1476B9;border-radius:4px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='path' style='position:absolute;left:92px;top:14px;width:420px;height:28px;font-family:Consolas;font-size:17px;color:#17324D;vertical-align:middle'></div><p data-slot='desc' style='position:absolute;left:528px;top:14px;width:624px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#52687A;vertical-align:middle'></p><div style='position:absolute;left:0;top:55px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+    },
+    {
+      "id": "tag",
+      "name": "标签",
+      "description": "浅主色底圆角标签，15px 粗体，用于技术栈、分类、优先级等短词（如“微服务”“P0”）。宽 140；按文字长短调整 box 宽度并排摆放。",
+      "size": {
+        "width": 140,
+        "height": 32
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8;border-radius:6px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div>"
+    },
+    {
+      "id": "status",
+      "name": "状态标记",
+      "description": "状态符号 + 文字（17px）。dot 填“● ”“▶ ”“✓ ”等（带尾随空格，主色）；text 可用 runs 指定颜色表达状态，如红色 #B3372F 表异常。",
+      "size": {
+        "width": 320,
+        "height": 32
+      },
+      "inputs": {
+        "dot": {
+          "type": "text",
+          "description": "状态符号，如“● ”，带尾随空格"
+        },
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<p style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:17px;color:#263C50;vertical-align:middle'><span data-slot='dot' style='color:#1476B8'></span><span data-slot='text'></span></p>"
+    },
+    {
+      "id": "quote",
+      "name": "引用块",
+      "description": "左侧主色竖线 + 20px 斜体引用 + 15px 出处，用于评审意见、会议纪要、规范条文。source 填“—— ××会议纪要”。",
+      "size": {
+        "width": 768,
+        "height": 110
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        },
+        "source": {
+          "type": "text",
+          "description": "引用出处"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:4px;width:4px;height:102px;background-color:#3F92CC;border-radius:2px'></div><p data-slot='text' style='position:absolute;left:24px;top:0;width:744px;height:78px;font-family:Microsoft YaHei;font-size:20px;font-style:italic;color:#263C50;line-height:1.65'></p><p data-slot='source' style='position:absolute;left:24px;top:82px;width:744px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#8496A8'></p></div>"
+    },
+    {
+      "id": "callout",
+      "name": "提示框",
+      "description": "浅主色圆角提示块：左侧主色细条 + 15px 标签 + 17px 说明。label 填“提示”“说明”“备注”，留空则不显示标签行。宽 552。",
+      "size": {
+        "width": 552,
+        "height": 120
+      },
+      "inputs": {
+        "label": {
+          "type": "text",
+          "description": "标签文字，如“提示”"
+        },
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#1476B8;border-radius:2px'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
+    },
+    {
+      "id": "callout-warn",
+      "name": "注意事项框",
+      "description": "橙色圆角警示块：左侧橙色细条 + 标签 + 说明。用于兼容性、灰度并行、数据口径等注意事项；label 填“注意”“提醒”。宽 552。",
+      "size": {
+        "width": 552,
+        "height": 120
+      },
+      "inputs": {
+        "label": {
+          "type": "text",
+          "description": "标签文字，如“注意”"
+        },
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FBF0DC;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#A86A00;border-radius:2px'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#A86A00'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
+    },
+    {
+      "id": "callout-danger",
+      "name": "风险提示框",
+      "description": "红色圆角风险块：左侧红色细条 + 标签 + 说明。用于延期风险、回退预案、安全合规红线；label 填“风险”“阻塞”。宽 552。",
+      "size": {
+        "width": 552,
+        "height": 120
+      },
+      "inputs": {
+        "label": {
+          "type": "text",
+          "description": "标签文字，如“风险”"
+        },
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F9E9E7;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#B3372F;border-radius:2px'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#B3372F'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
+    },
+    {
+      "id": "conclusion",
+      "name": "评审结论条",
+      "description": "深主色圆角结论条（1152×80）：白色“结论”徽标 + 19px 白色粗体结论文字。放在评审/方案页末尾给出决策意见。",
+      "size": {
+        "width": 1152,
+        "height": 80
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#145D93;border-radius:10px'><div style='position:absolute;left:20px;top:20px;width:72px;height:40px;background-color:#FFFFFF;border-radius:6px;font-family:Microsoft YaHei;font-size:16px;font-weight:bold;color:#145D93;text-align:center;vertical-align:middle'>结论</div><p data-slot='text' style='position:absolute;left:112px;top:0;width:1016px;height:80px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#FFFFFF;vertical-align:middle'></p></section>"
     },
     {
       "id": "flow-step",
       "name": "流程步骤",
-      "description": "序号块 + 标题 + 说明的流程节点。画流程图时多个本组件横向同 y 摆放、每两个之间放一个 flow-arrow；num 填 1/2/3 序号，留空为纯色块。",
+      "description": "流程节点（264×160）：32px 圆形序号 + 20px 标题 + 15px 说明，白底圆角。横向排布时每两个之间放一个 flow-arrow；num 填 1/2/3。",
       "size": {
         "width": 264,
-        "height": 180
+        "height": 160
       },
       "inputs": {
         "num": {
@@ -530,15 +704,15 @@
           "type": "richtext"
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF\"><div data-slot=\"num\" style=\"position:absolute;left:24px;top:20px;width:48px;height:48px;background-color:#1476B8;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle\"></div><h3 data-slot=\"title\" style=\"position:absolute;left:24px;top:84px;width:216px;height:34px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#17324D\"></h3><p data-slot=\"desc\" style=\"position:absolute;left:24px;top:124px;width:216px;height:44px;font-family:Microsoft YaHei;font-size:17px;color:#52687A\"></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='num' style='position:absolute;left:20px;top:20px;width:32px;height:32px;background-color:#1476B9;border-radius:50%;font-family:Microsoft YaHei;font-size:16px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:20px;top:66px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:20px;top:102px;width:224px;height:44px;font-family:Microsoft YaHei;font-size:15px;color:#52687A;line-height:1.5'></p></section>"
     },
     {
       "id": "flow-arrow",
       "name": "流程箭头",
-      "description": "居中大箭头字符，插在两个 flow-step 之间。arrow 填 →、⇒、➜ 等；纵向流程改填 ▼、↓。",
+      "description": "居中的大箭头字符（72×160），插在两个 flow-step 之间。arrow 填 →、⇒、➜；纵向流程改填 ▼、↓。",
       "size": {
-        "width": 96,
-        "height": 80
+        "width": 72,
+        "height": 160
       },
       "inputs": {
         "arrow": {
@@ -547,15 +721,71 @@
           "description": "箭头字符，如“→”“▼”“⇒”"
         }
       },
-      "html": "<div data-slot=\"arrow\" style=\"position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:48px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle\"></div>"
+      "html": "<div data-slot='arrow' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'></div>"
+    },
+    {
+      "id": "layer",
+      "name": "架构分层",
+      "description": "架构层条（1152×80）：左侧 176px 深主色层名块 + 右侧浅底内容条。多个同 x、同宽、y 递增 92px 竖向叠放即成分层架构图。",
+      "size": {
+        "width": 1152,
+        "height": 80
+      },
+      "inputs": {
+        "name": {
+          "type": "text",
+          "required": true,
+          "description": "层名，如“接入层”"
+        },
+        "text": {
+          "type": "richtext",
+          "description": "该层包含的系统或组件"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='name' style='position:absolute;left:0;top:0;width:176px;height:80px;background-color:#145D93;border-radius:8px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='text' style='position:absolute;left:188px;top:0;width:964px;height:80px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:8px;font-family:Microsoft YaHei;font-size:18px;color:#263C50;padding:0 24px;vertical-align:middle'></div></div>"
+    },
+    {
+      "id": "arch-node",
+      "name": "架构节点",
+      "description": "架构图中的单个系统/模块（240×96）：左侧浅主色细条 + 17px 标题 + 13px 说明，白底圆角。配合 arch-zone 使用，先放分区背景再放节点。",
+      "size": {
+        "width": 240,
+        "height": 96
+      },
+      "inputs": {
+        "title": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc": {
+          "type": "richtext"
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:0;top:12px;width:3px;height:72px;background-color:#3F92CC;border-radius:2px'></div><h3 data-slot='title' style='position:absolute;left:18px;top:16px;width:204px;height:28px;font-family:Microsoft YaHei;font-size:17px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:18px;top:48px;width:204px;height:40px;font-family:Microsoft YaHei;font-size:13px;color:#52687A;line-height:1.35'></p></section>"
+    },
+    {
+      "id": "arch-zone",
+      "name": "架构分区",
+      "description": "架构图分区背景（1152×160）：浅底大圆角 + 14px 分区标题 + 细分隔线。作为容器先摆放，再在内部放 arch-node；title 填“接入层”“服务层”等。",
+      "size": {
+        "width": 1152,
+        "height": 160
+      },
+      "inputs": {
+        "title": {
+          "type": "text",
+          "required": true
+        }
+      },
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='title' style='position:absolute;left:20px;top:12px;width:400px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#52687A;letter-spacing:1px'></div><div style='position:absolute;left:20px;top:40px;width:1112px;height:1px;background-color:#D8E4EF'></div></section>"
     },
     {
       "id": "timeline-item",
-      "name": "时间线节点",
-      "description": "圆点 + 竖轨 + 日期 + 标题 + 说明的时间线项，多个同 x 递增 y 竖向叠放即连成竖直时间线；date 可填“2026-03”“第 1 周”。",
+      "name": "竖向时间线节点",
+      "description": "竖直时间线一项（552×120）：圆点 + 竖轨 + 14px 日期 + 20px 标题 + 16px 说明。多个同 x、y 递增 120px 竖向叠放即连成时间线。",
       "size": {
         "width": 552,
-        "height": 132
+        "height": 120
       },
       "inputs": {
         "date": {
@@ -570,12 +800,35 @@
           "type": "richtext"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div style=\"position:absolute;left:15px;top:0;width:2px;height:100%;background-color:#D8E4EF\"></div><div style=\"position:absolute;left:8px;top:10px;width:16px;height:16px;background-color:#1476B8\"></div><div data-slot=\"date\" style=\"position:absolute;left:48px;top:0;width:240px;height:28px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#145D92\"></div><h3 data-slot=\"title\" style=\"position:absolute;left:48px;top:32px;width:488px;height:32px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#17324D\"></h3><p data-slot=\"desc\" style=\"position:absolute;left:48px;top:70px;width:488px;height:52px;font-family:Microsoft YaHei;font-size:19px;color:#52687A\"></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:10px;top:0;width:2px;height:120px;background-color:#D8E4EF'></div><div style='position:absolute;left:4px;top:10px;width:14px;height:14px;background-color:#1476B8;border-radius:50%'></div><div data-slot='date' style='position:absolute;left:40px;top:0;width:240px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></div><h3 data-slot='title' style='position:absolute;left:40px;top:28px;width:512px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:40px;top:62px;width:512px;height:48px;font-family:Microsoft YaHei;font-size:16px;color:#52687A;line-height:1.55'></p></div>"
+    },
+    {
+      "id": "timeline-h-item",
+      "name": "横向时间线节点",
+      "description": "横向时间线一项（264×160）：顶部日期 + 圆点 + 横轨 + 19px 标题 + 15px 说明。相邻摆放（间距 0）即连成横向时间轴；日期建议 2026-03 形式。",
+      "size": {
+        "width": 264,
+        "height": 160
+      },
+      "inputs": {
+        "date": {
+          "type": "text",
+          "description": "时间点，如“2026-03”"
+        },
+        "title": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc": {
+          "type": "richtext"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:38px;width:100%;height:2px;background-color:#D8E4EF'></div><div style='position:absolute;left:0;top:32px;width:14px;height:14px;background-color:#1476B8;border-radius:50%'></div><div data-slot='date' style='position:absolute;left:24px;top:0;width:216px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></div><h3 data-slot='title' style='position:absolute;left:0;top:64px;width:248px;height:30px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:0;top:98px;width:248px;height:52px;font-family:Microsoft YaHei;font-size:15px;color:#52687A;line-height:1.5'></p></div>"
     },
     {
       "id": "phase",
       "name": "阶段卡片",
-      "description": "顶部主色条 + 阶段名 + 周期 + 要点列表的路线图卡片，4 张并排（宽 264）适合展示实施计划、版本里程碑。items 为要点数组，自动带 • 前缀。",
+      "description": "路线图阶段卡（264×200）：顶部主色短条 + 20px 阶段名 + 14px 周期 + 15px 要点列表（自动 • 前缀）。4 张并排展示实施计划、版本里程碑。",
       "size": {
         "width": 264,
         "height": 200
@@ -594,104 +847,63 @@
           "description": "阶段要点数组"
         }
       },
-      "html": "<section style=\"position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF\"><div style=\"position:absolute;left:0;top:0;width:100%;height:6px;background-color:#1476B8\"></div><h3 data-slot=\"name\" style=\"position:absolute;left:20px;top:22px;width:224px;height:32px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#145D92\"></h3><p data-slot=\"period\" style=\"position:absolute;left:20px;top:58px;width:224px;height:24px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8\"></p><ul data-slot=\"items\" style=\"position:absolute;left:20px;top:92px;width:224px;height:96px;font-family:Microsoft YaHei;font-size:17px;color:#263C50\"></ul></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:16px;top:0;width:232px;height:4px;background-color:#1476B8;border-radius:2px'></div><h3 data-slot='name' style='position:absolute;left:20px;top:24px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></h3><p data-slot='period' style='position:absolute;left:20px;top:58px;width:224px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#8496A8'></p><ul data-slot='items' style='position:absolute;left:20px;top:90px;width:224px;height:96px;font-family:Microsoft YaHei;font-size:15px;color:#263C50;line-height:1.6'></ul></section>"
     },
     {
-      "id": "layer",
-      "name": "架构分层",
-      "description": "左侧深色层名块 + 右侧内容条的架构层，多个同 x、同宽、y 递增 96px 竖向叠放即成分层架构图（接入层/服务层/数据层…）。",
+      "id": "image",
+      "name": "本地图片",
+      "description": "展示配置目录中的本地 PNG/JPEG 等图片，等比缩放不拉伸。宽 552；通栏时把 box 宽高设为 1152×360 左右。",
       "size": {
-        "width": 1152,
-        "height": 96
-      },
-      "inputs": {
-        "name": {
-          "type": "text",
-          "required": true,
-          "description": "层名，如“接入层”"
-        },
-        "text": {
-          "type": "richtext",
-          "description": "该层包含的系统或组件"
-        }
-      },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div data-slot=\"name\" style=\"position:absolute;left:0;top:0;width:200px;height:96px;background-color:#145D92;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle\"></div><div data-slot=\"text\" style=\"position:absolute;left:200px;top:0;width:952px;height:96px;background-color:#F5F8FB;font-family:Microsoft YaHei;font-size:22px;color:#263C50;padding:0 24px;vertical-align:middle\"></div></div>"
-    },
-    {
-      "id": "compare",
-      "name": "双栏对比",
-      "description": "左右两栏带标题的对比块，用于方案 A/B、改造前后、自建/外采对比。textLeft/textRight 每行一条、用换行分隔，建议行首自带 ✓/✗/— 前缀表达支持、不支持、部分支持。",
-      "size": {
-        "width": 1152,
+        "width": 552,
         "height": 360
       },
       "inputs": {
-        "titleLeft": {
-          "type": "text",
+        "src": {
+          "type": "image",
           "required": true
-        },
-        "textLeft": {
-          "type": "richtext",
-          "description": "左栏逐行条目，行首可带 ✓/✗/—"
-        },
-        "titleRight": {
-          "type": "text",
-          "required": true
-        },
-        "textRight": {
-          "type": "richtext",
-          "description": "右栏逐行条目，行首可带 ✓/✗/—"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div style=\"position:absolute;left:0;top:0;width:552px;height:360px;background-color:#F5F8FB;border:1px solid #D8E4EF\"></div><div style=\"position:absolute;left:600px;top:0;width:552px;height:360px;background-color:#F5F8FB;border:1px solid #D8E4EF\"></div><div style=\"position:absolute;left:0;top:0;width:552px;height:56px;background-color:#E4EFF8\"></div><div style=\"position:absolute;left:600px;top:0;width:552px;height:56px;background-color:#E4EFF8\"></div><div data-slot=\"titleLeft\" style=\"position:absolute;left:24px;top:0;width:504px;height:56px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#145D92;vertical-align:middle\"></div><div data-slot=\"titleRight\" style=\"position:absolute;left:624px;top:0;width:504px;height:56px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#145D92;vertical-align:middle\"></div><p data-slot=\"textLeft\" style=\"position:absolute;left:24px;top:76px;width:504px;height:268px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p><p data-slot=\"textRight\" style=\"position:absolute;left:624px;top:76px;width:504px;height:268px;font-family:Microsoft YaHei;font-size:20px;color:#263C50\"></p></div>"
+      "html": "<img data-slot='src' style='position:absolute;left:0;top:0;width:100%;height:100%'/>"
     },
     {
-      "id": "matrix2x2",
-      "name": "四象限矩阵",
-      "description": "2×2 四象限，用于 SWOT、需求优先级（重要/紧急）矩阵。titleTL/TR/BL/BR 为左上/右上/左下/右下象限标题；itemsXX 为该象限条目数组，自动带 • 前缀。",
+      "id": "image-frame",
+      "name": "带框图片",
+      "description": "白底圆角图片框（552×400）：图片区 + 底部浅底图注条。用于架构图、流程图、系统截图；caption 填“图 2-1 ××架构”，留空只保留底条。",
       "size": {
-        "width": 1152,
-        "height": 560
+        "width": 552,
+        "height": 400
       },
       "inputs": {
-        "titleTL": {
+        "src": {
+          "type": "image",
+          "required": true
+        },
+        "caption": {
           "type": "text",
-          "required": true,
-          "description": "左上象限标题"
-        },
-        "itemsTL": {
-          "type": "list",
-          "description": "左上象限条目数组"
-        },
-        "titleTR": {
-          "type": "text",
-          "required": true,
-          "description": "右上象限标题"
-        },
-        "itemsTR": {
-          "type": "list",
-          "description": "右上象限条目数组"
-        },
-        "titleBL": {
-          "type": "text",
-          "required": true,
-          "description": "左下象限标题"
-        },
-        "itemsBL": {
-          "type": "list",
-          "description": "左下象限条目数组"
-        },
-        "titleBR": {
-          "type": "text",
-          "required": true,
-          "description": "右下象限标题"
-        },
-        "itemsBR": {
-          "type": "list",
-          "description": "右下象限条目数组"
+          "description": "底部图注，如“图 2-1 总体架构”"
         }
       },
-      "html": "<div style=\"position:absolute;left:0;top:0;width:100%;height:100%\"><div style=\"position:absolute;left:0;top:0;width:568px;height:272px;background-color:#F5F8FB;border:1px solid #D8E4EF\"></div><div style=\"position:absolute;left:584px;top:0;width:568px;height:272px;background-color:#F5F8FB;border:1px solid #D8E4EF\"></div><div style=\"position:absolute;left:0;top:288px;width:568px;height:272px;background-color:#F5F8FB;border:1px solid #D8E4EF\"></div><div style=\"position:absolute;left:584px;top:288px;width:568px;height:272px;background-color:#F5F8FB;border:1px solid #D8E4EF\"></div><div data-slot=\"titleTL\" style=\"position:absolute;left:20px;top:16px;width:528px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#145D92\"></div><ul data-slot=\"itemsTL\" style=\"position:absolute;left:20px;top:60px;width:528px;height:196px;font-family:Microsoft YaHei;font-size:18px;color:#263C50\"></ul><div data-slot=\"titleTR\" style=\"position:absolute;left:604px;top:16px;width:528px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#145D92\"></div><ul data-slot=\"itemsTR\" style=\"position:absolute;left:604px;top:60px;width:528px;height:196px;font-family:Microsoft YaHei;font-size:18px;color:#263C50\"></ul><div data-slot=\"titleBL\" style=\"position:absolute;left:20px;top:304px;width:528px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#145D92\"></div><ul data-slot=\"itemsBL\" style=\"position:absolute;left:20px;top:348px;width:528px;height:196px;font-family:Microsoft YaHei;font-size:18px;color:#263C50\"></ul><div data-slot=\"titleBR\" style=\"position:absolute;left:604px;top:304px;width:528px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#145D92\"></div><ul data-slot=\"itemsBR\" style=\"position:absolute;left:604px;top:348px;width:528px;height:196px;font-family:Microsoft YaHei;font-size:18px;color:#263C50\"></ul></div>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><img data-slot='src' style='position:absolute;left:0;top:0;width:100%;height:356px'/><div style='position:absolute;left:0;top:356px;width:100%;height:44px;background-color:#F5F8FB'></div><p data-slot='caption' style='position:absolute;left:16px;top:356px;width:520px;height:44px;font-family:Microsoft YaHei;font-size:15px;color:#52687A;vertical-align:middle'></p></section>"
+    },
+    {
+      "id": "code",
+      "name": "代码块",
+      "description": "深底等宽字体块（552×200）：13px 标签 + 14px Consolas 代码，1.6 行距。用于命令行、SQL、配置、伪代码；label 填语言或文件名，code 用换行分行。",
+      "size": {
+        "width": 552,
+        "height": 200
+      },
+      "inputs": {
+        "label": {
+          "type": "text",
+          "description": "语言或文件名标签，如“Bash”"
+        },
+        "code": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#212B36;border:1px solid #3A4A5C;border-radius:8px'><div data-slot='label' style='position:absolute;left:20px;top:12px;width:400px;height:22px;font-family:Microsoft YaHei;font-size:13px;color:#8496A8'></div><div data-slot='code' style='position:absolute;left:0;top:40px;width:100%;height:148px;font-family:Consolas;font-size:14px;color:#D9E4EF;line-height:1.6;padding:0 20px'></div></div>"
     }
   ]
 }
