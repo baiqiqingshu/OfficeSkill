@@ -62,6 +62,18 @@
       "maximum": 200,
       "description": "If supplied must equal pages.length; CLI enforces this relationship."
     },
+    "autoFitFonts": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, render automatically shrinks overflowing text/table font sizes to fit their boxes, down to minFontSize. Remaining issues are still reported."
+    },
+    "minFontSize": {
+      "type": "integer",
+      "minimum": 8,
+      "maximum": 24,
+      "default": 12,
+      "description": "Floor used by layout-check font-size suggestions and autoFitFonts shrinking, in px."
+    },
     "pages": {
       "type": "array",
       "minItems": 1,

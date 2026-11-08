@@ -18,11 +18,11 @@ description: 面向内网技术汇报、技术方案评审、需求评审、场�
    python SKILL_DIR/scripts/ppt_tool.py render deck.json --out output/deck
    ```
 
-4. 根据错误中的页面、元素和字段修正 JSON。超长内容由模型精简或拆页；框架不会按内容自动缩小文字。交付 PPTX；HTML 仅预览内容，原生公司母版的最终外观以 PPTX 为准。条件允许时在本地 PowerPoint/LibreOffice 复核换行、遮挡和图片比例。
+4. 根据错误中的页面、元素和字段修正 JSON。超长内容由模型精简或拆页；框架默认不自动缩小文字，但顶层加 `"autoFitFonts": true` 后，`render` 会把溢出的文本/表格字号自动调小到可容纳（不低于最小字号，默认 12px，可用 `"minFontSize"` 调整）。交付 PPTX；HTML 仅预览内容，原生公司母版的最终外观以 PPTX 为准。条件允许时在本地 PowerPoint/LibreOffice 复核换行、遮挡和图片比例。
 
 IPD 需求串讲（SR/AR）推荐结构：封面 + SR 清单 + AR 清单，之后每个 SR 先放一页 SR 标题页，再按该 SR 下每个 AR 出六页——背景、主成功场景、异常场景、后置状态、前置条件、分支场景。每个 AR 页统一用 `ar-header` 作页头：`crumb` 写「SR-01 · AR-01 · 背景」这类面包屑（SR 编号 · AR 编号 · 场景类型），`title` 统一填 AR 名称（同一 AR 的六页标题一致），`meta` 填场景序号如「场景 2/6」。完整示例见 `examples/ipd-walkthrough.json`（30 页 SR/AR 需求串讲，不展开 IR）。
 
-`render` 会做布局检查：`report.json` 的 `layout` 列出重叠、超出页面、文本溢出和表格溢出，`preview.html` 顶部显示「布局检查通过」或问题数量，并给出偏移、重排、拆页、加宽/拆分表格等建议。`validate` 输出 `layoutIssueCount`，可先看数量再渲染。
+`render` 会做布局检查：`report.json` 的 `layout` 列出重叠、超出页面、文本溢出和表格溢出，`preview.html` 顶部显示「布局检查通过」或问题数量，并给出偏移、重排、拆页、加宽/拆分表格等建议；文本/表格溢出时建议首位会给出**具体可调小到的字号**（如「可将字号调小至 15px」，并标注最小字号），供模型直接改字号或开启自动缩放。`validate` 输出 `layoutIssueCount`，可先看数量再渲染。
 
 最小配置：
 
@@ -51,6 +51,8 @@ IPD 需求串讲（SR/AR）推荐结构：封面 + SR 清单 + AR 清单，之�
 表格行高按内容紧凑排布（含单元格 runs 自带字号）：`box` 高度是上限而非等分高度，内容少时表格顶部对齐、下方留白；单元格内容过多仍会溢出，需精简或拆页。
 
 配置顶层可加 `"theme":"主题id"` 整体换色，可选 `crimson`（默认，深红）、`blue`（政务蓝）、`emerald`（墨绿）、`mono`（黑白灰）、`graphite`（深色暗底）。只有组件规范色板内的色值参与换色，其余颜色原样保留。
+
+字号适配（可选）：顶层加 `"autoFitFonts": true` 时，`render` 自动把布局检查出的文本/表格溢出按需调小字号到可容纳；`"minFontSize"` 规定最小字号（默认 12，允许 8–24），避免字过小。仍无法容纳的问题（字号已到最小）会如实保留在布局报告中，需精简或拆页。
 
 ## 元素库预览
 

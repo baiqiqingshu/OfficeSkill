@@ -110,3 +110,14 @@
   - 文本尾部超出页面 → `outOfPage` + `textOverflow`，提示上移/缩小或拆页。
 - `preview.html` 正常 deck 显示“布局检查通过”，问题 deck 显示“布局检查 N 项”并展开建议面板；无控制台错误、无外部请求。
 - IPD 示例删除 IR 页与 IR 文字后为 30 页；`demo` 重新生成后为 49 组件、6 份示例、62 页、无跳过页。
+
+## 六、字号适配（2026-11-08）
+
+目标：布局检查出文本/表格溢出时给出**具体可调小到的字号**，并规定最小字号避免过小；支持渲染时自动调小字号。方案见 `docs/intranet-ppt-font-fit.md`。
+
+- `components.py`：
+  - 新增 `MIN_FONT_PX = 12`；`audit_layout(pages, page_size, min_font=None)`。
+  - text/table 溢出 issue 的 suggestions 首位插入计算建议：`suggested = floor(F * H / N)`（F 为测量口径字号，H 为 box 高，N 为所需高度）；`suggested >= min_font` 时给「可将（表格）字号调小至 Xpx（最小 Ypx）」，否则给「最小字号 Ypx 仍无法容纳，需精简文案或拆页/拆表」；`_LAYOUT_SUGGESTIONS` 常量本身未改。
+  - 新增 `fit_fonts(pages, min_font=None)`：只缩放溢出节点的 `style.fontSize` 与 runs/headerStyle 的 fontSize，clamp 到 `[min_font, 240]` 且仅变小才写回；表格缩放后按 page px 口径重算 `rowHeights`（与 emit 存储口径一致），保证二次审计不再按旧行高误报。
+- `cli.py`：顶层白名单新增 `autoFitFonts`（bool，默认 false）与 `minFontSize`（int，8–24，默认 12）及校验；`validate` 审计传 `min_font`；`render` 在 `autoFitFonts` 为真时先审计 → `fit_fonts` → 二次审计，剩余问题如实进 preview/report.json。
+- 验收：6 份示例 `validate`/`render` 回归通过；溢出 deck 建议含「可调小至 16px（最小 12px）」等；autoFitFonts 渲染 issueCount 下降且 rowHeights 重算生效；极限文案触发「最小字号 12px 仍无法容纳」兜底；非法 `minFontSize`/`autoFitFonts` 配置被拒。

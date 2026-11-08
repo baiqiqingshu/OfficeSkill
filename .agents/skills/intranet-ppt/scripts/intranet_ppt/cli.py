@@ -81,11 +81,17 @@ def _number(value, label, minimum=None, maximum=None):
 def prepare(config_path):
     from . import components, pptx_backend, themes
     config = _read_json(config_path)
-    _keys(config, ["schemaVersion", "title", "master", "libraries", "pageSize", "pageCount", "pages", "theme"], "配置")
+    _keys(config, ["schemaVersion", "title", "master", "libraries", "pageSize", "pageCount", "pages", "theme", "autoFitFonts", "minFontSize"], "配置")
     if type(config.get("schemaVersion")) is not int or config["schemaVersion"] != 1:
         raise ValueError("schemaVersion 必须为 1")
     if not isinstance(config.get("title", "未命名演示"), str):
         raise ValueError("title 必须是字符串")
+    auto_fit = config.get("autoFitFonts", False)
+    if not isinstance(auto_fit, bool):
+        raise ValueError("autoFitFonts 必须是布尔值")
+    min_font = config.get("minFontSize", 12)
+    if isinstance(min_font, bool) or type(min_font) is not int or not 8 <= min_font <= 24:
+        raise ValueError("minFontSize 必须是 8 到 24 的整数")
     size = config.get("pageSize", dict(DEFAULT_SIZE))
     _keys(size, ["width", "height"], "pageSize")
     for key in ["width", "height"]:
@@ -145,7 +151,7 @@ def prepare(config_path):
             element_nodes.append({"id": e_id, "component": element["component"], "nodes": compiled_nodes})
         compiled.append({"id": page_id, "masterSlide": slide, "nodes": nodes, "elements": element_nodes})
     return {"config": config, "pageSize": size, "pages": compiled, "master": master,
-            "title": config.get("title", "未命名演示")}
+            "title": config.get("title", "未命名演示"), "autoFitFonts": auto_fit, "minFontSize": min_font}
 
 
 def _directory_transaction(destination, overwrite, writer):
@@ -188,7 +194,10 @@ def render(config_path, destination, overwrite):
     if config_path.is_relative_to(destination):
         raise ValueError("输出目录不能包含输入配置，请使用独立子目录")
     prepared = prepare(config_path)
-    layout = components.audit_layout(prepared["pages"], prepared["pageSize"])
+    layout = components.audit_layout(prepared["pages"], prepared["pageSize"], min_font=prepared["minFontSize"])
+    if prepared["autoFitFonts"]:
+        components.fit_fonts(prepared["pages"], min_font=prepared["minFontSize"])
+        layout = components.audit_layout(prepared["pages"], prepared["pageSize"], min_font=prepared["minFontSize"])
     sources = ([prepared["master"]] if prepared["master"] else [])
     sources += [_asset(config_path.parent, p, "library") for p in prepared["config"].get("libraries", [])]
     sources += [Path(n["src"]) for p in prepared["pages"] for n in p["nodes"] if n.get("type") == "image"]
@@ -269,7 +278,7 @@ def main(argv=None):
             result = components.catalog(components.load_libraries([_local_argument(p) for p in args.library]))
         elif args.command == "validate":
             prepared = prepare(_local_argument(args.config))
-            layout = components.audit_layout(prepared["pages"], prepared["pageSize"])
+            layout = components.audit_layout(prepared["pages"], prepared["pageSize"], min_font=prepared["minFontSize"])
             result = {"valid": True, "pageCount": len(prepared["pages"]), "pageSize": prepared["pageSize"],
                       "layoutIssueCount": layout["issueCount"], "layoutIssues": layout["issues"]}
         elif args.command == "render":

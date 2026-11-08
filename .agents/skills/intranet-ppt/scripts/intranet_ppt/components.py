@@ -924,6 +924,8 @@ _PAGE_TOLERANCE = 0.5
 _OVERFLOW_TOLERANCE = 2.0
 _OVERLAP_MIN_AREA = 4.0
 _CONTAIN_TOLERANCE = 1.0
+# Smallest font size layout suggestions / auto-fit are willing to go to.
+MIN_FONT_PX = 12
 
 _LAYOUT_SUGGESTIONS = {
     "overlap": ["将其中一个元素上/下/左/右偏移 8–16px", "缩小或调整元素 box 尺寸", "重新布局该页元素", "将其中一个元素拆分到下一页"],
@@ -1004,13 +1006,18 @@ def _layout_issue(page_id, page_index, kind, elements, detail):
             "detail": detail, "suggestions": list(_LAYOUT_SUGGESTIONS[kind])}
 
 
-def audit_layout(pages, page_size):
+def audit_layout(pages, page_size, min_font=None):
     """Audit compiled pages for out-of-page, overflow and overlap problems.
 
     The audit is advisory: it estimates text height with the same wrap model as
     the table renderer, uses real table row heights, and ignores containers that
     fully hold their children, so a clean deck reports zero issues.
+
+    ``min_font`` (default :data:`MIN_FONT_PX`) floors the concrete font-size
+    suggestion inserted at the head of every overflow issue's suggestions.
     """
+    if min_font is None:
+        min_font = MIN_FONT_PX
     width, height = float(page_size["width"]), float(page_size["height"])
     issues = []
     for index, page in enumerate(pages or [], 1):
@@ -1048,12 +1055,20 @@ def audit_layout(pages, page_size):
                 over, required, box, node = text_worst
                 detail = (f"元素 {element['id']} 的文字约需 {required:.0f}px 高，box 仅 {box:.0f}px，溢出 {over:.0f}px"
                           f"（文字节点 w={_num(node.get('w', 0)):.0f}px）")
-                issues.append(_layout_issue(page_id, index, "textOverflow", [element["id"]], detail))
+                issue = _layout_issue(page_id, index, "textOverflow", [element["id"]], detail)
+                suggestion = _overflow_font_suggestion(node, required, box, min_font)
+                if suggestion:
+                    issue["suggestions"].insert(0, suggestion)
+                issues.append(issue)
             if table_worst:
                 over, total, box, node, rows = table_worst
                 detail = (f"元素 {element['id']} 的表格 {rows} 行内容约需 {total:.0f}px 高，box 仅 {box:.0f}px，溢出 {over:.0f}px"
                           f"（表格节点 w={_num(node.get('w', 0)):.0f}px）")
-                issues.append(_layout_issue(page_id, index, "tableOverflow", [element["id"]], detail))
+                issue = _layout_issue(page_id, index, "tableOverflow", [element["id"]], detail)
+                suggestion = _overflow_font_suggestion(node, total, box, min_font, table=True)
+                if suggestion:
+                    issue["suggestions"].insert(0, suggestion)
+                issues.append(issue)
         for first in range(len(entries)):
             for second in range(first + 1, len(entries)):
                 (left_element, left_bounds), (right_element, right_bounds) = entries[first], entries[second]
@@ -1078,6 +1093,106 @@ def audit_layout(pages, page_size):
                 issues.append(_layout_issue(page_id, index, "overlap", [left_element["id"], right_element["id"]], detail))
     issues.sort(key=lambda issue: (issue["pageIndex"], issue["kind"]))
     return {"issueCount": len(issues), "issues": issues}
+
+
+def _node_font_size(node):
+    """Return the font size an overflow estimate should measure against.
+
+    Text and table heights use the node style's ``fontSize`` (fallback 24) as
+    their paragraph/cell default; the same fallback keeps the concrete font
+    suggestion consistent with the measured overflow.
+    """
+    style = node.get("style") or {}
+    font_size = style.get("fontSize", 24)
+    if isinstance(font_size, bool) or not isinstance(font_size, (int, float)) or not math.isfinite(font_size) or font_size <= 0:
+        return 24.0
+    return float(font_size)
+
+
+def _overflow_font_suggestion(node, required, box, min_font, table=False):
+    """Compose the concrete font-size suggestion for one overflowing node.
+
+    Returns the leading suggestion listing the largest shrink that fits
+    (``floor(F * H / N)``) or the minimum-font fallback; ``None`` when the
+    node carries no usable numbers. The generic suggestions are untouched.
+    """
+    if required <= 0 or box <= 0:
+        return None
+    font_size = _node_font_size(node)
+    suggested = math.floor(font_size * box / required)
+    if table:
+        if suggested >= min_font:
+            return f"可将表格字号调小至 {suggested}px（最小 {min_font}px）"
+        return f"最小字号 {min_font}px 仍无法容纳，需精简单元格文案或拆表"
+    if suggested >= min_font:
+        return f"可将字号调小至 {suggested}px（最小 {min_font}px）即可容纳"
+    return f"最小字号 {min_font}px 仍无法容纳，需精简文案或拆页"
+
+
+def _shrink_font(target, factor, min_font):
+    """Scale ``target["fontSize"]`` down by ``factor``, clamped to the minimum.
+
+    Mutates in place and only writes a strictly smaller value: sizes at or
+    below ``min_font`` (or missing/invalid) are left untouched.
+    """
+    if not isinstance(target, dict):
+        return
+    size = target.get("fontSize")
+    if isinstance(size, bool) or not isinstance(size, (int, float)) or not math.isfinite(size) or size <= 0:
+        return
+    new = min(240, max(min_font, round(size * factor)))
+    if new < size:
+        target["fontSize"] = new
+
+
+def fit_fonts(pages, min_font=None):
+    """Shrink overflowing text/table nodes until their copy fits the box.
+
+    Only nodes whose measured height exceeds their box are touched, and each
+    font size is clamped to ``[min_font, 240]`` and only written when it is
+    strictly smaller (so already-small runs are never grown or shrunk below
+    the minimum). Tables get ``rowHeights`` recomputed from the shrunk fonts
+    with the same estimate used at compile time and in the same page-px
+    coordinate space, so a follow-up audit measures the real painted height.
+    Other node types (rect/line/image) are never modified.
+    """
+    if min_font is None:
+        min_font = MIN_FONT_PX
+    for page in pages or []:
+        if not isinstance(page, dict):
+            continue
+        for node in page.get("nodes", []):
+            if not isinstance(node, dict):
+                continue
+            if node.get("type") == "text":
+                box = _num(node.get("h", 0))
+                required = _text_required_height(node)
+                if box <= 0 or required <= box:
+                    continue
+                factor = box / required
+                _shrink_font(node.get("style"), factor, min_font)
+                for run in node.get("runs", []) or []:
+                    _shrink_font(run, factor, min_font)
+            elif node.get("type") == "table":
+                box = _num(node.get("h", 0))
+                total = _table_render_height(node)
+                if box <= 0 or total <= box:
+                    continue
+                factor = box / total
+                _shrink_font(node.get("style"), factor, min_font)
+                _shrink_font(node.get("headerStyle"), factor, min_font)
+                for row in node.get("rows", []) or []:
+                    if not isinstance(row, list):
+                        continue
+                    for cell in row:
+                        if isinstance(cell, list):
+                            for run in cell:
+                                _shrink_font(run, factor, min_font)
+                heights = _table_row_heights(_num(node.get("w", 0)), node.get("style") or {},
+                                             node.get("rows", []) or [], int(node.get("headerRows") or 0),
+                                             node.get("headerStyle") or {})
+                if heights:
+                    node["rowHeights"] = heights
 
 
 def _padding_css(value):
