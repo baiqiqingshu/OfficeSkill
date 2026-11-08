@@ -15,6 +15,18 @@
     "title": {
       "type": "string"
     },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "blue",
+        "emerald",
+        "crimson",
+        "mono",
+        "graphite"
+      ],
+      "default": "blue",
+      "description": "Optional theme palette. Canonical spec-palette hexes inside component HTML are remapped to the theme colors during library loading."
+    },
     "master": {
       "$ref": "#/$defs/localPath"
     },

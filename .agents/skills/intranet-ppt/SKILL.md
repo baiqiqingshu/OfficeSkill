@@ -42,6 +42,19 @@ description: 面向内网技术汇报、技术方案评审和需求评审，用�
 
 每页可放多个元素。`box` 为页面像素坐标，默认页面 1280×720。`pageCount` 可省略；填写时必须等于 `pages` 数量。文字可以是字符串或 runs 数组，每段支持 `text`、`bold`、`italic`、`fontFamily`、`fontSize`、`color`、`underline`，例如 `[{"text":"重点","bold":true},{"text":"说明","fontFamily":"宋体","italic":true}]`。颜色用 `#RRGGBB`，字号用像素。
 
+配置顶层可加 `"theme":"主题id"` 整体换色，可选 `blue`（默认，政务蓝）、`emerald`（墨绿）、`crimson`（深红）、`mono`（黑白灰）、`graphite`（深色暗底）。只有组件规范色板内的色值参与换色，其余颜色原样保留。
+
+## 元素库预览
+
+直接双击打开 `SKILL_DIR/assets/demo/library-demo.html`，可离线浏览元素库全部组件：中文名、`库ID/组件ID`、原始尺寸、inputs 签名、示例输入 JSON 及按原尺寸渲染的效果；页头按钮可在 5 套主题间即时换色，顶部另有流程图、分层架构、目录、指标行等组合编排示例。该文件为预生成产物，库变更后可用命令重新生成（第三方库用 `--library` 一并纳入）：
+
+```text
+python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo
+python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library 本地/library.json
+```
+
+内置组件（`builtin/` 前缀）：`title` `text` `bullets` `card` `table` `image` `metric` `steps` `cover` `section-break` `agenda-item` `section-title` `caption` `footnote` `quote` `callout` `callout-warn` `callout-danger` `conclusion` `divider` `tag` `status` `field` `feature-card` `panel` `code` `image-frame` `flow-step` `flow-arrow` `timeline-item` `phase` `layer` `compare` `matrix2x2`。各组件的输入名、类型和必填性一律以 `catalog` 输出为准。
+
 ## 公司母版和外部库
 
 配置顶层添加 `"master":"master.pptx"`；每页 `masterSlide` 选择该 PPTX 的第几张页面，从 1 开始，可重复及重排。建议母版页面只保留背景、徽标、页脚等固定元素，正文由 HTML 组件控制；框架会保留指定源页上的所有静态内容。

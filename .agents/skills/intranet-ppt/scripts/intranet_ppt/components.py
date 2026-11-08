@@ -216,6 +216,38 @@ def _parse(value):
     return parser.root
 
 
+_HEX_TOKEN = re.compile(r"#[0-9A-Fa-f]{6}\b|#[0-9A-Fa-f]{3}\b")
+
+
+def _expand_hex(value):
+    if re.fullmatch(r"#[0-9A-Fa-f]{3}", value):
+        return "#" + "".join(char * 2 for char in value[1:])
+    return value
+
+
+def _palette_map(palette):
+    """Normalize {fromHex: toHex} to expanded uppercase #RRGGBB pairs."""
+    table = {}
+    for source, target in (palette or {}).items():
+        if not isinstance(source, str) or not isinstance(target, str):
+            continue
+        source = _expand_hex(source.strip()).upper()
+        target = _expand_hex(target.strip()).upper()
+        if re.fullmatch(r"#[0-9A-Fa-f]{6}", source) and re.fullmatch(r"#[0-9A-Fa-f]{6}", target):
+            table[source] = target
+    return table
+
+
+def _apply_palette(html, table):
+    """Whole-token replace canonical spec colors inside a component HTML string."""
+    if not table:
+        return html
+    def replace(match):
+        token = match.group(0)
+        return table.get(_expand_hex(token).upper(), token)
+    return _HEX_TOKEN.sub(replace, html)
+
+
 def _walk(node):
     yield node
     for child in node.children:
@@ -223,9 +255,15 @@ def _walk(node):
             yield from _walk(child)
 
 
-def load_libraries(paths) -> dict:
-    """Load the builtin library and local third-party manifests, never code."""
+def load_libraries(paths, palette=None) -> dict:
+    """Load the builtin library and local third-party manifests, never code.
+
+    ``palette`` optionally maps spec-palette hexes (uppercase #RRGGBB) to target
+    theme hexes; the swap happens on the raw HTML string before parsing, so a
+    ``None`` palette preserves the component colors exactly.
+    """
     builtin = Path(__file__).resolve().parents[2] / "assets/libraries/builtin/library.json"
+    recolor = _palette_map(palette)
     result = {}
     libraries = set()
     for supplied in [builtin, *(paths or [])]:
@@ -276,7 +314,7 @@ def load_libraries(paths) -> dict:
                 if file.stat().st_size > 1024 * 1024:
                     _fail("组件 HTML 文件过大")
                 html = file.read_text(encoding="utf-8-sig")
-            tree = _parse(html)
+            tree = _parse(_apply_palette(html, recolor))
             slots = set()
             for node in _walk(tree):
                 slot = node.attrs.get("data-slot")
@@ -583,6 +621,46 @@ def _preview_runs(runs, inherited=None):
     return "".join(f'<span style="{escape(_preview_style({**defaults, **run}), quote=True)}">{escape(run["text"])}</span>' for run in runs)
 
 
+def _preview_node_html(node):
+    """Render one compiled scene node to an absolutely-positioned HTML fragment.
+
+    Shared by render_preview (page canvases) and the library demo gallery; the
+    image branch reads the verified local file and embeds it as a data URI.
+    """
+    positioning = f'position:absolute;left:{node["x"]:g}px;top:{node["y"]:g}px;width:{node["w"]:g}px;height:{node["h"]:g}px;'
+    css = positioning + _preview_style(node.get("style", {}))
+    kind = node["type"]
+    if kind == "text":
+        # Decorations belong on each run so an explicit false can clear
+        # a template's underline/bold/italic for only part of a sentence.
+        css = positioning + _preview_style({key: value for key, value in node.get("style", {}).items() if key not in {"bold", "italic", "underline"}})
+        body = _preview_runs(node.get("runs", []), node.get("style", {}))
+        vertical = node.get("style", {}).get("verticalAlign", "top")
+        content_style = {"top": "flex-start", "middle": "center", "bottom": "flex-end"}.get(vertical, "flex-start")
+        return f'<div class="text" style="{escape(css, quote=True)};display:flex;flex-direction:column;justify-content:{content_style}"><div>{body}</div></div>'
+    if kind == "image":
+        from io import BytesIO
+        from PIL import Image, ImageOps
+        with Image.open(node["src"]) as source:
+            image = ImageOps.exif_transpose(source)
+            stream = BytesIO()
+            image.convert("RGBA").save(stream, format="PNG")
+        uri = "data:image/png;base64," + base64.b64encode(stream.getvalue()).decode("ascii")
+        return f'<img alt="" style="{escape(css, quote=True)};object-fit:contain" src="{uri}">'
+    if kind == "table":
+        css = positioning + _preview_style({key: value for key, value in node.get("style", {}).items() if key not in {"bold", "italic", "underline"}})
+        rows = []
+        for row in node.get("rows", []):
+            cells = [f'<td>{_preview_runs([{"text": cell}] if isinstance(cell, str) else cell, node.get("style", {}))}</td>' for cell in row]
+            rows.append("<tr>" + "".join(cells) + "</tr>")
+        return f'<table style="{escape(css, quote=True)}">' + "".join(rows) + "</table>"
+    if kind == "line":
+        return f'<div style="{escape(css, quote=True)};border-top:1px solid #17324D"></div>'
+    if kind == "rect":
+        return f'<div style="{escape(css, quote=True)}"></div>'
+    return ""
+
+
 def render_preview(pages, page_size, title):
     """Render a self-contained, script-free offline content preview."""
     width, height = page_size["width"], page_size["height"]
@@ -590,37 +668,9 @@ def render_preview(pages, page_size, title):
     for index, page in enumerate(pages, 1):
         elements = []
         for node in page["nodes"]:
-            positioning = f'position:absolute;left:{node["x"]:g}px;top:{node["y"]:g}px;width:{node["w"]:g}px;height:{node["h"]:g}px;'
-            css = positioning + _preview_style(node.get("style", {}))
-            kind = node["type"]
-            if kind == "text":
-                # Decorations belong on each run so an explicit false can clear
-                # a template's underline/bold/italic for only part of a sentence.
-                css = positioning + _preview_style({key: value for key, value in node.get("style", {}).items() if key not in {"bold", "italic", "underline"}})
-                body = _preview_runs(node.get("runs", []), node.get("style", {}))
-                vertical = node.get("style", {}).get("verticalAlign", "top")
-                content_style = {"top": "flex-start", "middle": "center", "bottom": "flex-end"}.get(vertical, "flex-start")
-                elements.append(f'<div class="text" style="{escape(css, quote=True)};display:flex;flex-direction:column;justify-content:{content_style}"><div>{body}</div></div>')
-            elif kind == "image":
-                from io import BytesIO
-                from PIL import Image, ImageOps
-                with Image.open(node["src"]) as source:
-                    image = ImageOps.exif_transpose(source)
-                    stream = BytesIO()
-                    image.convert("RGBA").save(stream, format="PNG")
-                uri = "data:image/png;base64," + base64.b64encode(stream.getvalue()).decode("ascii")
-                elements.append(f'<img alt="" style="{escape(css, quote=True)};object-fit:contain" src="{uri}">')
-            elif kind == "table":
-                css = positioning + _preview_style({key: value for key, value in node.get("style", {}).items() if key not in {"bold", "italic", "underline"}})
-                rows = []
-                for row in node.get("rows", []):
-                    cells = [f'<td>{_preview_runs([{"text": cell}] if isinstance(cell, str) else cell, node.get("style", {}))}</td>' for cell in row]
-                    rows.append("<tr>" + "".join(cells) + "</tr>")
-                elements.append(f'<table style="{escape(css, quote=True)}">' + "".join(rows) + "</table>")
-            elif kind == "line":
-                elements.append(f'<div style="{escape(css, quote=True)};border-top:1px solid #17324D"></div>')
-            elif kind == "rect":
-                elements.append(f'<div style="{escape(css, quote=True)}"></div>')
+            fragment = _preview_node_html(node)
+            if fragment:
+                elements.append(fragment)
         slides.append(f'<section aria-label="第 {index} 页" style="width:{width:g}px;height:{height:g}px">' + "".join(elements) + "</section>")
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'">'

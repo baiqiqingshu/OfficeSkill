@@ -53,6 +53,54 @@
 
 禁止 `script/style/link/iframe/object` 等可执行或外链元素、`on*` 事件、CSS `url()`、`@import`、表达式、远程字体及远程资源。任意 HTML/CSS、SVG 动画、图表脚本不在原型范围。未知字段或不支持样式应修正为目录支持的契约，不通过内联脚本绕过限制。
 
+## 规范色板与主题换色
+
+组件 HTML 只应使用下表中的 hex 色值。配置 JSON 顶层可选 `"theme"` 字段（`blue` 默认、`emerald`、`crimson`、`mono`、`graphite`）会把这些色值整体映射到目标主题；色板之外的 hex 一律原样保留，不参与换色。第三方库同样遵守本约定即可自动支持主题。
+
+| 语义 | hex |
+| --- | --- |
+| INK 主标题 | #17324D |
+| BODY 正文 | #263C50 |
+| MUTED 次要 | #52687A |
+| FAINT 弱文字 | #8496A8 |
+| ACCENT_D 深主色 | #145D92 |
+| ACCENT 主色 | #1476B8 |
+| ACCENT_L 浅主色 | #3F92CC |
+| SOFT_A 主色浅底 | #E4EFF8 |
+| BG_SOFT 卡片底 | #F0F5FA |
+| BG_SOFT2 表格底 | #F5F8FB |
+| BORDER 边框 | #C5D3DF |
+| BORDER_L 浅边框 | #D8E4EF |
+| WHITE 反白文字 | #FFFFFF |
+| OK / OK_BG | #1E7A46 / #E5F3EA |
+| WARN / WARN_BG | #A86A00 / #FBF0DC |
+| DANGER / DANGER_BG | #B3372F / #F9E9E7 |
+
+例外（不属于色板、不参与换色）：代码块深底 `#212B36`、代码文字 `#D9E4EF`、代码边框 `#3A4A5C`。
+
+换色发生在库加载阶段：组件 HTML 字符串进入解析器前，对 `#RRGGBB`/`#RGB` 做大小写不敏感的全词替换。`graphite` 为暗底主题，文字系 token 换浅色、底色系 token 换深色；各主题的状态色（OK/WARN/DANGER）可保持恒定或微调。
+
+## 示例输入 samples.json
+
+库清单同目录可放置 `samples.json`，为可视化预览提供每个组件的示例 inputs：
+
+```json
+{
+  "company/conclusion": {"inputs": {"text": "评审通过，进入实施阶段"}},
+  "conclusion": {"inputs": {"text": "同上，组件 ID 不带库前缀也可识别"}}
+}
+```
+
+key 推荐 `库ID/组件ID`（不带前缀的组件 ID 亦可）；value 直接是 inputs 对象或 `{"inputs": {...}}`。未覆盖的输入槽会按类型自动补全示例值（text/richtext 示例文本、list 三条、table 表头加两行、image 用生成的占位图）。image 输入可写库内相对路径图片，demo 生成时会复制进输出目录。
+
+## 可视化预览
+
+```text
+python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/library.json] [--overwrite]
+```
+
+生成 `output/library-demo/library-demo.html`：单文件离线页面，按原始尺寸渲染全部组件，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）和可折叠的示例 JSON；页头按钮可在 5 套主题间即时换色，文件顶部另有固定编排的组合示例（流程图、分层架构、目录、指标行，缺组件自动跳过）。
+
 ## 内置组件
 
-`builtin/title`、`text`、`bullets`、`card`、`table`、`image`、`metric`、`steps`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
+`builtin/`：`title`、`text`、`bullets`、`card`、`table`、`image`、`metric`、`steps`、`cover`、`section-break`、`agenda-item`、`section-title`、`caption`、`footnote`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`divider`、`tag`、`status`、`field`、`feature-card`、`panel`、`code`、`image-frame`、`flow-step`、`flow-arrow`、`timeline-item`、`phase`、`layer`、`compare`、`matrix2x2`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。

@@ -79,9 +79,9 @@ def _number(value, label, minimum=None, maximum=None):
 
 
 def prepare(config_path):
-    from . import components, pptx_backend
+    from . import components, pptx_backend, themes
     config = _read_json(config_path)
-    _keys(config, ["schemaVersion", "title", "master", "libraries", "pageSize", "pageCount", "pages"], "配置")
+    _keys(config, ["schemaVersion", "title", "master", "libraries", "pageSize", "pageCount", "pages", "theme"], "配置")
     if type(config.get("schemaVersion")) is not int or config["schemaVersion"] != 1:
         raise ValueError("schemaVersion 必须为 1")
     if not isinstance(config.get("title", "未命名演示"), str):
@@ -96,10 +96,14 @@ def prepare(config_path):
     if "pageCount" in config and (type(config["pageCount"]) is not int or config["pageCount"] != len(pages)):
         raise ValueError("pageCount 必须与 pages 数量一致")
     base = config_path.parent
+    theme = config.get("theme", "blue")
+    if not isinstance(theme, str) or theme not in themes.THEMES:
+        raise ValueError(f"theme 必须是以下主题之一：{', '.join(themes.theme_ids())}")
     library_paths = config.get("libraries", [])
     if not isinstance(library_paths, list):
         raise ValueError("libraries 必须是数组")
-    libraries = components.load_libraries([_asset(base, item, "library") for item in library_paths])
+    libraries = components.load_libraries([_asset(base, item, "library") for item in library_paths],
+                                          palette=themes.palette(theme))
     master = _asset(base, config["master"], "master") if "master" in config else None
     master_info = pptx_backend.inspect_pptx(master) if master else {"pageCount": 1}
     compiled = []
@@ -228,6 +232,10 @@ def parser():
     validate.add_argument("config")
     render_cmd = commands.add_parser("render", help="生成可编辑 PPTX 和 HTML 内容预览")
     render_cmd.add_argument("config")
+    demo = commands.add_parser("demo", help="生成元素库可视化预览页 library-demo.html")
+    demo.add_argument("--out", required=True)
+    demo.add_argument("--library", action="append", default=[], help="本地 library.json，可重复")
+    demo.add_argument("--overwrite", action="store_true")
     for command in (render_cmd, commands.add_parser("starter", help="生成默认母版和三个场景示例"),
                     commands.add_parser("extract", help="从现有 PPTX 提取元素库、母版和配置")):
         if command.prog.endswith("extract"):
@@ -251,6 +259,9 @@ def main(argv=None):
             result = {"valid": True, "pageCount": len(prepared["pages"]), "pageSize": prepared["pageSize"]}
         elif args.command == "render":
             result = render(_local_argument(args.config), _local_argument(args.out), args.overwrite)
+        elif args.command == "demo":
+            from . import demo
+            result = demo.build(_local_argument(args.out), [_local_argument(p) for p in args.library], args.overwrite)
         elif args.command == "starter":
             result = starter(_local_argument(args.out), args.overwrite)
         else:

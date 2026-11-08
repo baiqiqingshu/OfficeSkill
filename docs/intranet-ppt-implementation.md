@@ -107,3 +107,10 @@
 提取回放的表格主题/填充存在近似转换差异，属于已声明限制；正文、字体和位置可用。HTML 为内容预览，不包含原生母版的固定视觉。框架自身没有网络行为，不代表宿主模型、查看器或操作系统自动满足内网数据边界。
 
 临时验收产物及 JSON 报告位于 `temp/intranet-ppt-validation-20261105-022153/`，由仓库忽略规则排除，不随代码提交。
+
+## 元素库扩展与主题换色（本轮追加交付）
+
+- 内置库扩至 34 个组件（流程、分层、目录、引用、提示框、代码块、时间线、四象限等），同目录 `samples.json` 提供演示输入，`images/` 放库内静态图。
+- `themes.py` 提供 5 套主题（blue/emerald/crimson/mono/graphite），`load_libraries(palette=)` 在组件 HTML 解析前做规范色板 hex 全词替换；deck JSON 顶层 `"theme"` 生效于 render 链路。
+- 新增 `demo` 命令：`demo --out DIR [--library x.json] [--overwrite]` 生成单文件离线 `library-demo.html`，含组件卡片、示例 JSON、5 主题即时换色与固定组合示例；预生成产物在 `assets/demo/`。
+- `deck.schema.json` 增加 `theme` 枚举；`library-format.md` 增补规范色板、samples.json、demo 用法；`SKILL.md` 增补元素库预览说明。
