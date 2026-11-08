@@ -566,8 +566,6 @@ def create_default_master(path, page_size=None, background=None, accent=None, li
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     slide.background.fill.solid()
     slide.background.fill.fore_color.rgb = _color(background or "F7F9FD")
-    _render_node(slide, {"type": "rect", "x": 0, "y": 0, "w": 12, "h": height, "style": {"fill": accent or "1748A6"}}, EMU_PX, EMU_PX)
-    _render_node(slide, {"type": "line", "x": 48, "y": height - 36, "w": width - 96, "h": 0, "style": {"borderColor": line or "D5DDEA", "borderWidth": 1}}, EMU_PX, EMU_PX)
     out = _save(prs, path)
     return {"output": str(out), "pageCount": 1, "pageSize": {"width": width, "height": height}}
 

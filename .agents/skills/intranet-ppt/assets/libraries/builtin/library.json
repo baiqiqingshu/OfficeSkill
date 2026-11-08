@@ -17,7 +17,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><h1 data-slot='text' style='position:absolute;left:0;top:0;width:1152px;height:42px;font-family:Microsoft YaHei;font-size:34px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:44px;width:48px;height:4px;background-color:#1476B8;border-radius:2px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><h1 data-slot='text' style='position:absolute;left:0;top:0;width:1152px;height:42px;font-family:Microsoft YaHei;font-size:34px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:44px;width:48px;height:4px;background-color:#1476B8'></div></div>"
     },
     {
       "id": "eyebrow",
@@ -69,7 +69,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:9px;width:6px;height:30px;background-color:#1476B8;border-radius:3px'></div><h2 style='position:absolute;left:22px;top:0;width:1130px;height:48px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#17324D;vertical-align:middle'><span data-slot='num' style='color:#1476B8'></span><span data-slot='text'></span></h2></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:9px;width:6px;height:30px;background-color:#1476B8'></div><h2 style='position:absolute;left:22px;top:0;width:1130px;height:48px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#17324D;vertical-align:middle'><span data-slot='num' style='color:#1476B8'></span><span data-slot='text'></span></h2></div>"
     },
     {
       "id": "text",
@@ -203,7 +203,7 @@
           "description": "汇报人、部门、日期等元信息行"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='tag' style='position:absolute;left:0;top:0;width:200px;height:34px;background-color:#E4EFF8;border-radius:6px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:64px;width:940px;height:150px;font-family:Microsoft YaHei;font-size:52px;font-weight:bold;color:#17324D;line-height:1.3'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:226px;width:940px;height:40px;font-family:Microsoft YaHei;font-size:22px;color:#52687A;line-height:1.5'></p><div style='position:absolute;left:0;top:290px;width:72px;height:4px;background-color:#1476B8;border-radius:2px'></div><p data-slot='meta' style='position:absolute;left:0;top:318px;width:940px;height:32px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8'></p><div style='position:absolute;left:980px;top:20px;width:172px;height:172px;border:1px solid #D8E4EF;border-radius:12px'></div><div style='position:absolute;left:1012px;top:52px;width:108px;height:108px;background-color:#E4EFF8;border-radius:8px'></div><div style='position:absolute;left:1044px;top:84px;width:44px;height:44px;background-color:#1476B8;border-radius:6px'></div><div style='position:absolute;left:980px;top:216px;width:172px;height:4px;background-color:#C5D3DF;border-radius:2px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='tag' style='position:absolute;left:0;top:0;width:200px;height:34px;background-color:#E4EFF8;border-radius:6px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:64px;width:940px;height:150px;font-family:Microsoft YaHei;font-size:52px;font-weight:bold;color:#17324D;line-height:1.3'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:226px;width:940px;height:40px;font-family:Microsoft YaHei;font-size:22px;color:#52687A;line-height:1.5'></p><div style='position:absolute;left:0;top:290px;width:72px;height:4px;background-color:#1476B8'></div><p data-slot='meta' style='position:absolute;left:0;top:318px;width:940px;height:32px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8'></p><div style='position:absolute;left:980px;top:20px;width:172px;height:172px;border:1px solid #D8E4EF;border-radius:12px'></div><div style='position:absolute;left:1012px;top:52px;width:108px;height:108px;background-color:#E4EFF8;border-radius:8px'></div><div style='position:absolute;left:1044px;top:84px;width:44px;height:44px;background-color:#1476B8;border-radius:6px'></div><div style='position:absolute;left:980px;top:216px;width:172px;height:4px;background-color:#C5D3DF'></div></div>"
     },
     {
       "id": "section-break",
@@ -226,7 +226,7 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='number' style='position:absolute;left:40px;top:28px;width:220px;height:96px;font-family:Microsoft YaHei;font-size:76px;font-weight:bold;color:#3F92CC;line-height:1'></div><h1 data-slot='title' style='position:absolute;left:40px;top:132px;width:900px;height:54px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#17324D'></h1><div style='position:absolute;left:40px;top:198px;width:56px;height:4px;background-color:#1476B8;border-radius:2px'></div><p data-slot='desc' style='position:absolute;left:40px;top:218px;width:960px;height:36px;font-family:Microsoft YaHei;font-size:20px;color:#52687A'></p><div style='position:absolute;left:1012px;top:40px;width:4px;height:64px;background-color:#1476B8;border-radius:2px'></div><div style='position:absolute;left:1032px;top:40px;width:4px;height:64px;background-color:#3F92CC;border-radius:2px'></div><div style='position:absolute;left:1052px;top:40px;width:4px;height:64px;background-color:#C5D3DF;border-radius:2px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='number' style='position:absolute;left:40px;top:28px;width:220px;height:96px;font-family:Microsoft YaHei;font-size:76px;font-weight:bold;color:#3F92CC;line-height:1'></div><h1 data-slot='title' style='position:absolute;left:40px;top:132px;width:900px;height:54px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#17324D'></h1><div style='position:absolute;left:40px;top:198px;width:56px;height:4px;background-color:#1476B8'></div><p data-slot='desc' style='position:absolute;left:40px;top:218px;width:960px;height:36px;font-family:Microsoft YaHei;font-size:20px;color:#52687A'></p><div style='position:absolute;left:1012px;top:40px;width:4px;height:64px;background-color:#1476B8'></div><div style='position:absolute;left:1032px;top:40px;width:4px;height:64px;background-color:#3F92CC'></div><div style='position:absolute;left:1052px;top:40px;width:4px;height:64px;background-color:#C5D3DF'></div></div>"
     },
     {
       "id": "agenda-item",
@@ -272,7 +272,7 @@
           "description": "联系方式、部门等元信息"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:0;width:64px;height:4px;background-color:#1476B8;border-radius:2px'></div><h1 data-slot='title' style='position:absolute;left:0;top:36px;width:900px;height:80px;font-family:Microsoft YaHei;font-size:56px;font-weight:bold;color:#17324D'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:128px;width:900px;height:36px;font-family:Microsoft YaHei;font-size:22px;color:#52687A'></p><p data-slot='meta' style='position:absolute;left:0;top:190px;width:900px;height:28px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8'></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:0;width:64px;height:4px;background-color:#1476B8'></div><h1 data-slot='title' style='position:absolute;left:0;top:36px;width:900px;height:80px;font-family:Microsoft YaHei;font-size:56px;font-weight:bold;color:#17324D'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:128px;width:900px;height:36px;font-family:Microsoft YaHei;font-size:22px;color:#52687A'></p><p data-slot='meta' style='position:absolute;left:0;top:190px;width:900px;height:28px;font-family:Microsoft YaHei;font-size:16px;color:#8496A8'></p></div>"
     },
     {
       "id": "card",
@@ -292,7 +292,7 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8;border-radius:2px'></div><h3 data-slot='title' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:23px;font-weight:bold;color:#17324D'></h3><p data-slot='text' style='position:absolute;left:24px;top:72px;width:504px;height:124px;font-family:Microsoft YaHei;font-size:18px;color:#263C50;line-height:1.7'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8'></div><h3 data-slot='title' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:23px;font-weight:bold;color:#17324D'></h3><p data-slot='text' style='position:absolute;left:24px;top:72px;width:504px;height:124px;font-family:Microsoft YaHei;font-size:18px;color:#263C50;line-height:1.7'></p></section>"
     },
     {
       "id": "feature-card",
@@ -354,7 +354,7 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'><p data-slot='label' style='position:absolute;left:24px;top:20px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#52687A'></p><div data-slot='value' style='position:absolute;left:24px;top:48px;width:312px;height:64px;font-family:Microsoft YaHei;font-size:44px;font-weight:bold;color:#145D92;line-height:1.1'></div><div style='position:absolute;left:24px;top:126px;width:40px;height:3px;background-color:#1476B8;border-radius:2px'></div></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'><p data-slot='label' style='position:absolute;left:24px;top:20px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#52687A'></p><div data-slot='value' style='position:absolute;left:24px;top:48px;width:312px;height:64px;font-family:Microsoft YaHei;font-size:44px;font-weight:bold;color:#145D92;line-height:1.1'></div><div style='position:absolute;left:24px;top:126px;width:40px;height:3px;background-color:#1476B8'></div></section>"
     },
     {
       "id": "stat-card",
@@ -382,7 +382,7 @@
           "description": "口径或补充说明"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><p data-slot='label' style='position:absolute;left:24px;top:20px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#52687A'></p><div data-slot='value' style='position:absolute;left:24px;top:50px;width:312px;height:56px;font-family:Microsoft YaHei;font-size:40px;font-weight:bold;color:#145D92;line-height:1.2'></div><div data-slot='delta' style='position:absolute;left:24px;top:108px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#1E7A46'></div><div style='position:absolute;left:24px;top:146px;width:36px;height:3px;background-color:#1476B8;border-radius:2px'></div><p data-slot='note' style='position:absolute;left:72px;top:136px;width:264px;height:24px;font-family:Microsoft YaHei;font-size:14px;color:#8496A8'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><p data-slot='label' style='position:absolute;left:24px;top:20px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#52687A'></p><div data-slot='value' style='position:absolute;left:24px;top:50px;width:312px;height:56px;font-family:Microsoft YaHei;font-size:40px;font-weight:bold;color:#145D92;line-height:1.2'></div><div data-slot='delta' style='position:absolute;left:24px;top:108px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#1E7A46'></div><div style='position:absolute;left:24px;top:146px;width:36px;height:3px;background-color:#1476B8'></div><p data-slot='note' style='position:absolute;left:72px;top:136px;width:264px;height:24px;font-family:Microsoft YaHei;font-size:14px;color:#8496A8'></p></section>"
     },
     {
       "id": "person-card",
@@ -406,7 +406,7 @@
           "description": "职责说明"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:148px;background-color:#1476B8;border-radius:2px'></div><h3 data-slot='name' style='position:absolute;left:24px;top:20px;width:312px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D'></h3><p data-slot='role' style='position:absolute;left:24px;top:54px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92'></p><p data-slot='duty' style='position:absolute;left:24px;top:88px;width:312px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#52687A;line-height:1.6'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:148px;background-color:#1476B8'></div><h3 data-slot='name' style='position:absolute;left:24px;top:20px;width:312px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D'></h3><p data-slot='role' style='position:absolute;left:24px;top:54px;width:312px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92'></p><p data-slot='duty' style='position:absolute;left:24px;top:88px;width:312px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#52687A;line-height:1.6'></p></section>"
     },
     {
       "id": "icon-badge",
@@ -466,7 +466,7 @@
           "description": "右栏逐行条目，换行分隔"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:600px;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8;border-radius:2px'></div><div style='position:absolute;left:624px;top:24px;width:4px;height:24px;background-color:#8496A8;border-radius:2px'></div><h3 data-slot='titleLeft' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><h3 data-slot='titleRight' style='position:absolute;left:640px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#52687A'></h3><div style='position:absolute;left:24px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:624px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='textLeft' style='position:absolute;left:24px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.8'></p><p data-slot='textRight' style='position:absolute;left:624px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.8'></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:600px;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8'></div><div style='position:absolute;left:624px;top:24px;width:4px;height:24px;background-color:#8496A8'></div><h3 data-slot='titleLeft' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><h3 data-slot='titleRight' style='position:absolute;left:640px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#52687A'></h3><div style='position:absolute;left:24px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:624px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='textLeft' style='position:absolute;left:24px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.8'></p><p data-slot='textRight' style='position:absolute;left:624px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.8'></p></div>"
     },
     {
       "id": "matrix2x2",
@@ -605,7 +605,7 @@
           "description": "引用出处"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:4px;width:4px;height:102px;background-color:#3F92CC;border-radius:2px'></div><p data-slot='text' style='position:absolute;left:24px;top:0;width:744px;height:78px;font-family:Microsoft YaHei;font-size:20px;font-style:italic;color:#263C50;line-height:1.65'></p><p data-slot='source' style='position:absolute;left:24px;top:82px;width:744px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#8496A8'></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:4px;width:4px;height:102px;background-color:#3F92CC'></div><p data-slot='text' style='position:absolute;left:24px;top:0;width:744px;height:78px;font-family:Microsoft YaHei;font-size:20px;font-style:italic;color:#263C50;line-height:1.65'></p><p data-slot='source' style='position:absolute;left:24px;top:82px;width:744px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#8496A8'></p></div>"
     },
     {
       "id": "callout",
@@ -625,7 +625,7 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#1476B8;border-radius:2px'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#1476B8'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
     },
     {
       "id": "callout-warn",
@@ -645,7 +645,7 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FBF0DC;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#A86A00;border-radius:2px'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#A86A00'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FBF0DC;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#A86A00'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#A86A00'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
     },
     {
       "id": "callout-danger",
@@ -665,7 +665,7 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F9E9E7;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#B3372F;border-radius:2px'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#B3372F'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F9E9E7;border-radius:10px'><div style='position:absolute;left:0;top:16px;width:4px;height:88px;background-color:#B3372F'></div><div data-slot='label' style='position:absolute;left:24px;top:16px;width:504px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#B3372F'></div><p data-slot='text' style='position:absolute;left:24px;top:46px;width:504px;height:58px;font-family:Microsoft YaHei;font-size:17px;color:#263C50;line-height:1.55'></p></section>"
     },
     {
       "id": "conclusion",
@@ -761,7 +761,7 @@
           "type": "richtext"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:0;top:12px;width:3px;height:72px;background-color:#3F92CC;border-radius:2px'></div><h3 data-slot='title' style='position:absolute;left:18px;top:16px;width:204px;height:28px;font-family:Microsoft YaHei;font-size:17px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:18px;top:48px;width:204px;height:40px;font-family:Microsoft YaHei;font-size:13px;color:#52687A;line-height:1.35'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:0;top:12px;width:3px;height:72px;background-color:#3F92CC'></div><h3 data-slot='title' style='position:absolute;left:18px;top:16px;width:204px;height:28px;font-family:Microsoft YaHei;font-size:17px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:18px;top:48px;width:204px;height:40px;font-family:Microsoft YaHei;font-size:13px;color:#52687A;line-height:1.35'></p></section>"
     },
     {
       "id": "arch-zone",
@@ -847,7 +847,7 @@
           "description": "阶段要点数组"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:16px;top:0;width:232px;height:4px;background-color:#1476B8;border-radius:2px'></div><h3 data-slot='name' style='position:absolute;left:20px;top:24px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></h3><p data-slot='period' style='position:absolute;left:20px;top:58px;width:224px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#8496A8'></p><ul data-slot='items' style='position:absolute;left:20px;top:90px;width:224px;height:96px;font-family:Microsoft YaHei;font-size:15px;color:#263C50;line-height:1.6'></ul></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:16px;top:0;width:232px;height:4px;background-color:#1476B8'></div><h3 data-slot='name' style='position:absolute;left:20px;top:24px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></h3><p data-slot='period' style='position:absolute;left:20px;top:58px;width:224px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#8496A8'></p><ul data-slot='items' style='position:absolute;left:20px;top:90px;width:224px;height:96px;font-family:Microsoft YaHei;font-size:15px;color:#263C50;line-height:1.6'></ul></section>"
     },
     {
       "id": "image",
@@ -996,7 +996,7 @@
           "description": "右侧场景序号，如「场景 2/6」"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='crumb' style='position:absolute;left:0;top:0;width:760px;height:22px;font-family:Microsoft YaHei;font-size:12px;font-weight:bold;color:#1476B8;letter-spacing:1px;vertical-align:middle'></div><div data-slot='meta' style='position:absolute;left:760px;top:0;width:392px;height:22px;font-family:Microsoft YaHei;font-size:12px;color:#8496A8;text-align:right;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:24px;width:1152px;height:40px;font-family:Microsoft YaHei;font-size:32px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:68px;width:48px;height:4px;background-color:#1476B9;border-radius:2px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='crumb' style='position:absolute;left:0;top:0;width:760px;height:22px;font-family:Microsoft YaHei;font-size:12px;font-weight:bold;color:#1476B8;letter-spacing:1px;vertical-align:middle'></div><div data-slot='meta' style='position:absolute;left:760px;top:0;width:392px;height:22px;font-family:Microsoft YaHei;font-size:12px;color:#8496A8;text-align:right;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:24px;width:1152px;height:40px;font-family:Microsoft YaHei;font-size:32px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:68px;width:48px;height:4px;background-color:#1476B9'></div></div>"
     }
   ]
 }
