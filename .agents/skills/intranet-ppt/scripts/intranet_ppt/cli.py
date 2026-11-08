@@ -122,6 +122,7 @@ def prepare(config_path):
         if not isinstance(elements, list) or len(elements) > 300:
             raise ValueError(f"{label}.elements 必须是最多 300 个元素的数组")
         nodes, element_ids = [], set()
+        element_nodes = []
         for e_index, element in enumerate(elements):
             e_label = f"{label}.elements[{e_index}]"
             _keys(element, ["id", "component", "box", "inputs"], e_label)
@@ -137,10 +138,12 @@ def prepare(config_path):
                 if box["x"] + box["w"] > size["width"] + .01 or box["y"] + box["h"] > size["height"] + .01:
                     raise ValueError(f"{e_label}.box 超出页面边界")
             try:
-                nodes.extend(components.compile_element(element, libraries, base, size))
+                compiled_nodes = components.compile_element(element, libraries, base, size)
             except Exception as exc:
                 raise ValueError(f"{e_label} ({e_id}): {exc}") from exc
-        compiled.append({"id": page_id, "masterSlide": slide, "nodes": nodes})
+            nodes.extend(compiled_nodes)
+            element_nodes.append({"id": e_id, "component": element["component"], "nodes": compiled_nodes})
+        compiled.append({"id": page_id, "masterSlide": slide, "nodes": nodes, "elements": element_nodes})
     return {"config": config, "pageSize": size, "pages": compiled, "master": master,
             "title": config.get("title", "未命名演示")}
 
@@ -185,6 +188,7 @@ def render(config_path, destination, overwrite):
     if config_path.is_relative_to(destination):
         raise ValueError("输出目录不能包含输入配置，请使用独立子目录")
     prepared = prepare(config_path)
+    layout = components.audit_layout(prepared["pages"], prepared["pageSize"])
     sources = ([prepared["master"]] if prepared["master"] else [])
     sources += [_asset(config_path.parent, p, "library") for p in prepared["config"].get("libraries", [])]
     sources += [Path(n["src"]) for p in prepared["pages"] for n in p["nodes"] if n.get("type") == "image"]
@@ -199,11 +203,12 @@ def render(config_path, destination, overwrite):
             pptx_backend.create_default_master(master, prepared["pageSize"], background=theme["canvas"],
                                               accent=theme["colors"]["ACCENT"], line=theme["colors"]["BORDER_L"])
         pptx_backend.render_pptx(master, prepared["pages"], prepared["pageSize"], stage / "presentation.pptx")
-        (stage / "preview.html").write_text(components.render_preview(prepared["pages"], prepared["pageSize"], prepared["title"]), encoding="utf-8")
+        (stage / "preview.html").write_text(components.render_preview(prepared["pages"], prepared["pageSize"], prepared["title"], layout), encoding="utf-8")
         report = {"schemaVersion": 1, "title": prepared["title"], "pageCount": len(prepared["pages"]),
                   "pageSize": prepared["pageSize"], "elementCount": sum(len(p["elements"]) for p in prepared["config"]["pages"]),
                   "preview": "HTML 仅为内容预览，不显示原生 PPTX 母版；母版外观以 presentation.pptx 为准。",
                   "warnings": ["请在本地 PowerPoint 或 LibreOffice 检查文字换行及最终版式。"],
+                  "layout": layout,
                   "outputs": ["presentation.pptx", "preview.html", "report.json"]}
         _write_json(stage / "report.json", report)
         if prepared["master"] is None:
@@ -264,7 +269,9 @@ def main(argv=None):
             result = components.catalog(components.load_libraries([_local_argument(p) for p in args.library]))
         elif args.command == "validate":
             prepared = prepare(_local_argument(args.config))
-            result = {"valid": True, "pageCount": len(prepared["pages"]), "pageSize": prepared["pageSize"]}
+            layout = components.audit_layout(prepared["pages"], prepared["pageSize"])
+            result = {"valid": True, "pageCount": len(prepared["pages"]), "pageSize": prepared["pageSize"],
+                      "layoutIssueCount": layout["issueCount"]}
         elif args.command == "render":
             result = render(_local_argument(args.config), _local_argument(args.out), args.overwrite)
         elif args.command == "demo":

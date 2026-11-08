@@ -114,4 +114,4 @@ python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/libr
 
 `builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`、`outline`、`ui-frame`、`figure`、`ar-header`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
 
-`ar-header` 是 AR 场景页的标准页头（1152×100），IPD 需求串讲中每个 AR 页都用它：`crumb`（text，必填）写「SR-01 · AR-01 · 背景」这类 SR/AR/场景类型面包屑，`title`（richtext，必填）填 AR 名称（同一 AR 各页保持一致），`meta`（text，可选）写右侧场景序号如「场景 2/6」。
+`ar-header` 是 AR 场景页的标准页头（1152×86），IPD 需求串讲中每个 AR 页都用它：`crumb`（text，必填）写「SR-01 · AR-01 · 背景」这类 SR/AR/场景类型面包屑，`title`（richtext，必填）填 AR 名称（同一 AR 各页保持一致），`meta`（text，可选）写右侧场景序号如「场景 2/6」。

@@ -738,7 +738,7 @@ def compile_element(element, libraries, base_dir, page_size):
         if "rowHeights" in content:
             # Content-based rows follow the font scale, not a stretched box.
             content["rowHeights"] = [height * scale for height in content["rowHeights"]]
-        output.append({"type": kind, "x": box["x"] + rect["x"] * sx, "y": box["y"] + rect["y"] * sy, "w": rect["w"] * sx, "h": rect["h"] * sy, "style": mapped, **content})
+        output.append({"type": kind, "elementId": element["id"], "x": box["x"] + rect["x"] * sx, "y": box["y"] + rect["y"] * sy, "w": rect["w"] * sx, "h": rect["h"] * sy, "style": mapped, **content})
 
     def visit(node, parent, inherited):
         css = _css(node.attrs.get("style", ""))
@@ -827,6 +827,205 @@ def compile_element(element, libraries, base_dir, page_size):
         elif child.strip():
             _fail("组件根文字须包含在 HTML 标签内")
     return output
+
+
+def _text_required_height(node):
+    """Estimate the pixel height a compiled text node needs for its runs.
+
+    Uses the same wrapping estimate as table cells (``_cell_lines``) on the
+    node's own available width, so a box that is too short for its copy can be
+    reported before PowerPoint reflows it.
+    """
+    style = node.get("style", {})
+    top, right, bottom, left = _padding_parts(style)
+    available = float(node.get("w", 0)) - left - right
+    font_size = style.get("fontSize", 24)
+    if isinstance(font_size, bool) or not isinstance(font_size, (int, float)) or not math.isfinite(font_size) or font_size <= 0:
+        font_size = 24
+    line_height = style.get("lineHeight", 1.2)
+    if isinstance(line_height, bool) or not isinstance(line_height, (int, float)) or not math.isfinite(line_height) or line_height <= 0:
+        line_height = 1.2
+    lines, max_font = _cell_lines(node.get("runs", []), font_size, available)
+    return lines * max_font * line_height + top + bottom
+
+
+def _valid_row_heights(node):
+    """Return the finite positive ``rowHeights`` of a table node."""
+    heights = []
+    for value in node.get("rowHeights") or []:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            continue
+        heights.append(float(value))
+    return heights
+
+
+def _node_visual_rect(node):
+    """Return the rect a node actually paints, in page pixels.
+
+    Text only occupies the height its copy needs (vertical-align moves that band
+    inside the box, and an over-long text keeps its full required height so the
+    overflow stays visible); tables are as tall as their content rows; images,
+    rects and lines fill their box.
+    """
+    x, y, w, h = (float(node.get(key, 0) or 0) for key in ("x", "y", "w", "h"))
+    kind = node.get("type")
+    if kind == "text":
+        required = _text_required_height(node)
+        if required <= h:
+            vertical = node.get("style", {}).get("verticalAlign", "top")
+            if vertical == "middle":
+                y += (h - required) / 2
+            elif vertical == "bottom":
+                y += h - required
+        return {"x": x, "y": y, "w": w, "h": required}
+    if kind == "table":
+        heights = _valid_row_heights(node)
+        return {"x": x, "y": y, "w": w, "h": sum(heights) if heights else h}
+    return {"x": x, "y": y, "w": w, "h": h}
+
+
+# Audit thresholds: half-pixel slack on page edges, 2px on content overflow so
+# rounding of the estimates cannot flag a fit, and a 4px² floor on intersections
+# so borders/edges that merely touch are not overlaps.
+_PAGE_TOLERANCE = 0.5
+_OVERFLOW_TOLERANCE = 2.0
+_OVERLAP_MIN_AREA = 4.0
+_CONTAIN_TOLERANCE = 1.0
+
+_LAYOUT_SUGGESTIONS = {
+    "overlap": ["将其中一个元素上/下/左/右偏移 8–16px", "缩小或调整元素 box 尺寸", "重新布局该页元素", "将其中一个元素拆分到下一页"],
+    "outOfPage": ["上移/左移元素或缩小 box", "精简文案或降低字号/行距", "拆分到下一页"],
+    "textOverflow": ["精简文案或拆成多级要点", "降低字号/行距或增大 box 高", "拆分到下一页"],
+    "tableOverflow": ["将表格拆成多页", "加宽表格或减少列数", "精简单元格文案或降低字号", "调整表格 box 或页面布局"],
+}
+
+
+def _page_elements(page):
+    """Return ``[{id, nodes}]`` for one prepared page.
+
+    ``prepare`` records the per-element node groups on the page; a page without
+    them (hand-built scenes) is regrouped by the ``elementId`` on each node.
+    """
+    elements = page.get("elements")
+    if isinstance(elements, list):
+        return [{"id": str(item.get("id", "")), "nodes": list(item.get("nodes") or [])}
+                for item in elements if isinstance(item, dict)]
+    grouped = {}
+    for node in page.get("nodes", []):
+        if isinstance(node, dict) and node.get("elementId"):
+            grouped.setdefault(str(node["elementId"]), []).append(node)
+    return [{"id": key, "nodes": value} for key, value in grouped.items()]
+
+
+def _union_bounds(nodes):
+    """Union bounding box of an element's visual rects, or ``None`` if empty."""
+    rects = [_node_visual_rect(node) for node in nodes if isinstance(node, dict)]
+    if not rects:
+        return None
+    left = min(rect["x"] for rect in rects)
+    top = min(rect["y"] for rect in rects)
+    right = max(rect["x"] + rect["w"] for rect in rects)
+    bottom = max(rect["y"] + rect["h"] for rect in rects)
+    return {"x": left, "y": top, "w": right - left, "h": bottom - top}
+
+
+def _page_overflow(bounds, width, height):
+    """Return ``[(side, px)]`` for each page edge the bounds exceed."""
+    sides = []
+    if bounds["x"] < -_PAGE_TOLERANCE:
+        sides.append(("左", -bounds["x"]))
+    if bounds["y"] < -_PAGE_TOLERANCE:
+        sides.append(("上", -bounds["y"]))
+    if bounds["x"] + bounds["w"] > width + _PAGE_TOLERANCE:
+        sides.append(("右", bounds["x"] + bounds["w"] - width))
+    if bounds["y"] + bounds["h"] > height + _PAGE_TOLERANCE:
+        sides.append(("下", bounds["y"] + bounds["h"] - height))
+    return sides
+
+
+def _contains(outer, inner):
+    """True when ``outer`` fully contains ``inner`` (1px tolerance).
+
+    Containers such as arch-zone + arch-node intentionally sit on top of their
+    children, so a nesting relationship is not reported as an overlap.
+    """
+    return (outer["x"] <= inner["x"] + _CONTAIN_TOLERANCE
+            and outer["y"] <= inner["y"] + _CONTAIN_TOLERANCE
+            and outer["x"] + outer["w"] >= inner["x"] + inner["w"] - _CONTAIN_TOLERANCE
+            and outer["y"] + outer["h"] >= inner["y"] + inner["h"] - _CONTAIN_TOLERANCE)
+
+
+def _layout_issue(page_id, page_index, kind, elements, detail):
+    return {"page": page_id, "pageIndex": page_index, "kind": kind, "elements": elements,
+            "detail": detail, "suggestions": list(_LAYOUT_SUGGESTIONS[kind])}
+
+
+def audit_layout(pages, page_size):
+    """Audit compiled pages for out-of-page, overflow and overlap problems.
+
+    The audit is advisory: it estimates text height with the same wrap model as
+    the table renderer, uses real table row heights, and ignores containers that
+    fully hold their children, so a clean deck reports zero issues.
+    """
+    width, height = float(page_size["width"]), float(page_size["height"])
+    issues = []
+    for index, page in enumerate(pages or [], 1):
+        page_id = str(page.get("id", f"page{index}"))
+        entries = []
+        for element in _page_elements(page):
+            bounds = _union_bounds(element["nodes"])
+            if bounds is not None:
+                entries.append((element, bounds))
+        for element, bounds in entries:
+            sides = _page_overflow(bounds, width, height)
+            if not sides:
+                continue
+            detail = (f"元素 {element['id']} 超出页面："
+                      + "、".join(f"{side}侧 {value:.0f}px" for side, value in sides)
+                      + f"（元素 x={bounds['x']:.0f}、y={bounds['y']:.0f}、w={bounds['w']:.0f}、h={bounds['h']:.0f}；页面 {width:.0f}×{height:.0f}）")
+            issues.append(_layout_issue(page_id, index, "outOfPage", [element["id"]], detail))
+        for element, _ in entries:
+            text_worst, table_worst = None, None
+            for node in element["nodes"]:
+                if not isinstance(node, dict):
+                    continue
+                if node.get("type") == "text":
+                    required = _text_required_height(node)
+                    box = float(node.get("h", 0) or 0)
+                    if required - box > _OVERFLOW_TOLERANCE and (text_worst is None or required - box > text_worst[0]):
+                        text_worst = (required - box, required, box, node)
+                elif node.get("type") == "table":
+                    heights = _valid_row_heights(node)
+                    if not heights:
+                        continue
+                    total = sum(heights)
+                    box = float(node.get("h", 0) or 0)
+                    if total - box > _OVERFLOW_TOLERANCE and (table_worst is None or total - box > table_worst[0]):
+                        table_worst = (total - box, total, box, node, len(heights))
+            if text_worst:
+                over, required, box, node = text_worst
+                detail = (f"元素 {element['id']} 的文字约需 {required:.0f}px 高，box 仅 {box:.0f}px，溢出 {over:.0f}px"
+                          f"（文字节点 w={float(node.get('w', 0) or 0):.0f}px）")
+                issues.append(_layout_issue(page_id, index, "textOverflow", [element["id"]], detail))
+            if table_worst:
+                over, total, box, node, rows = table_worst
+                detail = (f"元素 {element['id']} 的表格 {rows} 行内容约需 {total:.0f}px 高，box 仅 {box:.0f}px，溢出 {over:.0f}px"
+                          f"（表格节点 w={float(node.get('w', 0) or 0):.0f}px）")
+                issues.append(_layout_issue(page_id, index, "tableOverflow", [element["id"]], detail))
+        for first in range(len(entries)):
+            for second in range(first + 1, len(entries)):
+                (left_element, left_bounds), (right_element, right_bounds) = entries[first], entries[second]
+                overlap_w = min(left_bounds["x"] + left_bounds["w"], right_bounds["x"] + right_bounds["w"]) - max(left_bounds["x"], right_bounds["x"])
+                overlap_h = min(left_bounds["y"] + left_bounds["h"], right_bounds["y"] + right_bounds["h"]) - max(left_bounds["y"], right_bounds["y"])
+                if overlap_w <= 0 or overlap_h <= 0 or overlap_w * overlap_h <= _OVERLAP_MIN_AREA:
+                    continue
+                if _contains(left_bounds, right_bounds) or _contains(right_bounds, left_bounds):
+                    continue
+                detail = (f"元素 {left_element['id']} 与 {right_element['id']} 重叠约 {overlap_w * overlap_h:.0f}px²"
+                          f"（重叠区域 {overlap_w:.0f}×{overlap_h:.0f}px）")
+                issues.append(_layout_issue(page_id, index, "overlap", [left_element["id"], right_element["id"]], detail))
+    issues.sort(key=lambda issue: (issue["pageIndex"], issue["kind"]))
+    return {"issueCount": len(issues), "issues": issues}
 
 
 def _padding_css(value):
@@ -946,6 +1145,9 @@ body{background:#eef2f7;color:#17324d;font-family:"Microsoft YaHei","Segoe UI",s
 .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 20px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid #dbe4ee}
 .tb-title{display:flex;align-items:baseline;gap:10px;min-width:0;font-size:15px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb-meta{font-size:12px;font-weight:normal;color:#6b7f93;white-space:nowrap}
+.tb-layout{font-size:12px;font-weight:normal;padding:3px 9px;border-radius:2px;white-space:nowrap}
+.tb-layout.ok{background:#e5f3ea;color:#1e7a46}
+.tb-layout.warn{background:#fbf0dc;color:#a86a00}
 .tb-tools{display:flex;align-items:center;gap:8px;flex:none}
 .zoom{display:flex;background:#fff;border:1px solid #dbe4ee;border-radius:2px;overflow:hidden}
 .zoom button{border:0;border-left:1px solid #eef2f7;background:#fff;color:#33506c;font:inherit;font-size:12px;padding:6px 12px;cursor:pointer}
@@ -954,6 +1156,12 @@ body{background:#eef2f7;color:#17324d;font-family:"Microsoft YaHei","Segoe UI",s
 .zoom button.active{background:#1476b8;color:#fff}
 .action{border:1px solid #dbe4ee;background:#fff;color:#33506c;font:inherit;font-size:12px;padding:6px 14px;border-radius:2px;cursor:pointer}
 .action:hover{background:#f2f7fc}
+.layout-banner{margin:0 0 0 64px;padding:10px 20px;background:#fbf0dc;border-bottom:1px solid #e7d3ac;font-size:12px;color:#7a5200}
+.layout-banner summary{cursor:pointer;font-weight:bold;color:#a86a00}
+.layout-banner ul{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.layout-banner li{line-height:1.5}
+.layout-banner .page{font-weight:bold;color:#7a5200;margin-right:6px}
+.layout-banner .sug{color:#8a6a3c}
 .pager{position:fixed;left:0;top:0;bottom:0;z-index:20;width:64px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:74px 8px 24px;overflow:auto;background:#f8fbfe;border-right:1px solid #dbe4ee}
 .pager button{width:38px;height:32px;flex:none;border:1px solid transparent;border-radius:2px;background:transparent;color:#4a6b88;font:inherit;font-size:12px;cursor:pointer}
 .pager button:hover{background:#e8f1f9;border-color:#d3e2ee}
@@ -966,12 +1174,14 @@ section.slide{position:relative;overflow:hidden;background:#fff;border:1px solid
 .text{white-space:pre-wrap;overflow:hidden;line-height:1.2}
 table{table-layout:fixed;border-collapse:collapse}
 td,th{padding:0;white-space:pre-wrap;overflow-wrap:anywhere}
-@media (max-width:899px){.pager{display:none}.stage{margin-left:0;padding:16px 12px 48px}}
-@media print{body{background:#fff}.topbar,.pager,.caption{display:none}.stage{margin:0;padding:0;gap:0}.slide-block{width:auto;gap:0}.slide-holder{width:auto!important;height:auto!important}section.slide{transform:none!important;box-shadow:none;border:0;border-radius:0;break-after:page;page-break-after:always}}
+@media (max-width:899px){.pager{display:none}.stage{margin-left:0;padding:16px 12px 48px}.layout-banner{margin-left:0}}
+@media print{body{background:#fff}.topbar,.pager,.caption,.layout-banner{display:none}.stage{margin:0;padding:0;gap:0}.slide-block{width:auto;gap:0}.slide-holder{width:auto!important;height:auto!important}section.slide{transform:none!important;box-shadow:none;border:0;border-radius:0;break-after:page;page-break-after:always}}
 """
 
 _PREVIEW_JS = """(function () {
   var PAGE_W = __PAGE_W__, PAGE_H = __PAGE_H__;
+  var LAYOUT = __LAYOUT__;
+  if (LAYOUT.length) LAYOUT.forEach(function (t) { console.warn("[layout] " + t); });
   var holder = Array.prototype.slice.call(document.querySelectorAll('.slide-holder'));
   var slide = Array.prototype.slice.call(document.querySelectorAll('section.slide'));
   var block = Array.prototype.slice.call(document.querySelectorAll('.slide-block'));
@@ -1060,15 +1270,19 @@ _PREVIEW_JS = """(function () {
 """
 
 
-def render_preview(pages, page_size, title):
+def render_preview(pages, page_size, title, layout=None):
     """Render a self-contained, interactive offline content preview.
 
     The page shell (toolbar, page rail, zoom, keyboard paging) is inline
     JavaScript/CSS with no external requests; the slide sections themselves keep
     the absolute-positioned scene nodes produced by :func:`_preview_node_html`.
+    ``layout`` is the :func:`audit_layout` result; when it reports issues the
+    toolbar carries a badge, a collapsible banner lists them and the console
+    repeats each detail.
     """
     width, height = page_size["width"], page_size["height"]
     total = len(pages)
+    issues = [issue for issue in ((layout or {}).get("issues") or []) if isinstance(issue, dict)]
     blocks = []
     for index, page in enumerate(pages, 1):
         elements = []
@@ -1083,18 +1297,36 @@ def render_preview(pages, page_size, title):
                       f'<p class="caption">第 {index} 页 / 共 {total} 页</p></div>')
     nav = "".join(f'<button type="button" data-goto="{index}" aria-label="跳到第 {index} 页">{index}</button>'
                   for index in range(1, total + 1))
-    script = (_PREVIEW_JS.replace("__PAGE_W__", f"{width:g}").replace("__PAGE_H__", f"{height:g}"))
+    if issues:
+        badge = f'<span class="tb-layout warn">布局检查 {len(issues)} 项</span>'
+        items = []
+        for issue in issues:
+            page_label = f"第 {int(issue.get('pageIndex') or 0)} 页 · {issue.get('page', '')}"
+            detail = escape(str(issue.get("detail", "")))
+            suggestions = "；".join(escape(str(item)) for item in (issue.get("suggestions") or []))
+            items.append(f'<li><span class="page">{escape(page_label)}</span>{detail}'
+                         + (f'<span class="sug">建议：{suggestions}</span>' if suggestions else "") + "</li>")
+        banner = ('<details class="layout-banner" open><summary>'
+                  f'布局检查：{len(issues)} 项可能的重叠/溢出</summary>'
+                  '<ul>' + "".join(items) + "</ul></details>")
+    else:
+        badge = '<span class="tb-layout ok">布局检查通过</span>'
+        banner = ""
+    payload = json.dumps([str(issue.get("detail", "")) for issue in issues], ensure_ascii=False).replace("</", "<\\/")
+    script = (_PREVIEW_JS.replace("__PAGE_W__", f"{width:g}").replace("__PAGE_H__", f"{height:g}")
+              .replace("__LAYOUT__", payload))
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; script-src \'unsafe-inline\'; base-uri \'none\'; form-action \'none\'">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1"><title>{escape(str(title))}</title>'
             f'<style>{_PREVIEW_CSS}</style></head><body>'
             f'<header class="topbar"><div class="tb-title">{escape(str(title))}<span class="tb-meta">共 {total} 页</span></div>'
-            '<div class="tb-tools"><div class="zoom" role="group" aria-label="缩放">'
+            f'<div class="tb-tools">{badge}<div class="zoom" role="group" aria-label="缩放">'
             '<button type="button" data-zoom="fit" class="active">适应窗口</button>'
             '<button type="button" data-zoom="1">100%</button>'
             '<button type="button" data-zoom="0.75">75%</button>'
             '<button type="button" data-zoom="0.5">50%</button></div>'
             '<button type="button" class="action" data-print>打印</button></div></header>'
-            f'<nav class="pager" aria-label="页码导航">{nav}</nav>'
+            + banner
+            + f'<nav class="pager" aria-label="页码导航">{nav}</nav>'
             '<main class="stage">' + "".join(blocks) + "</main>"
             f'<script>{script}</script></body></html>')

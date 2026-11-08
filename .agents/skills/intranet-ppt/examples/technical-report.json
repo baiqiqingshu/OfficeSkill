@@ -12,9 +12,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 72
+            "h": 52
           },
           "inputs": {
             "text": "技术进展概览"
@@ -25,7 +25,7 @@
           "component": "builtin/text",
           "box": {
             "x": 64,
-            "y": 150,
+            "y": 122,
             "w": 1152,
             "h": 160
           },
@@ -46,7 +46,7 @@
           "component": "builtin/bullets",
           "box": {
             "x": 64,
-            "y": 340,
+            "y": 312,
             "w": 1152,
             "h": 300
           },
@@ -69,9 +69,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 72
+            "h": 52
           },
           "inputs": {
             "text": "风险与应对"
@@ -82,7 +82,7 @@
           "component": "builtin/table",
           "box": {
             "x": 64,
-            "y": 150,
+            "y": 122,
             "w": 1152,
             "h": 360
           },
@@ -117,9 +117,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 72
+            "h": 52
           },
           "inputs": {
             "text": "下一阶段计划"
@@ -130,7 +130,7 @@
           "component": "builtin/steps",
           "box": {
             "x": 64,
-            "y": 160,
+            "y": 132,
             "w": 1152,
             "h": 350
           },

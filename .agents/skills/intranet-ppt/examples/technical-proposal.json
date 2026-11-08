@@ -52,9 +52,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "汇报议程"
@@ -65,7 +65,7 @@
           "component": "builtin/lead",
           "box": {
             "x": 64,
-            "y": 124,
+            "y": 96,
             "w": 1152,
             "h": 80
           },
@@ -78,7 +78,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 220,
+            "y": 192,
             "w": 1152,
             "h": 72
           },
@@ -93,7 +93,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 312,
+            "y": 284,
             "w": 1152,
             "h": 72
           },
@@ -108,7 +108,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 404,
+            "y": 376,
             "w": 1152,
             "h": 72
           },
@@ -123,7 +123,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 496,
+            "y": 468,
             "w": 1152,
             "h": 72
           },
@@ -192,9 +192,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "现状与目标"
@@ -205,7 +205,7 @@
           "component": "builtin/lead",
           "box": {
             "x": 64,
-            "y": 124,
+            "y": 96,
             "w": 1152,
             "h": 80
           },
@@ -218,7 +218,7 @@
           "component": "builtin/feature-card",
           "box": {
             "x": 64,
-            "y": 220,
+            "y": 192,
             "w": 360,
             "h": 220
           },
@@ -233,7 +233,7 @@
           "component": "builtin/feature-card",
           "box": {
             "x": 460,
-            "y": 220,
+            "y": 192,
             "w": 360,
             "h": 220
           },
@@ -248,7 +248,7 @@
           "component": "builtin/feature-card",
           "box": {
             "x": 856,
-            "y": 220,
+            "y": 192,
             "w": 360,
             "h": 220
           },
@@ -263,7 +263,7 @@
           "component": "builtin/callout",
           "box": {
             "x": 64,
-            "y": 470,
+            "y": 442,
             "w": 552,
             "h": 120
           },
@@ -277,7 +277,7 @@
           "component": "builtin/callout-warn",
           "box": {
             "x": 664,
-            "y": 470,
+            "y": 442,
             "w": 552,
             "h": 120
           },
@@ -310,9 +310,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "总体架构"
@@ -323,7 +323,7 @@
           "component": "builtin/arch-zone",
           "box": {
             "x": 64,
-            "y": 120,
+            "y": 92,
             "w": 1152,
             "h": 160
           },
@@ -336,7 +336,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 84,
-            "y": 166,
+            "y": 138,
             "w": 240,
             "h": 96
           },
@@ -350,7 +350,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 372,
-            "y": 166,
+            "y": 138,
             "w": 240,
             "h": 96
           },
@@ -364,7 +364,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 660,
-            "y": 166,
+            "y": 138,
             "w": 240,
             "h": 96
           },
@@ -378,7 +378,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 948,
-            "y": 166,
+            "y": 138,
             "w": 240,
             "h": 96
           },
@@ -392,7 +392,7 @@
           "component": "builtin/arch-zone",
           "box": {
             "x": 64,
-            "y": 292,
+            "y": 264,
             "w": 1152,
             "h": 160
           },
@@ -405,7 +405,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 84,
-            "y": 338,
+            "y": 310,
             "w": 240,
             "h": 96
           },
@@ -419,7 +419,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 372,
-            "y": 338,
+            "y": 310,
             "w": 240,
             "h": 96
           },
@@ -433,7 +433,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 660,
-            "y": 338,
+            "y": 310,
             "w": 240,
             "h": 96
           },
@@ -447,7 +447,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 948,
-            "y": 338,
+            "y": 310,
             "w": 240,
             "h": 96
           },
@@ -461,7 +461,7 @@
           "component": "builtin/arch-zone",
           "box": {
             "x": 64,
-            "y": 464,
+            "y": 436,
             "w": 1152,
             "h": 160
           },
@@ -474,7 +474,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 84,
-            "y": 510,
+            "y": 482,
             "w": 240,
             "h": 96
           },
@@ -488,7 +488,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 372,
-            "y": 510,
+            "y": 482,
             "w": 240,
             "h": 96
           },
@@ -502,7 +502,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 660,
-            "y": 510,
+            "y": 482,
             "w": 240,
             "h": 96
           },
@@ -516,7 +516,7 @@
           "component": "builtin/arch-node",
           "box": {
             "x": 948,
-            "y": 510,
+            "y": 482,
             "w": 240,
             "h": 96
           },
@@ -549,9 +549,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "核心流程"
@@ -562,7 +562,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 64,
-            "y": 190,
+            "y": 162,
             "w": 240,
             "h": 160
           },
@@ -577,7 +577,7 @@
           "component": "builtin/flow-arrow",
           "box": {
             "x": 304,
-            "y": 190,
+            "y": 162,
             "w": 48,
             "h": 160
           },
@@ -590,7 +590,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 352,
-            "y": 190,
+            "y": 162,
             "w": 240,
             "h": 160
           },
@@ -605,7 +605,7 @@
           "component": "builtin/flow-arrow",
           "box": {
             "x": 592,
-            "y": 190,
+            "y": 162,
             "w": 48,
             "h": 160
           },
@@ -618,7 +618,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 640,
-            "y": 190,
+            "y": 162,
             "w": 240,
             "h": 160
           },
@@ -633,7 +633,7 @@
           "component": "builtin/flow-arrow",
           "box": {
             "x": 880,
-            "y": 190,
+            "y": 162,
             "w": 48,
             "h": 160
           },
@@ -646,7 +646,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 928,
-            "y": 190,
+            "y": 162,
             "w": 240,
             "h": 160
           },
@@ -661,7 +661,7 @@
           "component": "builtin/bullets",
           "box": {
             "x": 64,
-            "y": 410,
+            "y": 382,
             "w": 1152,
             "h": 180
           },
@@ -697,9 +697,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "需求清单"
@@ -710,7 +710,7 @@
           "component": "builtin/lead",
           "box": {
             "x": 64,
-            "y": 120,
+            "y": 92,
             "w": 1152,
             "h": 80
           },
@@ -723,7 +723,7 @@
           "component": "builtin/table",
           "box": {
             "x": 64,
-            "y": 220,
+            "y": 192,
             "w": 1152,
             "h": 340
           },
@@ -791,9 +791,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "关键指标"
@@ -804,7 +804,7 @@
           "component": "builtin/stat-card",
           "box": {
             "x": 64,
-            "y": 140,
+            "y": 112,
             "w": 360,
             "h": 180
           },
@@ -831,7 +831,7 @@
           "component": "builtin/stat-card",
           "box": {
             "x": 460,
-            "y": 140,
+            "y": 112,
             "w": 360,
             "h": 180
           },
@@ -858,7 +858,7 @@
           "component": "builtin/stat-card",
           "box": {
             "x": 856,
-            "y": 140,
+            "y": 112,
             "w": 360,
             "h": 180
           },
@@ -880,7 +880,7 @@
           "component": "builtin/divider",
           "box": {
             "x": 64,
-            "y": 356,
+            "y": 328,
             "w": 1152,
             "h": 2
           },
@@ -891,7 +891,7 @@
           "component": "builtin/section-title",
           "box": {
             "x": 64,
-            "y": 390,
+            "y": 362,
             "w": 1152,
             "h": 48
           },
@@ -904,7 +904,7 @@
           "component": "builtin/bullets",
           "box": {
             "x": 64,
-            "y": 452,
+            "y": 424,
             "w": 1152,
             "h": 160
           },
@@ -940,9 +940,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "方案对比"
@@ -953,7 +953,7 @@
           "component": "builtin/compare",
           "box": {
             "x": 64,
-            "y": 130,
+            "y": 102,
             "w": 1152,
             "h": 320
           },
@@ -969,7 +969,7 @@
           "component": "builtin/conclusion",
           "box": {
             "x": 64,
-            "y": 490,
+            "y": 462,
             "w": 1152,
             "h": 80
           },
@@ -1001,9 +1001,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "实施计划"
@@ -1014,7 +1014,7 @@
           "component": "builtin/timeline-h-item",
           "box": {
             "x": 64,
-            "y": 130,
+            "y": 102,
             "w": 288,
             "h": 160
           },
@@ -1029,7 +1029,7 @@
           "component": "builtin/timeline-h-item",
           "box": {
             "x": 352,
-            "y": 130,
+            "y": 102,
             "w": 288,
             "h": 160
           },
@@ -1044,7 +1044,7 @@
           "component": "builtin/timeline-h-item",
           "box": {
             "x": 640,
-            "y": 130,
+            "y": 102,
             "w": 288,
             "h": 160
           },
@@ -1059,7 +1059,7 @@
           "component": "builtin/timeline-h-item",
           "box": {
             "x": 928,
-            "y": 130,
+            "y": 102,
             "w": 288,
             "h": 160
           },
@@ -1074,7 +1074,7 @@
           "component": "builtin/phase",
           "box": {
             "x": 64,
-            "y": 340,
+            "y": 312,
             "w": 264,
             "h": 200
           },
@@ -1093,7 +1093,7 @@
           "component": "builtin/phase",
           "box": {
             "x": 360,
-            "y": 340,
+            "y": 312,
             "w": 264,
             "h": 200
           },
@@ -1112,7 +1112,7 @@
           "component": "builtin/phase",
           "box": {
             "x": 656,
-            "y": 340,
+            "y": 312,
             "w": 264,
             "h": 200
           },
@@ -1131,7 +1131,7 @@
           "component": "builtin/phase",
           "box": {
             "x": 952,
-            "y": 340,
+            "y": 312,
             "w": 264,
             "h": 200
           },

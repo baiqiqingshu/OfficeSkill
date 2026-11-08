@@ -1,6 +1,6 @@
 ---
 name: intranet-ppt
-description: 面向内网技术汇报、技术方案评审、需求评审、场景串讲和 IPD IR/SR/AR 需求串讲，用一份 JSON、原生 PPTX 母版及本地 HTML 元素库生成可编辑 PPTX。支持第三方元素库和从现有 PPTX 提取组件；全程离线，不适用于任意网页或复杂动画转换。
+description: 面向内网技术汇报、技术方案评审、需求评审、场景串讲和 IPD SR/AR 需求串讲，用一份 JSON、原生 PPTX 母版及本地 HTML 元素库生成可编辑 PPTX。支持第三方元素库和从现有 PPTX 提取组件；全程离线，不适用于任意网页或复杂动画转换。
 ---
 
 # 内网 PPT
@@ -10,7 +10,7 @@ description: 面向内网技术汇报、技术方案评审、需求评审、场�
 ## 生成
 
 1. 先查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。使用第三方库时追加 `--library 本地/library.json`。只使用目录中列出的组件 ID 和输入名。
-2. 写一份配置 JSON。优先参考 `examples/technical-proposal.json`：11 页完整技术方案，覆盖封面、议程、章节页、架构图、流程图、表格、指标、对比、时间线和结束页。短例可参考 `technical-report.json`、`solution-review.json`、`requirements-review.json`；单场景走查示例见 `examples/scenario-walkthrough.json`（多级要点、图示框、界面示意图与紧凑表格）；IPD IR/SR/AR 需求串讲见 `examples/ipd-walkthrough.json`（31 页，多 SR / 多 AR）。默认内置母版和基础库，无需选择多套方案。
+2. 写一份配置 JSON。优先参考 `examples/technical-proposal.json`：11 页完整技术方案，覆盖封面、议程、章节页、架构图、流程图、表格、指标、对比、时间线和结束页。短例可参考 `technical-report.json`、`solution-review.json`、`requirements-review.json`；单场景走查示例见 `examples/scenario-walkthrough.json`（多级要点、图示框、界面示意图与紧凑表格）；IPD SR/AR 需求串讲见 `examples/ipd-walkthrough.json`（30 页，多 SR / 多 AR）。默认内置母版和基础库，无需选择多套方案。
 3. 执行：
 
    ```text
@@ -20,7 +20,9 @@ description: 面向内网技术汇报、技术方案评审、需求评审、场�
 
 4. 根据错误中的页面、元素和字段修正 JSON。超长内容由模型精简或拆页；框架不会按内容自动缩小文字。交付 PPTX；HTML 仅预览内容，原生公司母版的最终外观以 PPTX 为准。条件允许时在本地 PowerPoint/LibreOffice 复核换行、遮挡和图片比例。
 
-IPD 需求串讲（IR/SR/AR）推荐结构：封面 + IR 概览 + SR 清单 + AR 清单，之后每个 SR 先放一页 SR 标题页，再按该 SR 下每个 AR 出六页——背景、主成功场景、异常场景、后置状态、前置条件、分支场景。每个 AR 页统一用 `ar-header` 作页头：`crumb` 写「SR-01 · AR-01 · 背景」这类面包屑（SR 编号 · AR 编号 · 场景类型），`title` 统一填 AR 名称（同一 AR 的六页标题一致），`meta` 填场景序号如「场景 2/6」。完整示例见 `examples/ipd-walkthrough.json`（31 页 IR/SR/AR 需求串讲）。
+IPD 需求串讲（SR/AR）推荐结构：封面 + SR 清单 + AR 清单，之后每个 SR 先放一页 SR 标题页，再按该 SR 下每个 AR 出六页——背景、主成功场景、异常场景、后置状态、前置条件、分支场景。每个 AR 页统一用 `ar-header` 作页头：`crumb` 写「SR-01 · AR-01 · 背景」这类面包屑（SR 编号 · AR 编号 · 场景类型），`title` 统一填 AR 名称（同一 AR 的六页标题一致），`meta` 填场景序号如「场景 2/6」。完整示例见 `examples/ipd-walkthrough.json`（30 页 SR/AR 需求串讲，不展开 IR）。
+
+`render` 会做布局检查：`report.json` 的 `layout` 列出重叠、超出页面、文本溢出和表格溢出，`preview.html` 顶部显示「布局检查通过」或问题数量，并给出偏移、重排、拆页、加宽/拆分表格等建议。`validate` 输出 `layoutIssueCount`，可先看数量再渲染。
 
 最小配置：
 
@@ -35,7 +37,7 @@ IPD 需求串讲（IR/SR/AR）推荐结构：封面 + IR 概览 + SR 清单 + AR
     "elements": [{
       "id": "heading",
       "component": "builtin/title",
-      "box": {"x": 64, "y": 40, "w": 1152, "h": 72},
+      "box": {"x": 64, "y": 24, "w": 1152, "h": 52},
       "inputs": {"text": [{"text": "方案", "bold": true}, {"text": "概述", "bold": false}]}
     }]
   }]
@@ -88,4 +90,4 @@ python SKILL_DIR/scripts/ppt_tool.py render extracted/deck.json --out output/reb
 
 依赖 Python 3.10+、python-pptx、Pillow、lxml，版本范围见 `scripts/requirements.txt`。未安装时由内网环境准备 wheel，执行 `python -m pip install --no-index --find-links 本地wheel目录 -r SKILL_DIR/scripts/requirements.txt`。不自动联网安装，不上传模板或内容，不使用云端转换、外部字体、遥测。
 
-需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出六个场景示例（含 31 页 IPD IR/SR/AR 需求串讲）和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。
+需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出六个场景示例（含 30 页 IPD SR/AR 需求串讲）和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。

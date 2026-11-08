@@ -52,9 +52,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "串讲结构"
@@ -65,7 +65,7 @@
           "component": "builtin/lead",
           "box": {
             "x": 64,
-            "y": 124,
+            "y": 96,
             "w": 1152,
             "h": 80
           },
@@ -78,7 +78,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 220,
+            "y": 192,
             "w": 1152,
             "h": 68
           },
@@ -93,7 +93,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 292,
+            "y": 264,
             "w": 1152,
             "h": 68
           },
@@ -108,7 +108,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 364,
+            "y": 336,
             "w": 1152,
             "h": 68
           },
@@ -123,7 +123,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 436,
+            "y": 408,
             "w": 1152,
             "h": 68
           },
@@ -138,7 +138,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 508,
+            "y": 480,
             "w": 1152,
             "h": 68
           },
@@ -153,7 +153,7 @@
           "component": "builtin/agenda-item",
           "box": {
             "x": 64,
-            "y": 580,
+            "y": 552,
             "w": 1152,
             "h": 68
           },
@@ -174,9 +174,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "01 背景"
@@ -187,7 +187,7 @@
           "component": "builtin/lead",
           "box": {
             "x": 64,
-            "y": 124,
+            "y": 96,
             "w": 1152,
             "h": 80
           },
@@ -200,7 +200,7 @@
           "component": "builtin/outline",
           "box": {
             "x": 64,
-            "y": 220,
+            "y": 192,
             "w": 1152,
             "h": 260
           },
@@ -242,7 +242,7 @@
           "component": "builtin/callout",
           "box": {
             "x": 64,
-            "y": 500,
+            "y": 472,
             "w": 1152,
             "h": 120
           },
@@ -275,9 +275,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "02 前置条件"
@@ -288,7 +288,7 @@
           "component": "builtin/lead",
           "box": {
             "x": 64,
-            "y": 124,
+            "y": 96,
             "w": 1152,
             "h": 80
           },
@@ -301,7 +301,7 @@
           "component": "builtin/table",
           "box": {
             "x": 64,
-            "y": 220,
+            "y": 192,
             "w": 1152,
             "h": 360
           },
@@ -370,9 +370,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "03 主成功场景"
@@ -383,7 +383,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 64,
-            "y": 150,
+            "y": 122,
             "w": 240,
             "h": 160
           },
@@ -398,7 +398,7 @@
           "component": "builtin/flow-arrow",
           "box": {
             "x": 304,
-            "y": 150,
+            "y": 122,
             "w": 48,
             "h": 160
           },
@@ -411,7 +411,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 352,
-            "y": 150,
+            "y": 122,
             "w": 240,
             "h": 160
           },
@@ -426,7 +426,7 @@
           "component": "builtin/flow-arrow",
           "box": {
             "x": 592,
-            "y": 150,
+            "y": 122,
             "w": 48,
             "h": 160
           },
@@ -439,7 +439,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 640,
-            "y": 150,
+            "y": 122,
             "w": 240,
             "h": 160
           },
@@ -454,7 +454,7 @@
           "component": "builtin/flow-arrow",
           "box": {
             "x": 880,
-            "y": 150,
+            "y": 122,
             "w": 48,
             "h": 160
           },
@@ -467,7 +467,7 @@
           "component": "builtin/flow-step",
           "box": {
             "x": 928,
-            "y": 150,
+            "y": 122,
             "w": 240,
             "h": 160
           },
@@ -482,7 +482,7 @@
           "component": "builtin/outline",
           "box": {
             "x": 64,
-            "y": 330,
+            "y": 302,
             "w": 1152,
             "h": 260
           },
@@ -543,9 +543,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "04 分支场景"
@@ -556,7 +556,7 @@
           "component": "builtin/table",
           "box": {
             "x": 64,
-            "y": 130,
+            "y": 102,
             "w": 1152,
             "h": 360
           },
@@ -606,7 +606,7 @@
           "component": "builtin/callout",
           "box": {
             "x": 64,
-            "y": 510,
+            "y": 482,
             "w": 1152,
             "h": 120
           },
@@ -626,9 +626,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "05 异常场景"
@@ -639,7 +639,7 @@
           "component": "builtin/table",
           "box": {
             "x": 64,
-            "y": 130,
+            "y": 102,
             "w": 1152,
             "h": 360
           },
@@ -689,7 +689,7 @@
           "component": "builtin/callout-warn",
           "box": {
             "x": 64,
-            "y": 510,
+            "y": 482,
             "w": 1152,
             "h": 120
           },
@@ -709,9 +709,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "06 后置状态"
@@ -722,7 +722,7 @@
           "component": "builtin/panel",
           "box": {
             "x": 64,
-            "y": 130,
+            "y": 102,
             "w": 552,
             "h": 300
           },
@@ -736,7 +736,7 @@
           "component": "builtin/panel",
           "box": {
             "x": 664,
-            "y": 130,
+            "y": 102,
             "w": 552,
             "h": 300
           },
@@ -750,7 +750,7 @@
           "component": "builtin/checklist",
           "box": {
             "x": 64,
-            "y": 450,
+            "y": 422,
             "w": 1152,
             "h": 180
           },
@@ -775,9 +775,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "界面示意图"
@@ -788,7 +788,7 @@
           "component": "builtin/ui-frame",
           "box": {
             "x": 64,
-            "y": 140,
+            "y": 112,
             "w": 640,
             "h": 440
           },
@@ -803,7 +803,7 @@
           "component": "builtin/panel",
           "box": {
             "x": 736,
-            "y": 150,
+            "y": 122,
             "w": 480,
             "h": 300
           },
@@ -817,7 +817,7 @@
           "component": "builtin/callout",
           "box": {
             "x": 736,
-            "y": 470,
+            "y": 442,
             "w": 480,
             "h": 120
           },
@@ -837,9 +837,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "流程图"
@@ -850,7 +850,7 @@
           "component": "builtin/figure",
           "box": {
             "x": 64,
-            "y": 140,
+            "y": 112,
             "w": 704,
             "h": 480
           },
@@ -866,7 +866,7 @@
           "component": "builtin/panel",
           "box": {
             "x": 800,
-            "y": 160,
+            "y": 132,
             "w": 416,
             "h": 380
           },
@@ -886,9 +886,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "UML 时序图"
@@ -899,7 +899,7 @@
           "component": "builtin/figure",
           "box": {
             "x": 64,
-            "y": 130,
+            "y": 102,
             "w": 704,
             "h": 480
           },
@@ -915,7 +915,7 @@
           "component": "builtin/panel",
           "box": {
             "x": 800,
-            "y": 150,
+            "y": 122,
             "w": 416,
             "h": 380
           },
@@ -935,9 +935,9 @@
           "component": "builtin/title",
           "box": {
             "x": 64,
-            "y": 40,
+            "y": 24,
             "w": 1152,
-            "h": 64
+            "h": 52
           },
           "inputs": {
             "text": "场景要点回顾"
@@ -948,7 +948,7 @@
           "component": "builtin/conclusion",
           "box": {
             "x": 64,
-            "y": 170,
+            "y": 142,
             "w": 1152,
             "h": 80
           },
@@ -961,7 +961,7 @@
           "component": "builtin/thanks",
           "box": {
             "x": 64,
-            "y": 320,
+            "y": 292,
             "w": 1152,
             "h": 240
           },
