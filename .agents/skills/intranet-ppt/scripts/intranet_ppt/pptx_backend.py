@@ -344,26 +344,33 @@ def _text(tf, value, style, scale):
         paddings = [padding] * 4
     tf.margin_top, tf.margin_right, tf.margin_bottom, tf.margin_left = [int(float(p) * scale) for p in paddings]
     tf.vertical_anchor = {"top": MSO_ANCHOR.TOP, "middle": MSO_ANCHOR.MIDDLE, "center": MSO_ANCHOR.MIDDLE, "bottom": MSO_ANCHOR.BOTTOM}.get(style.get("verticalAlign"), MSO_ANCHOR.TOP)
-    line_spacing = _line_spacing(style)
+    # CSS line-height means size*ratio while a spcPct value multiplies the
+    # font's natural line height, so absolute spcPts are written per paragraph
+    # from its largest run size (page px -> pt at 0.75) to match the preview.
+    line_spacing = _line_spacing(style) or 1.2
     paragraph = tf.paragraphs[0]
     align = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT, "justify": PP_ALIGN.JUSTIFY}.get(style.get("align"), PP_ALIGN.LEFT)
     paragraph.alignment = align
     paragraph.space_before = Pt(0)
     paragraph.space_after = Pt(0)
-    if line_spacing:
-        paragraph.line_spacing = line_spacing
+    max_sizes = [0.0]  # page-px font size ceiling per paragraph, in order
     for spec in _runs(value):
         merged = {**style, **spec.get("style", {}), **{k: v for k, v in spec.items() if k not in {"text", "style"}}}
+        size = merged.get("fontSize", 24)
+        if isinstance(size, bool) or not isinstance(size, (int, float)) or not math.isfinite(size):
+            size = 24
         for index, chunk in enumerate(str(spec.get("text", "")).replace("\r\n", "\n").split("\n")):
             if index:
                 paragraph = tf.add_paragraph()
                 paragraph.alignment = align
                 paragraph.space_before = paragraph.space_after = Pt(0)
-                if line_spacing:
-                    paragraph.line_spacing = line_spacing
+                max_sizes.append(0.0)
+            max_sizes[-1] = max(max_sizes[-1], float(size))
             run = paragraph.add_run()
             run.text = chunk
             _font(run, merged, scale)
+    for paragraph, size in zip(tf.paragraphs, max_sizes):
+        paragraph.line_spacing = Pt((size or 24) * 0.75 * line_spacing)
 
 
 def _image(path):
@@ -524,9 +531,37 @@ def _render_node(slide, node, sx, sy):
         shape.name = str(node["id"])
 
 
+def _theme_fonts(prs, family="Microsoft YaHei"):
+    """Rewrite the theme font scheme so even hand-added text uses YaHei."""
+    for master in prs.slide_masters:
+        for rel in master.part.rels.values():
+            if not rel.reltype.endswith("/theme"):
+                continue
+            part = rel.target_part
+            root = _xml(part.blob)
+            for scheme in root.iter(f"{{{A}}}fontScheme"):
+                for group in ("majorFont", "minorFont"):
+                    node = scheme.find(f"{{{A}}}{group}")
+                    if node is None:
+                        continue
+                    # latin/ea/cs precede the a:font script list in schema order.
+                    anchor = node.find(f"{{{A}}}font")
+                    for tag in ("latin", "ea", "cs"):
+                        child = node.find(f"{{{A}}}{tag}")
+                        if child is None:
+                            child = OxmlElement(f"a:{tag}")
+                            if anchor is not None:
+                                anchor.addprevious(child)
+                            else:
+                                node.append(child)
+                        child.set("typeface", family)
+            part._blob = _serialize(root)
+
+
 def create_default_master(path, page_size=None, background=None, accent=None, line=None):
     width, height = _page_size(page_size)
     prs = Presentation()
+    _theme_fonts(prs)
     prs.slide_width, prs.slide_height = int(width * EMU_PX), int(height * EMU_PX)
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     slide.background.fill.solid()

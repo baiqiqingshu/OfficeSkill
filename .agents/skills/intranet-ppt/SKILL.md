@@ -91,3 +91,9 @@ python SKILL_DIR/scripts/ppt_tool.py render extracted/deck.json --out output/reb
 依赖 Python 3.10+、python-pptx、Pillow、lxml，版本范围见 `scripts/requirements.txt`。未安装时由内网环境准备 wheel，执行 `python -m pip install --no-index --find-links 本地wheel目录 -r SKILL_DIR/scripts/requirements.txt`。不自动联网安装，不上传模板或内容，不使用云端转换、外部字体、遥测。
 
 需要可直接修改的初始目录：`python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck`。输出六个场景示例（含 30 页 IPD SR/AR 需求串讲）和默认母版。默认不覆盖已有非空目录；只有本工具生成并带标记的目录可用 `--overwrite` 替换，勿将其他文件放入待覆盖目录。
+
+## 维护约束
+
+- 本目录文件总数须 ≤100。调试脚本、临时 deck、渲染输出一律放仓库 `temp/` 或用户 `--out` 目录，不进本目录；新增内容优先合并进现有文件。
+- 默认字体全部为微软雅黑（`Microsoft YaHei`），含默认母版主题字体；仅在 run/listItem/组件 HTML 中显式指定 `fontFamily` 时才覆盖。
+- 修改库、示例或样式实现后重新生成 `assets/demo/library-demo.html`（`demo` 命令）。

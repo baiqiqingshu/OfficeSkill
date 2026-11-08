@@ -143,3 +143,15 @@
 - 新增 `components.audit_layout`：按元素聚合可见边界，检查超出页面、元素重叠、文本溢出、表格溢出；表格使用实际行高、文本使用估算文字高度，容器全包含子元素时不报重叠。
 - `report.json` 增加 `layout`（问题数量、详情、建议）；`preview.html` 顶部显示“布局检查通过”或问题数，并列出偏移、重排、拆页、加宽/拆分表格等建议；`validate` 输出 `layoutIssueCount`。
 - 当前 6 份示例 `layoutIssueCount` 均为 0；临时重叠、超页、文本溢出、表格溢出测试 deck 均能正确识别并给出建议。详见 [intranet-ppt-layout-check.md](intranet-ppt-layout-check.md)。
+
+## 布局检查修复、字体统一与文件收敛（本轮追加交付）
+
+- **布局检查修复**：修正估算模型与 PPTX 渲染的口径偏差及若干边界 bug，详见 [intranet-ppt-audit-font-cleanup.md](intranet-ppt-audit-font-cleanup.md)。
+  - PPTX 段落行距改为绝对行距 `a:spcPts`（段落最大 run 字号 × 0.75pt × line-height，未设时 1.2），与 preview CSS、审计估算三端统一；消除原 `spcPct`（×字体自然行高，雅黑 ≈1.3em）造成的 10–30% 系统性低估。
+  - 文本可视带锚点位移无条件应用（middle 对称溢出、bottom 向上溢出）；letterSpacing 计入字宽；混合字号 runs 按视觉段落最大字号计高；满宽不再被 3% 余量误进位；可用宽 ≤0 退化为每字符一行。
+  - 表格行高估算列宽折算到字号度量单位（非等比拉伸修正）；rowHeights 与渲染端"全部有效才收缩"口径对齐；图片按 letterbox 实际区域计边界。
+  - overlap 判定改方向敏感：仅"先出现包含后出现"豁免；box 完全相同与"后者完全覆盖前者"均报出并注明 z 序；无 elementId 节点纳入审计；手写场景数值鲁棒性兜底。
+  - `validate` 输出增加 `layoutIssues` 明细。
+- **字体全部微软雅黑**：默认母版 theme majorFont/minorFont 的 latin/ea/cs 改写为 `Microsoft YaHei`（用户在 PowerPoint 中新增文字也回退雅黑）；内置库 `api-item` 的 `path` 与 `code` 组件两处 `Consolas` 改为 `Microsoft YaHei`；run 级 `fontFamily` 显式覆盖通道保留。
+- **文件收敛**：删除 skill 内 `temp/`（988 个调试产物）与 `__pycache__`，目录文件总数 1029 → 34（≤100）；`SKILL.md` 新增"维护约束"写入文件预算与雅黑默认约定。
+- **验收**（独立测试代理，6/6 通过）：6 份示例 validate 全过、layoutIssueCount=0；render 冒烟生成正常；解包 PPTX 全部 latin/ea/cs 为 Microsoft YaHei、spcPct=0、theme 字体槽为雅黑；library-demo.html 重新生成且内容无 Consolas；负面 deck 正确报出 box 完全相同 / 完全覆盖 / textOverflow 且正常包含关系不误报；顺带修复 `deck.schema.json` theme default 文档值 blue→crimson。

@@ -271,7 +271,7 @@ def main(argv=None):
             prepared = prepare(_local_argument(args.config))
             layout = components.audit_layout(prepared["pages"], prepared["pageSize"])
             result = {"valid": True, "pageCount": len(prepared["pages"]), "pageSize": prepared["pageSize"],
-                      "layoutIssueCount": layout["issueCount"]}
+                      "layoutIssueCount": layout["issueCount"], "layoutIssues": layout["issues"]}
         elif args.command == "render":
             result = render(_local_argument(args.config), _local_argument(args.out), args.overwrite)
         elif args.command == "demo":

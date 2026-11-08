@@ -549,7 +549,7 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='method' style='position:absolute;left:0;top:12px;width:76px;height:30px;background-color:#1476B9;border-radius:4px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='path' style='position:absolute;left:92px;top:14px;width:420px;height:28px;font-family:Consolas;font-size:17px;color:#17324D;vertical-align:middle'></div><p data-slot='desc' style='position:absolute;left:528px;top:14px;width:624px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#52687A;vertical-align:middle'></p><div style='position:absolute;left:0;top:55px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='method' style='position:absolute;left:0;top:12px;width:76px;height:30px;background-color:#1476B9;border-radius:4px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='path' style='position:absolute;left:92px;top:14px;width:420px;height:28px;font-family:Microsoft YaHei;font-size:17px;color:#17324D;vertical-align:middle'></div><p data-slot='desc' style='position:absolute;left:528px;top:14px;width:624px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#52687A;vertical-align:middle'></p><div style='position:absolute;left:0;top:55px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "tag",
@@ -903,7 +903,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#212B36;border:1px solid #3A4A5C;border-radius:8px'><div data-slot='label' style='position:absolute;left:20px;top:12px;width:400px;height:22px;font-family:Microsoft YaHei;font-size:13px;color:#8496A8'></div><div data-slot='code' style='position:absolute;left:0;top:40px;width:100%;height:148px;font-family:Consolas;font-size:14px;color:#D9E4EF;line-height:1.6;padding:0 20px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#212B36;border:1px solid #3A4A5C;border-radius:8px'><div data-slot='label' style='position:absolute;left:20px;top:12px;width:400px;height:22px;font-family:Microsoft YaHei;font-size:13px;color:#8496A8'></div><div data-slot='code' style='position:absolute;left:0;top:40px;width:100%;height:148px;font-family:Microsoft YaHei;font-size:14px;color:#D9E4EF;line-height:1.6;padding:0 20px'></div></div>"
     },
     {
       "id": "outline",

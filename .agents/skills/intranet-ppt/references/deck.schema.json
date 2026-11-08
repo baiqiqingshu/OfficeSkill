@@ -24,7 +24,7 @@
         "mono",
         "graphite"
       ],
-      "default": "blue",
+      "default": "crimson",
       "description": "Optional theme palette. Canonical spec-palette hexes inside component HTML are remapped to the theme colors during library loading."
     },
     "master": {

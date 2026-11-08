@@ -583,7 +583,14 @@ _NARROW_PUNCT = set(".,:;'|!")
 _WIDE_PUNCT = set("MW@%&#")
 
 
-def _text_width(text, font_size):
+def _num(value):
+    """Coerce a scene number to float; bools, non-numbers and NaN become 0."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        return 0.0
+    return float(value)
+
+
+def _text_width(text, font_size, spacing=0):
     """Estimate one line's rendered width in px (no newlines in ``text``)."""
     units = 0.0
     for char in text:
@@ -597,7 +604,7 @@ def _text_width(text, font_size):
             units += 0.68 if char.isupper() else 0.56
         else:
             units += 1.0
-    return units * font_size
+    return units * font_size + len(text) * spacing
 
 
 def _cell_runs(cell, default_font):
@@ -617,23 +624,31 @@ def _cell_runs(cell, default_font):
     return [("" if cell is None else str(cell), default_font)]
 
 
-def _cell_lines(cell, default_font, available):
-    """Return ``(lineCount, maxFontSize)`` for a cell's wrapped content."""
+def _cell_lines(cell, default_font, available, spacing=0):
+    """Return ``(lineCount, wrappedLinePx)`` for a cell's wrapped content.
+
+    Lines are charged per visual paragraph (runs joined until a ``\\n``) at
+    that paragraph's tallest run size, not the cell's global maximum, and the
+    ``_TABLE_SAFETY`` margin only inflates a paragraph that is actually wider
+    than ``available``. With no room at all each character is its own line.
+    """
     runs = _cell_runs(cell, default_font)
     if not runs:
         return 1, default_font
-    max_font = max(size for _, size in runs)
     if available <= 0:
-        return 1, max_font
-    lines, width = 0, 0.0
+        chars = max(1, sum(len(text) for text, _ in runs))
+        return chars, chars * max(size for _, size in runs)
+    lines, line_px, width, font = 0, 0.0, 0.0, 0.0
     for text, size in runs:
         for index, segment in enumerate(text.replace("\r\n", "\n").split("\n")):
             if index:
-                lines += max(1, math.ceil(width * _TABLE_SAFETY / available))
-                width = 0.0
-            width += _text_width(segment, size)
-    lines += max(1, math.ceil(width * _TABLE_SAFETY / available))
-    return max(1, lines), max_font
+                wrapped = 1 if width <= available else math.ceil(width * _TABLE_SAFETY / available)
+                lines, line_px = lines + wrapped, line_px + wrapped * font
+                width, font = 0.0, 0.0
+            width += _text_width(segment, size, spacing)
+            font = max(font, size)
+    wrapped = 1 if width <= available else math.ceil(width * _TABLE_SAFETY / available)
+    return max(1, lines + wrapped), line_px + wrapped * font
 
 
 def _padding_parts(style):
@@ -670,12 +685,13 @@ def _table_row_heights(width, style, rows, header_rows, header_style):
         font_size = cell_style.get("fontSize", 24)
         if isinstance(font_size, bool) or not isinstance(font_size, (int, float)) or not math.isfinite(font_size) or font_size <= 0:
             font_size = 24
-        line_height = cell_style.get("lineHeight", 1.35)
+        line_height = cell_style.get("lineHeight", 1.2)
         if isinstance(line_height, bool) or not isinstance(line_height, (int, float)) or not math.isfinite(line_height) or line_height <= 0:
-            line_height = 1.35
+            line_height = 1.2
+        spacing = _num(cell_style.get("letterSpacing"))
         available = column - left - right - 2 * border
-        content = max((lines * font * line_height
-                       for lines, font in (_cell_lines(cell, font_size, available) for cell in row)),
+        content = max((line_px * line_height
+                       for _, line_px in (_cell_lines(cell, font_size, available, spacing=spacing) for cell in row)),
                       default=font_size * line_height)
         heights.append(math.ceil(content + top + bottom + 2 * border))
     return heights
@@ -771,7 +787,7 @@ def compile_element(element, libraries, base_dir, page_size):
             if rows:
                 head = min(header_rows, len(rows))
                 emit("table", rect, style, rows=rows, headerRows=head, headerStyle=header_style,
-                     rowHeights=_table_row_heights(rect["w"], style, rows, head, header_style))
+                     rowHeights=_table_row_heights(rect["w"] * sx / scale, style, rows, head, header_style))
             return
         if slot:
             if kind == "list":
@@ -838,49 +854,66 @@ def _text_required_height(node):
     """
     style = node.get("style", {})
     top, right, bottom, left = _padding_parts(style)
-    available = float(node.get("w", 0)) - left - right
+    available = _num(node.get("w", 0)) - left - right
     font_size = style.get("fontSize", 24)
     if isinstance(font_size, bool) or not isinstance(font_size, (int, float)) or not math.isfinite(font_size) or font_size <= 0:
         font_size = 24
     line_height = style.get("lineHeight", 1.2)
     if isinstance(line_height, bool) or not isinstance(line_height, (int, float)) or not math.isfinite(line_height) or line_height <= 0:
         line_height = 1.2
-    lines, max_font = _cell_lines(node.get("runs", []), font_size, available)
-    return lines * max_font * line_height + top + bottom
+    _, line_px = _cell_lines(node.get("runs", []), font_size, available, spacing=_num(style.get("letterSpacing")))
+    return line_px * line_height + top + bottom
 
 
-def _valid_row_heights(node):
-    """Return the finite positive ``rowHeights`` of a table node."""
-    heights = []
-    for value in node.get("rowHeights") or []:
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
-            continue
-        heights.append(float(value))
-    return heights
+def _table_render_height(node):
+    """Return a table node's painted height in page px.
+
+    The renderer shrinks the table frame to the summed ``rowHeights`` only
+    when every row received a valid height; otherwise the frame keeps box h.
+    """
+    rows, heights = node.get("rows"), node.get("rowHeights")
+    box = _num(node.get("h", 0))
+    if not isinstance(rows, list) or not rows or not isinstance(heights, list) or len(heights) < len(rows):
+        return box
+    heights = heights[:len(rows)]
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0
+           for value in heights):
+        return box
+    return float(sum(heights))
 
 
 def _node_visual_rect(node):
     """Return the rect a node actually paints, in page pixels.
 
-    Text only occupies the height its copy needs (vertical-align moves that band
-    inside the box, and an over-long text keeps its full required height so the
-    overflow stays visible); tables are as tall as their content rows; images,
-    rects and lines fill their box.
+    Text only occupies the height its copy needs (vertical-align shifts that
+    band even past the box edge, matching the PPT anchor's overflow direction);
+    tables are as tall as their rendered rows; images are contain-fitted and
+    centered like the backend; rects and lines fill their box.
     """
-    x, y, w, h = (float(node.get(key, 0) or 0) for key in ("x", "y", "w", "h"))
+    x, y, w, h = (_num(node.get(key, 0)) for key in ("x", "y", "w", "h"))
     kind = node.get("type")
     if kind == "text":
         required = _text_required_height(node)
-        if required <= h:
-            vertical = node.get("style", {}).get("verticalAlign", "top")
-            if vertical == "middle":
-                y += (h - required) / 2
-            elif vertical == "bottom":
-                y += h - required
+        vertical = node.get("style", {}).get("verticalAlign", "top")
+        if vertical == "middle":
+            y += (h - required) / 2
+        elif vertical == "bottom":
+            y += h - required
         return {"x": x, "y": y, "w": w, "h": required}
     if kind == "table":
-        heights = _valid_row_heights(node)
-        return {"x": x, "y": y, "w": w, "h": sum(heights) if heights else h}
+        return {"x": x, "y": y, "w": w, "h": _table_render_height(node)}
+    if kind == "image":
+        try:
+            from PIL import Image, ImageOps
+            with Image.open(node.get("src")) as source:
+                iw, ih = ImageOps.exif_transpose(source).size
+        except Exception:
+            iw = ih = 0
+        if iw <= 0 or ih <= 0 or w <= 0 or h <= 0:
+            return {"x": x, "y": y, "w": w, "h": h}
+        ratio = min(w / iw, h / ih)
+        nw, nh = iw * ratio, ih * ratio
+        return {"x": x + (w - nw) / 2, "y": y + (h - nh) / 2, "w": nw, "h": nh}
     return {"x": x, "y": y, "w": w, "h": h}
 
 
@@ -904,17 +937,28 @@ def _page_elements(page):
     """Return ``[{id, nodes}]`` for one prepared page.
 
     ``prepare`` records the per-element node groups on the page; a page without
-    them (hand-built scenes) is regrouped by the ``elementId`` on each node.
+    them (hand-built scenes) is regrouped by the ``elementId`` on each node,
+    and a node without one becomes a pseudo element of its own.
     """
     elements = page.get("elements")
     if isinstance(elements, list):
         return [{"id": str(item.get("id", "")), "nodes": list(item.get("nodes") or [])}
                 for item in elements if isinstance(item, dict)]
-    grouped = {}
-    for node in page.get("nodes", []):
-        if isinstance(node, dict) and node.get("elementId"):
-            grouped.setdefault(str(node["elementId"]), []).append(node)
-    return [{"id": key, "nodes": value} for key, value in grouped.items()]
+    grouped, order = {}, []
+    for index, node in enumerate(page.get("nodes", [])):
+        if not isinstance(node, dict):
+            continue
+        if node.get("elementId"):
+            entry = grouped.get(str(node["elementId"]))
+            if entry is None:
+                grouped[str(node["elementId"])] = entry = {"id": str(node["elementId"]), "nodes": []}
+                order.append(entry)
+            entry["nodes"].append(node)
+        else:
+            # Nodes without an elementId still belong in the audit, each as
+            # its own pseudo element so z-order stays faithful.
+            order.append({"id": f"node-{index}", "nodes": [node]})
+    return order
 
 
 def _union_bounds(nodes):
@@ -991,26 +1035,24 @@ def audit_layout(pages, page_size):
                     continue
                 if node.get("type") == "text":
                     required = _text_required_height(node)
-                    box = float(node.get("h", 0) or 0)
+                    box = _num(node.get("h", 0))
                     if required - box > _OVERFLOW_TOLERANCE and (text_worst is None or required - box > text_worst[0]):
                         text_worst = (required - box, required, box, node)
                 elif node.get("type") == "table":
-                    heights = _valid_row_heights(node)
-                    if not heights:
-                        continue
-                    total = sum(heights)
-                    box = float(node.get("h", 0) or 0)
+                    box = _num(node.get("h", 0))
+                    total = _table_render_height(node)
                     if total - box > _OVERFLOW_TOLERANCE and (table_worst is None or total - box > table_worst[0]):
-                        table_worst = (total - box, total, box, node, len(heights))
+                        rows = node.get("rows")
+                        table_worst = (total - box, total, box, node, len(rows) if isinstance(rows, list) else 0)
             if text_worst:
                 over, required, box, node = text_worst
                 detail = (f"元素 {element['id']} 的文字约需 {required:.0f}px 高，box 仅 {box:.0f}px，溢出 {over:.0f}px"
-                          f"（文字节点 w={float(node.get('w', 0) or 0):.0f}px）")
+                          f"（文字节点 w={_num(node.get('w', 0)):.0f}px）")
                 issues.append(_layout_issue(page_id, index, "textOverflow", [element["id"]], detail))
             if table_worst:
                 over, total, box, node, rows = table_worst
                 detail = (f"元素 {element['id']} 的表格 {rows} 行内容约需 {total:.0f}px 高，box 仅 {box:.0f}px，溢出 {over:.0f}px"
-                          f"（表格节点 w={float(node.get('w', 0) or 0):.0f}px）")
+                          f"（表格节点 w={_num(node.get('w', 0)):.0f}px）")
                 issues.append(_layout_issue(page_id, index, "tableOverflow", [element["id"]], detail))
         for first in range(len(entries)):
             for second in range(first + 1, len(entries)):
@@ -1019,10 +1061,20 @@ def audit_layout(pages, page_size):
                 overlap_h = min(left_bounds["y"] + left_bounds["h"], right_bounds["y"] + right_bounds["h"]) - max(left_bounds["y"], right_bounds["y"])
                 if overlap_w <= 0 or overlap_h <= 0 or overlap_w * overlap_h <= _OVERLAP_MIN_AREA:
                     continue
-                if _contains(left_bounds, right_bounds) or _contains(right_bounds, left_bounds):
+                area = overlap_w * overlap_h
+                if _contains(left_bounds, right_bounds) and _contains(right_bounds, left_bounds):
+                    detail = (f"元素 {left_element['id']} 与 {right_element['id']} 的 box 完全相同（疑似重复元素），"
+                              f"重叠约 {area:.0f}px²（后者绘制在上层）")
+                elif _contains(left_bounds, right_bounds):
+                    # An earlier box holding a later one is a container under
+                    # its children, so it is not an overlap.
                     continue
-                detail = (f"元素 {left_element['id']} 与 {right_element['id']} 重叠约 {overlap_w * overlap_h:.0f}px²"
-                          f"（重叠区域 {overlap_w:.0f}×{overlap_h:.0f}px）")
+                elif _contains(right_bounds, left_bounds):
+                    detail = (f"元素 {left_element['id']} 与 {right_element['id']} 重叠约 {area:.0f}px²，"
+                              f"后者完全覆盖前者（后者绘制在上层）")
+                else:
+                    detail = (f"元素 {left_element['id']} 与 {right_element['id']} 重叠约 {area:.0f}px²"
+                              f"（重叠区域 {overlap_w:.0f}×{overlap_h:.0f}px）（后者绘制在上层）")
                 issues.append(_layout_issue(page_id, index, "overlap", [left_element["id"], right_element["id"]], detail))
     issues.sort(key=lambda issue: (issue["pageIndex"], issue["kind"]))
     return {"issueCount": len(issues), "issues": issues}
