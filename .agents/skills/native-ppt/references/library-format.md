@@ -23,7 +23,7 @@
 `components/conclusion.html`：
 
 ```html
-<div data-slot="text" style="position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#17324D"></div>
+<div data-slot="text" style="position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#000000"></div>
 ```
 
 组件可用 `html` 字符串代替 `htmlFile`，两者只选一个。模型通过 `company/conclusion` 引用。库清单 ID 和组件 ID 必须唯一，不能覆盖内置组件。
@@ -38,9 +38,9 @@
 | table | 二维数组或 `{"rows":[["列A","列B"],["值A","值B"]]}` | `table data-slot="rows"` |
 | list | 字符串、runs 或 level 对象构成的数组 | `ul/ol/div data-slot="items"` |
 
-表格单元格和列表条目可使用 runs。单段 run 为 `{"text":"内容","bold":true,"italic":false,"fontFamily":"宋体","fontSize":24,"color":"#17324D","underline":false}`。遗漏样式时继承组件样式；字号单位是像素。
+表格单元格和列表条目可使用 runs。单段 run 为 `{"text":"内容","bold":true,"italic":false,"fontFamily":"宋体","fontSize":24,"color":"#000000","underline":false}`。遗漏样式时继承组件样式；字号单位是像素。
 
-列表条目还支持多级嵌套对象 `{"level":2,"text":"…"}`：`level` 为 1–4 的整数（省略按 1 级），`text` 可写字符串或 runs 数组，对象内可带 `bold`/`italic`/`underline`/`fontFamily`/`fontSize`/`color`，未知字段报错。1–4 级前缀依次为 `•`、`◦`、`▪`、`–`，每深一级在标记前加两个全角空格缩进；`check`/`dash`/`num` 等 class 只作用于 1 级。
+列表条目支持多级对象 `{"level":2,"text":"…"}`：`level` 为 1–4 的整数（省略按 1 级），`text` 可写字符串或 runs，对象可带 `bold`/`italic`/`underline`/`fontFamily`/`fontSize`/`color`，未知字段报错。列表编译为原生 PowerPoint 段落，通过 `a:buChar` 或 `a:buAutoNum` 设置项目符号/编号，以段落级缩进与悬挂缩进控制层级；标记不属于正文文本，不再拼接全角空格。HTML 预览和布局估算使用相同层级信息。
 
 ## 支持的 HTML/CSS 子集
 
@@ -50,7 +50,7 @@
 - 布局：内联样式，`position:absolute/relative`、`left/top/width/height`，尺寸使用 `px`、`%` 或零。建议所有可见叶子明确给出位置和高度；不使用 flex、grid、自动流式网页布局。
 - 文字：`font-family/font-size/font-weight/font-style/text-decoration/text-align/vertical-align`、`color`、`line-height`（无单位倍数 0.8–3.0）、`letter-spacing`（px，-5–20）。
 - 形状：`background-color`、`border:1px solid #RRGGBB`、`padding`、`border-radius`（`Npx` 或 `50%`，用于圆角卡片与圆形徽标）。
-- 列表：`ul/ol` 的 `class` 决定前缀，`check` → `✓`、`dash` → `—`、`num` → 数字；前缀加粗并沿用列表文字颜色，随主题换色。
+- 列表：`ul` 或普通 `list` 使用原生项目符号；`ol` 或 `class="num"` 使用原生自动编号；`check` 和 `dash` 使用对应原生符号。继续编辑时可增删条目，标记不会混入正文。
 - 表格：组件 HTML 中用 `<thead><tr><th style="...">` 声明表头样式（填充、文字颜色、加粗、内边距、边框）；`data-slot="rows"` 只提供正文行，表头行数和样式来自 HTML。`th` 的表头样式会同时用于 HTML 预览和 PPTX。表格行高按内容紧凑排布：框架按等宽列、单元格内边距与边框估算每个单元格的换行行数，取行内最大行数乘以字号与 `line-height`（缺省 1.2，与 PPTX 绝对行距口径一致）得到行高；单元格 runs 自带的 `fontSize` 也计入估算。因此 `box` 高度是上限而非等分高度；内容少时表格顶部对齐、下方留白，内容多时仍可能溢出，需精简或拆页。
 - 根组件按 `size` 设计，通过配置 `box` 缩放；字号按两个缩放方向的较小比例缩放。避免过度缩放，优先选择适合内容的元素尺寸。
 - 图片使用本地文件，维持宽高比。JSON 的图片相对于配置目录；HTML 中静态 `img src` 相对于库目录。
@@ -59,14 +59,15 @@
 
 ## 规范色板与主题换色
 
-组件 HTML 只应使用下表中的 hex 色值。配置 JSON 顶层可选 `"theme"` 字段（`crimson` 默认、`blue`、`emerald`、`mono`、`graphite`）会把这些色值整体映射到目标主题；色板之外的 hex 一律原样保留，不参与换色。第三方库同样遵守本约定即可自动支持主题。
+普通正文、导语、表格正文与说明使用黑色 `#000000`，省略颜色时也默认黑色；标题、关键词及状态可以显式使用强调色或粗体。组件填充、边框和强调色优先使用下表中的 hex 色值。配置 JSON 顶层可选 `"theme"` 字段（`crimson` 默认、`blue`、`emerald`、`mono`、`graphite`）会把这些色值整体映射到目标主题；色板之外的 hex 一律原样保留，不参与换色。第三方库同样遵守本约定即可自动支持主题。
 
 | 语义 | hex |
 | --- | --- |
+| 默认正文（浅色主题固定黑色） | #000000 |
 | INK 主标题 | #17324D |
-| BODY 正文 | #263C50 |
-| MUTED 次要 | #52687A |
-| FAINT 弱文字 | #8496A8 |
+| BODY 兼容正文 token（新组件改用黑色） | #263C50 |
+| MUTED 兼容次要 token（新组件改用黑色） | #52687A |
+| FAINT 兼容弱文字 token（新组件改用黑色） | #8496A8 |
 | ACCENT_D 深主色（文字/描边） | #145D92 |
 | ACCENT_FILL_D 深主色填充（白字） | #145D93 |
 | ACCENT 主色（文字/描边） | #1476B8 |
@@ -85,7 +86,7 @@
 
 例外（不属于色板、不参与换色）：代码块深底 `#212B36`、代码文字 `#D9E4EF`、代码边框 `#3A4A5C`。
 
-换色发生在库加载阶段：组件 HTML 字符串进入解析器前，对 `#RRGGBB`/`#RGB` 做大小写不敏感的全词替换。`graphite` 为暗底主题，文字系 token 换浅色、底色系 token 换深色；各主题的状态色（OK/WARN/DANGER）可保持恒定或微调。
+换色发生在库加载阶段：组件 HTML 字符串进入解析器前，对 `#RRGGBB`/`#RGB` 做大小写不敏感的全词替换。`graphite` 是显式选择的暗底对比主题，普通黑字及文字系 token 换为浅色，底色系 token 换深色；浅色主题保留普通正文黑色。各主题的状态色（OK/WARN/DANGER）可保持恒定或微调。
 
 `SURFACE` 与 `WHITE` 必须分开：`SURFACE` 用于白色卡片、表格正文和图片框背景，暗色主题会换成深色面；`WHITE` 只用于主色填充上的反白文字，暗色主题仍保持白色。同理，主色填充块（表头、结论条、徽标、方法标签）使用 `ACCENT_FILL` / `ACCENT_FILL_D`，避免暗色主题把填充换成浅色后白字不可读。
 
@@ -115,3 +116,11 @@ python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/libr
 `builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`、`outline`、`ui-frame`、`figure`、`ar-header`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
 
 `ar-header` 是 AR 场景页的标准页头（1152×86），IPD 需求串讲中每个 AR 页都用它：`crumb`（text，必填）写「SR-01 · AR-01 · 背景」这类 SR/AR/场景类型面包屑，`title`（richtext，必填）填 AR 名称（同一 AR 各页保持一致），`meta`（text，可选）写右侧场景序号如「场景 2/6」。
+
+## 现代组件编排
+
+内置库新增 `insight-card`、`value-card`、`decision-card`、`milestone-strip`、`risk-card`、`action-card`、`summary-band`、`comparison-row`、`capability-tile`、`takeaway-panel`，合计 59 个组件。5 页完整编排见 `examples/modern-elements.json`，默认样例输入位于 `samples.json`。
+
+组件正文使用黑色，标题和编号使用强调色；卡片背景用 `SURFACE`、`BG_SOFT` 等主题 token，避免暗色主题下不可读。文字叶子需留足行高和内边距，示例保持短句。列表使用 `list` 输入绑定，不手写项目符号字符。
+
+页面元素可声明 `region: body/title/footer/full`，结合配置顶层或逐页 `masterRegions` 限定标题及页脚区域。`region` 属于 deck 元素字段，不放进库清单的组件对象。第三方标题/页脚组件应明确声明区域，正文默认 `body`；`full` 用于有意跨区的封面和背景。任何生成 PPTX 的路径均需读取布局报告，不能以“可打开”代替“布局通过”。

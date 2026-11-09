@@ -9,6 +9,7 @@ from __future__ import annotations
 
 # 规范色板：组件中允许出现、且参与主题换色的全部 hex（大写带 #）。
 CANONICAL = {
+    "TEXT": "#000000",
     "INK": "#17324D",
     "BODY": "#263C50",
     "MUTED": "#52687A",
@@ -39,6 +40,7 @@ DEFAULT_THEME = "crimson"
 
 def _derived(**overrides):
     colors = dict(CANONICAL)
+    colors.update(BODY="#000000", MUTED="#000000", FAINT="#000000")
     colors.update(overrides)
     return colors
 
@@ -88,9 +90,9 @@ THEMES = {
         "canvas": "#FFFFFF",
         "colors": _derived(
             INK="#1C1C1C",
-            BODY="#2E2E2E",
-            MUTED="#5C5C5C",
-            FAINT="#8A8A8A",
+            BODY="#000000",
+            MUTED="#000000",
+            FAINT="#000000",
             ACCENT_D="#222222",
             ACCENT="#383838",
             ACCENT_L="#6B6B6B",
@@ -108,6 +110,7 @@ THEMES = {
         "name": "石墨黑",
         "canvas": "#0F151C",
         "colors": _derived(
+            TEXT="#C6D3DF",
             INK="#EAF1F8",
             BODY="#C6D3DF",
             MUTED="#93A5B8",

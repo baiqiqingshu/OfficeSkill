@@ -79,9 +79,9 @@ def _number(value, label, minimum=None, maximum=None):
 
 
 def prepare(config_path):
-    from . import components, pptx_backend, themes
+    from . import components, master_regions, themes
     config = _read_json(config_path)
-    _keys(config, ["schemaVersion", "title", "master", "libraries", "pageSize", "pageCount", "pages", "theme", "autoFitFonts", "minFontSize"], "配置")
+    _keys(config, ["schemaVersion", "title", "master", "libraries", "pageSize", "pageCount", "pages", "theme", "autoFitFonts", "minFontSize", "masterRegions"], "配置")
     if type(config.get("schemaVersion")) is not int or config["schemaVersion"] != 1:
         raise ValueError("schemaVersion 必须为 1")
     if not isinstance(config.get("title", "未命名演示"), str):
@@ -96,6 +96,7 @@ def prepare(config_path):
     _keys(size, ["width", "height"], "pageSize")
     for key in ["width", "height"]:
         _number(size.get(key), f"pageSize.{key}", 100, 10000)
+    global_regions = master_regions.validate_options(config.get("masterRegions", {}), size["height"])
     pages = config.get("pages")
     if not isinstance(pages, list) or not 1 <= len(pages) <= 200:
         raise ValueError("pages 必须包含 1 到 200 个页面")
@@ -111,18 +112,19 @@ def prepare(config_path):
     libraries = components.load_libraries([_asset(base, item, "library") for item in library_paths],
                                           palette=themes.palette(theme))
     master = _asset(base, config["master"], "master") if "master" in config else None
-    master_info = pptx_backend.inspect_pptx(master) if master else {"pageCount": 1}
+    master_info = master_regions.inspect_master(master) if master else None
     compiled = []
     page_ids = set()
     for index, page in enumerate(pages, 1):
         label = f"pages[{index - 1}]"
-        _keys(page, ["id", "masterSlide", "elements"], label)
+        _keys(page, ["id", "masterSlide", "elements", "masterRegions"], label)
+        page_regions = master_regions.validate_options(page.get("masterRegions", {}), size["height"], label + ".masterRegions")
         page_id = page.get("id")
         if not isinstance(page_id, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,79}", page_id) or page_id in page_ids:
             raise ValueError(f"{label}.id 必须是唯一的字母开头 ID（字母、数字、下划线、连字符，最多 80 字符）")
         page_ids.add(page_id)
         slide = page.get("masterSlide", 1)
-        if type(slide) is not int or not 1 <= slide <= master_info["pageCount"]:
+        if type(slide) is not int or not 1 <= slide <= (master_info["pageCount"] if master_info else 1):
             raise ValueError(f"{label}.masterSlide 超出母版页面范围")
         elements = page.get("elements")
         if not isinstance(elements, list) or len(elements) > 300:
@@ -131,7 +133,8 @@ def prepare(config_path):
         element_nodes = []
         for e_index, element in enumerate(elements):
             e_label = f"{label}.elements[{e_index}]"
-            _keys(element, ["id", "component", "box", "inputs"], e_label)
+            _keys(element, ["id", "component", "box", "inputs", "region"], e_label)
+            region = master_regions.element_region(element)
             e_id = element.get("id")
             if not isinstance(e_id, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]{0,79}", e_id) or e_id in element_ids:
                 raise ValueError(f"{e_label}.id 必须是页内唯一的字母开头 ID（字母、数字、下划线、连字符，最多 80 字符）")
@@ -144,14 +147,15 @@ def prepare(config_path):
                 if box["x"] + box["w"] > size["width"] + .01 or box["y"] + box["h"] > size["height"] + .01:
                     raise ValueError(f"{e_label}.box 超出页面边界")
             try:
-                compiled_nodes = components.compile_element(element, libraries, base, size)
+                compiled_nodes = components.compile_element({k: v for k, v in element.items() if k != "region"}, libraries, base, size)
             except Exception as exc:
                 raise ValueError(f"{e_label} ({e_id}): {exc}") from exc
             nodes.extend(compiled_nodes)
-            element_nodes.append({"id": e_id, "component": element["component"], "nodes": compiled_nodes})
-        compiled.append({"id": page_id, "masterSlide": slide, "nodes": nodes, "elements": element_nodes})
+            element_nodes.append({"id": e_id, "component": element["component"], "region": region, "nodes": compiled_nodes})
+        regions = master_regions.resolve_regions(size, master_regions.scaled_regions(master_info, slide, size), global_regions, page_regions)
+        compiled.append({"id": page_id, "masterSlide": slide, "nodes": nodes, "elements": element_nodes, "masterRegions": regions})
     return {"config": config, "pageSize": size, "pages": compiled, "master": master,
-            "title": config.get("title", "未命名演示"), "autoFitFonts": auto_fit, "minFontSize": min_font}
+            "masterInfo": master_info, "title": config.get("title", "未命名演示"), "autoFitFonts": auto_fit, "minFontSize": min_font}
 
 
 def _directory_transaction(destination, overwrite, writer):
@@ -189,15 +193,14 @@ def _directory_transaction(destination, overwrite, writer):
             shutil.rmtree(stage)
 
 
-def render(config_path, destination, overwrite):
-    from . import components, pptx_backend
+def render(config_path, destination, overwrite, strict_layout=False):
+    from . import components, layout_checks, pptx_backend
     if config_path.is_relative_to(destination):
         raise ValueError("输出目录不能包含输入配置，请使用独立子目录")
     prepared = prepare(config_path)
-    layout = components.audit_layout(prepared["pages"], prepared["pageSize"], min_font=prepared["minFontSize"])
     if prepared["autoFitFonts"]:
         components.fit_fonts(prepared["pages"], min_font=prepared["minFontSize"])
-        layout = components.audit_layout(prepared["pages"], prepared["pageSize"], min_font=prepared["minFontSize"])
+    layout = layout_checks.audit_prepared(prepared)
     sources = ([prepared["master"]] if prepared["master"] else [])
     sources += [_asset(config_path.parent, p, "library") for p in prepared["config"].get("libraries", [])]
     sources += [Path(n["src"]) for p in prepared["pages"] for n in p["nodes"] if n.get("type") == "image"]
@@ -212,22 +215,29 @@ def render(config_path, destination, overwrite):
             pptx_backend.create_default_master(master, prepared["pageSize"], background=theme["canvas"],
                                               accent=theme["colors"]["ACCENT"], line=theme["colors"]["BORDER_L"])
         pptx_backend.render_pptx(master, prepared["pages"], prepared["pageSize"], stage / "presentation.pptx")
-        (stage / "preview.html").write_text(components.render_preview(prepared["pages"], prepared["pageSize"], prepared["title"], layout), encoding="utf-8")
+        counts = [prepared["masterInfo"]["slides"][p["masterSlide"] - 1]["shapeCount"] for p in prepared["pages"]] if prepared["masterInfo"] else [0] * len(prepared["pages"])
+        native = layout_checks.audit_pptx(stage / "presentation.pptx", static_counts=counts)
+        checked_layout = layout_checks.merge_native(layout, native)
+        (stage / "preview.html").write_text(components.render_preview(prepared["pages"], prepared["pageSize"], prepared["title"], checked_layout), encoding="utf-8")
         report = {"schemaVersion": 1, "title": prepared["title"], "pageCount": len(prepared["pages"]),
                   "pageSize": prepared["pageSize"], "elementCount": sum(len(p["elements"]) for p in prepared["config"]["pages"]),
                   "preview": "HTML 仅为内容预览，不显示原生 PPTX 母版；母版外观以 presentation.pptx 为准。",
                   "warnings": ["请在本地 PowerPoint 或 LibreOffice 检查文字换行及最终版式。"],
-                  "layout": layout,
+                  "layout": checked_layout, "nativeChecks": {"presentation.pptx": native},
                   "outputs": ["presentation.pptx", "preview.html", "report.json"]}
         _write_json(stage / "report.json", report)
         if prepared["master"] is None:
             master.unlink()
-        return {"output": str(destination), "pageCount": len(prepared["pages"]), "pptx": str(destination / "presentation.pptx")}
-    return _directory_transaction(destination, overwrite, writer)
+        return {"output": str(destination), "pageCount": len(prepared["pages"]), "pptx": str(destination / "presentation.pptx"),
+                "layoutChecked": True, "layoutStatus": checked_layout["status"], "layoutIssueCount": checked_layout["issueCount"],
+                "report": str(destination / "report.json")}
+    result = _directory_transaction(destination, overwrite, writer)
+    result["strictLayoutFailed"] = bool(strict_layout and result["layoutIssueCount"])
+    return result
 
 
-def starter(destination, overwrite):
-    from . import pptx_backend, themes
+def starter(destination, overwrite, strict_layout=False):
+    from . import layout_checks, pptx_backend, themes
     def writer(stage):
         theme = themes.THEMES[themes.DEFAULT_THEME]
         pptx_backend.create_default_master(stage / "master.pptx", DEFAULT_SIZE, background=theme["canvas"],
@@ -241,17 +251,25 @@ def starter(destination, overwrite):
             config["master"] = "master.pptx"
             _write_json(stage / source.name, config)
             filenames.append(source.name)
-        return {"output": str(destination), "configs": filenames, "master": "master.pptx"}
-    return _directory_transaction(destination, overwrite, writer)
+        layout = layout_checks.audit_pptx(stage / "master.pptx")
+        _write_json(stage / "report.json", {"schemaVersion": 1, "layout": layout, "nativeChecks": {"master.pptx": layout}})
+        return {"output": str(destination), "configs": filenames, "master": "master.pptx", "layoutChecked": True,
+                "layoutStatus": layout["status"], "layoutIssueCount": layout["issueCount"], "report": str(destination / "report.json")}
+    result = _directory_transaction(destination, overwrite, writer)
+    result["strictLayoutFailed"] = bool(strict_layout and result["layoutIssueCount"])
+    return result
 
 
 def parser():
-    root = argparse.ArgumentParser(description="离线内网 PPT：JSON + PPTX 母版 + 声明式 HTML 元素库")
+    root = argparse.ArgumentParser(description="Native PPT：JSON + 原生 PPTX 母版 + 离线声明式元素库")
     commands = root.add_subparsers(dest="command", required=True)
     catalog = commands.add_parser("catalog", help="查看可用组件及输入")
     catalog.add_argument("--library", action="append", default=[], help="本地 library.json，可重复")
     validate = commands.add_parser("validate", help="完整校验配置及本地资源")
     validate.add_argument("config")
+    validate.add_argument("--strict-layout", action="store_true", help="布局问题导致非零退出，仍输出诊断")
+    inspect = commands.add_parser("inspect-master", help="读取母版标题/页脚保留高度及占位符来源")
+    inspect.add_argument("source")
     render_cmd = commands.add_parser("render", help="生成可编辑 PPTX 和 HTML 内容预览")
     render_cmd.add_argument("config")
     demo = commands.add_parser("demo", help="生成元素库可视化预览页 library-demo.html")
@@ -264,6 +282,7 @@ def parser():
             command.add_argument("source")
         command.add_argument("--out", required=True)
         command.add_argument("--overwrite", action="store_true")
+        command.add_argument("--strict-layout", action="store_true", help="布局有问题时返回非零，保留报告及诊断产物")
     return root
 
 
@@ -273,21 +292,27 @@ def main(argv=None):
             stream.reconfigure(encoding="utf-8")
     args = parser().parse_args(argv)
     try:
-        from . import components, pptx_backend
+        from . import components, layout_checks, master_regions, pptx_backend
         if args.command == "catalog":
             result = components.catalog(components.load_libraries([_local_argument(p) for p in args.library]))
         elif args.command == "validate":
             prepared = prepare(_local_argument(args.config))
-            layout = components.audit_layout(prepared["pages"], prepared["pageSize"], min_font=prepared["minFontSize"])
+            if prepared["autoFitFonts"]:
+                components.fit_fonts(prepared["pages"], min_font=prepared["minFontSize"])
+            layout = layout_checks.audit_prepared(prepared)
             result = {"valid": True, "pageCount": len(prepared["pages"]), "pageSize": prepared["pageSize"],
-                      "layoutIssueCount": layout["issueCount"], "layoutIssues": layout["issues"]}
+                      "layoutChecked": True, "layoutStatus": layout["status"], "layoutIssueCount": layout["issueCount"],
+                      "layoutIssues": layout["issues"], "masterRegions": layout["masterRegions"],
+                      "strictLayoutFailed": bool(args.strict_layout and layout["issueCount"])}
+        elif args.command == "inspect-master":
+            result = master_regions.inspect_master(_local_argument(args.source))
         elif args.command == "render":
-            result = render(_local_argument(args.config), _local_argument(args.out), args.overwrite)
+            result = render(_local_argument(args.config), _local_argument(args.out), args.overwrite, args.strict_layout)
         elif args.command == "demo":
             from . import demo
             result = demo.build(_local_argument(args.out), [_local_argument(p) for p in args.library], args.overwrite)
         elif args.command == "starter":
-            result = starter(_local_argument(args.out), args.overwrite)
+            result = starter(_local_argument(args.out), args.overwrite, args.strict_layout)
         else:
             source, destination = _local_argument(args.source), _local_argument(args.out)
             if source.is_relative_to(destination):
@@ -295,11 +320,18 @@ def main(argv=None):
             pptx_backend.inspect_pptx(source)
             def writer(stage):
                 result = pptx_backend.extract_pptx(source, stage)
+                layout = layout_checks.audit_pptx(stage / "master.pptx")
+                report = _read_json(stage / "extraction-report.json")
+                report.update(layout=layout, nativeChecks={"master.pptx": layout})
+                _write_json(stage / "extraction-report.json", report)
+                result.update(layoutChecked=True, layoutStatus=layout["status"], layoutIssueCount=layout["issueCount"],
+                              strictLayoutFailed=bool(args.strict_layout and layout["issueCount"]),
+                              report=str(destination / "extraction-report.json"))
                 result["output"] = str(destination)
                 return result
             result = _directory_transaction(destination, args.overwrite, writer)
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0
+        return 2 if result.get("strictLayoutFailed") else 0
     except ModuleNotFoundError as exc:
         print(json.dumps({"error": f"缺少本地依赖：{exc.name}。请使用内网 wheel 目录离线安装 scripts/requirements.txt；本工具不会联网安装。"}, ensure_ascii=False), file=sys.stderr)
         return 2

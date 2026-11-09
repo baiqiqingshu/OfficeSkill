@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:intranet-ppt:deck:1",
-  "title": "Intranet PPT deck configuration",
+  "$id": "urn:native-ppt:deck:1",
+  "title": "Native PPT deck configuration",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -101,9 +101,15 @@
             "items": {
               "$ref": "#/$defs/element"
             }
+          },
+          "masterRegions": {
+            "$ref": "#/$defs/masterRegions"
           }
         }
       }
+    },
+    "masterRegions": {
+      "$ref": "#/$defs/masterRegions"
     }
   },
   "$defs": {
@@ -332,8 +338,40 @@
             "$ref": "#/$defs/input"
           },
           "description": "Names and types must match the selected component catalog."
+        },
+        "region": {
+          "type": "string",
+          "enum": [
+            "body",
+            "title",
+            "footer",
+            "full"
+          ],
+          "description": "Region checked against masterRegions. Known title/footer/cover components are inferred if omitted; other components default to body. full opts a decorative element out of reserved-region checks, but not page-boundary/overflow checks."
         }
       }
+    },
+    "masterRegions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "detect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Read populated native title/footer shapes when true; explicit heights override detection."
+        },
+        "titleHeight": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Reserved band from top edge to title bottom, in deck pixels."
+        },
+        "footerHeight": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Reserved band from footer top to bottom edge, in deck pixels."
+        }
+      },
+      "description": "Global defaults or per-page overrides. Combined heights must remain below page height; checked by CLI."
     }
   }
 }

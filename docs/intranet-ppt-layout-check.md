@@ -1,3 +1,5 @@
+> 历史记录：当前技能已迁移为 `native-ppt`，现行用法与验证结论以 [Native PPT 实施文档](native-ppt-implementation.md) 和 [新 SKILL](../.agents/skills/native-ppt/SKILL.md) 为准；旧 CLI 入口继续兼容。
+
 # intranet-ppt 标题压缩、布局检查与 IPD 示例去 IR 实施方案
 
 ## 目标

@@ -216,7 +216,7 @@ def inspect_pptx(path):
     return {"pageCount": len(prs.slides), "pageSize": {"width": round(prs.slide_width / EMU_PX, 4), "height": round(prs.slide_height / EMU_PX, 4)}, "slides": [{"index": i, "name": slide.name, "shapeCount": len(slide.shapes)} for i, slide in enumerate(prs.slides, 1)]}
 
 
-def _color(value, default="25334D"):
+def _color(value, default="000000"):
     if value is None:
         value = default
     value = str(value).lstrip("#")
@@ -333,7 +333,7 @@ def _runs(value):
     return [{"text": run} if isinstance(run, str) else run for run in value]
 
 
-def _text(tf, value, style, scale):
+def _text(tf, value, style, scale, paragraphs=None):
     tf.clear()
     tf.word_wrap = True
     tf.auto_size = None
@@ -348,6 +348,9 @@ def _text(tf, value, style, scale):
     # font's natural line height, so absolute spcPts are written per paragraph
     # from its largest run size (page px -> pt at 0.75) to match the preview.
     line_spacing = _line_spacing(style) or 1.2
+    if paragraphs is not None:
+        _native_list_text(tf, paragraphs, style, scale, line_spacing)
+        return
     paragraph = tf.paragraphs[0]
     align = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT, "justify": PP_ALIGN.JUSTIFY}.get(style.get("align"), PP_ALIGN.LEFT)
     paragraph.alignment = align
@@ -371,6 +374,52 @@ def _text(tf, value, style, scale):
             _font(run, merged, scale)
     for paragraph, size in zip(tf.paragraphs, max_sizes):
         paragraph.line_spacing = Pt((size or 24) * 0.75 * line_spacing)
+
+
+def _native_list_text(tf, paragraphs, style, scale, line_spacing):
+    """Write bullets into DrawingML, leaving editable paragraph text clean."""
+    from .components import _list_spacing
+    align = {"left": PP_ALIGN.LEFT, "center": PP_ALIGN.CENTER, "right": PP_ALIGN.RIGHT, "justify": PP_ALIGN.JUSTIFY}.get(style.get("align"), PP_ALIGN.LEFT)
+    for index, spec in enumerate(paragraphs):
+        paragraph = tf.paragraphs[0] if index == 0 else tf.add_paragraph()
+        paragraph.level = spec.get("level", 1) - 1
+        paragraph.alignment = align
+        paragraph.space_before = paragraph.space_after = Pt(0)
+        indent, hanging = _list_spacing(spec, style.get("fontSize", 24))
+        ppr = paragraph._p.get_or_add_pPr()
+        ppr.set("marL", str(int(indent * scale)))
+        ppr.set("indent", str(-int(hanging * scale)))
+        for node in list(ppr):
+            if etree.QName(node).localname in {"buNone", "buChar", "buAutoNum", "buBlip", "buFont", "buFontTx"}:
+                ppr.remove(node)
+        bullet_font = OxmlElement("a:buFont")
+        bullet_font.set("typeface", style.get("fontFamily", "Microsoft YaHei"))
+        ppr.append(bullet_font)
+        if spec.get("numbering"):
+            bullet = OxmlElement("a:buAutoNum")
+            bullet.set("type", "arabicPeriod")
+            if spec["numbering"] == 1:
+                bullet.set("startAt", "1")
+        else:
+            bullet = OxmlElement("a:buChar")
+            bullet.set("char", spec.get("marker", "•"))
+        ppr.append(bullet)
+        max_size = style.get("fontSize", 24)
+        for run_spec in spec.get("runs", []):
+            merged = {**style, **run_spec}
+            max_size = max(max_size, merged.get("fontSize", 24))
+            chunks = str(run_spec.get("text", "")).replace("\r\n", "\n").split("\n")
+            for chunk_index, chunk in enumerate(chunks):
+                if chunk_index:
+                    paragraph.add_line_break()
+                run = paragraph.add_run()
+                run.text = chunk
+                _font(run, merged, scale)
+        # Empty entries still get an explicit default so user edits inherit
+        # the same black text/font as the rest of the list.
+        if not paragraph.runs:
+            _font(paragraph.add_run(), style, scale)
+        paragraph.line_spacing = Pt(max_size * .75 * line_spacing)
 
 
 def _image(path):
@@ -456,12 +505,12 @@ def _render_node(slide, node, sx, sy):
             _flat(shape)
             _apply_radius(shape, style, width, height, scale)
             _style_shape(shape, style, scale)
-            _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale)
+            _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale, node.get("paragraphs"))
         else:
             shape = slide.shapes.add_textbox(left, top, width, height)
             _flat(shape)
             _style_shape(shape, style, scale)
-            _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale)
+            _text(shape.text_frame, node.get("runs", node.get("text", "")), style, scale, node.get("paragraphs"))
     elif kind == "rect":
         shape = slide.shapes.add_shape(_geometry(style, width, height, scale), left, top, width, height)
         _flat(shape)
@@ -582,7 +631,11 @@ def render_pptx(master_path, pages, page_size, out_path):
         if page.get("id"):
             slide.name = str(page["id"])
         for node in page.get("nodes", []):
+            existing_count = len(slide.shapes)
             _render_node(slide, node, sx, sy)
+            if node.get("elementId"):
+                for added_index in range(existing_count, len(slide.shapes)):
+                    slide.shapes[added_index].name = "native-ppt:" + str(node["elementId"])
     out = _save(prs, out_path)
     return {"output": str(out), "pageCount": len(pages)}
 
@@ -700,6 +753,8 @@ def _supported(shape):
     if shape.has_table:
         if any(c.is_merge_origin or c.is_spanned for row in shape.table.rows for c in row.cells):
             return None, "合并单元格表格保留为原生静态对象"
+        if any(_has_native_bullets(cell.text_frame) for row in shape.table.rows for cell in row.cells):
+            return None, "含原生分点的表格保留在母版中，避免提取时丢失段落分点"
         return "table", None
     if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
         if any(abs(v) > .001 for v in (shape.crop_left, shape.crop_right, shape.crop_top, shape.crop_bottom)):
@@ -709,8 +764,37 @@ def _supported(shape):
         if shape.auto_shape_type not in {MSO_SHAPE.RECTANGLE, MSO_SHAPE.ROUNDED_RECTANGLE}:
             return None, "复杂自选图形保留为原生静态对象"
     if shape.has_text_frame:
+        if _has_native_bullets(shape.text_frame, shape):
+            return None, "原生项目符号/编号列表保留在母版中，保留分点、编号及悬挂缩进"
         return "text", None
     return None, "该对象类型尚不支持提取，保留为原生静态对象"
+
+
+def _has_native_bullets(tf, shape=None):
+    """Conservatively retain native list shapes until extraction can map them.
+
+    Reading text alone drops bullets, so inspect paragraph and inherited
+    placeholder properties before deciding that a shape is plain rich text.
+    """
+    for paragraph in tf.paragraphs:
+        candidates = [paragraph._p.find(f"{{{A}}}pPr"), tf._txBody.find(f"{{{A}}}lstStyle/{{{A}}}lvl{paragraph.level + 1}pPr")]
+        if shape is not None and shape.is_placeholder:
+            layout = getattr(shape.part, "slide_layout", None)
+            if layout is not None:
+                placeholder = layout.placeholders.get(shape.placeholder_format.idx)
+                if placeholder is not None and placeholder.has_text_frame:
+                    candidates.extend([placeholder.text_frame.paragraphs[0]._p.find(f"{{{A}}}pPr"), placeholder.text_frame._txBody.find(f"{{{A}}}lstStyle/{{{A}}}lvl{paragraph.level + 1}pPr")])
+                placeholder_type = str(shape.placeholder_format.type)
+                style = "titleStyle" if "TITLE" in placeholder_type else "bodyStyle"
+                candidates.append(layout.slide_master._element.find(f"{{{P}}}txStyles/{{{P}}}{style}/{{{A}}}lvl{paragraph.level + 1}pPr"))
+        for props in candidates:
+            if props is None:
+                continue
+            if props.find(f"{{{A}}}buNone") is not None:
+                break
+            if any(props.find(f"{{{A}}}{tag}") is not None for tag in ("buChar", "buAutoNum", "buBlip")):
+                return True
+    return False
 
 
 def extract_pptx(source, out_dir):

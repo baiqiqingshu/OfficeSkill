@@ -27,9 +27,8 @@ HEADER_STYLE_KEYS = {"fontFamily", "fontSize", "color", "bold", "italic", "under
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
 # Markers for nested list levels; level 1 keeps the class/tag marker so the
 # existing `check`/`dash`/`num` behavior stays intact.
-LIST_MARKERS = {1: "•  ", 2: "◦  ", 3: "▪  ", 4: "–  "}
-LIST_INDENT = "\u3000"  # full-width space, two per level beyond 1
-DEFAULT_STYLE = {"fontFamily": "Microsoft YaHei", "fontSize": 24, "color": "#17324D", "bold": False, "italic": False, "underline": False, "align": "left", "verticalAlign": "top", "padding": 0}
+LIST_MARKERS = {1: "•", 2: "◦", 3: "▪", 4: "–"}
+DEFAULT_STYLE = {"fontFamily": "Microsoft YaHei", "fontSize": 24, "color": "#000000", "bold": False, "italic": False, "underline": False, "align": "left", "verticalAlign": "top", "padding": 0}
 
 
 def _fail(message: str):
@@ -716,7 +715,7 @@ def _scale_style(style, rect, scale):
 
 def compile_element(element, libraries, base_dir, page_size):
     """Compile one placed component to pixel-based native scene nodes."""
-    if not isinstance(element, dict) or set(element) - {"id", "component", "box", "inputs"}:
+    if not isinstance(element, dict) or set(element) - {"id", "component", "box", "inputs", "region"}:
         _fail("页面元素字段无效")
     _identifier(element.get("id"), "页面元素 ID")
     key = element.get("component")
@@ -747,6 +746,8 @@ def compile_element(element, libraries, base_dir, page_size):
         mapped = _scale_style(style, rect, scale)
         if "runs" in content:
             content["runs"] = [{**run, **({"fontSize": run["fontSize"] * scale} if "fontSize" in run else {})} for run in content["runs"]]
+        if "paragraphs" in content:
+            content["paragraphs"] = [{**paragraph, "runs": [{**run, **({"fontSize": run["fontSize"] * scale} if "fontSize" in run else {})} for run in paragraph["runs"]]} for paragraph in content["paragraphs"]]
         if "rows" in content:
             content["rows"] = [[cell if isinstance(cell, str) else [{**run, **({"fontSize": run["fontSize"] * scale} if "fontSize" in run else {})} for run in cell] for cell in row] for row in content["rows"]]
         if "headerStyle" in content:
@@ -796,26 +797,20 @@ def compile_element(element, libraries, base_dir, page_size):
                 if not isinstance(value, list) or len(value) > 100:
                     _fail("list 输入须为最多 100 项的数组")
                 classes = set(node.attrs.get("class", "").split())
-                color = style.get("color")
-                color_style = {"color": color} if color else {}
-                runs = []
+                paragraphs, runs, counters = [], [], {}
                 for index, item in enumerate(value):
                     level, item_runs = _list_item(item)
-                    if level == 1:
-                        if "check" in classes:
-                            marker = "✓  "
-                        elif "dash" in classes:
-                            marker = "—  "
-                        elif "num" in classes:
-                            marker = f"{index + 1}. "
-                        else:
-                            marker = f"{index + 1}. " if node.tag == "ol" else "•  "
-                        marker_style = {"bold": True, **color_style}
-                    else:
-                        marker = LIST_MARKERS[level]
-                        marker_style = dict(color_style)
-                    indent = LIST_INDENT * (2 * (level - 1))
-                    runs += [{"text": ("\n" if index else "") + indent + marker, **marker_style}, *item_runs]
+                    numbered = "num" in classes or node.tag == "ol"
+                    counters[level] = counters.get(level, 0) + 1
+                    counters = {depth: count for depth, count in counters.items() if depth <= level}
+                    marker = "✓" if "check" in classes else "—" if "dash" in classes else LIST_MARKERS[level]
+                    paragraphs.append({"level": level, "marker": marker, "numbering": counters[level] if numbered else None, "runs": item_runs})
+                    # Plain text stays free of bullet characters; metadata is
+                    # shared by PPTX, preview, and the wrapping estimator.
+                    runs += ([{"text": "\n"}] if index else []) + item_runs
+                if paragraphs:
+                    emit("text", rect, style, runs=runs, paragraphs=paragraphs)
+                return
             elif kind in {"text", "richtext"}:
                 if kind == "text" and value is not None and not isinstance(value, str):
                     _fail("text 输入须为字符串；富文本请声明 richtext")
@@ -861,8 +856,22 @@ def _text_required_height(node):
     line_height = style.get("lineHeight", 1.2)
     if isinstance(line_height, bool) or not isinstance(line_height, (int, float)) or not math.isfinite(line_height) or line_height <= 0:
         line_height = 1.2
-    _, line_px = _cell_lines(node.get("runs", []), font_size, available, spacing=_num(style.get("letterSpacing")))
+    if node.get("paragraphs"):
+        line_px = 0
+        for paragraph in node["paragraphs"]:
+            indent, _ = _list_spacing(paragraph, font_size)
+            _, paragraph_px = _cell_lines(paragraph.get("runs", []), font_size, available - indent, spacing=_num(style.get("letterSpacing")))
+            line_px += paragraph_px
+    else:
+        _, line_px = _cell_lines(node.get("runs", []), font_size, available, spacing=_num(style.get("letterSpacing")))
     return line_px * line_height + top + bottom
+
+
+def _list_spacing(paragraph, default_size):
+    """Return text/hanging indents in page px, matching native paragraphs."""
+    sizes = [run.get("fontSize", default_size) for run in paragraph.get("runs", [])]
+    size = max([default_size, *sizes])
+    return size * (1.35 + 1.25 * (paragraph.get("level", 1) - 1)), size * .95
 
 
 def _table_render_height(node):
@@ -1173,6 +1182,9 @@ def fit_fonts(pages, min_font=None):
                 _shrink_font(node.get("style"), factor, min_font)
                 for run in node.get("runs", []) or []:
                     _shrink_font(run, factor, min_font)
+                for paragraph in node.get("paragraphs", []) or []:
+                    for run in paragraph.get("runs", []) or []:
+                        _shrink_font(run, factor, min_font)
             elif node.get("type") == "table":
                 box = _num(node.get("h", 0))
                 total = _table_render_height(node)
@@ -1257,7 +1269,17 @@ def _preview_node_html(node):
         # Decorations belong on each run so an explicit false can clear
         # a template's underline/bold/italic for only part of a sentence.
         css = positioning + _preview_style({key: value for key, value in node.get("style", {}).items() if key not in {"bold", "italic", "underline"}})
-        body = _preview_runs(node.get("runs", []), node.get("style", {}))
+        if node.get("paragraphs"):
+            style = node.get("style", {})
+            items = []
+            for paragraph in node["paragraphs"]:
+                indent, hanging = _list_spacing(paragraph, style.get("fontSize", 24))
+                marker = f'{paragraph["numbering"]}.' if paragraph.get("numbering") else paragraph.get("marker", "•")
+                copy = _preview_runs(paragraph.get("runs", []), style) or "&#8203;"
+                items.append(f'<div role="listitem" aria-level="{paragraph.get("level", 1)}" style="position:relative;padding-left:{indent:g}px;min-height:1em"><span aria-hidden="true" style="position:absolute;left:{indent-hanging:g}px">{escape(marker)}</span>{copy}</div>')
+            body = '<div role="list">' + ''.join(items) + '</div>'
+        else:
+            body = _preview_runs(node.get("runs", []), node.get("style", {}))
         vertical = node.get("style", {}).get("verticalAlign", "top")
         content_style = {"top": "flex-start", "middle": "center", "bottom": "flex-end"}.get(vertical, "flex-start")
         return f'<div class="text" style="{escape(css, quote=True)};display:flex;flex-direction:column;justify-content:{content_style}"><div>{body}</div></div>'

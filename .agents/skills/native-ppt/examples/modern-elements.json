@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 1,
+  "title": "现代元素 · 方案评审示例",
+  "pageCount": 5,
+  "masterRegions": {
+    "detect": true,
+    "titleHeight": 96,
+    "footerHeight": 32
+  },
+  "pages": [
+    {
+      "id": "insights",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "region": "title",
+          "box": {
+            "x": 64,
+            "y": 24,
+            "w": 1152,
+            "h": 52
+          },
+          "inputs": {
+            "text": "三个洞察，让方案更容易理解"
+          }
+        },
+        {
+          "id": "insight1",
+          "component": "builtin/insight-card",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 126,
+            "w": 360,
+            "h": 240
+          },
+          "inputs": {
+            "number": "01",
+            "title": "减少认知负担",
+            "text": "把常用操作集中到工作台，让每一步都有明确的下一步。"
+          }
+        },
+        {
+          "id": "insight2",
+          "component": "builtin/insight-card",
+          "region": "body",
+          "box": {
+            "x": 460,
+            "y": 126,
+            "w": 360,
+            "h": 240
+          },
+          "inputs": {
+            "number": "02",
+            "title": "统一关键口径",
+            "text": "把目标、边界和验收条件放到同一张清单中。"
+          }
+        },
+        {
+          "id": "insight3",
+          "component": "builtin/insight-card",
+          "region": "body",
+          "box": {
+            "x": 856,
+            "y": 126,
+            "w": 360,
+            "h": 240
+          },
+          "inputs": {
+            "number": "03",
+            "title": "及时验证反馈",
+            "text": "用小范围试点验证假设，再逐步扩大覆盖范围。"
+          }
+        },
+        {
+          "id": "summary",
+          "component": "builtin/summary-band",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 406,
+            "w": 1152,
+            "h": 150
+          },
+          "inputs": {
+            "eyebrow": "本页结论",
+            "title": "用统一能力支撑业务快速接入",
+            "text": "先标准化接口与验收口径，再分批扩大覆盖范围。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "value",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "region": "title",
+          "box": {
+            "x": 64,
+            "y": 24,
+            "w": 1152,
+            "h": 52
+          },
+          "inputs": {
+            "text": "用价值与能力说明建设重点"
+          }
+        },
+        {
+          "id": "value1",
+          "component": "builtin/value-card",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 126,
+            "w": 360,
+            "h": 240
+          },
+          "inputs": {
+            "label": "接入周期",
+            "value": "2 天",
+            "note": "标准接口接入，复用认证能力。"
+          }
+        },
+        {
+          "id": "value2",
+          "component": "builtin/value-card",
+          "region": "body",
+          "box": {
+            "x": 460,
+            "y": 126,
+            "w": 360,
+            "h": 240
+          },
+          "inputs": {
+            "label": "系统覆盖",
+            "value": "47 个",
+            "note": "统一接入标准，覆盖核心业务系统。"
+          }
+        },
+        {
+          "id": "value3",
+          "component": "builtin/value-card",
+          "region": "body",
+          "box": {
+            "x": 856,
+            "y": 126,
+            "w": 360,
+            "h": 240
+          },
+          "inputs": {
+            "label": "服务目标",
+            "value": "99.95%",
+            "note": "建立可监控、可回退的运行机制。"
+          }
+        },
+        {
+          "id": "capability1",
+          "component": "builtin/capability-tile",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 398,
+            "w": 360,
+            "h": 220
+          },
+          "inputs": {
+            "symbol": "A",
+            "title": "接入能力",
+            "items": [
+              "标准协议适配",
+              "统一回调接口",
+              "配置化验收"
+            ]
+          }
+        },
+        {
+          "id": "capability2",
+          "component": "builtin/capability-tile",
+          "region": "body",
+          "box": {
+            "x": 460,
+            "y": 398,
+            "w": 360,
+            "h": 220
+          },
+          "inputs": {
+            "symbol": "B",
+            "title": "运行保障",
+            "items": [
+              "全链路监控",
+              "灰度与回退",
+              "审计留痕"
+            ]
+          }
+        },
+        {
+          "id": "capability3",
+          "component": "builtin/capability-tile",
+          "region": "body",
+          "box": {
+            "x": 856,
+            "y": 398,
+            "w": 360,
+            "h": 220
+          },
+          "inputs": {
+            "symbol": "C",
+            "title": "组织协同",
+            "items": [
+              "明确接口人",
+              "统一验收",
+              "按期复盘"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "decision",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "region": "title",
+          "box": {
+            "x": 64,
+            "y": 24,
+            "w": 1152,
+            "h": 52
+          },
+          "inputs": {
+            "text": "明确方案选择与实施取舍"
+          }
+        },
+        {
+          "id": "recommend",
+          "component": "builtin/decision-card",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 126,
+            "w": 552,
+            "h": 240
+          },
+          "inputs": {
+            "status": "推荐方案",
+            "title": "统一平台，分批接入",
+            "text": "保留旧通道作为回退路径，先验证核心链路，再逐步扩大覆盖范围。"
+          }
+        },
+        {
+          "id": "alternative",
+          "component": "builtin/decision-card",
+          "region": "body",
+          "box": {
+            "x": 664,
+            "y": 126,
+            "w": 552,
+            "h": 240
+          },
+          "inputs": {
+            "status": "保留备选",
+            "title": "保持适配边界清晰",
+            "text": "旧系统通过适配层逐步接入，避免把历史差异带入平台核心。"
+          }
+        },
+        {
+          "id": "compare",
+          "component": "builtin/comparison-row",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 410,
+            "w": 1152,
+            "h": 140
+          },
+          "inputs": {
+            "label": "接入方式",
+            "before": "现状：各系统自行维护登录逻辑，重复开发且口径不一。",
+            "after": "目标：统一认证，一次接入，共享平台能力。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "region": "title",
+          "box": {
+            "x": 64,
+            "y": 24,
+            "w": 1152,
+            "h": 52
+          },
+          "inputs": {
+            "text": "阶段推进，责任到人"
+          }
+        },
+        {
+          "id": "phase1",
+          "component": "builtin/milestone-strip",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 126,
+            "w": 1152,
+            "h": 130
+          },
+          "inputs": {
+            "phase": "阶段 01",
+            "title": "试点验证",
+            "items": [
+              "完成核心系统接入",
+              "沉淀监控与回退方案",
+              "形成标准接入清单"
+            ]
+          }
+        },
+        {
+          "id": "phase2",
+          "component": "builtin/milestone-strip",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 280,
+            "w": 1152,
+            "h": 130
+          },
+          "inputs": {
+            "phase": "阶段 02",
+            "title": "扩大覆盖",
+            "items": [
+              "复用试点接入经验",
+              "完善运维交接",
+              "分批完成系统迁移"
+            ]
+          }
+        },
+        {
+          "id": "action",
+          "component": "builtin/action-card",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 442,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "owner": "负责人：平台组 · 本周完成",
+            "title": "锁定试点范围",
+            "items": [
+              "确认首批三个系统",
+              "完成接入排期和验收口径"
+            ]
+          }
+        },
+        {
+          "id": "risk",
+          "component": "builtin/risk-card",
+          "region": "body",
+          "box": {
+            "x": 664,
+            "y": 442,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "level": "重点关注 · 兼容性",
+            "title": "存量协议差异",
+            "text": "部分旧系统使用自定义登录协议，接入成本尚待确认。",
+            "action": "应对：提前盘点，安排独立适配窗口。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "conclusion",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "region": "title",
+          "box": {
+            "x": 64,
+            "y": 24,
+            "w": 1152,
+            "h": 52
+          },
+          "inputs": {
+            "text": "形成可执行的评审结论"
+          }
+        },
+        {
+          "id": "takeaway",
+          "component": "builtin/takeaway-panel",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 146,
+            "w": 1152,
+            "h": 220
+          },
+          "inputs": {
+            "title": "建议通过方案评审",
+            "items": [
+              "范围、架构与验收口径已明确",
+              "关键风险已有负责人和应对计划",
+              "保持灰度推进与可回退能力"
+            ],
+            "next": "下一步\n启动试点接入\n完成首轮验证"
+          }
+        },
+        {
+          "id": "next-action",
+          "component": "builtin/action-card",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 406,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "owner": "负责人：业务组 · 下周完成",
+            "title": "确认验收清单",
+            "items": [
+              "对齐业务成功场景",
+              "确认上线和回退条件"
+            ]
+          }
+        },
+        {
+          "id": "dependency",
+          "component": "builtin/risk-card",
+          "region": "body",
+          "box": {
+            "x": 664,
+            "y": 406,
+            "w": 552,
+            "h": 220
+          },
+          "inputs": {
+            "level": "需要协同 · 资源依赖",
+            "title": "跨团队窗口需提前确认",
+            "text": "试点系统上线时段需与业务维护计划保持一致。",
+            "action": "行动：评审后两日内锁定协同窗口。"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+> 历史记录：当前技能已迁移为 `native-ppt`，现行用法与验证结论以 [Native PPT 实施文档](native-ppt-implementation.md) 和 [新 SKILL](../.agents/skills/native-ppt/SKILL.md) 为准；旧 CLI 入口继续兼容。
+
 # intranet-ppt 审查修复实施文档
 
 本轮三项任务：布局检查（layout audit）实现问题修复、默认字体全部统一为微软雅黑、skill 目录文件数收敛至 ≤100。
