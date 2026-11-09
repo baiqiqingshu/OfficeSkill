@@ -1,4 +1,4 @@
-> 历史记录：当前技能已迁移为 `native-ppt`，现行用法与验证结论以 [Native PPT 实施文档](native-ppt-implementation.md) 和 [新 SKILL](../.agents/skills/native-ppt/SKILL.md) 为准；旧 CLI 入口继续兼容。
+> 历史记录：当前技能统一为 `pptx-builder`，现行用法与验证结论以 [PPTX Builder 实施文档](pptx-builder-implementation.md) 和 [SKILL](../.agents/skills/pptx-builder/SKILL.md) 为准；旧技能及 CLI 入口已移除。
 
 # intranet-ppt 元素库 v2 与预览页改版实施方案
 

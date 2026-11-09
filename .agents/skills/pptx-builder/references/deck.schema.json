@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:native-ppt:deck:1",
-  "title": "Native PPT deck configuration",
+  "$id": "urn:pptx-builder:deck:1",
+  "title": "PPTX Builder deck configuration",
   "type": "object",
   "additionalProperties": false,
   "required": [

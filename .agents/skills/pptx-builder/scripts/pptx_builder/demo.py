@@ -788,7 +788,7 @@ def render_gallery(libraries, decks, warnings, stage):
             f'<span class="sub"><code>{escape(lid)}</code> · {len(items)} 个组件</span></div>'
             f'<div class="comp-grid">{cards}</div></section>')
 
-    hero = (f'<header class="hero"><h1>原生可编辑 PPT 元素库</h1>'
+    hero = (f'<header class="hero"><h1>PPTX Builder 元素库</h1>'
             f'<p>本页由 <code>ppt_tool.py demo</code> 离线生成：先用 <code>examples/*.json</code> 在完整页面里'
             f'（默认 1280×720）展示组件编排效果，再按库分组浏览全部 {component_total} 个组件。'
             f'主题色板按钮会让整页示例与组件预览同步换色（只替换规范色板内的色值）；'
@@ -799,7 +799,7 @@ def render_gallery(libraries, decks, warnings, stage):
             f'<span class="chip"><b>{len(decks)}</b>份整页示例 · <b>{page_total}</b>页</span>'
             f'<span class="chip"><b>{theme_total}</b>套主题色板</span></div></header>')
 
-    sidebar = ('<aside class="sidebar"><div class="brand"><b>原生 PPT</b><span>元素库 v3</span>'
+    sidebar = ('<aside class="sidebar"><div class="brand"><b>PPTX Builder</b><span>元素库 v3</span>'
                f'<div class="count"><b>{component_total}</b> 组件 · <b>{page_total}</b> 整页</div></div>'
                '<div class="search"><input id="search-input" type="search" autocomplete="off"'
                ' placeholder="搜索组件名 / ID / 描述" aria-label="搜索组件"></div>'
@@ -842,7 +842,7 @@ def render_gallery(libraries, decks, warnings, stage):
         '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; '
         'style-src \'unsafe-inline\'; script-src \'unsafe-inline\'">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        '<title>原生可编辑 PPT 元素库</title>'
+        '<title>PPTX Builder 元素库</title>'
         f'<style>{style}</style></head><body data-theme="{escape(default_theme)}">'
         + body + f'<script>{script}</script></body></html>')
 

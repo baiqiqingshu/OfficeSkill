@@ -164,18 +164,18 @@ def _directory_transaction(destination, overwrite, writer):
         raise ValueError("输出目录必须是专用子目录")
     if destination.exists() and not destination.is_dir():
         raise ValueError("输出路径已存在且不是目录")
-    marker = destination / ".intranet-ppt-output"
+    marker = destination / ".pptx-builder-output"
     if destination.exists() and any(destination.iterdir()):
         if not overwrite:
             raise ValueError("输出目录非空；请使用新目录，或对本工具产物指定 --overwrite")
-        if not marker.is_file() or marker.read_text(encoding="utf-8") != "intranet-ppt-v1\n":
+        if not marker.is_file() or marker.read_text(encoding="utf-8") != "pptx-builder-v1\n":
             raise ValueError("仅允许覆盖含本工具标记的输出目录；请改用新目录")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    stage = Path(tempfile.mkdtemp(prefix=".intranet-ppt-", dir=destination.parent))
-    backup = destination.with_name(".intranet-ppt-backup-" + uuid.uuid4().hex)
+    stage = Path(tempfile.mkdtemp(prefix=".pptx-builder-", dir=destination.parent))
+    backup = destination.with_name(".pptx-builder-backup-" + uuid.uuid4().hex)
     try:
         result = writer(stage)
-        (stage / ".intranet-ppt-output").write_text("intranet-ppt-v1\n", encoding="utf-8")
+        (stage / ".pptx-builder-output").write_text("pptx-builder-v1\n", encoding="utf-8")
         previous = destination.exists()
         if previous:
             destination.rename(backup)
@@ -261,7 +261,7 @@ def starter(destination, overwrite, strict_layout=False):
 
 
 def parser():
-    root = argparse.ArgumentParser(description="Native PPT：JSON + 原生 PPTX 母版 + 离线声明式元素库")
+    root = argparse.ArgumentParser(description="PPTX Builder：JSON + 原生 PPTX 母版 + 离线声明式元素库")
     commands = root.add_subparsers(dest="command", required=True)
     catalog = commands.add_parser("catalog", help="查看可用组件及输入")
     catalog.add_argument("--library", action="append", default=[], help="本地 library.json，可重复")

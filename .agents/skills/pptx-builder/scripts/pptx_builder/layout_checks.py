@@ -135,8 +135,8 @@ def audit_pptx(path, static_counts=None):
                     limitations.append({"pageIndex": index, "shape": sid, "detail": "组合、图表或旋转对象仅检查外框，不检查其内部排版。"})
                 nodes = _native_nodes(shape, sid)
                 if nodes:
-                    if label == "slide" and shape.name.startswith("native-ppt:"):
-                        sid = "generated-" + shape.name.removeprefix("native-ppt:")
+                    if label == "slide" and shape.name.startswith("pptx-builder:"):
+                        sid = "generated-" + shape.name.removeprefix("pptx-builder:")
                         entry = generated.get(sid)
                         if entry is None:
                             generated[sid] = entry = {"id": sid, "nodes": []}

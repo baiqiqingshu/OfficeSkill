@@ -1,11 +1,11 @@
 ---
-name: native-ppt
+name: pptx-builder
 description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 PowerPoint，适合技术汇报、方案评审、需求评审及 IPD SR/AR 串讲。支持母版安全区域、原生分点、布局检查和现有 PPTX 组件提取；全程离线，不用于任意网页或复杂动画转换。
 ---
 
-# 原生可编辑 PPT
+# PPTX Builder
 
-选择组件、填写 JSON，生成原生可编辑 `presentation.pptx` 和离线内容预览 `preview.html`。`SKILL_DIR` 指本文件所在目录；命令可从任意工作目录执行。原名称 `intranet-ppt` 的命令入口仍兼容，新任务使用 `native-ppt`。
+选择组件、填写 JSON，生成原生可编辑 `presentation.pptx` 和离线内容预览 `preview.html`。`SKILL_DIR` 指本文件所在的 `.agents/skills/pptx-builder` 目录；命令可从任意工作目录执行。
 
 ## 生成与布局检查
 
@@ -120,7 +120,7 @@ python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck --strict-layout
 
 提取输出 `master.pptx`、本地元素库/图片、`deck.json` 和提取报告。先确认报告中哪些对象仍留在母版，避免重复叠加。复杂原生列表等不能安全提取的对象保留在母版并报告，不静默丢失语义。范围见 [提取和安全边界](references/extraction-security.md)。
 
-`starter` 复制全部场景示例和默认母版。默认不覆盖非空目录；只有本工具生成并带标记的目录才可 `--overwrite`，旧名称的输出标记仍兼容。
+`starter` 复制全部场景示例和默认母版。默认不覆盖非空目录；只有本工具生成并带 `.pptx-builder-output` 标记的目录才可 `--overwrite`。
 
 ## 本地环境与维护
 

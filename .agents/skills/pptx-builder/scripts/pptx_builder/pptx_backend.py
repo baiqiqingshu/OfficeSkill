@@ -133,7 +133,7 @@ def _clone_slides(data, indices):
     used_ids = {rel.get("Id") for rel in rels}
     for number, source_index in enumerate(indices, 1):
         old_name = source[source_index - 1]
-        new_name = f"ppt/slides/intranetGenerated{number}.xml"
+        new_name = f"ppt/slides/pptxBuilderGenerated{number}.xml"
         while new_name in parts:
             new_name = new_name.removesuffix(".xml") + "x.xml"
         parts[new_name] = parts[old_name]
@@ -151,7 +151,7 @@ def _clone_slides(data, indices):
                 if rel_type.endswith("/themeOverride"):
                     if absolute not in parts:
                         raise ValueError("母版 themeOverride 关系无效")
-                    clone_name = f"ppt/theme/intranetOverride{number}.xml"
+                    clone_name = f"ppt/theme/pptxBuilderOverride{number}.xml"
                     while clone_name in parts:
                         clone_name = clone_name.removesuffix(".xml") + "x.xml"
                     parts[clone_name] = parts[absolute]
@@ -159,7 +159,7 @@ def _clone_slides(data, indices):
                     absolute = clone_name
                 rel.set("Target", posixpath.relpath(absolute, posixpath.dirname(new_name)))
         parts[posixpath.join(posixpath.dirname(new_name), "_rels", posixpath.basename(new_name) + ".rels")] = _serialize(slide_rels)
-        rid = f"rIdIntranet{number}"
+        rid = f"rIdPptxBuilder{number}"
         while rid in used_ids:
             rid += "x"
         used_ids.add(rid)
@@ -635,7 +635,7 @@ def render_pptx(master_path, pages, page_size, out_path):
             _render_node(slide, node, sx, sy)
             if node.get("elementId"):
                 for added_index in range(existing_count, len(slide.shapes)):
-                    slide.shapes[added_index].name = "native-ppt:" + str(node["elementId"])
+                    slide.shapes[added_index].name = "pptx-builder:" + str(node["elementId"])
     out = _save(prs, out_path)
     return {"output": str(out), "pageCount": len(pages)}
 

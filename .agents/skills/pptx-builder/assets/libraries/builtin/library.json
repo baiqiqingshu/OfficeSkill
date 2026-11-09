@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "builtin",
-  "name": "原生可编辑 PPT 元素库",
+  "name": "PPTX Builder 元素库",
   "components": [
     {
       "id": "title",
