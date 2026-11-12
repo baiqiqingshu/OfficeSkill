@@ -108,7 +108,7 @@ python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo
 python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library 本地/library.json
 ```
 
-IPD SR/AR 串讲参考 `examples/ipd-walkthrough.json`（30 页）：封面、SR/AR 清单，每个 SR 先放标题页，再为各 AR 组织背景、主成功场景、异常场景、后置状态、前置条件和分支场景。`ar-header` 的 `crumb` 填 SR/AR/场景类型，`title` 填同一 AR 的统一名称，`meta` 填场景序号。
+IPD SR/AR 串讲参考 `examples/ipd-walkthrough.json`（29 页）：封面、SR/AR 需求列表（类型/编号/标题/工作量四列），每个 SR 先放标题页，再为各 AR 组织背景、主成功场景、异常场景、后置状态、前置条件和分支场景。`ar-header` 的 `crumb` 填 SR/AR/场景类型，`title` 填同一 AR 的统一名称，`meta` 填场景序号。
 
 ## 提取与初始目录
 

@@ -6,7 +6,7 @@
     "width": 1280,
     "height": 720
   },
-  "pageCount": 30,
+  "pageCount": 29,
   "pages": [
     {
       "id": "cover",
@@ -44,11 +44,11 @@
       ]
     },
     {
-      "id": "sr-list",
+      "id": "req-list",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "sr-list-title",
+          "id": "req-list-title",
           "component": "builtin/title",
           "box": {
             "x": 64,
@@ -57,11 +57,11 @@
             "h": 52
           },
           "inputs": {
-            "text": "SR 列表"
+            "text": "需求列表"
           }
         },
         {
-          "id": "sr-list-lead",
+          "id": "req-list-lead",
           "component": "builtin/lead",
           "box": {
             "x": 64,
@@ -70,119 +70,11 @@
             "h": 80
           },
           "inputs": {
-            "text": "本次串讲包含 2 个 SR：SR-01 收敛认证与会话，SR-02 收敛账号与审计；SR-01 为 P0 优先交付。"
+            "text": "本次串讲覆盖 2 个 SR、4 个 AR；SR 行工作量为下辖 AR 合计。"
           }
         },
         {
-          "id": "sr-list-table",
-          "component": "builtin/table",
-          "box": {
-            "x": 64,
-            "y": 192,
-            "w": 1152,
-            "h": 300
-          },
-          "inputs": {
-            "rows": [
-              [
-                "SR",
-                "SR 名称",
-                "AR 数",
-                "优先级",
-                "负责人"
-              ],
-              [
-                "SR-01",
-                "统一认证与单点登录",
-                "2",
-                "P0",
-                "张伟"
-              ],
-              [
-                "SR-02",
-                "账号治理与审计",
-                "2",
-                "P1",
-                "李婷"
-              ]
-            ]
-          }
-        },
-        {
-          "id": "sr-list-layer-sr",
-          "component": "builtin/layer",
-          "box": {
-            "x": 64,
-            "y": 380,
-            "w": 1152,
-            "h": 80
-          },
-          "inputs": {
-            "name": "SR",
-            "text": "SR-01 统一认证与单点登录 ｜ SR-02 账号治理与审计"
-          }
-        },
-        {
-          "id": "sr-list-layer-ar",
-          "component": "builtin/layer",
-          "box": {
-            "x": 64,
-            "y": 472,
-            "w": 1152,
-            "h": 80
-          },
-          "inputs": {
-            "name": "AR",
-            "text": "AR-01 员工登录与全局会话 ｜ AR-02 多因素认证与风险登录 ｜ AR-03 账号全生命周期管理 ｜ AR-04 登录审计与合规报表"
-          }
-        },
-        {
-          "id": "sr-list-note",
-          "component": "builtin/footnote",
-          "box": {
-            "x": 64,
-            "y": 664,
-            "w": 1152,
-            "h": 24
-          },
-          "inputs": {
-            "text": "SR 与 AR 编号对应同一需求基线；优先级按上线批次排序。"
-          }
-        }
-      ]
-    },
-    {
-      "id": "ar-list",
-      "masterSlide": 1,
-      "elements": [
-        {
-          "id": "ar-list-title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
-          "inputs": {
-            "text": "AR 列表"
-          }
-        },
-        {
-          "id": "ar-list-lead",
-          "component": "builtin/lead",
-          "box": {
-            "x": 64,
-            "y": 96,
-            "w": 1152,
-            "h": 80
-          },
-          "inputs": {
-            "text": "每个 SR 包含 2 个 AR；每个 AR 按背景、主成功、异常、后置、前置、分支六页展开。"
-          }
-        },
-        {
-          "id": "ar-list-table",
+          "id": "req-list-table",
           "component": "builtin/table",
           "box": {
             "x": 64,
@@ -193,59 +85,52 @@
           "inputs": {
             "rows": [
               [
-                "SR",
-                "AR",
-                "AR 名称",
-                "优先级",
-                "场景页数"
+                "类型",
+                "编号",
+                "标题",
+                "工作量"
               ],
               [
+                "SR",
                 "SR-01",
+                "统一认证与单点登录",
+                "45 人日"
+              ],
+              [
+                "AR",
                 "AR-01",
                 "员工登录与全局会话",
-                "P0",
-                "6"
+                "25 人日"
               ],
               [
-                "SR-01",
+                "AR",
                 "AR-02",
                 "多因素认证与风险登录",
-                "P0",
-                "6"
+                "20 人日"
               ],
               [
+                "SR",
                 "SR-02",
+                "账号治理与审计",
+                "45 人日"
+              ],
+              [
+                "AR",
                 "AR-03",
                 "账号全生命周期管理",
-                "P1",
-                "6"
+                "30 人日"
               ],
               [
-                "SR-02",
+                "AR",
                 "AR-04",
                 "登录审计与合规报表",
-                "P1",
-                "6"
+                "15 人日"
               ]
             ]
           }
         },
         {
-          "id": "ar-list-order",
-          "component": "builtin/callout",
-          "box": {
-            "x": 64,
-            "y": 442,
-            "w": 1152,
-            "h": 120
-          },
-          "inputs": {
-            "label": "串讲顺序",
-            "text": "SR-01 → AR-01 → AR-02 → SR-02 → AR-03 → AR-04；每个 AR 固定六页：背景、主成功、异常、后置、前置、分支。"
-          }
-        },
-        {
-          "id": "ar-list-note",
+          "id": "req-list-note",
           "component": "builtin/footnote",
           "box": {
             "x": 64,
@@ -254,7 +139,7 @@
             "h": 24
           },
           "inputs": {
-            "text": "4 个 AR 共 24 个场景页；场景页统一按 ar-header 标注 SR/AR 与场景序号。"
+            "text": "仅列 SR / AR 两级；串讲按 SR-01 → AR-01 → AR-02 → SR-02 → AR-03 → AR-04 顺序展开，每个 AR 固定六页场景。"
           }
         }
       ]
@@ -288,37 +173,7 @@
           "inputs": {
             "number": "01",
             "title": "统一认证与单点登录",
-            "desc": "包含 2 个 AR：员工登录与全局会话、多因素认证与风险登录。"
-          }
-        },
-        {
-          "id": "sr01-title-agenda-1",
-          "component": "builtin/agenda-item",
-          "box": {
-            "x": 64,
-            "y": 500,
-            "w": 1152,
-            "h": 72
-          },
-          "inputs": {
-            "num": "1",
-            "title": "AR-01 · 员工登录与全局会话",
-            "desc": "一次登录、全局会话，单点登出 30 秒同步"
-          }
-        },
-        {
-          "id": "sr01-title-agenda-2",
-          "component": "builtin/agenda-item",
-          "box": {
-            "x": 64,
-            "y": 580,
-            "w": 1152,
-            "h": 72
-          },
-          "inputs": {
-            "num": "2",
-            "title": "AR-02 · 多因素认证与风险登录",
-            "desc": "按风险分级挑战，高风险拦截率 ≥90%"
+            "desc": "下辖 2 个 AR：AR-01 ~ AR-02。"
           }
         },
         {
@@ -331,7 +186,7 @@
             "h": 24
           },
           "inputs": {
-            "text": "SR-01 共 2 个 AR、12 个场景页；每页按六类场景展开。"
+            "text": "SR-01 下辖 2 个 AR，每个 AR 六页场景。"
           }
         }
       ]
@@ -1627,37 +1482,7 @@
           "inputs": {
             "number": "02",
             "title": "账号治理与审计",
-            "desc": "包含 2 个 AR：账号全生命周期管理、登录审计与合规报表。"
-          }
-        },
-        {
-          "id": "sr02-title-agenda-1",
-          "component": "builtin/agenda-item",
-          "box": {
-            "x": 64,
-            "y": 500,
-            "w": 1152,
-            "h": 72
-          },
-          "inputs": {
-            "num": "1",
-            "title": "AR-03 · 账号全生命周期管理",
-            "desc": "HR 事件驱动，离职回收 ≤1 小时"
-          }
-        },
-        {
-          "id": "sr02-title-agenda-2",
-          "component": "builtin/agenda-item",
-          "box": {
-            "x": 64,
-            "y": 580,
-            "w": 1152,
-            "h": 72
-          },
-          "inputs": {
-            "num": "2",
-            "title": "AR-04 · 登录审计与合规报表",
-            "desc": "5 分钟入湖、留存 180 天、T+1 报表"
+            "desc": "下辖 2 个 AR：AR-03 ~ AR-04。"
           }
         },
         {
@@ -1670,7 +1495,7 @@
             "h": 24
           },
           "inputs": {
-            "text": "SR-02 共 2 个 AR、12 个场景页；每页按六类场景展开。"
+            "text": "SR-02 下辖 2 个 AR，每个 AR 六页场景。"
           }
         }
       ]
