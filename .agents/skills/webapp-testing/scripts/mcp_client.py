@@ -1,4 +1,4 @@
-"""Small stdlib HTTP MCP client for Lightpanda, with owned sessions and no retries."""
+"""Small stdlib HTTP MCP client for native browser services, with owned sessions and no retries."""
 from __future__ import annotations
 
 import asyncio
@@ -36,13 +36,17 @@ def result_json(result):
 
 
 class McpClient:
-    def __init__(self, url, token_env=None):
+    def __init__(self, url, token_env=None, require_session=True, close_tool=None):
         self.url = urlsplit(url)
         self.session_id = None
         self.protocol = None
         self.counter = 0
         self.broken = False
         self.tools = {}
+        # Lightpanda allocates a Mcp-Session-Id per client; obscura is a
+        # single-session server whose isolation comes from owning the process.
+        self.require_session = require_session
+        self.close_tool = close_tool or "session_close"
         self.token = os.getenv(token_env, "") if token_env else ""
         if token_env and not self.token:
             raise ValueError("MCP service token environment variable is empty: " + token_env)
@@ -119,9 +123,12 @@ class McpClient:
         if notification:
             return {}
         if method == "initialize":
-            if not isinstance(sid, str) or not sid.strip() or sid == "default":
-                raise McpTransportError("Native MCP did not allocate an isolated session; upgrade the server or check proxy session headers")
-            self.session_id = sid
+            if self.require_session:
+                if not isinstance(sid, str) or not sid.strip() or sid == "default":
+                    raise McpTransportError("Native MCP did not allocate an isolated session; upgrade the server or check proxy session headers")
+                self.session_id = sid
+            elif isinstance(sid, str) and sid.strip() and sid != "default":
+                self.session_id = sid
         if response.get("error"):
             self.broken = True
             raise McpTransportError("Native MCP JSON-RPC error at " + method)
@@ -159,12 +166,13 @@ class McpClient:
         return result
 
     async def close(self):
-        if self.session_id:
+        if self.session_id or self.close_tool in self.tools:
             # A timed-out request may still execute server-side. Close the owned
-            # session without reusing it or replaying the original action.
+            # session/tabs without reusing them or replaying the original action.
             self.broken = False
+            arguments = {"id": self.session_id} if self.session_id else {}
             try:
-                result = await self.rpc("tools/call", {"name": "session_close", "arguments": {"id": self.session_id}}, 3)
+                result = await self.rpc("tools/call", {"name": self.close_tool, "arguments": arguments}, 3)
                 if result.get("isError"):
                     raise McpTransportError("Native MCP could not close its owned session")
             finally:

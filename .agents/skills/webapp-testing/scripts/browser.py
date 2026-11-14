@@ -1,4 +1,4 @@
-"""Shared action contract and optional Playwright CDP executor for Lightpanda."""
+"""Shared action contract and optional Playwright CDP executor for native browsers."""
 from __future__ import annotations
 
 import asyncio
@@ -36,17 +36,26 @@ def _milliseconds(value, name, maximum=300000):
 def validate_config(config, allow_variables=False):
     if not isinstance(config, dict):
         raise ValueError("browser must be an object")
-    if set(config) - {"backend", "mcp_url", "mcp_token_env", "cdp_url", "timeout_ms", "step_timeout_ms", "poll_interval_ms", "storage"}:
+    fields = {"backend", "mcp_url", "mcp_token_env", "cdp_url", "timeout_ms",
+              "step_timeout_ms", "poll_interval_ms", "storage", "obscura_bin", "auto_start"}
+    if set(config) - fields:
         raise ValueError("Unknown browser configuration field")
-    backend = config.get("backend", "lightpanda")
-    if not isinstance(backend, str) or backend not in {"lightpanda", "playwright"}:
-        raise ValueError("browser.backend must be lightpanda (native MCP) or playwright (CDP)")
-    if backend == "lightpanda" and "cdp_url" in config:
-        raise ValueError("cdp_url requires browser.backend=playwright; native Lightpanda uses mcp_url")
+    backend = config.get("backend", "obscura")
+    if not isinstance(backend, str) or backend not in {"obscura", "lightpanda", "playwright"}:
+        raise ValueError("browser.backend must be obscura (bundled native MCP), lightpanda (native MCP) or playwright (CDP)")
+    native = backend in {"obscura", "lightpanda"}
+    if native and "cdp_url" in config:
+        raise ValueError("cdp_url requires browser.backend=playwright; native backends use mcp_url")
     if backend == "playwright" and ("mcp_url" in config or "mcp_token_env" in config):
-        raise ValueError("mcp_url/mcp_token_env require browser.backend=lightpanda")
-    field = "mcp_url" if backend == "lightpanda" else "cdp_url"
-    endpoint = config.get(field, "http://127.0.0.1:8000/mcp" if backend == "lightpanda" else "ws://127.0.0.1:9222")
+        raise ValueError("mcp_url/mcp_token_env require a native backend (obscura or lightpanda)")
+    if backend != "obscura" and ("obscura_bin" in config or "auto_start" in config):
+        raise ValueError("obscura_bin/auto_start require browser.backend=obscura")
+    if "obscura_bin" in config and (not isinstance(config["obscura_bin"], str) or not config["obscura_bin"].strip()):
+        raise ValueError("browser.obscura_bin must be a binary path")
+    if "auto_start" in config and type(config["auto_start"]) is not bool:
+        raise ValueError("browser.auto_start must be a boolean")
+    field = "mcp_url" if native else "cdp_url"
+    endpoint = config.get(field, "http://127.0.0.1:8000/mcp" if native else "ws://127.0.0.1:9222")
     if not isinstance(endpoint, str):
         raise ValueError("browser." + field + " must be a URL")
     if allow_variables:
@@ -55,7 +64,7 @@ def validate_config(config, allow_variables=False):
             endpoint = "http://127.0.0.1:8000/mcp"
     try:
         parsed = urlsplit(endpoint)
-        schemes = {"http", "https"} if backend == "lightpanda" else {"http", "https", "ws", "wss"}
+        schemes = {"http", "https"} if native else {"http", "https", "ws", "wss"}
         valid = parsed.scheme in schemes and parsed.hostname and parsed.port != 0 and not parsed.username and not parsed.password
     except ValueError:
         valid = False
@@ -115,7 +124,7 @@ def validate_action(action, allow_variables=False):
 
 class PlaywrightBrowserSession:
     """One owned context and page, reused across steps, with a private event loop."""
-    engine = "lightpanda-cdp"
+    engine = "playwright-cdp"
 
     def __init__(self, frontend_url, config=None, auth=None, token=""):
         self.frontend_url = frontend_url.rstrip("/") + "/"
@@ -142,7 +151,7 @@ class PlaywrightBrowserSession:
         try:
             from playwright.async_api import async_playwright
         except ImportError as exc:
-            raise RuntimeError("Browser steps require: python -m pip install 'playwright>=1.55,<2'; start Lightpanda CDP separately") from exc
+            raise RuntimeError("Browser steps require: python -m pip install 'playwright>=1.55,<2'; start a CDP service separately (e.g. bundled obscura serve --port 9222)") from exc
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.connect_over_cdp(
             self.config.get("cdp_url", "ws://127.0.0.1:9222"), timeout=self.timeout)
@@ -319,7 +328,7 @@ def BrowserSession(frontend_url, config=None, auth=None, token=""):
     """Select an explicit backend; failures never trigger an automatic fallback."""
     config = config or {}
     validate_config(config)
-    if config.get("backend", "lightpanda") == "playwright":
+    if config.get("backend", "obscura") == "playwright":
         return PlaywrightBrowserSession(frontend_url, config, auth, token)
     from browser_mcp import NativeBrowserSession
     return NativeBrowserSession(frontend_url, config, auth, token)

@@ -1,4 +1,4 @@
-// DOM-only operations for Lightpanda. No rendered boxes or stale node handles.
+// DOM-only operations for the native browser MCP backends. No rendered boxes or stale node handles.
 ({id, operation, data, maxNodes = 30, prepare = false}) => {
     const validId = value => /^[A-Za-z_][A-Za-z0-9_.:-]*$/.test(value);
     const matches = value => document.querySelectorAll('[id="' + value + '"]');

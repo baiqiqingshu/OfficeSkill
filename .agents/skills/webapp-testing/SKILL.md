@@ -1,6 +1,6 @@
 ---
 name: webapp-testing
-description: Verify Spring Boot and Vue features with HTTP, databases and deterministic Lightpanda native MCP browser batches; optional Playwright CDP and standalone PandaScript. Use for functional cases, requirement or staged-change validation, concise project context, backend case supplementation, and portable Python execution bundles.
+description: Verify Spring Boot and Vue features with HTTP, databases and deterministic browser batches over the bundled obscura native MCP (no manual browser download); optional Lightpanda MCP, Playwright CDP and standalone PandaScript. Use for functional cases, requirement or staged-change validation, concise project context, backend case supplementation, and portable Python execution bundles.
 ---
 
 # Web 项目功能验证
@@ -9,7 +9,7 @@ description: Verify Spring Boot and Vue features with HTTP, databases and determ
 
 `SKILL_DIR` 为本文件所在目录。命令在任意目录执行，路径带空格时加引号。Python 3.10+；首次执行或缺依赖时读 [安装与连接](references/install.md)。
 
-浏览器默认使用 **Python 标准库 → Lightpanda 原生 HTTP MCP**，地址 `http://127.0.0.1:8000/mcp`；HTTP＋SQLite＋原生 MCP 无需第三方 Python 包。保留 `browser.backend: playwright` 的现有 CDP 方案，显式选择时才安装 Playwright。超长、连续的纯前端阶段可用独立 PandaScript，尤其在网络往返成为瓶颈时；它不共享混合 suite 的浏览器会话。
+浏览器默认使用 **Python 标准库 → 内置 obscura 原生 HTTP MCP**，地址 `http://127.0.0.1:8000/mcp`；`bin/obscura` 已带 Windows x86_64 二进制，回环地址无人监听时自动拉起，无需人工下载或预启动。HTTP＋SQLite＋原生 MCP 无需第三方 Python 包。保留 `browser.backend: lightpanda`（外部服务）与 `browser.backend: playwright` 的 CDP 方案，显式选择时才需要对应环境。超长、连续的纯前端阶段可用独立 PandaScript（需另行提供 Lightpanda 二进制），尤其在网络往返成为瓶颈时；它不共享混合 suite 的浏览器会话。
 
 ## 按请求选择工作
 
@@ -35,7 +35,7 @@ python delivery/feature-cases/run.py --frontend-url http://HOST:5173 --token TOK
 2. 默认保持鉴权，使用 token（推荐环境变量 `WEBTEST_TOKEN`）。缺 token 时先完成源码分析和用例包，再索取必要信息。若用户已授权关闭本地鉴权，可用现有隔离测试 profile；没有隔离开关时给出具体改动，取得授权后再修改。禁止将 `permitAll` 等绕过写入默认/生产配置。
 3. 浏览器以稳定且唯一的 DOM `id` 定位输入框和按钮。缺失时列出所需控件及拟加 ID，取得用户同意后补充；本会话已授权则直接实施。Vue 组件应核实 ID 确实落在可交互 DOM 上，列表行加入稳定业务键以避免重复。
 4. 前后端实际运行并保留，告知用户访问 URL、业务数据标记和日志/报告路径，方便观察执行效果。只停止本工具启动的进程；用户要求关闭或显式配置清理时再停止。
-5. Lightpanda 默认通过原生 MCP 执行业务交互；CDP 是显式可选后端，两种地址不能混用。`assert_visible` 仅检查 DOM 可见语义，不能证明视觉正确性；不承诺像素/截图验收，也不默默改用 Chromium 或其它后端。工具能力或控件不兼容时保留错误证据并说明受阻范围。
+5. 默认通过 obscura 原生 MCP 执行业务交互；自动拉起的进程仅绑定回环地址、随运行结束终止。CDP 是显式可选后端，MCP 与 CDP 地址不能混用。`assert_visible` 仅检查 DOM 可见语义，不能证明视觉正确性；不承诺像素/截图验收，也不默默改用 Chromium 或其它后端。工具能力或控件不兼容时保留错误证据并说明受阻范围。
 6. 用例、预处理 SQL、执行动作、断言和报告放在一个目录。交付说明覆盖执行命令、环境变量、未运行项与缺口；凭据不写入 suite、文档、Git 或执行报告。导出前审查业务数据与 SQL 中的敏感值。
 7. 浏览器先等待唯一控件满足 DOM 可见、启用、可编辑等前置，再派发动作；只重试未派发动作的就绪检查与读取。点击/输入已发出后发生断连或超时，不自动重放；先用业务接口/数据库核对结果，再决定如何恢复。长流程按业务阶段拆成多个 browser 步骤，每阶段用可观察业务状态收尾，页面会话保持复用。
 

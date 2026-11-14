@@ -4,7 +4,7 @@
   "auth": {"mode": "token"},
   "variables": {"test_name": "webtest-ui-demo"},
   "browser": {
-    "backend": "lightpanda",
+    "backend": "obscura",
     "mcp_url": "http://127.0.0.1:8000/mcp",
     "timeout_ms": 10000,
     "step_timeout_ms": 60000,

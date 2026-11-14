@@ -549,8 +549,13 @@ def run_suite(suite_path, frontend_url, token=None, api_url=None, output=None, s
             if browser_backend == "playwright":
                 browser_config.pop("mcp_url", None)
                 browser_config.pop("mcp_token_env", None)
+                browser_config.pop("obscura_bin", None)
+                browser_config.pop("auto_start", None)
             else:
                 browser_config.pop("cdp_url", None)
+                if browser_backend == "lightpanda":
+                    browser_config.pop("obscura_bin", None)
+                    browser_config.pop("auto_start", None)
         if mcp_url is not None:
             browser_config["mcp_url"] = mcp_url
         if cdp_url is not None:

@@ -11,6 +11,7 @@ from browser import BrowserSession
 
 CDP = os.getenv("WEBTEST_LIGHTPANDA_CDP", "")
 MCP = os.getenv("WEBTEST_LIGHTPANDA_MCP", "")
+OBSCURA_MCP = os.getenv("WEBTEST_OBSCURA_MCP", "")
 HTML = b"""<!doctype html><html><body>
 <input id="name"><input id="order.1:search">
 <select id="status"><option value="draft">Draft</option><option value="ready">Ready</option></select>
@@ -54,6 +55,10 @@ class LightpandaSmoke(unittest.TestCase):
     @unittest.skipUnless(MCP, "Set WEBTEST_LIGHTPANDA_MCP to run against a real Lightpanda MCP server")
     def test_native_form_events_state_and_page_reuse(self):
         self.smoke({"backend": "lightpanda", "mcp_url": MCP})
+
+    @unittest.skipUnless(OBSCURA_MCP, "Set WEBTEST_OBSCURA_MCP to run against an external obscura MCP server")
+    def test_obscura_form_events_state_and_page_reuse(self):
+        self.smoke({"backend": "obscura", "mcp_url": OBSCURA_MCP})
 
     def smoke(self, config):
         host = os.getenv("WEBTEST_LIGHTPANDA_HOST", "127.0.0.1")

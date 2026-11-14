@@ -200,6 +200,9 @@ def export_suite(suite, output):
     out = _new_output(output)
     for name in ("webtest.py", "runtime.py", "browser.py", "browser_mcp.py", "mcp_client.py", "browser_dom.js", "pandascript.py", "project.py"):
         shutil.copy2(Path(__file__).parent / name, out / name)
+    bundled = Path(__file__).resolve().parents[1] / "bin" / "obscura"
+    if bundled.is_dir():
+        shutil.copytree(bundled, out / "bin" / "obscura")
     for candidate, target in copies:
         dest = out / target
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -211,44 +214,34 @@ def export_suite(suite, output):
         shutil.copy2(requirements, out / "requirements.txt")
     _write(out / "RUN.md", """# 功能用例执行包
 
-Python 3.10+。默认 HTTP＋SQLite＋Lightpanda 原生 MCP 客户端仅用标准库，无需 Playwright、Node、模型或 API key。浏览器需独立 Lightpanda 服务；其它数据库按需安装驱动。
+Python 3.10+。默认 HTTP＋SQLite＋原生 MCP 客户端仅用标准库，无需 Playwright、Node、模型或 API key。默认浏览器为本包内置的 obscura（bin/obscura），缺省时需自行提供；其它数据库按需安装驱动。
 
 ```text
 python webtest.py validate --suite suite.json
-python run.py --frontend-url http://HOST:5173 --mcp-url http://127.0.0.1:8000/mcp
+python run.py --frontend-url http://HOST:5173
 ```
 
 推荐环境变量 WEBTEST_TOKEN；后端默认由前端 /api 代理，独立后端用 --api-url。数据库 URL 用 suite.databases 的 url_env 指定的环境变量。先审阅 suite：setup 预处理、cases 执行、teardown 定向清理；sql/ 为引用文件。默认报告在本包 .webtest/runs，失败返回非零。
 
-## 默认原生 MCP
+## 默认：内置 obscura 原生 MCP
 
-在 Linux/macOS/WSL2 或已有 Lightpanda 主机启动：
+browser.backend 默认 obscura，mcp_url 默认 http://127.0.0.1:8000/mcp。该地址在回环地址且无人监听时，自动以 `bin/obscura/obscura[.exe] mcp --http --host 127.0.0.1 --port 8000` 拉起本包二进制，进程随运行结束终止；OBSCURA_ALLOW_PRIVATE_NETWORK=1 已设置，允许访问 localhost/局域网被测服务。已有 MCP 服务监听同端口时直接连接（tools/list 校验能力），不抢占也不停止它。
 
-```text
-lightpanda version
-lightpanda mcp --host 127.0.0.1 --port 8000 --load-resources stylesheet
-```
+跨机器或缺少内置二进制时：从 https://github.com/h4ckf0r0day/obscura/releases 取对应平台资产，经 suite 的 browser.obscura_bin 或环境变量 WEBTEST_OBSCURA_BIN 指定；也可手工 `obscura mcp --http --port 8000 --allow-private-network` 后再运行。非回环 mcp_url 不自动拉起；browser.auto_start: false 可关闭拉起。mcp_token_env 可指定服务 bearer token 的环境变量名，与业务 token 分开。obscura MCP 是单浏览器服务，会话隔离来自独立进程；连接外部共享实例时 browser_close 会关闭其全部标签页。
 
-Docker Linux 容器可另起服务，需覆盖镜像默认 CDP 命令：
+frontend-url 必须同时可被 Python 与 obscura 访问。同机默认走 127.0.0.1；其它主机运行浏览器时推荐共用宿主局域网 IP，Vite 需允许访问。
 
-```text
-docker run -d --name lightpanda-mcp -p 127.0.0.1:8000:8000 lightpanda/browser:latest /bin/lightpanda mcp --host 0.0.0.0 --port 8000 --load-resources stylesheet
-```
-
-核对 mcp --help、独立会话和工具能力，固定已验证版本/镜像摘要。browser.backend 默认 lightpanda，mcp_url 默认 http://127.0.0.1:8000/mcp。mcp_token_env 可指定服务 bearer token 的环境变量名，与业务 token 分开。CDP 的 ws://HOST:9222 不能当 MCP；两种服务需分进程、分端口，不共享会话。
-
-frontend-url 必须同时可被 Python 与 Lightpanda 访问。容器的 127.0.0.1 指容器自身，推荐共用宿主局域网 IP；Vite 需允许访问。host.docker.internal 通常仅容器能解析。Windows 无官方原生二进制，可用已有 Linux 主机、WSL2 或 Docker Linux 容器。
-
-原生后端不注入浏览器请求头，使用应用自身登录或 token storage。browser.storage 在首个 goto 先访问前端同源 /，写入后再导航目标页，同会话只写一次；根页需可访问且不能重定向其它 origin。HTTP 步骤仍按 auth 注入业务头，HTTP 登录 cookie 不自动转移给浏览器。
+原生后端不注入浏览器请求头，使用应用自身登录或 token storage。obscura 通过 browser_set_storage_state 在导航前按 origin 写入 browser.storage，同会话只写一次。HTTP 步骤仍按 auth 注入业务头，HTTP 登录 cookie 不自动转移给浏览器。
 
 ## 可选 Playwright＋CDP
 
 ```text
 python -m pip install "playwright>=1.55,<2"
-python run.py --frontend-url http://HOST:5173 --browser-backend playwright --cdp-url ws://HOST:9222
+bin/obscura/obscura serve --port 9222 --allow-private-network   # 或任何 CDP 服务
+python run.py --frontend-url http://HOST:5173 --browser-backend playwright --cdp-url ws://127.0.0.1:9222
 ```
 
-需另行启动 Lightpanda CDP。suite 可持久配置 browser.backend=playwright 与 cdp_url；旧配置只有 cdp_url 时补 backend。无需 playwright install chromium。保留前导航 storage init script 和前端同源 auth 头注入。失败不自动切换后端；原生键盘等行为与 DOM 事件后端可能不同，切换需回归目标控件。
+需另行启动 CDP 服务。suite 可持久配置 browser.backend=playwright 与 cdp_url；旧配置只有 cdp_url 时补 backend。无需 playwright install chromium。保留前导航 storage init script 和前端同源 auth 头注入。失败不自动切换后端；原生键盘等行为与 DOM 事件后端可能不同，切换需回归目标控件。
 
 ## 动作与独立长流程
 
@@ -256,9 +249,9 @@ python run.py --frontend-url http://HOST:5173 --browser-backend playwright --cdp
 
 只重试就绪检查/读取；已发出点击或输入后的超时/断连不重放，先查 HTTP/数据库结果。MCP 传输失败后拒绝继续使用该会话。失败报告含动作序号、last_state 和限量结构快照，省略输入值、正文及工具回显。按业务阶段拆步骤，以业务断言收尾。
 
-原生 press 使用 Lightpanda 工具，Enter 可能触发表单默认行为；Playwright 后端只派发 DOM keydown/keyup。scroll.x/y 为增量，原生适配层换算绝对偏移并核对移动。DOM 可见/滚动不证明视觉、虚拟列表或无限滚动正确。iframe、Shadow DOM、文件上传、拖拽和原生弹窗需额外适配。
+原生 press 使用引擎按键工具，Enter 可能触发表单默认行为；Playwright 后端只派发 DOM keydown/keyup。scroll.x/y 为增量并核对移动。DOM 可见/滚动不证明视觉、虚拟列表或无限滚动正确。iframe、Shadow DOM、文件上传、拖拽和原生弹窗需额外适配。
 
-超长连续纯前端流程可另写 PandaScript，在有 Lightpanda 二进制的主机执行：
+超长连续纯前端流程可另写 PandaScript，它需要另行提供的 Lightpanda 二进制（obscura 无等价物）：
 
 ```text
 python webtest.py pandascript --script frontend-batch.js --executable lightpanda --timeout 120 --output reports/frontend-batch.json

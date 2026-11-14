@@ -14,10 +14,11 @@ HTTP 步骤按 auth 注入业务请求头。浏览器可用 `browser.storage.loc
 
 | 后端 | storage | 浏览器请求头 |
 |---|---|---|
-| 默认原生 MCP | 首个 goto 先访问前端同源 `/`，写 storage，再导航目标页；同一会话只写一次。根页需可访问，重定向到其它 origin 会失败 | 不自动注入 auth 头；由应用自身读取 token 并鉴权 |
+| 默认内置 obscura | `browser_set_storage_state` 在首个 goto 前按 origin 写入；同一会话只写一次，不需要先访问根页 | 不自动注入 auth 头；由应用自身读取 token 并鉴权 |
+| 外部 Lightpanda MCP | 首个 goto 先访问前端同源 `/`，写 storage，再导航目标页；同一会话只写一次。根页需可访问，重定向到其它 origin 会失败 | 同上 |
 | 显式 Playwright | context 的前导航 init script，在前端 origin 的页面脚本执行前写入 | 按 auth 仅注入前端同源请求；跨域 API 由应用自身处理 |
 
-需要首个请求就带头、或不能先访问根页而必须在脚本执行前写 storage 时，显式选择 Playwright 后端。不要用 Lightpanda 全局 `--http-header` 冒充同源拦截，它会作用于所有外发请求（包括重定向）。HTTP 登录响应的 cookie 不会自动转移至浏览器；HttpOnly cookie/复杂登录应通过浏览器内的项目登录流程完成。
+需要首个请求就带业务头时，显式选择 Playwright 后端。HTTP 登录响应的 cookie 不会自动转移至浏览器；HttpOnly cookie/复杂登录应通过浏览器内的项目登录流程完成。
 
 `browser.mcp_token_env` 仅用于 MCP 服务/代理 bearer 鉴权，不是业务 token，也不会作为业务请求头发送。
 
@@ -76,6 +77,6 @@ python SKILL_DIR/scripts/webtest.py export --suite cases/suite.json --output del
 python delivery/feature/run.py --frontend-url http://HOST:5173 --token TOKEN
 ```
 
-导出包含执行入口/模块、suite、引用的 SQL、依赖说明和 RUN.md。目标目录需为空。SQL 文件必须是 suite 目录内部的 `.sql`，导出会拷贝并重写路径。不会复制目标 Java/Vue 应用、数据库或密码。服务 cwd 转为源项目绝对路径，同机器可启动；跨机器默认连接已启动服务，或先调整 services 路径。
+导出包含执行入口/模块、suite、引用的 SQL、内置 bin/obscura 浏览器、依赖说明和 RUN.md。目标目录需为空。SQL 文件必须是 suite 目录内部的 `.sql`，导出会拷贝并重写路径。不会复制目标 Java/Vue 应用、数据库或密码。服务 cwd 转为源项目绝对路径，同机器可启动；跨机器默认连接已启动服务，或先调整 services 路径与浏览器二进制。
 
 导出拒绝常见凭据字段的字面量、带密码 URL 与私钥；这不等于完整数据分类。仍需检查请求体、SQL 文件是否包含敏感数据。不要通过跳过校验把实际 token 放入包。

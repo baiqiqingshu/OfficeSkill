@@ -44,12 +44,12 @@ JSON 顶层 `version: 1`、`name`、`cases`；其余字段按需提供。`cases`
 
 ## 浏览器
 
-顶层 `browser.backend` 默认 `lightpanda`，使用原生 HTTP MCP；`mcp_url` 默认 `http://127.0.0.1:8000/mcp`，可用 `mcp_token_env` 指定服务 bearer token 的环境变量名。显式 `backend: playwright` 时使用 `cdp_url`（默认 `ws://127.0.0.1:9222`），才需要安装 Playwright。两类 endpoint 字段不能混用；旧 cdp_url 配置需补 backend。
+顶层 `browser.backend` 默认 `obscura`，使用内置二进制的原生 HTTP MCP；`mcp_url` 默认 `http://127.0.0.1:8000/mcp`，回环地址无人监听时自动拉起（`auto_start: false` 关闭；`obscura_bin` 指定其它二进制路径）。可用 `mcp_token_env` 指定服务 bearer token 的环境变量名。`backend: lightpanda` 连接外部 Lightpanda MCP。显式 `backend: playwright` 时使用 `cdp_url`（默认 `ws://127.0.0.1:9222`），才需要安装 Playwright。两类 endpoint 字段不能混用；旧 cdp_url 配置需补 backend。
 
 `timeout_ms` 默认 10000，`step_timeout_ms` 默认 60000；单位为毫秒。`poll_interval_ms` 默认 100，仅用于 Playwright；原生 MCP 使用服务端等待。可配置 `storage.localStorage`、`storage.sessionStorage`，注入时机和请求头行为见 [服务鉴权](services.md)。多个 browser 步骤复用独立会话和页面，结束只关闭自有会话/context，保留服务；失败不自动切换后端。长流程、预算及重试边界见 [浏览器执行层](browser-control.md)。
 
 ```json
-{"browser": {"backend": "lightpanda", "mcp_url": "http://127.0.0.1:8000/mcp"}}
+{"browser": {"backend": "obscura", "mcp_url": "http://127.0.0.1:8000/mcp"}}
 ```
 
 ```json

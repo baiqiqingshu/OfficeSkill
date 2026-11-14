@@ -1,5 +1,5 @@
-# Python 3.10+: HTTP, SQLite and default native Lightpanda MCP use stdlib only.
-# Start/connect Lightpanda MCP separately. No Playwright/Chromium/LLM required.
+# Python 3.10+: HTTP, SQLite and default native obscura MCP use stdlib only.
+# bin/obscura is bundled and auto-started on loopback; no Playwright/Chromium/LLM required.
 # Optional fallback: python -m pip install "playwright>=1.55,<2"
 # SQLAlchemy + drivers are optional; install only the target database driver:
 # python -m pip install "SQLAlchemy>=2,<3" "PyMySQL>=1.1,<2"

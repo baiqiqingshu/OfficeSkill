@@ -1,0 +1,4 @@
+obscura v0.2.7
+https://github.com/h4ckf0r0day/obscura/releases/tag/v0.2.7
+asset: obscura-x86_64-windows-no-render.zip
+archive sha256: a2ac7d8b08e93e3ed31f6f14cc7057d822725d3f55d91fc7992a6f2d3e0ad1b6

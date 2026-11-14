@@ -1,4 +1,4 @@
-"""Adapter control-flow tests; fake CDP responses do not prove Lightpanda support."""
+"""Adapter control-flow tests; fake CDP responses do not prove real browser support."""
 import asyncio
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -168,11 +168,18 @@ class SuiteTests(unittest.TestCase):
 
     def test_config_validation_and_variable_endpoint(self):
         for config in [{"poll_interval_ms": 0}, {"step_timeout_ms": -1}, {"cdp_url": []},
-                       {"cdp_url": "ws://localhost:bad"}, {"timeot_ms": 1}]:
+                       {"cdp_url": "ws://localhost:bad"}, {"timeot_ms": 1}, {"backend": "chromium"},
+                       {"obscura_bin": 1}, {"obscura_bin": "  "}, {"auto_start": "yes"},
+                       {"backend": "lightpanda", "obscura_bin": "x"}, {"backend": "playwright", "auto_start": True},
+                       {"backend": "obscura", "cdp_url": "ws://localhost:9222"},
+                       {"backend": "playwright", "mcp_url": "http://localhost:8000/mcp"}]:
             with self.subTest(config=config), self.assertRaises(ValueError):
                 validate_config(config)
         validate_config({"backend": "playwright", "cdp_url": "${cdp_url}"}, allow_variables=True)
         validate_config({"backend": "playwright", "cdp_url": "ws://${host}:${port}"}, allow_variables=True)
+        validate_config({"backend": "obscura", "mcp_url": "http://127.0.0.1:8000/mcp",
+                         "auto_start": False, "obscura_bin": "C:/obscura/obscura.exe"})
+        validate_config({"backend": "lightpanda", "mcp_url": "http://127.0.0.1:8000/mcp"})
 
     def test_suite_validation_happens_before_setup_requests(self):
         suite = self.suite()
@@ -208,6 +215,8 @@ class SuiteTests(unittest.TestCase):
             source.write_text(json.dumps(self.suite()), encoding="utf-8")
             bundle = export_suite(source, Path(temp) / "bundle")
             self.assertTrue((bundle / "browser_dom.js").is_file())
+            self.assertTrue((bundle / "bin" / "obscura" / "obscura.exe").is_file()
+                            or (bundle / "bin" / "obscura" / "obscura").is_file())
             result = subprocess.run([sys.executable, "webtest.py", "validate", "--suite", "suite.json"], cwd=bundle, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(result.stdout)["status"], "valid")
