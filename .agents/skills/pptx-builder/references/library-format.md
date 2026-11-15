@@ -109,17 +109,17 @@ key 推荐 `库ID/组件ID`（不带前缀的组件 ID 亦可）；value 直接�
 python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/library.json] [--overwrite]
 ```
 
-生成 `output/library-demo/library-demo.html`：单文件离线页面。顶部「整页示例」按 deck 分页签，把组件放进 1280×720 完整页面展示，可点击放大与左右翻页；下方「组件库」按库分组，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）、缩放预览、可折叠示例 JSON 和复制元素 JSON 按钮。左侧支持搜索过滤，5 套主题可即时给预览换色。
+生成 `output/library-demo/library-demo.html`：单文件离线页面。顶部「整页示例」按 deck 分页签，把组件放进 1280×720 完整页面展示，可点击放大与左右翻页；下方「组件库」按库分组，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）、缩放预览、可折叠示例 JSON 和复制元素 JSON 按钮。左侧支持搜索过滤，6 套主题可即时给预览换色。
 
 ## 内置组件
 
-`builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`、`outline`、`ui-frame`、`figure`、`ar-header`。准确输入和尺寸以 `catalog` 输出为准。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
+`builtin/`：`title`、`eyebrow`、`lead`、`section-title`、`text`、`bullets`、`checklist`、`steps`、`caption`、`footnote`、`divider`、`cover`、`section-break`、`agenda-item`、`thanks`、`card`、`feature-card`、`panel`、`metric`、`stat-card`、`person-card`、`icon-badge`、`table`、`compare`、`matrix2x2`、`field`、`api-item`、`tag`、`status`、`quote`、`callout`、`callout-warn`、`callout-danger`、`conclusion`、`flow-step`、`flow-arrow`、`layer`、`arch-node`、`arch-zone`、`timeline-item`、`timeline-h-item`、`phase`、`image`、`image-frame`、`code`、`outline`、`ui-frame`、`figure`、`ar-header`、`swot`、`pros-cons`、`status-row`、`scorecard`、`funnel`、`kpi-band`、`stairs`。准确输入和尺寸以 `catalog` 输出为准；`catalog` 同时给出每个输入槽的 `capacity`（按槽位宽高与字号估算的安全文字量），写内容前先对照预算。第三方组件只需增加本地清单及 HTML，无需修改框架或安装代码插件。
 
 `ar-header` 是 AR 场景页的标准页头（1152×86），IPD 需求串讲中每个 AR 页都用它：`crumb`（text，必填）写「SR-01 · AR-01 · 背景」这类 SR/AR/场景类型面包屑，`title`（richtext，必填）填 AR 名称（同一 AR 各页保持一致），`meta`（text，可选）写右侧场景序号如「场景 2/6」。
 
 ## 现代组件编排
 
-内置库新增 `insight-card`、`value-card`、`decision-card`、`milestone-strip`、`risk-card`、`action-card`、`summary-band`、`comparison-row`、`capability-tile`、`takeaway-panel`，合计 59 个组件。5 页完整编排见 `examples/modern-elements.json`，默认样例输入位于 `samples.json`。
+内置库另有面向汇报编排的 `insight-card`、`value-card`、`decision-card`、`milestone-strip`、`risk-card`、`action-card`、`summary-band`、`comparison-row`、`capability-tile`、`takeaway-panel`、`swot`、`pros-cons`、`status-row`、`scorecard`、`funnel`、`kpi-band`、`stairs`，合计 66 个组件。6 页完整编排见 `examples/modern-elements.json`，默认样例输入位于 `samples.json`。
 
 组件正文使用黑色，标题和编号使用强调色；卡片背景用 `SURFACE`、`BG_SOFT` 等主题 token，避免暗色主题下不可读。文字叶子需留足行高和内边距，示例保持短句。列表使用 `list` 输入绑定，不手写项目符号字符。
 

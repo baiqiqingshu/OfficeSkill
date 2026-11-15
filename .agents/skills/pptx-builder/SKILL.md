@@ -9,7 +9,7 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 ## 生成与布局检查
 
-1. 查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。第三方库追加 `--library 本地/library.json`；组件 ID 和输入名以目录为准。
+1. 查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。第三方库追加 `--library 本地/library.json`；组件 ID 和输入名以目录为准。每个组件附带 `capacity`：各输入槽的安全文字量（`charsPerLine`×`lines`≈`approxChars`，列表为 `itemCharsPerLine`/`lines`，表格为 `rowCharsPerLine`）。**先按容量预算写内容再填 JSON**；超出预算时精简、拆分或换更大组件，不靠缩小字号补救。
 2. 编写配置。完整方案参考 `examples/technical-proposal.json`；现代卡片、价值指标、决策、里程碑和结论编排参考 `examples/modern-elements.json`（5 页）。其他示例包括技术进展、方案评审、需求评审、场景走查及 IPD SR/AR 串讲。
 3. 校验并生成：
 
@@ -20,7 +20,20 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 **任何 PPTX 输出都必须执行布局检查。** `render`、`starter`、`extract` 均检查已保存 PPTX 中原生对象的几何边界和重叠，生成报告；`render` 另检查编译内容的文字/表格高度估算及母版保留区。检查方法和复杂对象限制写入报告，不能代替 Office 实际换行渲染。先读取报告，修正问题后重新生成；存在问题的产物不能称为“布局通过”或作为最终完成稿交付。`--strict-layout` 在存在问题时返回非零状态，并保留诊断产物；原型排查可暂不加该参数，检查仍会执行。
 
-`render` 的 `report.json.layout` 包含 `checked`、`status`、`issueCount`、`issues`、`masterRegions`；HTML 顶部显示通过状态或问题数量。报告提供具体页面、元素、偏移或拆页建议。超长文字优先精简或拆页；顶层 `"autoFitFonts":true` 可按需缩小文字/表格字号，`"minFontSize":12` 设置下限（允许 8–24），缩小后仍需检查。HTML 不显示原生公司母版的全部固定对象，最终外观以 PPTX 为准；本地有 PowerPoint/LibreOffice 时复核换行、遮挡和图片比例。
+`render` 的 `report.json.layout` 包含 `checked`、`status`、`issueCount`、`issues`、`masterRegions`；HTML 顶部显示通过状态或问题数量。报告提供具体页面、元素、偏移或拆页建议。超长文字优先精简或拆页；顶层 `"autoFitFonts":true` 可按需缩小文字/表格字号，`"minFontSize":12` 设置下限（允许 8–24），缩小后仍需检查。检查同时标记 `smallFont`：任何元素的有效字号（含组件缩放后、run 显式小字号）低于 `minFontSize` 即报出，避免拆页/缩字后文字小到无法辨认。HTML 不显示原生公司母版的全部固定对象，最终外观以 PPTX 为准；本地有 PowerPoint/LibreOffice 时复核换行、遮挡和图片比例。
+
+常见失败按表修正，改完重跑 `render`：
+
+| 报告/报错现象 | 原因 | 修正 |
+| --- | --- | --- |
+| `textOverflow` / `tableOverflow` | 内容超出槽位容量 | 按 `capacity` 精简；拆页；换更高组件 |
+| `overlap` | 元素 `box` 相交（装饰层除外） | 拉开间距，保持 `y` 网格 |
+| `outOfPage` | `box` 超出 1280×720 页面边界 | 收回页内；核对坐标 |
+| `reservedRegion` | 正文压到母版标题/页脚保留区 | 下移 `y` 或减 `h`；检查 `masterRegions` |
+| `smallFont` | 有效字号低于 `minFontSize`（组件缩小或 run 小字号） | 放大 box 减少缩放；提高 `fontSize`；换大组件；拆页 |
+| `required input` 报错 | 缺必填输入 | 对照 `catalog` 的 `inputs` 补齐 |
+| `unknown component` | 组件 ID 拼写或前缀错误 | 用 `catalog` 输出的完整 ID（含 `builtin/`） |
+| 中文字符显示方框 | run 指定了系统没有的字体 | 删除 `fontFamily` 或改回微软雅黑 |
 
 最小配置：
 
@@ -50,6 +63,26 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 `box` 使用页面像素坐标，默认 1280×720；每页可放多个元素。可选 `pageCount` 必须等于 `pages` 数量。完整字段见 [配置 JSON Schema](references/deck.schema.json)。
 
+## 选组件（场景 → 页型 → 组件）
+
+先定每页角色再选组件，不要先写内容再找地方塞。一页一个主题；同页组件不要超过 3 种。常用映射：
+
+| 页面角色 | 推荐组件 |
+| --- | --- |
+| 封面 / 章节页 | `cover`、`section-break`、`title`+`eyebrow`+`lead` |
+| 结论 / 要点 | `summary-band`、`takeaway-panel`、`conclusion`、`insight-card` |
+| 指标速览 | `value-card`、`kpi-band`、`stat-card`、`metric` |
+| 对比取舍 | `table`、`compare`、`pros-cons`、`comparison-row`、`matrix2x2` |
+| 内外部分析 | `swot` |
+| 计划推进 | `steps`、`milestone-strip`、`stairs`、`phase`、`timeline-h-item` |
+| 状态跟踪 | `status-row`、`scorecard`、`status`、`checklist` |
+| 风险决策 | `risk-card`、`decision-card`、`action-card`、`callout-danger` |
+| 转化 / 筛选 | `funnel` |
+| 架构流程 | `arch-zone`+`arch-node`+`flow-arrow`、`flow-step`、`layer` |
+| 场景串讲 | `ar-header`、`agenda-item`、`outline`、`person-card` |
+
+内容多于容量时的固定处理顺序：精简文字 → 拆成两页 → 换更大的组件 → 最后才考虑 `autoFitFonts`。每页先写 `title`，其余元素自上而下排布，`y` 间隔保持 8 的倍数。
+
 ## 文字、强调与原生分点
 
 默认字体为微软雅黑（`Microsoft YaHei`），**普通文字默认黑色 `#000000`**。标题、关键词、状态可显式使用其他颜色或粗体；不要把整段正文当作强调。示例：
@@ -62,7 +95,7 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 `list` 输入接受字符串、runs 或 `{"level":2,"text":"…"}` 对象，`level` 为 1–4；`text` 可为 runs，对象可附带 run 样式。列表输出 **PowerPoint 原生段落项目符号/自动编号及悬挂缩进**，标记不拼进正文，编辑时可继续增删条目。`ul`/普通列表使用项目符号，`ol`/`num` 使用自动编号，`check`、`dash` 使用对应符号；HTML 预览与布局估算沿用相同列表语义。场景描述优先使用 `outline`。
 
-可选主题：`crimson`（默认深红）、`blue`、`emerald`、`mono`、`graphite`。浅色主题的普通文字保持黑色；显式选择 `graphite` 时使用浅色对比文字，反白文字及强调色保留各自用途。
+可选主题：`crimson`（默认深红）、`blue`、`emerald`、`mono`、`majestic`（藏青金，适合正式汇报）、`graphite`。浅色主题的普通文字保持黑色；显式选择 `graphite` 时使用浅色对比文字，反白文字及强调色保留各自用途。
 
 ## 母版与标题、页脚区域
 
@@ -84,14 +117,21 @@ python SKILL_DIR/scripts/ppt_tool.py inspect-master master.pptx
 
 双击 `SKILL_DIR/assets/demo/library-demo.html` 离线查看整页示例和组件。目录可搜索名称/ID/描述、切换主题、放大翻页，并复制示例元素 JSON。
 
-内置库提供 59 个组件。除标题、正文、清单、表格、架构节点、流程、时间线和图框等基础元素外，本次新增：
+内置库提供 66 个组件。除标题、正文、清单、表格、架构节点、流程、时间线和图框等基础元素外，面向汇报场景的组件包括：
 
 | 组件 | 用途 |
 | --- | --- |
 | `builtin/insight-card` | 编号洞察与三栏观点 |
 | `builtin/value-card` | 大指标与价值说明 |
+| `builtin/kpi-band` | 四联指标横条 |
 | `builtin/decision-card` | 方案建议与决策取舍 |
+| `builtin/pros-cons` | 绿左红右利弊双栏 |
+| `builtin/swot` | 四色 SWOT 象限 |
+| `builtin/funnel` | 四级转化漏斗 |
 | `builtin/milestone-strip` | 阶段计划与里程碑 |
+| `builtin/stairs` | 三级上升演进阶梯 |
+| `builtin/status-row` | 事项状态行（可叠放成表） |
+| `builtin/scorecard` | 维度评分行（●○ 标记） |
 | `builtin/risk-card` | 风险描述与应对 |
 | `builtin/action-card` | 负责人及行动清单 |
 | `builtin/summary-band` | 页面摘要与重点导读 |

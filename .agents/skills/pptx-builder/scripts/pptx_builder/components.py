@@ -336,11 +336,69 @@ def load_libraries(paths, palette=None) -> dict:
     return result
 
 
+def _slot_capacity(component):
+    """Estimate how much text each input slot holds, in component pixels.
+
+    Walks the component tree with the same geometry and style rules used by
+    ``compile_element``, so the reported capacity matches what the renderer and
+    the layout check actually measure. Numbers are soft references, not hard
+    limits — they exist so the model can size its copy before writing JSON.
+    """
+    inputs = component.get("inputs", {})
+    caps = {}
+
+    def visit(node, parent, inherited):
+        css = _css(node.attrs.get("style", ""))
+        style = _style(css, inherited, node.tag)
+        rect = {"x": parent["x"] + _length(css.get("left", "0"), parent["w"]),
+                "y": parent["y"] + _length(css.get("top", "0"), parent["h"]),
+                "w": _length(css.get("width", "100%"), parent["w"]),
+                "h": _length(css.get("height", "100%"), parent["h"])}
+        slot = node.attrs.get("data-slot")
+        if slot and slot in inputs:
+            kind = inputs[slot].get("type")
+            top, right, bottom, left = _padding_parts(style)
+            available = max(0.0, rect["w"] - left - right)
+            room = max(0.0, rect["h"] - top - bottom)
+            font = style.get("fontSize", 24)
+            if not isinstance(font, (int, float)) or isinstance(font, bool) or not math.isfinite(font) or font <= 0:
+                font = 24
+            line_height = style.get("lineHeight", 1.2)
+            if not isinstance(line_height, (int, float)) or isinstance(line_height, bool) or not math.isfinite(line_height) or line_height <= 0:
+                line_height = 1.2
+            lines = max(1, int(room / (font * line_height)))
+            if kind in {"text", "richtext"}:
+                chars = max(1, int(available / font))
+                caps[slot] = {"charsPerLine": chars, "lines": lines, "approxChars": chars * lines}
+            elif kind == "list":
+                indent, _ = _list_spacing({}, font)
+                chars = max(1, int((available - indent) / font))
+                caps[slot] = {"itemCharsPerLine": chars, "lines": lines}
+            elif kind == "table":
+                row_chars = max(1, int((available - 2 * (style.get("borderWidth", 0) or 0)) / font))
+                caps[slot] = {"rowCharsPerLine": row_chars}
+            return
+        for child in node.children:
+            if isinstance(child, _Node):
+                visit(child, rect, style)
+
+    rootbox = {"x": 0, "y": 0, "w": component["size"]["width"], "h": component["size"]["height"]}
+    for child in component["_tree"].children:
+        if isinstance(child, _Node):
+            visit(child, rootbox, DEFAULT_STYLE)
+    return caps
+
+
 def catalog(libraries):
     """Return the compact, JSON-serializable model-facing component catalog."""
-    return {"schemaVersion": 1, "components": [
-        {"id": key, "name": value.get("name", value["id"]), "description": value.get("description", ""), "size": value["size"], "inputs": value.get("inputs", {})}
-        for key, value in libraries.items()]}
+    entries = []
+    for key, value in libraries.items():
+        entry = {"id": key, "name": value.get("name", value["id"]), "description": value.get("description", ""), "size": value["size"], "inputs": value.get("inputs", {})}
+        capacity = _slot_capacity(value)
+        if capacity:
+            entry["capacity"] = capacity
+        entries.append(entry)
+    return {"schemaVersion": 1, "components": entries}
 
 
 def _style(css, inherited, tag):
@@ -941,6 +999,7 @@ _LAYOUT_SUGGESTIONS = {
     "outOfPage": ["上移/左移元素或缩小 box", "精简文案或降低字号/行距", "拆分到下一页"],
     "textOverflow": ["精简文案或拆成多级要点", "降低字号/行距或增大 box 高", "拆分到下一页"],
     "tableOverflow": ["将表格拆成多页", "加宽表格或减少列数", "精简单元格文案或降低字号", "调整表格 box 或页面布局"],
+    "smallFont": ["增大元素 box 使缩放接近组件原始尺寸", "将 run 的 fontSize 提高到下限以上", "换用本身字号更大的组件", "精简文案后拆分到两页"],
 }
 
 
@@ -1078,6 +1137,11 @@ def audit_layout(pages, page_size, min_font=None):
                 if suggestion:
                     issue["suggestions"].insert(0, suggestion)
                 issues.append(issue)
+            small = _element_min_font(element)
+            if small is not None and small < min_font - 0.01:
+                detail = (f"元素 {element['id']} 的有效字号最小约 {small:.0f}px，低于下限 {min_font}px"
+                          "（组件被缩进较小 box 或 run 显式小字号都会触发，投影/打印场景难以辨认）")
+                issues.append(_layout_issue(page_id, index, "smallFont", [element["id"]], detail))
         for first in range(len(entries)):
             for second in range(first + 1, len(entries)):
                 (left_element, left_bounds), (right_element, right_bounds) = entries[first], entries[second]
@@ -1116,6 +1180,63 @@ def _node_font_size(node):
     if isinstance(font_size, bool) or not isinstance(font_size, (int, float)) or not math.isfinite(font_size) or font_size <= 0:
         return 24.0
     return float(font_size)
+
+
+def _valid_font(value):
+    """Return ``value`` as a positive finite px float, or ``None``."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+        return None
+    return float(value)
+
+
+def _element_min_font(element):
+    """Smallest effective painted font size (page px) in an element, or ``None``.
+
+    Node style ``fontSize`` is the default for unstyled text; explicit
+    run/cell ``fontSize`` overrides it. Compiled values are already scaled
+    into page px, so shrinking a component into a smaller box is measured
+    correctly. Elements with no text/table nodes report ``None``.
+    """
+    sizes = []
+    for node in element.get("nodes", []):
+        if not isinstance(node, dict):
+            continue
+        kind = node.get("type")
+        if kind == "text":
+            base = _valid_font((node.get("style") or {}).get("fontSize"))
+            runs = []
+            runs.extend(run for run in node.get("runs") or [] if isinstance(run, dict))
+            for paragraph in node.get("paragraphs") or []:
+                if isinstance(paragraph, dict):
+                    runs.extend(run for run in paragraph.get("runs") or [] if isinstance(run, dict))
+            effective = [(_valid_font(run.get("fontSize")) or base) for run in runs]
+            effective = [value for value in effective if value is not None]
+            if effective:
+                sizes.append(min(effective))
+            elif base is not None:
+                sizes.append(base)
+        elif kind == "table":
+            base = _valid_font((node.get("style") or {}).get("fontSize"))
+            header_base = _valid_font((node.get("headerStyle") or {}).get("fontSize")) or base
+            header_rows = int(node.get("headerRows") or 0)
+            effective = []
+            for row_index, row in enumerate(node.get("rows") or []):
+                if not isinstance(row, list):
+                    continue
+                row_base = header_base if row_index < header_rows else base
+                for cell in row:
+                    if isinstance(cell, list):
+                        for run in cell:
+                            if isinstance(run, dict):
+                                effective.append(_valid_font(run.get("fontSize")) or row_base)
+                    else:
+                        effective.append(row_base)
+            effective = [value for value in effective if value is not None]
+            if effective:
+                sizes.append(min(effective))
+            elif base is not None:
+                sizes.append(base)
+    return min(sizes) if sizes else None
 
 
 def _overflow_font_suggestion(node, required, box, min_font, table=False):

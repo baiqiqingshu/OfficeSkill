@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "title": "现代元素 · 方案评审示例",
-  "pageCount": 5,
+  "pageCount": 6,
   "masterRegions": {
     "detect": true,
     "titleHeight": 96,
@@ -380,6 +380,114 @@
             "title": "存量协议差异",
             "text": "部分旧系统使用自定义登录协议，接入成本尚待确认。",
             "action": "应对：提前盘点，安排独立适配窗口。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tracking",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "title",
+          "component": "builtin/title",
+          "region": "title",
+          "box": {
+            "x": 64,
+            "y": 24,
+            "w": 1152,
+            "h": 52
+          },
+          "inputs": {
+            "text": "关键事项进展与能力评估"
+          }
+        },
+        {
+          "id": "kpi",
+          "component": "builtin/kpi-band",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 126,
+            "w": 1152,
+            "h": 140
+          },
+          "inputs": {
+            "label1": "接入系统",
+            "value1": "36 套",
+            "label2": "交付周期",
+            "value2": "-42%",
+            "label3": "系统可用率",
+            "value3": "99.95%",
+            "label4": "节约成本",
+            "value4": "¥1,280万"
+          }
+        },
+        {
+          "id": "track1",
+          "component": "builtin/status-row",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 290,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "num": "01",
+            "name": "统一接入平台一期",
+            "status": [{"text": "正常", "bold": true, "color": "#1E7A46"}],
+            "note": "里程碑 M2 已达成"
+          }
+        },
+        {
+          "id": "track2",
+          "component": "builtin/status-row",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 370,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "num": "02",
+            "name": "历史接口迁移",
+            "status": [{"text": "延期", "bold": true, "color": "#B3372F"}],
+            "note": "依赖方确认推迟 2 周"
+          }
+        },
+        {
+          "id": "track3",
+          "component": "builtin/status-row",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 450,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "num": "03",
+            "name": "监控大盘上线",
+            "status": [{"text": "关注", "bold": true, "color": "#A86A00"}],
+            "note": "性能压测排期中"
+          }
+        },
+        {
+          "id": "score",
+          "component": "builtin/scorecard",
+          "region": "body",
+          "box": {
+            "x": 64,
+            "y": 538,
+            "w": 1152,
+            "h": 64
+          },
+          "inputs": {
+            "name": "接口标准化成熟度",
+            "rating": [{"text": "●●●●", "color": "#1476B8"}, {"text": "○", "color": "#D8E4EF"}],
+            "note": "4/5 较成熟"
           }
         }
       ]

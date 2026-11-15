@@ -1241,6 +1241,253 @@
         }
       },
       "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='title' style='position:absolute;left:28px;top:24px;width:720px;height:38px;font-family:Microsoft YaHei;font-size:26px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:28px;top:86px;width:720px;height:110px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></ul><div style='position:absolute;left:792px;top:0px;width:360px;height:220px;background-color:#E4EFF8;border-radius:12px'></div><div data-slot='next' style='position:absolute;left:820px;top:34px;width:304px;height:150px;font-family:Microsoft YaHei;font-size:23px;color:#145D92;line-height:1.35;font-weight:bold'></div></div>"
+    },
+    {
+      "id": "swot",
+      "name": "SWOT 四象限",
+      "description": "1152×520 四色象限：优势绿、劣势红、机会蓝、威胁黄，各含圆徽标字母、标题与要点列表。整页一个，用于方案评审的内外部分析。",
+      "size": {
+        "width": 1152,
+        "height": 520
+      },
+      "inputs": {
+        "titleTL": {
+          "type": "richtext",
+          "required": true
+        },
+        "itemsTL": {
+          "type": "list"
+        },
+        "titleTR": {
+          "type": "richtext",
+          "required": true
+        },
+        "itemsTR": {
+          "type": "list"
+        },
+        "titleBL": {
+          "type": "richtext",
+          "required": true
+        },
+        "itemsBL": {
+          "type": "list"
+        },
+        "titleBR": {
+          "type": "richtext",
+          "required": true
+        },
+        "itemsBR": {
+          "type": "list"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0px;top:0px;width:568px;height:252px;background-color:#E5F3EA;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:20px;width:44px;height:44px;background-color:#1E7A46;border-radius:50%'></div><div style='position:absolute;left:24px;top:25px;width:44px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'>S</div><h3 data-slot='titleTL' style='position:absolute;left:84px;top:24px;width:460px;height:34px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D;line-height:1.35'></h3><ul data-slot='itemsTL' style='position:absolute;left:24px;top:82px;width:520px;height:152px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.4'></ul><section style='position:absolute;left:584px;top:0px;width:568px;height:252px;background-color:#F9E9E7;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:608px;top:20px;width:44px;height:44px;background-color:#B3372F;border-radius:50%'></div><div style='position:absolute;left:608px;top:25px;width:44px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'>W</div><h3 data-slot='titleTR' style='position:absolute;left:668px;top:24px;width:460px;height:34px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D;line-height:1.35'></h3><ul data-slot='itemsTR' style='position:absolute;left:608px;top:82px;width:520px;height:152px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.4'></ul><section style='position:absolute;left:0px;top:268px;width:568px;height:252px;background-color:#E4EFF8;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:288px;width:44px;height:44px;background-color:#1476B9;border-radius:50%'></div><div style='position:absolute;left:24px;top:293px;width:44px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'>O</div><h3 data-slot='titleBL' style='position:absolute;left:84px;top:292px;width:460px;height:34px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D;line-height:1.35'></h3><ul data-slot='itemsBL' style='position:absolute;left:24px;top:350px;width:520px;height:152px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.4'></ul><section style='position:absolute;left:584px;top:268px;width:568px;height:252px;background-color:#FBF0DC;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:608px;top:288px;width:44px;height:44px;background-color:#A86A00;border-radius:50%'></div><div style='position:absolute;left:608px;top:293px;width:44px;height:32px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'>T</div><h3 data-slot='titleBR' style='position:absolute;left:668px;top:292px;width:460px;height:34px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#17324D;line-height:1.35'></h3><ul data-slot='itemsBR' style='position:absolute;left:608px;top:350px;width:520px;height:152px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.4'></ul></div>"
+    },
+    {
+      "id": "pros-cons",
+      "name": "利弊对比",
+      "description": "1152×360 绿左红右双栏：左侧利/优势（✓ 标记）、右侧弊/风险（— 标记），各含标题与列表。用于方案取舍、决策依据页。",
+      "size": {
+        "width": 1152,
+        "height": 360
+      },
+      "inputs": {
+        "titleL": {
+          "type": "richtext",
+          "required": true
+        },
+        "itemsL": {
+          "type": "list",
+          "required": true
+        },
+        "titleR": {
+          "type": "richtext",
+          "required": true
+        },
+        "itemsR": {
+          "type": "list",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0px;top:0px;width:568px;height:360px;background-color:#E5F3EA;border:1px solid #D8E4EF;border-radius:10px'></section><h3 data-slot='titleL' style='position:absolute;left:24px;top:22px;width:400px;height:34px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#1E7A46;line-height:1.35'></h3><div style='position:absolute;left:24px;top:66px;width:48px;height:3px;background-color:#1E7A46'></div><ul data-slot='itemsL' class='check' style='position:absolute;left:24px;top:84px;width:520px;height:252px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.5'></ul><section style='position:absolute;left:584px;top:0px;width:568px;height:360px;background-color:#F9E9E7;border:1px solid #D8E4EF;border-radius:10px'></section><h3 data-slot='titleR' style='position:absolute;left:608px;top:22px;width:400px;height:34px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#B3372F;line-height:1.35'></h3><div style='position:absolute;left:608px;top:66px;width:48px;height:3px;background-color:#B3372F'></div><ul data-slot='itemsR' class='dash' style='position:absolute;left:608px;top:84px;width:520px;height:252px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.5'></ul></div>"
+    },
+    {
+      "id": "status-row",
+      "name": "事项状态行",
+      "description": "1152×64 单行状态卡：序号方块 + 事项名 + 状态标签 + 右侧备注。status 用 runs 显式配色（正常 #1E7A46、关注 #A86A00、延期 #B3372F）。纵向叠 4-7 行做进展/风险跟踪页。",
+      "size": {
+        "width": 1152,
+        "height": 64
+      },
+      "inputs": {
+        "num": {
+          "type": "text",
+          "description": "序号，如 01"
+        },
+        "name": {
+          "type": "richtext",
+          "required": true
+        },
+        "status": {
+          "type": "richtext",
+          "required": true
+        },
+        "note": {
+          "type": "text"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:20px;top:16px;width:32px;height:32px;background-color:#E4EFF8;border-radius:8px'></div><div data-slot='num' style='position:absolute;left:20px;top:20px;width:32px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;line-height:1.3'></div><div data-slot='name' style='position:absolute;left:68px;top:17px;width:440px;height:32px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#17324D;line-height:1.35'></div><div style='position:absolute;left:548px;top:15px;width:150px;height:34px;background-color:#F0F5FA;border-radius:6px'></div><div data-slot='status' style='position:absolute;left:548px;top:22px;width:150px;height:20px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#000000;text-align:center;line-height:1.3'></div><div data-slot='note' style='position:absolute;left:732px;top:20px;width:396px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;text-align:right;line-height:1.35'></div></div>"
+    },
+    {
+      "id": "scorecard",
+      "name": "评分行",
+      "description": "1152×64 单行评分卡：维度名 + 评分标记 + 备注。rating 写 ●●●●○（实心 run 用 #1476B8、空心用 #D8E4EF）或 ★。纵向叠 4-6 行做能力成熟度/多维评估页。",
+      "size": {
+        "width": 1152,
+        "height": 64
+      },
+      "inputs": {
+        "name": {
+          "type": "richtext",
+          "required": true
+        },
+        "rating": {
+          "type": "richtext",
+          "required": true
+        },
+        "note": {
+          "type": "text"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div data-slot='name' style='position:absolute;left:24px;top:17px;width:380px;height:32px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='rating' style='position:absolute;left:432px;top:15px;width:320px;height:34px;font-family:Microsoft YaHei;font-size:22px;color:#1476B8;letter-spacing:4;line-height:1.3'></div><div data-slot='note' style='position:absolute;left:792px;top:20px;width:336px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;text-align:right;line-height:1.35'></div></div>"
+    },
+    {
+      "id": "funnel",
+      "name": "四级漏斗",
+      "description": "640×480 居中层叠漏斗：四级条块由深到浅，右侧 conv 写级间转化或流失。用于转化率、筛选流程、评审漏斗页；stage 文字控制在条块宽度内。",
+      "size": {
+        "width": 640,
+        "height": 480
+      },
+      "inputs": {
+        "stage1": {
+          "type": "richtext",
+          "required": true
+        },
+        "stage2": {
+          "type": "richtext",
+          "required": true
+        },
+        "stage3": {
+          "type": "richtext",
+          "required": true
+        },
+        "stage4": {
+          "type": "richtext",
+          "required": true
+        },
+        "conv1": {
+          "type": "text",
+          "description": "级间转化率/说明，如 ↓ 62%"
+        },
+        "conv2": {
+          "type": "text",
+          "description": "级间转化率/说明，如 ↓ 62%"
+        },
+        "conv3": {
+          "type": "text",
+          "description": "级间转化率/说明，如 ↓ 62%"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:40px;top:0px;width:560px;height:88px;background-color:#145D93;border-radius:10px'></div><div data-slot='stage1' style='position:absolute;left:40px;top:24px;width:560px;height:40px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'></div><div style='position:absolute;left:104px;top:112px;width:432px;height:88px;background-color:#1476B9;border-radius:10px'></div><div data-slot='stage2' style='position:absolute;left:104px;top:136px;width:432px;height:40px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'></div><div style='position:absolute;left:168px;top:224px;width:304px;height:88px;background-color:#1476B8;border-radius:10px'></div><div data-slot='stage3' style='position:absolute;left:168px;top:248px;width:304px;height:40px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'></div><div style='position:absolute;left:232px;top:336px;width:176px;height:88px;background-color:#3F92CC;border-radius:10px'></div><div data-slot='stage4' style='position:absolute;left:232px;top:360px;width:176px;height:40px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;line-height:1.35'></div><div data-slot='conv1' style='position:absolute;left:500px;top:90px;width:140px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#000000;text-align:right;line-height:1.3'></div><div data-slot='conv2' style='position:absolute;left:500px;top:202px;width:140px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#000000;text-align:right;line-height:1.3'></div><div data-slot='conv3' style='position:absolute;left:500px;top:314px;width:140px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#000000;text-align:right;line-height:1.3'></div></div>"
+    },
+    {
+      "id": "kpi-band",
+      "name": "指标横条",
+      "description": "1152×140 四联指标条：整栏浅色底 + 细分隔线，每格 label(15px) + value(38px 主色粗体)。用于经营/项目关键指标速览；指标不足 4 个时建议改用 stat-card。",
+      "size": {
+        "width": 1152,
+        "height": 140
+      },
+      "inputs": {
+        "label1": {
+          "type": "richtext",
+          "required": true
+        },
+        "value1": {
+          "type": "richtext",
+          "required": true
+        },
+        "label2": {
+          "type": "richtext",
+          "required": true
+        },
+        "value2": {
+          "type": "richtext",
+          "required": true
+        },
+        "label3": {
+          "type": "richtext",
+          "required": true
+        },
+        "value3": {
+          "type": "richtext",
+          "required": true
+        },
+        "label4": {
+          "type": "richtext",
+          "required": true
+        },
+        "value4": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='label1' style='position:absolute;left:24px;top:26px;width:248px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.35'></div><div data-slot='value1' style='position:absolute;left:24px;top:54px;width:248px;height:56px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#145D92;line-height:1.15'></div><div style='position:absolute;left:288px;top:28px;width:1px;height:84px;background-color:#D8E4EF'></div><div data-slot='label2' style='position:absolute;left:304px;top:26px;width:248px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.35'></div><div data-slot='value2' style='position:absolute;left:304px;top:54px;width:248px;height:56px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#145D92;line-height:1.15'></div><div style='position:absolute;left:568px;top:28px;width:1px;height:84px;background-color:#D8E4EF'></div><div data-slot='label3' style='position:absolute;left:584px;top:26px;width:248px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.35'></div><div data-slot='value3' style='position:absolute;left:584px;top:54px;width:248px;height:56px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#145D92;line-height:1.15'></div><div style='position:absolute;left:848px;top:28px;width:1px;height:84px;background-color:#D8E4EF'></div><div data-slot='label4' style='position:absolute;left:864px;top:26px;width:248px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.35'></div><div data-slot='value4' style='position:absolute;left:864px;top:54px;width:248px;height:56px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#145D92;line-height:1.15'></div></div>"
+    },
+    {
+      "id": "stairs",
+      "name": "阶梯演进",
+      "description": "1152×360 三级上升阶梯：左低右高三卡，各含编号、标题、说明。用于版本演进、成熟度路径、三步走战略页；比 milestone-strip 更强调逐级登高。",
+      "size": {
+        "width": 1152,
+        "height": 360
+      },
+      "inputs": {
+        "num1": {
+          "type": "text",
+          "description": "阶段编号，如 1"
+        },
+        "title1": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc1": {
+          "type": "richtext"
+        },
+        "num2": {
+          "type": "text",
+          "description": "阶段编号，如 2"
+        },
+        "title2": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc2": {
+          "type": "richtext"
+        },
+        "num3": {
+          "type": "text",
+          "description": "阶段编号，如 3"
+        },
+        "title3": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc3": {
+          "type": "richtext"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0px;top:200px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:16px;top:200px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num1' style='position:absolute;left:20px;top:218px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title1' style='position:absolute;left:68px;top:218px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc1' style='position:absolute;left:20px;top:264px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:392px;top:100px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:408px;top:100px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num2' style='position:absolute;left:412px;top:118px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title2' style='position:absolute;left:460px;top:118px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc2' style='position:absolute;left:412px;top:164px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:784px;top:0px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:800px;top:0px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num3' style='position:absolute;left:804px;top:18px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title3' style='position:absolute;left:852px;top:18px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc3' style='position:absolute;left:804px;top:64px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div></div>"
     }
   ]
 }
