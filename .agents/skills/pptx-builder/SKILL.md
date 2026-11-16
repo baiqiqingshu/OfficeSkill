@@ -95,7 +95,7 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 `list` 输入接受字符串、runs 或 `{"level":2,"text":"…"}` 对象，`level` 为 1–4；`text` 可为 runs，对象可附带 run 样式。列表输出 **PowerPoint 原生段落项目符号/自动编号及悬挂缩进**，标记不拼进正文，编辑时可继续增删条目。`ul`/普通列表使用项目符号，`ol`/`num` 使用自动编号，`check`、`dash` 使用对应符号；HTML 预览与布局估算沿用相同列表语义。场景描述优先使用 `outline`。
 
-可选主题：`crimson`（默认深红）、`blue`、`emerald`、`mono`、`majestic`（藏青金，适合正式汇报）、`graphite`。浅色主题的普通文字保持黑色；显式选择 `graphite` 时使用浅色对比文字，反白文字及强调色保留各自用途。
+可选主题：`crimson`（默认深红）、`blue`（政务蓝）、`emerald`（墨绿）、`navy`（藏青，科研答辩风）、`violet`（紫金，紫主色配浅金点缀）、`mono`（黑白灰）、`majestic`（藏青金，适合正式汇报）、`graphite`（石墨黑，深色底）。浅色主题的普通文字保持黑色；显式选择 `graphite` 时使用浅色对比文字，反白文字及强调色保留各自用途。
 
 ## 母版与标题、页脚区域
 
@@ -141,11 +141,13 @@ python SKILL_DIR/scripts/ppt_tool.py inspect-master master.pptx
 
 第三方库在顶层配置 `"libraries":["library/library.json"]`，通过 `库ID/组件ID` 引用。库只提供声明式受限 HTML/CSS，不加载 JS 插件。创建或扩展组件时读 [元素库格式](references/library-format.md)。
 
+随附的 `assets/libraries/studio/library.json` 提供 14 个答辩风组件（`studio/` 前缀：编号页眉 `num-header`、阐述条 `statement`、结论带 `conclusion-band`、技术路线 `route-chain`、里程碑轴 `milestone-axis`、问题对策 `issue-fix`、大数字 `big-number`、左图右文 `figure-points`、优劣对比 `versus-panel` 等）与 40 枚 Lucide 线性图标（`assets/libraries/studio/images/icons/`）。在 deck 顶层加 `"libraries":["assets/libraries/studio/library.json"]"`（路径相对配置目录，可用 `starter` 的相对布局或把库目录复制到 deck 目录内）即可按 `studio/组件ID` 使用。
+
 更新库或示例后重新生成预览：
 
 ```text
 python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo
-python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library 本地/library.json
+python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library SKILL_DIR/assets/libraries/studio/library.json
 ```
 
 IPD SR/AR 串讲参考 `examples/ipd-walkthrough.json`（29 页）：封面、SR/AR 需求列表（类型/编号/标题/工作量四列），每个 SR 先放标题页，再为各 AR 组织背景、主成功场景、异常场景、后置状态、前置条件和分支场景。`ar-header` 的 `crumb` 填 SR/AR/场景类型，`title` 填同一 AR 的统一名称，`meta` 填场景序号。

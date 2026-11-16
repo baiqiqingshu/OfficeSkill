@@ -19,3 +19,5 @@ playwright-report/
 
 # Web functional verification reports, process state and service logs
 .webtest/
+
+skills_hub/

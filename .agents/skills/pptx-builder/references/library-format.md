@@ -59,7 +59,7 @@
 
 ## 规范色板与主题换色
 
-普通正文、导语、表格正文与说明使用黑色 `#000000`，省略颜色时也默认黑色；标题、关键词及状态可以显式使用强调色或粗体。组件填充、边框和强调色优先使用下表中的 hex 色值。配置 JSON 顶层可选 `"theme"` 字段（`crimson` 默认、`blue`、`emerald`、`mono`、`graphite`）会把这些色值整体映射到目标主题；色板之外的 hex 一律原样保留，不参与换色。第三方库同样遵守本约定即可自动支持主题。
+普通正文、导语、表格正文与说明使用黑色 `#000000`，省略颜色时也默认黑色；标题、关键词及状态可以显式使用强调色或粗体。组件填充、边框和强调色优先使用下表中的 hex 色值。配置 JSON 顶层可选 `"theme"` 字段（`crimson` 默认、`blue`、`emerald`、`navy`、`violet`、`mono`、`majestic`、`graphite`）会把这些色值整体映射到目标主题；色板之外的 hex 一律原样保留，不参与换色。第三方库同样遵守本约定即可自动支持主题。
 
 | 语义 | hex |
 | --- | --- |
@@ -109,7 +109,7 @@ key 推荐 `库ID/组件ID`（不带前缀的组件 ID 亦可）；value 直接�
 python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/library.json] [--overwrite]
 ```
 
-生成 `output/library-demo/library-demo.html`：单文件离线页面。顶部「整页示例」按 deck 分页签，把组件放进 1280×720 完整页面展示，可点击放大与左右翻页；下方「组件库」按库分组，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）、缩放预览、可折叠示例 JSON 和复制元素 JSON 按钮。左侧支持搜索过滤，6 套主题可即时给预览换色。
+生成 `output/library-demo/library-demo.html`：单文件离线页面。顶部「整页示例」按 deck 分页签，把组件放进 1280×720 完整页面展示，可点击放大与左右翻页；下方「组件库」按库分组，展示中文名、`库ID/组件ID`、size、inputs 签名（`*` 必填）、缩放预览、可折叠示例 JSON 和复制元素 JSON 按钮。左侧支持搜索过滤，8 套主题可即时给预览换色。
 
 ## 内置组件
 

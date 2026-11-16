@@ -360,12 +360,12 @@ a{color:var(--accent)}
 .swatch{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid #24384F;background:#16263A;color:#C9D6E4;font:inherit;font-size:12px;cursor:pointer}
 .swatch i{width:10px;height:10px;border-radius:50%;background:var(--dot);box-shadow:0 0 0 1px rgba(255,255,255,.18) inset}
 .swatch:hover{border-color:#3C5875;color:#fff}
-.swatch.active{background:#1476B8;border-color:#2E8FD0;color:#fff}
+.swatch.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .nav{flex:1 1 auto;overflow:auto;padding:6px 10px 14px;border-top:1px solid #1B2B3E}
 .nav-label{padding:10px 10px 4px;font-size:11px;letter-spacing:1.2px;color:#647C92}
 .nav a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:7px;color:#B9C9D8;text-decoration:none;font-size:13px}
 .nav a:hover{background:#16263A;color:#fff}
-.nav a.active{background:#1476B8;color:#fff}
+.nav a.active{background:var(--accent);color:#fff}
 .nav a .n{font-size:11px;color:#7E93A8}
 .nav a.active .n{color:#D6E8F6}
 .side-foot{padding:12px 20px 16px;border-top:1px solid #1B2B3E;font-size:11px;line-height:1.7;color:#647C92}
@@ -494,6 +494,10 @@ _SCRIPT = """(function () {
       node.setAttribute("style", next);
     }
     document.body.setAttribute("data-theme", tid);
+    // Gallery chrome follows the selected accent so the preview frame and the
+    // components read as one theme.
+    document.body.style.setProperty("--accent", target.colors.ACCENT || "#1476B8");
+    document.body.style.setProperty("--accent-soft", target.colors.SOFT_A || "#E7F1FA");
     var buttons = document.querySelectorAll("[data-theme-btn]");
     for (var j = 0; j < buttons.length; j++) {
       var on = buttons[j].getAttribute("data-theme-btn") === tid;
@@ -791,6 +795,7 @@ def render_gallery(libraries, decks, warnings, stage):
     hero = (f'<header class="hero"><h1>PPTX Builder 元素库</h1>'
             f'<p>本页由 <code>ppt_tool.py demo</code> 离线生成：先用 <code>examples/*.json</code> 在完整页面里'
             f'（默认 1280×720）展示组件编排效果，再按库分组浏览全部 {component_total} 个组件。'
+            f'组件按科研答辩风设计：编号方块、深色表头条与结论条、通栏细线分层，正文黑字、强调走主色。'
             f'主题色板按钮会让整页示例与组件预览同步换色（只替换规范色板内的色值）；'
             f'组件卡片里的「复制元素 JSON」可直接粘贴进配置的 <code>pages[].elements</code>。'
             f'整页示例只渲染组件内容，不显示公司母版的固定背景与页脚，最终以生成的 PPTX 为准。'
@@ -799,7 +804,7 @@ def render_gallery(libraries, decks, warnings, stage):
             f'<span class="chip"><b>{len(decks)}</b>份整页示例 · <b>{page_total}</b>页</span>'
             f'<span class="chip"><b>{theme_total}</b>套主题色板</span></div></header>')
 
-    sidebar = ('<aside class="sidebar"><div class="brand"><b>PPTX Builder</b><span>元素库 v3</span>'
+    sidebar = ('<aside class="sidebar"><div class="brand"><b>PPTX Builder</b><span>内置组件库 · 答辩风</span>'
                f'<div class="count"><b>{component_total}</b> 组件 · <b>{page_total}</b> 整页</div></div>'
                '<div class="search"><input id="search-input" type="search" autocomplete="off"'
                ' placeholder="搜索组件名 / ID / 描述" aria-label="搜索组件"></div>'

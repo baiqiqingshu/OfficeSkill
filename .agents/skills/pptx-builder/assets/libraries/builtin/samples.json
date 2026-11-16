@@ -6,7 +6,7 @@
     "text": "技术方案评审 · 统一认证平台"
   },
   "lead": {
-    "text": "本期建设统一身份认证平台，收敛 47 个业务系统的登录入口，打通 IAM、OA 与人事系统账号体系，为后续多因素认证和审计留痕提供基础。"
+    "text": "结论先行：本期以统一认证收敛 47 个系统的登录入口，令牌校验 P99 ≤30ms，分批灰度接入、全程可回退。"
   },
   "section-title": {
     "num": "3.1 ",
@@ -46,8 +46,8 @@
     "text": "注：可用性指标按自然年统计，不含计划内维护窗口；QPS 数据来自 2026-02 压测报告。"
   },
   "cover": {
-    "tag": "技术方案评审",
-    "title": "统一认证平台\n技术方案评审",
+    "tag": "技术方案评审 · REQ-2026-018",
+    "title": "统一认证平台\n建设方案评审",
     "subtitle": "内网身份基础设施升级与 47 个业务系统接入",
     "meta": "汇报人：张伟 ｜ 平台研发部 ｜ 2026-03"
   },
@@ -232,7 +232,7 @@
     "caption": "图 2-1 统一认证平台总体架构"
   },
   "code": {
-    "label": "Bash 灰度发布命令",
+    "label": "deploy-gray.sh",
     "code": "kubectl set image deploy/auth-gw \\\n  auth-gw=registry.local/auth-gw:v1.4.2\nkubectl rollout status deploy/auth-gw"
   },
   "outline": {

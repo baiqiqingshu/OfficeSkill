@@ -6,7 +6,7 @@
     {
       "id": "title",
       "name": "页面标题",
-      "description": "正文页大标题：34px 粗体，下方带主色短条。放在页面顶部 (x=64,y=24,w=1152,h=52)；一页只用一个。",
+      "description": "正文页大标题：34px 粗体，下方主色粗条叠通栏细线（答辩式题注线）。放在页面顶部 (x=64,y=24,w=1152,h=52)；一页只用一个。",
       "size": {
         "width": 1152,
         "height": 52
@@ -17,12 +17,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><h1 data-slot='text' style='position:absolute;left:0;top:0;width:1152px;height:42px;font-family:Microsoft YaHei;font-size:34px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:44px;width:48px;height:4px;background-color:#1476B8'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><h1 data-slot='text' style='position:absolute;left:0;top:0;width:1152px;height:42px;font-family:Microsoft YaHei;font-size:34px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:46px;width:100%;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:0;top:44px;width:64px;height:4px;background-color:#1476B8'></div></div>"
     },
     {
       "id": "eyebrow",
       "name": "眉标",
-      "description": "页面顶部栏目/方案名：小方块 + 字距标签，15px 主色粗体。章节页常单独使用；与 title 同页时注意留出上下间距，避免重叠。",
+      "description": "页面顶部栏目/方案名：双色方块标记 + 字距标签，15px 主色粗体。章节页常单独使用；与 title 同页时注意留出上下间距，避免重叠。",
       "size": {
         "width": 320,
         "height": 28
@@ -33,12 +33,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:10px;width:8px;height:8px;background-color:#1476B8;border-radius:2px'></div><div data-slot='text' style='position:absolute;left:18px;top:0;width:302px;height:28px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;letter-spacing:1px;vertical-align:middle'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:9px;width:9px;height:9px;background-color:#1476B8;border-radius:2px'></div><div style='position:absolute;left:7px;top:16px;width:9px;height:9px;background-color:#3F92CC;border-radius:2px'></div><div data-slot='text' style='position:absolute;left:24px;top:0;width:296px;height:28px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;letter-spacing:1px;vertical-align:middle'></div></div>"
     },
     {
       "id": "lead",
       "name": "导语",
-      "description": "标题下的一句摘要或背景说明：22px 黑色文字、1.6 行距。放在标题下方 (y=124,w=1152,h=80)。",
+      "description": "标题下的一句结论性陈述条（statement bar）：浅底横条 + 左侧主色竖条，22px、1.55 行距。放在标题下方 (y=124,w=1152,h=80)；只写一句结论或背景，不超过两行。",
       "size": {
         "width": 1152,
         "height": 80
@@ -49,12 +49,12 @@
           "required": true
         }
       },
-      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:22px;color:#000000;line-height:1.6'></p>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border-radius:4px'><div style='position:absolute;left:0;top:0;width:5px;height:80px;background-color:#1476B8'></div><p data-slot='text' style='position:absolute;left:28px;top:0;width:1096px;height:80px;font-family:Microsoft YaHei;font-size:22px;color:#000000;line-height:1.55;vertical-align:middle'></p></div>"
     },
     {
       "id": "section-title",
       "name": "小节标题",
-      "description": "正文页内的小节标题：左侧主色竖条 + 26px 粗体标题。num 为可选编号（建议带尾随空格，如“3.1 ”）。",
+      "description": "正文页内的小节标题：左侧主色竖条 + 26px 粗体标题 + 底部通栏细线。num 为可选编号（建议带尾随空格，如“3.1 ”）。",
       "size": {
         "width": 1152,
         "height": 48
@@ -69,7 +69,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:9px;width:6px;height:30px;background-color:#1476B8'></div><h2 style='position:absolute;left:22px;top:0;width:1130px;height:48px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#17324D;vertical-align:middle'><span data-slot='num' style='color:#1476B8'></span><span data-slot='text'></span></h2></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:9px;width:6px;height:30px;background-color:#1476B8'></div><h2 style='position:absolute;left:22px;top:0;width:1130px;height:48px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#17324D;vertical-align:middle'><span data-slot='num' style='color:#1476B8'></span><span data-slot='text'></span></h2><div style='position:absolute;left:0;top:47px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "text",
@@ -138,7 +138,7 @@
     {
       "id": "caption",
       "name": "图注",
-      "description": "图片、表格、流程图下方的居中说明，16px 弱文字。建议按“图 2-1 ××架构示意”“表 3-1 ××对照”编号。",
+      "description": "图片、表格、流程图下方的居中编号说明，15px 主色粗体（答辩式图注）。建议按“图 2-1 ××架构示意”“表 3-1 ××对照”编号。",
       "size": {
         "width": 552,
         "height": 26
@@ -149,7 +149,7 @@
           "required": true
         }
       },
-      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:16px;color:#000000;text-align:center'></p>"
+      "html": "<p data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center'></p>"
     },
     {
       "id": "footnote",
@@ -170,18 +170,18 @@
     {
       "id": "divider",
       "name": "分隔线",
-      "description": "1px 浅色横线，用于标题与正文、模块之间分隔；无输入。",
+      "description": "主色短段叠通栏细线的分隔线（2px），用于标题与正文、模块之间分隔；无输入。",
       "size": {
         "width": 1152,
         "height": 2
       },
       "inputs": {},
-      "html": "<div style='position:absolute;left:0;top:1px;width:100%;height:1px;background-color:#D8E4EF'></div>"
+      "html": "<div style='position:absolute;left:0;top:1px;width:100%;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:0;top:0;width:64px;height:2px;background-color:#1476B8'></div>"
     },
     {
       "id": "cover",
       "name": "汇报封面",
-      "description": "首页封面：顶部标签 + 52px 大标题 + 副标题 + 主色短线 + 汇报人/日期元信息，右侧有几何装饰。tag 填“技术方案评审”“需求评审”等；meta 建议“汇报人：张三 ｜ 平台研发部 ｜ 2026-03”。",
+      "description": "首页封面：双色方块标记 + 顶部标签 + 50px 大标题 + 副标题 + 主色粗条 + 底部深主色横带（白色元信息），右侧几何装饰。tag 填“技术方案评审”“需求评审”等；meta 建议“汇报人：张三 ｜ 平台研发部 ｜ 2026-03”。",
       "size": {
         "width": 1152,
         "height": 420
@@ -203,12 +203,12 @@
           "description": "汇报人、部门、日期等元信息行"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='tag' style='position:absolute;left:0;top:0;width:200px;height:34px;background-color:#E4EFF8;border-radius:6px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:64px;width:940px;height:150px;font-family:Microsoft YaHei;font-size:52px;font-weight:bold;color:#17324D;line-height:1.3'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:226px;width:940px;height:40px;font-family:Microsoft YaHei;font-size:22px;color:#000000;line-height:1.5'></p><div style='position:absolute;left:0;top:290px;width:72px;height:4px;background-color:#1476B8'></div><p data-slot='meta' style='position:absolute;left:0;top:318px;width:940px;height:32px;font-family:Microsoft YaHei;font-size:16px;color:#000000'></p><div style='position:absolute;left:980px;top:20px;width:172px;height:172px;border:1px solid #D8E4EF;border-radius:12px'></div><div style='position:absolute;left:1012px;top:52px;width:108px;height:108px;background-color:#E4EFF8;border-radius:8px'></div><div style='position:absolute;left:1044px;top:84px;width:44px;height:44px;background-color:#1476B8;border-radius:6px'></div><div style='position:absolute;left:980px;top:216px;width:172px;height:4px;background-color:#C5D3DF'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:8px;width:9px;height:9px;background-color:#1476B8;border-radius:2px'></div><div style='position:absolute;left:7px;top:15px;width:9px;height:9px;background-color:#3F92CC;border-radius:2px'></div><div data-slot='tag' style='position:absolute;left:24px;top:2px;width:720px;height:28px;font-family:Microsoft YaHei;font-size:16px;font-weight:bold;color:#145D92;letter-spacing:2px;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:56px;width:940px;height:140px;font-family:Microsoft YaHei;font-size:50px;font-weight:bold;color:#17324D;line-height:1.3'></h1><p data-slot='subtitle' style='position:absolute;left:0;top:208px;width:940px;height:40px;font-family:Microsoft YaHei;font-size:22px;color:#000000;line-height:1.5'></p><div style='position:absolute;left:0;top:258px;width:72px;height:4px;background-color:#1476B8'></div><div style='position:absolute;left:0;top:344px;width:100%;height:76px;background-color:#145D93;border-radius:8px'></div><p data-slot='meta' style='position:absolute;left:32px;top:344px;width:920px;height:76px;font-family:Microsoft YaHei;font-size:16px;color:#FFFFFF;vertical-align:middle'></p><div style='position:absolute;left:980px;top:4px;width:172px;height:172px;border:1px solid #D8E4EF;border-radius:12px'></div><div style='position:absolute;left:1012px;top:36px;width:108px;height:108px;background-color:#E4EFF8;border-radius:8px'></div><div style='position:absolute;left:1044px;top:68px;width:44px;height:44px;background-color:#1476B8;border-radius:6px'></div><div style='position:absolute;left:980px;top:196px;width:172px;height:1px;background-color:#C5D3DF'></div><div style='position:absolute;left:980px;top:192px;width:56px;height:4px;background-color:#1476B8'></div></div>"
     },
     {
       "id": "section-break",
       "name": "章节过渡页",
-      "description": "章节封面：浅底大圆角面板 + 76px 编号 + 38px 标题 + 一句说明，右侧三条装饰竖线。number 填 01/02；留空则只显示标题与说明。",
+      "description": "深主色章节过渡页：68px 大号白色编号 + 主色粗条 + 36px 白色标题 + 一句说明，右侧三条装饰竖线。number 填 01/02；留空则只显示标题与说明。",
       "size": {
         "width": 1152,
         "height": 280
@@ -226,12 +226,12 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='number' style='position:absolute;left:40px;top:28px;width:220px;height:96px;font-family:Microsoft YaHei;font-size:76px;font-weight:bold;color:#3F92CC;line-height:1'></div><h1 data-slot='title' style='position:absolute;left:40px;top:132px;width:900px;height:54px;font-family:Microsoft YaHei;font-size:38px;font-weight:bold;color:#17324D'></h1><div style='position:absolute;left:40px;top:198px;width:56px;height:4px;background-color:#1476B8'></div><p data-slot='desc' style='position:absolute;left:40px;top:218px;width:960px;height:36px;font-family:Microsoft YaHei;font-size:20px;color:#000000'></p><div style='position:absolute;left:1012px;top:40px;width:4px;height:64px;background-color:#1476B8'></div><div style='position:absolute;left:1032px;top:40px;width:4px;height:64px;background-color:#3F92CC'></div><div style='position:absolute;left:1052px;top:40px;width:4px;height:64px;background-color:#C5D3DF'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#145D93;border-radius:12px'><div data-slot='number' style='position:absolute;left:40px;top:36px;width:300px;height:88px;font-family:Microsoft YaHei;font-size:68px;font-weight:bold;color:#FFFFFF;line-height:1'></div><div style='position:absolute;left:42px;top:140px;width:64px;height:4px;background-color:#3F92CC'></div><h1 data-slot='title' style='position:absolute;left:40px;top:158px;width:920px;height:52px;font-family:Microsoft YaHei;font-size:36px;font-weight:bold;color:#FFFFFF'></h1><p data-slot='desc' style='position:absolute;left:40px;top:222px;width:960px;height:36px;font-family:Microsoft YaHei;font-size:19px;color:#FFFFFF'></p><div style='position:absolute;left:1012px;top:44px;width:4px;height:64px;background-color:#3F92CC'></div><div style='position:absolute;left:1032px;top:44px;width:4px;height:64px;background-color:#E4EFF8'></div><div style='position:absolute;left:1052px;top:44px;width:4px;height:64px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "agenda-item",
       "name": "目录条目",
-      "description": "目录页一行：26px 编号 + 24px 标题 + 16px 说明 + 细分隔线。多个同 x、高度 72px 递增 y 纵向摆放即成目录页。num 填 01/02，留空为无编号条目。",
+      "description": "目录页一行：浅底圆角编号方块 + 24px 标题 + 16px 说明 + 细分隔线。多个同 x、高度 72px 递增 y 纵向摆放即成目录页。num 填 01/02，留空时编号块保留为浅色装饰。",
       "size": {
         "width": 1152,
         "height": 72
@@ -249,7 +249,7 @@
           "type": "text"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='num' style='position:absolute;left:0;top:14px;width:56px;height:40px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:72px;top:10px;width:760px;height:32px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:72px;top:42px;width:760px;height:24px;font-family:Microsoft YaHei;font-size:16px;color:#000000'></p><div style='position:absolute;left:0;top:71px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:14px;width:44px;height:44px;background-color:#E4EFF8;border-radius:8px'></div><div data-slot='num' style='position:absolute;left:0;top:14px;width:44px;height:44px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:64px;top:8px;width:768px;height:32px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:64px;top:42px;width:768px;height:24px;font-family:Microsoft YaHei;font-size:16px;color:#000000'></p><div style='position:absolute;left:0;top:71px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "thanks",
@@ -277,7 +277,7 @@
     {
       "id": "card",
       "name": "信息卡片",
-      "description": "白底圆角卡片：左侧主色短条 + 23px 标题 + 18px 正文（1.7 行距）。宽 552 适合双栏并排；三栏请用 feature-card。",
+      "description": "白底圆角卡片：左侧主色短条 + 23px 标题 + 细分隔线 + 18px 正文（1.7 行距）。宽 552 适合双栏并排；三栏请用 feature-card。",
       "size": {
         "width": 552,
         "height": 220
@@ -292,12 +292,12 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8'></div><h3 data-slot='title' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:23px;font-weight:bold;color:#17324D'></h3><p data-slot='text' style='position:absolute;left:24px;top:72px;width:504px;height:124px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.7'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:24px;top:22px;width:4px;height:28px;background-color:#1476B8'></div><h3 data-slot='title' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:23px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><div style='position:absolute;left:24px;top:64px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='text' style='position:absolute;left:24px;top:80px;width:504px;height:116px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.7'></p></section>"
     },
     {
       "id": "feature-card",
       "name": "特性卡片",
-      "description": "三栏特性卡（宽 360）：40px 圆角序号徽标 + 21px 标题 + 17px 说明。适合核心能力、建设要点、目标拆解；badge 填 01/02 或 ✓。",
+      "description": "三栏特性卡（宽 360）：主色圆角编号方块（白字）+ 21px 标题 + 细分隔线 + 17px 说明。适合核心能力、建设要点、目标拆解；badge 填 01/02 或 ✓。",
       "size": {
         "width": 360,
         "height": 220
@@ -315,12 +315,12 @@
           "type": "richtext"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='badge' style='position:absolute;left:24px;top:24px;width:40px;height:40px;background-color:#1476B9;border-radius:8px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:76px;top:26px;width:260px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><p data-slot='text' style='position:absolute;left:24px;top:88px;width:312px;height:108px;font-family:Microsoft YaHei;font-size:17px;color:#000000;line-height:1.65'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='badge' style='position:absolute;left:24px;top:24px;width:44px;height:44px;background-color:#1476B9;border-radius:8px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:80px;top:26px;width:256px;height:40px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><div style='position:absolute;left:24px;top:86px;width:312px;height:1px;background-color:#D8E4EF'></div><p data-slot='text' style='position:absolute;left:24px;top:100px;width:312px;height:96px;font-family:Microsoft YaHei;font-size:17px;color:#000000;line-height:1.6'></p></section>"
     },
     {
       "id": "panel",
       "name": "分组面板",
-      "description": "白底圆角分组容器：21px 标题 + 细分隔线 + 18px 内容。宽 552 双栏，宽 1152 通栏；适合把口径、约束、说明收拢成块。",
+      "description": "深色表头条分组面板：主色填充表头条（19px 白色粗体标题）+ 白底正文区（18px、1.7 行距）。宽 552 双栏，宽 1152 通栏；适合把口径、约束、说明收拢成块。",
       "size": {
         "width": 552,
         "height": 300
@@ -334,7 +334,7 @@
           "type": "richtext"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><h3 data-slot='title' style='position:absolute;left:24px;top:20px;width:504px;height:32px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><div style='position:absolute;left:24px;top:60px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='text' style='position:absolute;left:24px;top:76px;width:504px;height:200px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.7'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:0;width:100%;height:44px;background-color:#145D93;border-radius:10px'></div><h3 data-slot='title' style='position:absolute;left:20px;top:0;width:512px;height:44px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#FFFFFF;vertical-align:middle'></h3><p data-slot='text' style='position:absolute;left:24px;top:64px;width:504px;height:212px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.7'></p></section>"
     },
     {
       "id": "metric",
@@ -411,7 +411,7 @@
     {
       "id": "icon-badge",
       "name": "图标徽标",
-      "description": "48px 圆形浅色底 + 单字符符号（如 ✓、→、01、★）。用于卡片前的图标位或流程节点装饰；符号建议 1–2 个字符。",
+      "description": "48px 主色圆形徽标 + 白色符号（如 ✓、→、01、★）。用于卡片前的图标位或流程节点装饰；符号建议 1–2 个字符。",
       "size": {
         "width": 48,
         "height": 48
@@ -422,7 +422,7 @@
           "required": true
         }
       },
-      "html": "<div data-slot='symbol' style='position:absolute;left:0;top:0;width:48px;height:48px;background-color:#E4EFF8;border-radius:50%;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'></div>"
+      "html": "<div data-slot='symbol' style='position:absolute;left:0;top:0;width:48px;height:48px;background-color:#1476B9;border-radius:50%;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div>"
     },
     {
       "id": "table",
@@ -443,7 +443,7 @@
     {
       "id": "compare",
       "name": "双栏对比",
-      "description": "左右两栏对比（1152×320）：每栏浅底圆角 + 21px 标题 + 细分隔线 + 17px 逐行条目。用于方案 A/B、改造前后、自建/外采；行首建议带 ✓/✗/—。",
+      "description": "左右两栏对比（1152×320）：每栏浅底圆角 + 短条标记标题 + 细分隔线 + 17px 逐行条目，中央 VS 圆章。用于方案 A/B、改造前后、自建/外采；行首建议带 ✓/✗/—。",
       "size": {
         "width": 1152,
         "height": 320
@@ -466,12 +466,12 @@
           "description": "右栏逐行条目，换行分隔"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:600px;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8'></div><div style='position:absolute;left:624px;top:24px;width:4px;height:24px;background-color:#8496A8'></div><h3 data-slot='titleLeft' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><h3 data-slot='titleRight' style='position:absolute;left:640px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#000000'></h3><div style='position:absolute;left:24px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:624px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><p data-slot='textLeft' style='position:absolute;left:24px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#000000;line-height:1.8'></p><p data-slot='textRight' style='position:absolute;left:624px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#000000;line-height:1.8'></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:600px;top:0;width:552px;height:320px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:24px;width:4px;height:24px;background-color:#1476B8'></div><div style='position:absolute;left:624px;top:24px;width:4px;height:24px;background-color:#8496A8'></div><h3 data-slot='titleLeft' style='position:absolute;left:40px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#145D92'></h3><h3 data-slot='titleRight' style='position:absolute;left:640px;top:18px;width:488px;height:36px;font-family:Microsoft YaHei;font-size:21px;font-weight:bold;color:#000000'></h3><div style='position:absolute;left:24px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:624px;top:66px;width:504px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:560px;top:132px;width:32px;height:32px;background-color:#FDFDFD;border:1px solid #C5D3DF;border-radius:50%;font-family:Microsoft YaHei;font-size:13px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>VS</div><p data-slot='textLeft' style='position:absolute;left:24px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#000000;line-height:1.8'></p><p data-slot='textRight' style='position:absolute;left:624px;top:82px;width:504px;height:214px;font-family:Microsoft YaHei;font-size:17px;color:#000000;line-height:1.8'></p></div>"
     },
     {
       "id": "matrix2x2",
       "name": "四象限矩阵",
-      "description": "2×2 四象限（1152×520），浅底圆角分区。titleTL/TR/BL/BR 为象限标题，itemsXX 为原生项目符号条目数组。适合需求优先级、SWOT。",
+      "description": "2×2 四象限（1152×520），浅底圆角分区 + 主色小方块标记标题。titleTL/TR/BL/BR 为象限标题，itemsXX 为原生项目符号条目数组。适合需求优先级、SWOT。",
       "size": {
         "width": 1152,
         "height": 520
@@ -506,12 +506,12 @@
           "type": "list"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:584px;top:0;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:0;top:268px;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:584px;top:268px;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div data-slot='titleTL' style='position:absolute;left:24px;top:20px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsTL' style='position:absolute;left:24px;top:60px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul><div data-slot='titleTR' style='position:absolute;left:608px;top:20px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsTR' style='position:absolute;left:608px;top:60px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul><div data-slot='titleBL' style='position:absolute;left:24px;top:288px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsBL' style='position:absolute;left:24px;top:328px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul><div data-slot='titleBR' style='position:absolute;left:608px;top:288px;width:520px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsBR' style='position:absolute;left:608px;top:328px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:584px;top:0;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:0;top:268px;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><section style='position:absolute;left:584px;top:268px;width:568px;height:252px;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:24px;top:30px;width:10px;height:10px;background-color:#1476B8;border-radius:2px'></div><div data-slot='titleTL' style='position:absolute;left:44px;top:20px;width:500px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsTL' style='position:absolute;left:24px;top:60px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul><div style='position:absolute;left:608px;top:30px;width:10px;height:10px;background-color:#1476B8;border-radius:2px'></div><div data-slot='titleTR' style='position:absolute;left:628px;top:20px;width:500px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsTR' style='position:absolute;left:608px;top:60px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul><div style='position:absolute;left:24px;top:298px;width:10px;height:10px;background-color:#1476B8;border-radius:2px'></div><div data-slot='titleBL' style='position:absolute;left:44px;top:288px;width:500px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsBL' style='position:absolute;left:24px;top:328px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul><div style='position:absolute;left:608px;top:298px;width:10px;height:10px;background-color:#1476B8;border-radius:2px'></div><div data-slot='titleBR' style='position:absolute;left:628px;top:288px;width:500px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></div><ul data-slot='itemsBR' style='position:absolute;left:608px;top:328px;width:520px;height:172px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.7'></ul></div>"
     },
     {
       "id": "field",
       "name": "字段说明行",
-      "description": "左侧 18px 粗体字段名 + 右侧 18px 取值 + 底部细分隔线，高 48px。多条同 x 递增 y 竖向叠放即成需求字段表、接口入参表。",
+      "description": "主色小方块 + 左侧 18px 粗体字段名 + 右侧 18px 取值 + 底部细分隔线，高 48px。多条同 x 递增 y 竖向叠放即成需求字段表、接口入参表。",
       "size": {
         "width": 552,
         "height": 48
@@ -526,12 +526,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='name' style='position:absolute;left:0;top:0;width:140px;height:48px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></div><div data-slot='value' style='position:absolute;left:156px;top:0;width:396px;height:48px;font-family:Microsoft YaHei;font-size:18px;color:#000000;vertical-align:middle'></div><div style='position:absolute;left:0;top:47px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:2px;top:21px;width:6px;height:6px;background-color:#1476B8'></div><div data-slot='name' style='position:absolute;left:16px;top:0;width:130px;height:48px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></div><div data-slot='value' style='position:absolute;left:156px;top:0;width:396px;height:48px;font-family:Microsoft YaHei;font-size:18px;color:#000000;vertical-align:middle'></div><div style='position:absolute;left:0;top:47px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "api-item",
       "name": "接口行",
-      "description": "接口清单一行（1152×56）：方法标签 + Consolas 路径 + 15px 说明 + 细分隔线。method 填 GET/POST/PUT/DELETE；多条递增 y 排成接口列表。",
+      "description": "接口清单一行（1152×56）：主色方法标签 + Consolas 路径 + 15px 说明 + 细分隔线。method 填 GET/POST/PUT/DELETE；多条递增 y 排成接口列表。",
       "size": {
         "width": 1152,
         "height": 56
@@ -549,12 +549,12 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='method' style='position:absolute;left:0;top:12px;width:76px;height:30px;background-color:#1476B9;border-radius:4px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='path' style='position:absolute;left:92px;top:14px;width:420px;height:28px;font-family:Microsoft YaHei;font-size:17px;color:#17324D;vertical-align:middle'></div><p data-slot='desc' style='position:absolute;left:528px;top:14px;width:624px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#000000;vertical-align:middle'></p><div style='position:absolute;left:0;top:55px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='method' style='position:absolute;left:0;top:12px;width:76px;height:30px;background-color:#1476B9;border-radius:4px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='path' style='position:absolute;left:92px;top:14px;width:420px;height:28px;font-family:Consolas;font-size:17px;color:#17324D;vertical-align:middle'></div><p data-slot='desc' style='position:absolute;left:528px;top:14px;width:624px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#000000;vertical-align:middle'></p><div style='position:absolute;left:0;top:55px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "tag",
       "name": "标签",
-      "description": "浅主色底圆角标签，15px 粗体，用于技术栈、分类、优先级等短词（如“微服务”“P0”）。宽 140；按文字长短调整 box 宽度并排摆放。",
+      "description": "浅主色底胶囊标签，15px 粗体，用于技术栈、分类、优先级等短词（如“微服务”“P0”）。宽 140；按文字长短调整 box 宽度并排摆放。",
       "size": {
         "width": 140,
         "height": 32
@@ -565,7 +565,7 @@
           "required": true
         }
       },
-      "html": "<div data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8;border-radius:6px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div>"
+      "html": "<div data-slot='text' style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#E4EFF8;border-radius:16px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div>"
     },
     {
       "id": "status",
@@ -670,7 +670,7 @@
     {
       "id": "conclusion",
       "name": "评审结论条",
-      "description": "深主色圆角结论条（1152×80）：白色“结论”徽标 + 19px 白色粗体结论文字。放在评审/方案页末尾给出决策意见。",
+      "description": "深主色圆角结论条（1152×80）：白色“结论”徽标 + 细分隔线 + 20px 白色粗体结论文字。放在评审/方案页末尾给出决策意见。",
       "size": {
         "width": 1152,
         "height": 80
@@ -681,12 +681,12 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#145D93;border-radius:10px'><div style='position:absolute;left:20px;top:20px;width:72px;height:40px;background-color:#FFFFFF;border-radius:6px;font-family:Microsoft YaHei;font-size:16px;font-weight:bold;color:#145D93;text-align:center;vertical-align:middle'>结论</div><p data-slot='text' style='position:absolute;left:112px;top:0;width:1016px;height:80px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#FFFFFF;vertical-align:middle'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#145D93;border-radius:10px'><div style='position:absolute;left:20px;top:20px;width:72px;height:40px;background-color:#FFFFFF;border-radius:6px;font-family:Microsoft YaHei;font-size:16px;font-weight:bold;color:#145D93;text-align:center;vertical-align:middle'>结论</div><div style='position:absolute;left:106px;top:22px;width:1px;height:36px;background-color:#FFFFFF'></div><p data-slot='text' style='position:absolute;left:124px;top:0;width:1004px;height:80px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;vertical-align:middle'></p></section>"
     },
     {
       "id": "flow-step",
       "name": "流程步骤",
-      "description": "流程节点（264×160）：32px 圆形序号 + 20px 标题 + 15px 说明，白底圆角。横向排布时每两个之间放一个 flow-arrow；num 填 1/2/3。",
+      "description": "流程节点（264×160）：主色编号方块 + 同行标题 + 15px 说明，白底圆角。横向排布时每两个之间放一个 flow-arrow；num 填 1/2/3，标题建议 ≤8 字。",
       "size": {
         "width": 264,
         "height": 160
@@ -704,7 +704,7 @@
           "type": "richtext"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='num' style='position:absolute;left:20px;top:20px;width:32px;height:32px;background-color:#1476B9;border-radius:50%;font-family:Microsoft YaHei;font-size:16px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:20px;top:66px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:20px;top:102px;width:224px;height:44px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.5'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div data-slot='num' style='position:absolute;left:20px;top:20px;width:36px;height:36px;background-color:#1476B9;border-radius:8px;font-family:Microsoft YaHei;font-size:17px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><h3 data-slot='title' style='position:absolute;left:68px;top:20px;width:176px;height:36px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><p data-slot='desc' style='position:absolute;left:20px;top:70px;width:224px;height:76px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.5'></p></section>"
     },
     {
       "id": "flow-arrow",
@@ -721,7 +721,7 @@
           "description": "箭头字符，如“→”“▼”“⇒”"
         }
       },
-      "html": "<div data-slot='arrow' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:28px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'></div>"
+      "html": "<div data-slot='arrow' style='position:absolute;left:0;top:0;width:100%;height:100%;font-family:Microsoft YaHei;font-size:32px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'></div>"
     },
     {
       "id": "layer",
@@ -747,7 +747,7 @@
     {
       "id": "arch-node",
       "name": "架构节点",
-      "description": "架构图中的单个系统/模块（240×96）：左侧浅主色细条 + 17px 标题 + 13px 说明，白底圆角。配合 arch-zone 使用，先放分区背景再放节点。",
+      "description": "架构图中的单个系统/模块（240×96）：左侧主色细条 + 17px 标题 + 13px 说明，白底圆角。配合 arch-zone 使用，先放分区背景再放节点。",
       "size": {
         "width": 240,
         "height": 96
@@ -761,12 +761,12 @@
           "type": "richtext"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:0;top:12px;width:3px;height:72px;background-color:#3F92CC'></div><h3 data-slot='title' style='position:absolute;left:18px;top:16px;width:204px;height:28px;font-family:Microsoft YaHei;font-size:17px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:18px;top:48px;width:204px;height:40px;font-family:Microsoft YaHei;font-size:13px;color:#000000;line-height:1.35'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:0;top:12px;width:4px;height:72px;background-color:#1476B8'></div><h3 data-slot='title' style='position:absolute;left:18px;top:16px;width:204px;height:28px;font-family:Microsoft YaHei;font-size:17px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:18px;top:48px;width:204px;height:40px;font-family:Microsoft YaHei;font-size:13px;color:#000000;line-height:1.35'></p></section>"
     },
     {
       "id": "arch-zone",
       "name": "架构分区",
-      "description": "架构图分区背景（1152×160）：浅底大圆角 + 14px 分区标题 + 细分隔线。作为容器先摆放，再在内部放 arch-node；title 填“接入层”“服务层”等。",
+      "description": "架构图分区背景（1152×160）：浅底大圆角 + 主色页签细条 + 14px 分区标题 + 细分隔线。作为容器先摆放，再在内部放 arch-node；title 填“接入层”“服务层”等。",
       "size": {
         "width": 1152,
         "height": 160
@@ -777,12 +777,12 @@
           "required": true
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='title' style='position:absolute;left:20px;top:12px;width:400px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#000000;letter-spacing:1px'></div><div style='position:absolute;left:20px;top:40px;width:1112px;height:1px;background-color:#D8E4EF'></div></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0;top:14px;width:4px;height:20px;background-color:#1476B8'></div><div data-slot='title' style='position:absolute;left:20px;top:12px;width:400px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92;letter-spacing:1px'></div><div style='position:absolute;left:20px;top:40px;width:1112px;height:1px;background-color:#D8E4EF'></div></section>"
     },
     {
       "id": "timeline-item",
       "name": "竖向时间线节点",
-      "description": "竖直时间线一项（552×120）：圆点 + 竖轨 + 14px 日期 + 20px 标题 + 16px 说明。多个同 x、y 递增 120px 竖向叠放即连成时间线。",
+      "description": "竖直时间线一项（552×120）：主色圆环节点 + 竖轨 + 14px 日期 + 20px 标题 + 16px 说明。多个同 x、y 递增 120px 竖向叠放即连成时间线。",
       "size": {
         "width": 552,
         "height": 120
@@ -800,12 +800,12 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:10px;top:0;width:2px;height:120px;background-color:#D8E4EF'></div><div style='position:absolute;left:4px;top:10px;width:14px;height:14px;background-color:#1476B8;border-radius:50%'></div><div data-slot='date' style='position:absolute;left:40px;top:0;width:240px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></div><h3 data-slot='title' style='position:absolute;left:40px;top:28px;width:512px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:40px;top:62px;width:512px;height:48px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.55'></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:10px;top:0;width:2px;height:120px;background-color:#D8E4EF'></div><div style='position:absolute;left:3px;top:9px;width:16px;height:16px;background-color:#FDFDFD;border:2px solid #1476B8;border-radius:50%'></div><div data-slot='date' style='position:absolute;left:40px;top:0;width:240px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></div><h3 data-slot='title' style='position:absolute;left:40px;top:28px;width:512px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:40px;top:62px;width:512px;height:48px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.55'></p></div>"
     },
     {
       "id": "timeline-h-item",
       "name": "横向时间线节点",
-      "description": "横向时间线一项（264×160）：顶部日期 + 圆点 + 横轨 + 19px 标题 + 15px 说明。相邻摆放（间距 0）即连成横向时间轴；日期建议 2026-03 形式。",
+      "description": "横向时间线一项（264×160）：顶部日期 + 主色圆环节点 + 横轨 + 19px 标题 + 15px 说明。相邻摆放（间距 0）即连成横向时间轴；日期建议 2026-03 形式。",
       "size": {
         "width": 264,
         "height": 160
@@ -823,12 +823,12 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:38px;width:100%;height:2px;background-color:#D8E4EF'></div><div style='position:absolute;left:0;top:32px;width:14px;height:14px;background-color:#1476B8;border-radius:50%'></div><div data-slot='date' style='position:absolute;left:24px;top:0;width:216px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></div><h3 data-slot='title' style='position:absolute;left:0;top:64px;width:248px;height:30px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:0;top:98px;width:248px;height:52px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.5'></p></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:38px;width:100%;height:2px;background-color:#D8E4EF'></div><div style='position:absolute;left:0;top:31px;width:16px;height:16px;background-color:#FDFDFD;border:2px solid #1476B8;border-radius:50%'></div><div data-slot='date' style='position:absolute;left:24px;top:0;width:216px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></div><h3 data-slot='title' style='position:absolute;left:0;top:64px;width:248px;height:30px;font-family:Microsoft YaHei;font-size:19px;font-weight:bold;color:#17324D'></h3><p data-slot='desc' style='position:absolute;left:0;top:98px;width:248px;height:52px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.5'></p></div>"
     },
     {
       "id": "phase",
       "name": "阶段卡片",
-      "description": "路线图阶段卡（264×200）：顶部主色短条 + 20px 阶段名 + 14px 周期 + 15px 原生项目符号列表。4 张并排展示实施计划、版本里程碑。",
+      "description": "路线图阶段卡（264×200）：顶部主色短条 + 20px 阶段名 + 14px 主色周期 + 15px 原生项目符号列表。4 张并排展示实施计划、版本里程碑。",
       "size": {
         "width": 264,
         "height": 200
@@ -847,7 +847,7 @@
           "description": "阶段要点数组"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:16px;top:0;width:232px;height:4px;background-color:#1476B8'></div><h3 data-slot='name' style='position:absolute;left:20px;top:24px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></h3><p data-slot='period' style='position:absolute;left:20px;top:58px;width:224px;height:22px;font-family:Microsoft YaHei;font-size:14px;color:#000000'></p><ul data-slot='items' style='position:absolute;left:20px;top:90px;width:224px;height:96px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.6'></ul></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:16px;top:0;width:232px;height:4px;background-color:#1476B8'></div><h3 data-slot='name' style='position:absolute;left:20px;top:24px;width:224px;height:30px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#145D92'></h3><p data-slot='period' style='position:absolute;left:20px;top:58px;width:224px;height:22px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92'></p><ul data-slot='items' style='position:absolute;left:20px;top:90px;width:224px;height:96px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.6'></ul></section>"
     },
     {
       "id": "image",
@@ -888,7 +888,7 @@
     {
       "id": "code",
       "name": "代码块",
-      "description": "深底等宽字体块（552×200）：13px 标签 + 14px Consolas 代码，1.6 行距。用于命令行、SQL、配置、伪代码；label 填语言或文件名，code 用换行分行。",
+      "description": "等宽字体代码面板（552×200）：浅底细边框、右上角三色窗点 + 标签下细分割线，13px Consolas 标签 + 14px 代码，1.6 行距。用于命令行、SQL、配置、伪代码；label 填语言或文件名，code 用换行分行。",
       "size": {
         "width": 552,
         "height": 200
@@ -903,7 +903,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#212B36;border:1px solid #3A4A5C;border-radius:8px'><div data-slot='label' style='position:absolute;left:20px;top:12px;width:400px;height:22px;font-family:Microsoft YaHei;font-size:13px;color:#000000'></div><div data-slot='code' style='position:absolute;left:0;top:40px;width:100%;height:148px;font-family:Microsoft YaHei;font-size:14px;color:#D9E4EF;line-height:1.6;padding:0 20px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F5F8FB;border:1px solid #D8E4EF;border-radius:8px'><div style='position:absolute;left:512px;top:15px;width:8px;height:8px;background-color:#B3372F;border-radius:50%'></div><div style='position:absolute;left:526px;top:15px;width:8px;height:8px;background-color:#A86A00;border-radius:50%'></div><div style='position:absolute;left:540px;top:15px;width:8px;height:8px;background-color:#1E7A46;border-radius:50%'></div><div data-slot='label' style='position:absolute;left:20px;top:12px;width:400px;height:22px;font-family:Consolas;font-size:13px;color:#52687A'></div><div style='position:absolute;left:0;top:38px;width:100%;height:1px;background-color:#D8E4EF'></div><div data-slot='code' style='position:absolute;left:0;top:44px;width:100%;height:144px;font-family:Consolas;font-size:14px;color:#263C50;line-height:1.6;padding:0 20px'></div></div>"
     },
     {
       "id": "outline",
@@ -924,7 +924,7 @@
     {
       "id": "ui-frame",
       "name": "界面示意图",
-      "description": "窗口示意图（640×440）：40px 顶栏（三个圆点 + 标题）+ 图片区 + 底部说明条。src 放本地界面截图，title 填窗口标题，caption 填图注；适合系统截图、控制台界面。",
+      "description": "窗口示意图（640×440）：40px 顶栏（红黄绿窗点 + 标题）+ 图片区 + 底部说明条。src 放本地界面截图，title 填窗口标题，caption 填图注；适合系统截图、控制台界面。",
       "size": {
         "width": 640,
         "height": 440
@@ -943,7 +943,7 @@
           "description": "底部图注，如“图 4-1 会话管理界面”"
         }
       },
-      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:0;width:100%;height:40px;background-color:#F5F8FB'></div><div style='position:absolute;left:0;top:39px;width:100%;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:16px;top:16px;width:8px;height:8px;background-color:#C5D3DF;border-radius:50%'></div><div style='position:absolute;left:30px;top:16px;width:8px;height:8px;background-color:#C5D3DF;border-radius:50%'></div><div style='position:absolute;left:44px;top:16px;width:8px;height:8px;background-color:#C5D3DF;border-radius:50%'></div><div data-slot='title' style='position:absolute;left:64px;top:8px;width:552px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#000000;vertical-align:middle'></div><img data-slot='src' style='position:absolute;left:1px;top:41px;width:638px;height:362px'/><div style='position:absolute;left:0;top:404px;width:100%;height:36px;background-color:#F5F8FB'></div><p data-slot='caption' style='position:absolute;left:16px;top:404px;width:608px;height:36px;font-family:Microsoft YaHei;font-size:13px;color:#000000;vertical-align:middle'></p></section>"
+      "html": "<section style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'><div style='position:absolute;left:0;top:0;width:100%;height:40px;background-color:#F5F8FB'></div><div style='position:absolute;left:0;top:39px;width:100%;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:16px;top:16px;width:8px;height:8px;background-color:#B3372F;border-radius:50%'></div><div style='position:absolute;left:30px;top:16px;width:8px;height:8px;background-color:#A86A00;border-radius:50%'></div><div style='position:absolute;left:44px;top:16px;width:8px;height:8px;background-color:#1E7A46;border-radius:50%'></div><div data-slot='title' style='position:absolute;left:64px;top:8px;width:552px;height:24px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#000000;vertical-align:middle'></div><img data-slot='src' style='position:absolute;left:1px;top:41px;width:638px;height:362px'/><div style='position:absolute;left:0;top:404px;width:100%;height:36px;background-color:#F5F8FB'></div><p data-slot='caption' style='position:absolute;left:16px;top:404px;width:608px;height:36px;font-family:Microsoft YaHei;font-size:13px;color:#000000;vertical-align:middle'></p></section>"
     },
     {
       "id": "figure",
@@ -976,7 +976,7 @@
     {
       "id": "ar-header",
       "name": "AR 页头",
-      "description": "AR 内容页统一页头（1152×86）：左上 SR/AR/场景类型面包屑 + 32px AR 标题 + 右侧场景序号；每个 AR 场景页标题统一使用 AR 名称。",
+      "description": "AR 内容页统一页头（1152×86）：左上 SR/AR/场景类型面包屑 + 32px AR 标题 + 右侧场景序号 + 主色粗条叠通栏细线；每个 AR 场景页标题统一使用 AR 名称。",
       "size": {
         "width": 1152,
         "height": 86
@@ -996,12 +996,12 @@
           "description": "右侧场景序号，如「场景 2/6」"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='crumb' style='position:absolute;left:0;top:0;width:760px;height:22px;font-family:Microsoft YaHei;font-size:12px;font-weight:bold;color:#1476B8;letter-spacing:1px;vertical-align:middle'></div><div data-slot='meta' style='position:absolute;left:760px;top:0;width:392px;height:22px;font-family:Microsoft YaHei;font-size:12px;color:#000000;text-align:right;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:24px;width:1152px;height:40px;font-family:Microsoft YaHei;font-size:32px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:68px;width:48px;height:4px;background-color:#1476B9'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div data-slot='crumb' style='position:absolute;left:0;top:0;width:760px;height:22px;font-family:Microsoft YaHei;font-size:12px;font-weight:bold;color:#1476B8;letter-spacing:1px;vertical-align:middle'></div><div data-slot='meta' style='position:absolute;left:760px;top:0;width:392px;height:22px;font-family:Microsoft YaHei;font-size:12px;color:#000000;text-align:right;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:0;top:24px;width:1152px;height:40px;font-family:Microsoft YaHei;font-size:32px;font-weight:bold;color:#17324D;line-height:1.2'></h1><div style='position:absolute;left:0;top:68px;width:48px;height:4px;background-color:#1476B9'></div><div style='position:absolute;left:56px;top:70px;width:1096px;height:1px;background-color:#D8E4EF'></div></div>"
     },
     {
       "id": "insight-card",
       "name": "编号洞察卡",
-      "description": "360×240 三栏洞察卡：浅色编号块、强调标题与黑色正文。正文建议不超过 40 字。",
+      "description": "360×240 三栏洞察卡：深主色编号方块（白字）+ 强调标题 + 主色短条 + 黑色正文。正文建议不超过 40 字。",
       "size": {
         "width": 360,
         "height": 240
@@ -1020,12 +1020,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:24px;width:56px;height:44px;background-color:#E4EFF8;border-radius:8px'></div><div data-slot='number' style='position:absolute;left:24px;top:27px;width:56px;height:36px;font-family:Microsoft YaHei;font-size:24px;color:#145D92;line-height:1.35;font-weight:bold;text-align:center'></div><div data-slot='title' style='position:absolute;left:24px;top:86px;width:312px;height:38px;font-family:Microsoft YaHei;font-size:24px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='text' style='position:absolute;left:24px;top:140px;width:312px;height:80px;font-family:Microsoft YaHei;font-size:19px;color:#000000;line-height:1.35'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='number' style='position:absolute;left:24px;top:24px;width:56px;height:44px;background-color:#145D93;border-radius:8px;font-family:Microsoft YaHei;font-size:22px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div data-slot='title' style='position:absolute;left:24px;top:86px;width:312px;height:38px;font-family:Microsoft YaHei;font-size:24px;color:#17324D;line-height:1.35;font-weight:bold'></div><div style='position:absolute;left:24px;top:134px;width:48px;height:3px;background-color:#1476B8'></div><div data-slot='text' style='position:absolute;left:24px;top:146px;width:312px;height:74px;font-family:Microsoft YaHei;font-size:19px;color:#000000;line-height:1.35'></div></div>"
     },
     {
       "id": "value-card",
       "name": "价值指标卡",
-      "description": "360×240 价值卡：小标签、大指标、说明与底部强调线。适合三个并排指标。",
+      "description": "360×240 价值卡：主色小标签、44px 大指标、说明与底部强调线。适合三个并排指标。",
       "size": {
         "width": 360,
         "height": 240
@@ -1044,12 +1044,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='label' style='position:absolute;left:24px;top:26px;width:312px;height:30px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></div><div data-slot='value' style='position:absolute;left:24px;top:76px;width:312px;height:64px;font-family:Microsoft YaHei;font-size:44px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='note' style='position:absolute;left:24px;top:164px;width:312px;height:52px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></div><div style='position:absolute;left:24px;top:224px;width:56px;height:4px;background-color:#1476B8;border-radius:2px'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='label' style='position:absolute;left:24px;top:26px;width:312px;height:30px;font-family:Microsoft YaHei;font-size:16px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='value' style='position:absolute;left:24px;top:76px;width:312px;height:64px;font-family:Microsoft YaHei;font-size:44px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='note' style='position:absolute;left:24px;top:164px;width:312px;height:52px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></div><div style='position:absolute;left:24px;top:224px;width:56px;height:4px;background-color:#1476B8;border-radius:2px'></div></div>"
     },
     {
       "id": "decision-card",
       "name": "决策建议卡",
-      "description": "552×240 决策卡：状态标签、建议标题和正文。适合推荐方案及取舍说明。",
+      "description": "552×240 决策卡：浅主色状态标签、建议标题和正文。适合推荐方案及取舍说明。",
       "size": {
         "width": 552,
         "height": 240
@@ -1068,12 +1068,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:24px;width:120px;height:30px;background-color:#E5F3EA;border-radius:6px'></div><div data-slot='status' style='position:absolute;left:32px;top:28px;width:104px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#1E7A46;line-height:1.35;font-weight:bold'></div><div data-slot='title' style='position:absolute;left:24px;top:76px;width:504px;height:42px;font-family:Microsoft YaHei;font-size:26px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='text' style='position:absolute;left:24px;top:138px;width:504px;height:76px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:24px;width:120px;height:30px;background-color:#E4EFF8;border-radius:6px'></div><div data-slot='status' style='position:absolute;left:32px;top:28px;width:104px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='title' style='position:absolute;left:24px;top:76px;width:504px;height:42px;font-family:Microsoft YaHei;font-size:26px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='text' style='position:absolute;left:24px;top:138px;width:504px;height:76px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></div></div>"
     },
     {
       "id": "milestone-strip",
       "name": "里程碑横条",
-      "description": "1152×130 里程碑横条：左侧阶段标签，中部标题，右侧原生清单。适合串联计划。",
+      "description": "1152×130 里程碑横条：左侧深主色阶段块（白字），中部标题，右侧原生清单。适合串联计划。",
       "size": {
         "width": 1152,
         "height": 130
@@ -1092,7 +1092,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0px;top:0px;width:148px;height:130px;background-color:#1476B9;border-radius:12px'></div><div data-slot='phase' style='position:absolute;left:16px;top:44px;width:116px;height:42px;font-family:Microsoft YaHei;font-size:24px;color:#FFFFFF;line-height:1.35;font-weight:bold;text-align:center'></div><div data-slot='title' style='position:absolute;left:176px;top:42px;width:300px;height:42px;font-family:Microsoft YaHei;font-size:25px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:516px;top:22px;width:612px;height:86px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></ul></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0px;top:0px;width:148px;height:130px;background-color:#145D93;border-radius:12px'></div><div data-slot='phase' style='position:absolute;left:16px;top:44px;width:116px;height:42px;font-family:Microsoft YaHei;font-size:24px;color:#FFFFFF;line-height:1.35;font-weight:bold;text-align:center'></div><div data-slot='title' style='position:absolute;left:176px;top:42px;width:300px;height:42px;font-family:Microsoft YaHei;font-size:25px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:516px;top:22px;width:612px;height:86px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></ul></div>"
     },
     {
       "id": "risk-card",
@@ -1125,7 +1125,7 @@
     {
       "id": "action-card",
       "name": "负责人行动卡",
-      "description": "552×220 行动卡：负责人标签、任务标题及原生清单。用于会后行动与责任落实。",
+      "description": "552×220 行动卡：主色短条 + 负责人标签、任务标题及原生清单。用于会后行动与责任落实。",
       "size": {
         "width": 552,
         "height": 220
@@ -1144,12 +1144,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:24px;width:504px;height:1px;background-color:#D8E4EF;border-radius:0px'></div><div data-slot='owner' style='position:absolute;left:24px;top:36px;width:504px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='title' style='position:absolute;left:24px;top:78px;width:504px;height:38px;font-family:Microsoft YaHei;font-size:24px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:24px;top:132px;width:504px;height:68px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></ul></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:24px;width:48px;height:3px;background-color:#1476B8'></div><div data-slot='owner' style='position:absolute;left:24px;top:40px;width:504px;height:28px;font-family:Microsoft YaHei;font-size:15px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='title' style='position:absolute;left:24px;top:78px;width:504px;height:38px;font-family:Microsoft YaHei;font-size:24px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:24px;top:132px;width:504px;height:68px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></ul></div>"
     },
     {
       "id": "summary-band",
       "name": "摘要重点横幅",
-      "description": "1152×150 摘要横幅：主题标记、关键结论与黑色说明。适合正文页顶部导读。",
+      "description": "1152×150 摘要横幅：左侧主色竖条 + 方块标记的主题标签、关键结论与黑色说明。适合正文页顶部导读。",
       "size": {
         "width": 1152,
         "height": 150
@@ -1168,12 +1168,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0px;top:0px;width:6px;height:150px;background-color:#1476B8;border-radius:3px'></div><div data-slot='eyebrow' style='position:absolute;left:30px;top:20px;width:1092px;height:24px;font-family:Microsoft YaHei;font-size:14px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='title' style='position:absolute;left:30px;top:58px;width:1092px;height:40px;font-family:Microsoft YaHei;font-size:28px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='text' style='position:absolute;left:30px;top:112px;width:1092px;height:28px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0px;top:0px;width:6px;height:150px;background-color:#1476B8;border-radius:3px'></div><div style='position:absolute;left:30px;top:26px;width:10px;height:10px;background-color:#1476B8;border-radius:2px'></div><div data-slot='eyebrow' style='position:absolute;left:48px;top:20px;width:1074px;height:24px;font-family:Microsoft YaHei;font-size:14px;color:#145D92;line-height:1.35;font-weight:bold'></div><div data-slot='title' style='position:absolute;left:30px;top:58px;width:1092px;height:40px;font-family:Microsoft YaHei;font-size:28px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='text' style='position:absolute;left:30px;top:112px;width:1092px;height:28px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></div></div>"
     },
     {
       "id": "comparison-row",
       "name": "前后对比横条",
-      "description": "1152×140 前后对比：主题标签、现状和目标三栏，分隔线清晰。适合逐项讲清改进。",
+      "description": "1152×140 前后对比：主题标签、现状和目标三栏，中央分隔线带 → 圆章。适合逐项讲清改进。",
       "size": {
         "width": 1152,
         "height": 140
@@ -1192,12 +1192,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0px;top:0px;width:200px;height:140px;background-color:#F0F5FA;border-radius:12px'></div><div data-slot='label' style='position:absolute;left:24px;top:42px;width:152px;height:64px;font-family:Microsoft YaHei;font-size:23px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='before' style='position:absolute;left:232px;top:32px;width:408px;height:76px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></div><div style='position:absolute;left:670px;top:24px;width:1px;height:92px;background-color:#D8E4EF;border-radius:0px'></div><div data-slot='after' style='position:absolute;left:702px;top:32px;width:420px;height:76px;font-family:Microsoft YaHei;font-size:20px;color:#145D92;line-height:1.35;font-weight:bold'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0px;top:0px;width:200px;height:140px;background-color:#F0F5FA;border-radius:12px'></div><div data-slot='label' style='position:absolute;left:24px;top:42px;width:152px;height:64px;font-family:Microsoft YaHei;font-size:23px;color:#17324D;line-height:1.35;font-weight:bold'></div><div data-slot='before' style='position:absolute;left:232px;top:32px;width:408px;height:76px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></div><div style='position:absolute;left:670px;top:24px;width:1px;height:92px;background-color:#D8E4EF;border-radius:0px'></div><div style='position:absolute;left:652px;top:52px;width:36px;height:36px;background-color:#FDFDFD;border:1px solid #C5D3DF;border-radius:50%;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>→</div><div data-slot='after' style='position:absolute;left:702px;top:32px;width:420px;height:76px;font-family:Microsoft YaHei;font-size:20px;color:#145D92;line-height:1.35;font-weight:bold'></div></div>"
     },
     {
       "id": "capability-tile",
       "name": "能力模块卡",
-      "description": "360×220 能力卡：圆形短标签、模块标题和原生清单。适合三栏能力地图。",
+      "description": "360×220 能力卡：主色圆形符号徽标（白字）、模块标题和原生清单。适合三栏能力地图。",
       "size": {
         "width": 360,
         "height": 220
@@ -1216,12 +1216,12 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:22px;width:44px;height:44px;background-color:#E4EFF8;border-radius:22px'></div><div data-slot='symbol' style='position:absolute;left:24px;top:27px;width:44px;height:32px;font-family:Microsoft YaHei;font-size:18px;color:#145D92;line-height:1.35;font-weight:bold;text-align:center'></div><div data-slot='title' style='position:absolute;left:84px;top:28px;width:252px;height:36px;font-family:Microsoft YaHei;font-size:22px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:24px;top:94px;width:312px;height:104px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></ul></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='symbol' style='position:absolute;left:24px;top:22px;width:44px;height:44px;background-color:#1476B9;border-radius:22px;font-family:Microsoft YaHei;font-size:18px;color:#FFFFFF;line-height:1.35;font-weight:bold;text-align:center;vertical-align:middle'></div><div data-slot='title' style='position:absolute;left:84px;top:28px;width:252px;height:36px;font-family:Microsoft YaHei;font-size:22px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:24px;top:94px;width:312px;height:104px;font-family:Microsoft YaHei;font-size:18px;color:#000000;line-height:1.35'></ul></div>"
     },
     {
       "id": "takeaway-panel",
       "name": "结论与下一步面板",
-      "description": "1152×220 结论面板：左侧关键要点，右侧下一步行动。用于评审结尾或章节收束。",
+      "description": "1152×220 结论面板：左侧关键要点，右侧深主色“下一步”块（白字）。用于评审结尾或章节收束。",
       "size": {
         "width": 1152,
         "height": 220
@@ -1240,7 +1240,7 @@
           "required": true
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='title' style='position:absolute;left:28px;top:24px;width:720px;height:38px;font-family:Microsoft YaHei;font-size:26px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:28px;top:86px;width:720px;height:110px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></ul><div style='position:absolute;left:792px;top:0px;width:360px;height:220px;background-color:#E4EFF8;border-radius:12px'></div><div data-slot='next' style='position:absolute;left:820px;top:34px;width:304px;height:150px;font-family:Microsoft YaHei;font-size:23px;color:#145D92;line-height:1.35;font-weight:bold'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div data-slot='title' style='position:absolute;left:28px;top:24px;width:720px;height:38px;font-family:Microsoft YaHei;font-size:26px;color:#17324D;line-height:1.35;font-weight:bold'></div><ul data-slot='items' style='position:absolute;left:28px;top:86px;width:720px;height:110px;font-family:Microsoft YaHei;font-size:20px;color:#000000;line-height:1.35'></ul><div style='position:absolute;left:792px;top:0px;width:360px;height:220px;background-color:#145D93;border-radius:12px'></div><div data-slot='next' style='position:absolute;left:820px;top:34px;width:304px;height:150px;font-family:Microsoft YaHei;font-size:23px;color:#FFFFFF;line-height:1.35;font-weight:bold'></div></div>"
     },
     {
       "id": "swot",
@@ -1447,7 +1447,7 @@
     {
       "id": "stairs",
       "name": "阶梯演进",
-      "description": "1152×360 三级上升阶梯：左低右高三卡，各含编号、标题、说明。用于版本演进、成熟度路径、三步走战略页；比 milestone-strip 更强调逐级登高。",
+      "description": "1152×360 三级上升阶梯：左低右高三卡，各含编号、标题、说明，底部基线收束。用于版本演进、成熟度路径、三步走战略页；比 milestone-strip 更强调逐级登高。",
       "size": {
         "width": 1152,
         "height": 360
@@ -1487,7 +1487,7 @@
           "type": "richtext"
         }
       },
-      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0px;top:200px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:16px;top:200px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num1' style='position:absolute;left:20px;top:218px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title1' style='position:absolute;left:68px;top:218px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc1' style='position:absolute;left:20px;top:264px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:392px;top:100px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:408px;top:100px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num2' style='position:absolute;left:412px;top:118px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title2' style='position:absolute;left:460px;top:118px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc2' style='position:absolute;left:412px;top:164px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:784px;top:0px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:800px;top:0px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num3' style='position:absolute;left:804px;top:18px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title3' style='position:absolute;left:852px;top:18px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc3' style='position:absolute;left:804px;top:64px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div></div>"
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0px;top:200px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:16px;top:200px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num1' style='position:absolute;left:20px;top:218px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title1' style='position:absolute;left:68px;top:218px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc1' style='position:absolute;left:20px;top:264px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:392px;top:100px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:408px;top:100px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num2' style='position:absolute;left:412px;top:118px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title2' style='position:absolute;left:460px;top:118px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc2' style='position:absolute;left:412px;top:164px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:784px;top:0px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:800px;top:0px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num3' style='position:absolute;left:804px;top:18px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title3' style='position:absolute;left:852px;top:18px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc3' style='position:absolute;left:804px;top:64px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><div style='position:absolute;left:0;top:352px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
     }
   ]
 }
