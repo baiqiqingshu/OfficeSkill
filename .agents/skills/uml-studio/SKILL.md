@@ -24,33 +24,40 @@ metadata:
 
 4+1 是架构视角，不是五种新的 UML 记法。选择视角后，以有明确语义的类、组件、包、部署节点或业务场景表达；不要把同一张架构图改标题充当五个视图。
 
-## Agent 工作流
+## 极速生成与工作流（一步出图，无需先读 894 行 Schema）
 
-先判断交付阶段：用户说“先给草稿”“先看文字流程”“先不生成文件”等时，进入下方的**纯文本草稿模式**，本轮不执行 HTML / 图片生成。用户直接要求成品时，按以下流程生成，不强制先确认草稿。两种模式都先精炼元素文字（见“布局与文字”）。
+先判断交付阶段：用户说“先给草稿”“先看文字流程”“先不生成文件”等时，进入下方的**纯文本草稿模式**，本轮不执行 HTML / 图片生成。用户直接要求成品时，直接用 `--json`（或 `-` stdin）一步出图，**不必先读 `schemas/*.schema.json` 或写临时中间文件**：
+
+```bash
+# 1. 一步生成可编辑 HTML + 图片（--json 自动容错补全 version/id，可用节点 label 直接连线）
+node scripts/diagram.mjs --json '{"type":"flowchart","title":"需求评审","nodes":[{"id":"a","label":"评审需求","kind":"action"},{"id":"b","label":"通过？","kind":"decision"},{"id":"c","label":"进入迭代","kind":"end"}],"edges":[{"from":"a","to":"b"},{"from":"b","to":"c","label":"是"},{"from":"b","to":"a","label":"修改"}]}' --out output.html --image output.png
+
+# 2. 对已有 HTML 或 JSON 直接增量修改并重导出（支持 --set 与 --patch）
+node scripts/diagram.mjs output.html --set theme=industrial --set title="更新标题" --out output.html --image output.png
+
+# 3. 速查 18 类图 / 12 套主题 / 4 类最小结构（约 1KB，无需读完整 Schema）
+node scripts/diagram.mjs --presets
+node scripts/diagram.mjs --example sequence
+```
+
+四类数据家族最小结构（其余常用命令如 `--diagram 2`、`--all --out-dir`、`--format svg|png|jpeg|webp`、`--scale 2`、`--theme ocean` 均支持）：
+1. **节点连线图**（`activity|flowchart|usecase|class|state|component|package|architecture|module|deployment|logical|development|process|physical|scenario`）：`{"type":"flowchart","title":"标题","nodes":[{"id":"a","label":"步骤","kind":"action"}],"edges":[{"from":"a","to":"b","label":"条件"}],"groups":[{"id":"g1","label":"分组"}]}`
+2. **泳道图**（`swimlane`）：在节点连线图基础上加 `"lanes":[{"id":"l1","label":"角色"}]`，节点加 `"lane":"l1"`。
+3. **时序图**（`sequence`）：`{"type":"sequence","title":"标题","participants":[{"id":"u","label":"用户","kind":"actor"},{"id":"s","label":"服务"}],"messages":[{"from":"u","to":"s","label":"请求","kind":"sync"}],"fragments":[{"kind":"alt","label":"条件","from":0,"to":1,"elseAt":1,"elseLabel":"否则"}]}`
+4. **鱼骨图**（`fishbone`）：`{"type":"fishbone","title":"标题","fishbone":{"effect":"问题","categories":[{"label":"分类","causes":[{"label":"原因","children":[{"label":"子因"}]}]}]}}`
+
+多图文档使用 `{"version":1,"title":"文档名","diagrams":[...]}`；同类图可重复，每张独立保存主题与布局。仅当需要冷门进阶字段（如 `layout.adjustments`、`style` 细项）时，再按需查阅 `schemas/diagram.schema.json` 或 `examples/`。
 
 以下命令在本 SKILL 目录执行；从其它目录调用时，使用脚本和数据文件的实际路径。输出路径相对当前工作目录。
 
-1. 单图读取 `schemas/diagram.schema.json` 和对应 `examples/<type>.json`（4+1 视图读 `examples/scenarios/<type>.json`）；多图读取 `schemas/document.schema.json` 与 `examples/documents/gallery.json`。不照搬示例中的业务事实。
-2. 单图使用 `version:1,type,title`；多图使用 `version:1,title,diagrams:[...]`。同类图可以重复，每张独立保存主题、布局、数据；可选图形 `id` 在文档内唯一，节点 ID 只须在各自图内唯一。
-3. 验证再生成。默认海蓝主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。默认不配置坐标；明确需要手动调整时使用下方调整参数，不生成 SVG 路径。
-
 ```bash
 node scripts/diagram.mjs input.json --validate
-node scripts/diagram.mjs input.json --out output.html
 node scripts/diagram.mjs input.json --out output.html --image output.png --scale 2
-node scripts/diagram.mjs input.json --image output.svg
-node scripts/diagram.mjs input.json --image output.jpeg --quality 0.92
-node scripts/diagram.mjs input.json --image output.webp --theme ocean
-node scripts/diagram.mjs examples/industrial.json --out industrial.html --image industrial.png
 node scripts/diagram.mjs saved.html --diagram 2 --image selected.png
 node scripts/diagram.mjs saved.html --all --out-dir images --format webp --scale 1
-node scripts/diagram.mjs examples/documents/gallery.json --out design-book.html
 ```
 
-4. 检查命令退出码和生成回执。HTML 必须能在浏览器打开；修改数据/主题后，重新导出并检查对应图片。修改渲染源码后先完整构建，再重新生成 HTML 和图片，避免旧 HTML 内嵌运行时与新原生引擎混用。不要把 HTML 页面截图当作 diagram-only 图片导出。
-5. 返回用户要的文件路径，注明图类型及实际验证的格式。用户只要图片时可只交付图片，但建议保留可编辑 HTML。
-
-SVG、PNG、JPEG、WebP 均可在 Node 中直接导出，不安装、不启动浏览器。CLI 从 HTML 的惰性 JSON 数据块读取完整文档，不执行网页脚本；SVG 使用本地绘图引擎，位图使用 resvg / sharp。多图必须用 `--diagram` 选择从 1 开始的序号或图形 id，或用 `--all --out-dir` 批量输出，避免只导出第一张而遗漏其余图形。
+默认海蓝主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。检查命令退出码和生成回执。SVG、PNG、JPEG、WebP 均可在 Node 中直接导出，无需浏览器。多图必须用 `--diagram` 选择从 1 开始的序号或图形 id，或用 `--all --out-dir` 批量输出。
 
 ### 纯文本草稿模式
 
