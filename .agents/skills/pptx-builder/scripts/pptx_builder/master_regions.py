@@ -11,7 +11,7 @@ from . import pptx_backend
 
 TITLE_TYPES = {PP_PLACEHOLDER.TITLE, PP_PLACEHOLDER.CENTER_TITLE, PP_PLACEHOLDER.VERTICAL_TITLE}
 FOOTER_TYPES = {PP_PLACEHOLDER.FOOTER, PP_PLACEHOLDER.DATE, PP_PLACEHOLDER.SLIDE_NUMBER}
-TITLE_COMPONENTS = {"builtin/title", "builtin/eyebrow", "builtin/ar-header", "builtin/header-bar"}
+TITLE_COMPONENTS = {"builtin/title", "builtin/eyebrow", "builtin/ar-header", "builtin/header-bar", "studio/num-header"}
 FULL_COMPONENTS = {"builtin/cover", "builtin/cover-dark", "builtin/section-break", "builtin/thanks"}
 
 

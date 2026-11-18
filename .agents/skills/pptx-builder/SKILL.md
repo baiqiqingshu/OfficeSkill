@@ -7,167 +7,69 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 选择组件、填写 JSON，生成原生可编辑 `presentation.pptx` 和离线内容预览 `preview.html`。`SKILL_DIR` 指本文件所在的 `.agents/skills/pptx-builder` 目录；命令可从任意工作目录执行。
 
-## 生成与布局检查
+## 极速生成（免算像素坐标，一步出稿）
 
-1. 查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。第三方库追加 `--library 本地/library.json`；组件 ID 和输入名以目录为准。每个组件附带 `capacity`：各输入槽的安全文字量（`charsPerLine`×`lines`≈`approxChars`，列表为 `itemCharsPerLine`/`lines`，表格为 `rowCharsPerLine`）。**先按容量预算写内容再填 JSON**；超出预算时精简、拆分或换更大组件，不靠缩小字号补救。
-2. 编写配置。完整方案参考 `examples/technical-proposal.json`；现代卡片、深色封面、指标进度、支柱能力、四步流程、路线图和结论编排参考 `examples/modern-elements.json`（8 页）。其他示例包括技术进展、方案评审、需求评审、场景走查及 IPD SR/AR 串讲。
-3. 校验并生成：
+普通任务直接用 `quick`（内置容错规范化 + 省略 `box` 自动分栏排版 + 轻度字号自适应 + 布局检查）：
 
-   ```text
-   python SKILL_DIR/scripts/ppt_tool.py validate deck.json
-   python SKILL_DIR/scripts/ppt_tool.py render deck.json --out output/deck --strict-layout
-   ```
+```text
+python SKILL_DIR/scripts/ppt_tool.py quick --out output/deck --theme navy --title "方案评审" --json '{"pages":[{"elements":[{"component":"cover-dark","inputs":{"tag":"技术评审","title":"统一接入平台方案","subtitle":"收敛入口、毫秒校验、灰度可控","meta":"平台架构组 · 2026-04"}},{"component":"header-bar","inputs":{"title":"核心洞察","badge":"现状分析","meta":"01 / 02"}},{"component":"insight-card","inputs":{"number":"01","title":"统一入口","text":"47 套系统收口到统一网关，新系统 2 天接入。"}},{"component":"insight-card","inputs":{"number":"02","title":"统一审计","text":"策略集中下发，消除跨系统审计盲区。"}},{"component":"insight-card","inputs":{"number":"03","title":"灰度回退","text":"保留旧通道回退开关，确保零停机切换。"}},{"component":"summary-band","inputs":{"eyebrow":"结论","title":"统一底座支撑全业务协同","text":"分三批灰度推进。"}}]}]}' --strict-layout
+```
 
-**任何 PPTX 输出都必须执行布局检查。** `render`、`starter`、`extract` 均检查已保存 PPTX 中原生对象的几何边界和重叠，生成报告；`render` 另检查编译内容的文字/表格高度估算及母版保留区。检查方法和复杂对象限制写入报告，不能代替 Office 实际换行渲染。先读取报告，修正问题后重新生成；存在问题的产物不能称为“布局通过”或作为最终完成稿交付。`--strict-layout` 在存在问题时返回非零状态，并保留诊断产物；原型排查可暂不加该参数，检查仍会执行。
+- **省略 `box` 自动排版**：`quick` 会自动将 `header-bar`/`cover-dark` 放到保留区，将连续的同宽窄卡片（如 2 张 `552` 或 3 张 `360`）自动横向分栏，其余正文区块自上而下排布。也可显式指定页面 `"layout": "2cols"|"3cols"|"stack"` 或元素 `"slot": "title"|"left"|"right"|"col1"|"col2"|"col3"|"top"|"bottom"|"footer"|"full"`。
+- **使用已有模板**：省略 `pages` 时直接基于 `--template technical-report|modern-elements|requirements-review|solution-review` 覆盖标题/主题或局部补丁。
+- **局部修改**：用 `patch` 增量更新已生成的 `deck.json` 并重新渲染，不必重写整份 JSON：
 
-`render` 的 `report.json.layout` 包含 `checked`、`status`、`issueCount`、`issues`、`masterRegions`；HTML 顶部显示通过状态或问题数量。报告提供具体页面、元素、偏移或拆页建议。超长文字优先精简或拆页；顶层 `"autoFitFonts":true` 可按需缩小文字/表格字号，`"minFontSize":12` 设置下限（允许 8–24），缩小后仍需检查。检查同时标记 `smallFont`：任何元素的有效字号（含组件缩放后、run 显式小字号）低于 `minFontSize` 即报出，避免拆页/缩字后文字小到无法辨认。HTML 不显示原生公司母版的全部固定对象，最终外观以 PPTX 为准；本地有 PowerPoint/LibreOffice 时复核换行、遮挡和图片比例。
+```text
+python SKILL_DIR/scripts/ppt_tool.py patch output/deck/deck.json --set theme=blue --set pages.1.elements.0.inputs.title="新页标题" --render-out output/deck --strict-layout
+```
 
-常见失败按表修正，改完重跑 `render`：
+- **查看组件目录（按需精简查询，勿直接倾倒全量）**：`python SKILL_DIR/scripts/ppt_tool.py catalog --compact --filter 指标`；需要看全量槽位容量才加 `--id 组件ID`（去掉 `--compact`）。使用 `studio` 库时配置写 `"libraries":["studio"]` 即可自动解析。
+
+## 高频组件速查表（无需先查 catalog）
+
+| 角色 | 组件 ID（可省 `builtin/`） | 必填输入 `inputs`（及默认尺寸） |
+| --- | --- | --- |
+| 深色封面 | `cover-dark` | `title*`, `tag?`, `subtitle?`, `meta?`（1280×720，自动 full） |
+| 浅色封面 / 章节 | `cover` / `section-break` | `title*`, `tag?`/`number?`, `subtitle?`/`desc?`, `meta?` |
+| 现代页头 / 标题 | `header-bar` / `title` | `title*`, `badge?`, `meta?` / `text*`（自动 title 区） |
+| 三栏洞察 / 结论带 | `insight-card` / `summary-band` | `number*`,`title*`,`text*`(360×240) / `eyebrow*`,`title*`,`text*`(1152×150) |
+| 指标速览 / 条形对比 | `kpi-band` / `value-card` / `bar-metric` | `label1..4*`,`value1..4*` / `label*`,`value*`,`note*` / `title*`,`label1..4*`,`val1..4*` |
+| 三栏支柱 / 四步流程 | `pillars` / `process-4step` | `col1..3*`,`items1..3*`,`sub1..3?` / `step1..4*`,`desc1..4*` |
+| 四阶段路线图 | `roadmap-4col` | `date1..4*`,`title1..4*`,`desc1..4*`（1152×250） |
+| 对比取舍 / 表格 | `pros-cons` / `comparison-row` / `table` | `titleL*`,`itemsL*`,`titleR*`,`itemsR*` / `label*`,`before*`,`after*` / `rows*` |
+| 风险 / 行动 / 结论 | `risk-card` / `action-card` / `takeaway-panel` | `level*`,`title*`,`text*`,`action*` / `owner*`,`title*`,`items*` / `title*`,`items*`,`next*` |
+| 金句 / 状态 / 评分 | `highlight-quote` / `status-row` / `scorecard` | `text*`,`source?` / `num?`,`name*`,`status*`,`note?` / `name*`,`rating*`,`note?` |
+| 常规正文 / 列表 | `text` / `bullets` / `checklist` / `outline` | `text*` / `items*`（支持多级 `{"level":2,"text":"…"}`） |
+
+## 校验、自定义布局与失败修正
+
+手写完整坐标 JSON 时仍使用 `validate` 与 `render`：
+
+```text
+python SKILL_DIR/scripts/ppt_tool.py validate deck.json
+python SKILL_DIR/scripts/ppt_tool.py render deck.json --out output/deck --strict-layout
+```
+
+**任何 PPTX 输出都必须执行布局检查。** `report.json.layout` 包含 `checked`、`status`、`issueCount`、`issues`、`masterRegions`；`--strict-layout` 在存在问题时返回非零状态。
 
 | 报告/报错现象 | 原因 | 修正 |
 | --- | --- | --- |
-| `textOverflow` / `tableOverflow` | 内容超出槽位容量 | 按 `capacity` 精简；拆页；换更高组件 |
-| `overlap` | 元素 `box` 相交（装饰层除外） | 拉开间距，保持 `y` 网格 |
-| `outOfPage` | `box` 超出 1280×720 页面边界 | 收回页内；核对坐标 |
-| `reservedRegion` | 正文压到母版标题/页脚保留区 | 下移 `y` 或减 `h`；检查 `masterRegions` |
-| `smallFont` | 有效字号低于 `minFontSize`（组件缩小或 run 小字号） | 放大 box 减少缩放；提高 `fontSize`；换大组件；拆页 |
-| `required input` 报错 | 缺必填输入 | 对照 `catalog` 的 `inputs` 补齐 |
-| `unknown component` | 组件 ID 拼写或前缀错误 | 用 `catalog` 输出的完整 ID（含 `builtin/`） |
-| 中文字符显示方框 | run 指定了系统没有的字体 | 删除 `fontFamily` 或改回微软雅黑 |
-
-最小配置：
-
-```json
-{
-  "schemaVersion": 1,
-  "title": "技术方案评审",
-  "masterRegions": {"detect": true, "titleHeight": 96, "footerHeight": 32},
-  "pages": [{
-    "id": "overview",
-    "elements": [{
-      "id": "heading",
-      "component": "builtin/title",
-      "region": "title",
-      "box": {"x": 64, "y": 24, "w": 1152, "h": 52},
-      "inputs": {"text": "方案概述"}
-    }, {
-      "id": "summary",
-      "component": "builtin/bullets",
-      "region": "body",
-      "box": {"x": 64, "y": 130, "w": 1152, "h": 200},
-      "inputs": {"items": ["统一接入能力", {"level": 2, "text": "先验证核心链路"}]}
-    }]
-  }]
-}
-```
-
-`box` 使用页面像素坐标，默认 1280×720；每页可放多个元素。可选 `pageCount` 必须等于 `pages` 数量。完整字段见 [配置 JSON Schema](references/deck.schema.json)。
-
-## 选组件（场景 → 页型 → 组件）
-
-先定每页角色再选组件，不要先写内容再找地方塞。一页一个主题；同页组件不要超过 3 种。常用映射：
-
-| 页面角色 | 推荐组件 |
-| --- | --- |
-| 封面 / 章节页 | `cover-dark`、`cover`、`section-break`、`header-bar`、`title`+`eyebrow`+`lead` |
-| 结论 / 要点 | `summary-band`、`takeaway-panel`、`conclusion`、`insight-card`、`highlight-quote` |
-| 指标速览 | `value-card`、`kpi-band`、`bar-metric`、`stat-card`、`metric` |
-| 对比取舍 | `table`、`compare`、`pros-cons`、`comparison-row`、`matrix2x2` |
-| 内外部分析 | `swot` |
-| 计划推进 | `process-4step`、`roadmap-4col`、`steps`、`milestone-strip`、`stairs`、`phase`、`timeline-h-item` |
-| 状态跟踪 | `status-row`、`scorecard`、`status`、`checklist` |
-| 风险决策 | `risk-card`、`decision-card`、`action-card`、`callout-danger` |
-| 转化 / 筛选 | `funnel` |
-| 架构流程 | `pillars`、`arch-zone`+`arch-node`+`flow-arrow`、`flow-step`、`layer` |
-| 场景串讲 | `ar-header`、`agenda-item`、`outline`、`person-card` |
-
-内容多于容量时的固定处理顺序：精简文字 → 拆成两页 → 换更大的组件 → 最后才考虑 `autoFitFonts`。每页先写 `title`，其余元素自上而下排布，`y` 间隔保持 8 的倍数。
+| `textOverflow` / `tableOverflow` | 内容超出槽位容量 | 精简文字；拆页；启用 `"autoFitFonts":true` |
+| `overlap` | 元素 `box` 相交 | 改用自动排版（删去 `box`）或拉开 `y` 间距（8 的倍数） |
+| `outOfPage` / `reservedRegion` | 超出 1280×720 或侵入标题/页脚区 | 改用自动排版，或下移 `y` 避开 `masterRegions` |
+| `smallFont` | 有效字号低于 `minFontSize`（默认 12，允许 8–24） | 放大 `box`、提高 `fontSize` 或拆页 |
+| `unknown component` | 组件 ID 拼写或未加载 `studio` | 使用速查表 ID 或检查 `"libraries":["studio"]` |
+| 中文字符显示方框 | run 指定了系统没有的字体 | 删除 `fontFamily` 或改回 `Microsoft YaHei` |
 
 ## 文字、强调与原生分点
 
-默认字体为微软雅黑（`Microsoft YaHei`），**普通文字默认黑色 `#000000`**。标题、关键词、状态可显式使用其他颜色或粗体；不要把整段正文当作强调。示例：
+默认字体 `Microsoft YaHei`，**普通文字默认黑色 `#000000`**。文字与表格单元格支持 runs 数组：`[{"text":"关键结论：","bold":true,"color":"#A02C25"},{"text":"建议分批实施。"}]`（支持 `text`/`bold`/`italic`/`underline`/`fontFamily`/`fontSize`/`color`）。`list` 接受字符串、runs 或 `{"level":2,"text":"…"}`（1–4 级），输出 PowerPoint 原生项目符号/编号与悬挂缩进。
 
-```json
-[{"text":"关键结论：","bold":true,"color":"#A02C25"},{"text":"建议分批实施。"}]
-```
+可选主题：`crimson`（默认深红）、`blue`（政务蓝）、`emerald`（墨绿）、`navy`（藏青，科研答辩风）、`violet`（紫金）、`mono`（黑白灰）、`majestic`（藏青金）、`graphite`（石墨黑深底）。
 
-文字接收字符串或 runs 数组，run 支持 `text`、`bold`、`italic`、`underline`、`fontFamily`、`fontSize`、`color`；字号用像素，颜色用 `#RRGGBB`。省略样式时继承组件。表格单元格同样支持 runs；表格行高按实际内容估算，`box.h` 是上限，不会为了铺满框而拉伸短表。
+## 母版、元素库与维护
 
-`list` 输入接受字符串、runs 或 `{"level":2,"text":"…"}` 对象，`level` 为 1–4；`text` 可为 runs，对象可附带 run 样式。列表输出 **PowerPoint 原生段落项目符号/自动编号及悬挂缩进**，标记不拼进正文，编辑时可继续增删条目。`ul`/普通列表使用项目符号，`ol`/`num` 使用自动编号，`check`、`dash` 使用对应符号；HTML 预览与布局估算沿用相同列表语义。场景描述优先使用 `outline`。
-
-可选主题：`crimson`（默认深红）、`blue`（政务蓝）、`emerald`（墨绿）、`navy`（藏青，科研答辩风）、`violet`（紫金，紫主色配浅金点缀）、`mono`（黑白灰）、`majestic`（藏青金，适合正式汇报）、`graphite`（石墨黑，深色底）。浅色主题的普通文字保持黑色；显式选择 `graphite` 时使用浅色对比文字，反白文字及强调色保留各自用途。
-
-## 母版与标题、页脚区域
-
-配置顶层 `"master":"master.pptx"` 指定公司母版；每页 `masterSlide` 选择源 PPTX 的第几张页面，从 1 开始，可重复或重排。源页静态对象会保留，建议只留下背景、徽标、标题和页脚等固定内容。
-
-先读取母版实际区域：
-
-```text
-python SKILL_DIR/scripts/ppt_tool.py inspect-master master.pptx
-```
-
-结果包含 `pageSize`、`slides[].masterRegions` 和识别来源。工具识别源页、版式及母版的标题/页脚占位符：源样例页上实际存在的占位符即使空白也保留区域；版式或母版中尚未实例化的空占位符仅列为候选，不自动保留高度。没有可靠读取结果时用 `masterRegions` 显式指定。
-
-顶层和逐页均支持 `masterRegions`，逐页覆盖顶层。`titleHeight` 为自顶向下的标题区域高度，`footerHeight` 为自底向上的页脚高度，单位均为像素；`detect:true` 启用读取，显式高度覆盖对应读取值。正文应位于标题区域以下、页脚区域以上。
-
-元素 `region` 可为 `body`、`title`、`footer`、`full`。正文使用 `body`；标题、页脚分别声明对应区域；`full` 仅用于确实需要跨区域的封面或背景装饰。内置标题/封面可自动识别，第三方组件建议显式声明。区域声明不会免除页面越界或文字溢出检查。
-
-## 元素库与预览
-
-双击 `SKILL_DIR/assets/demo/library-demo.html` 离线查看整页示例和组件。目录可搜索名称/ID/描述、切换主题、放大翻页，并复制示例元素 JSON。
-
-内置库提供 73 个组件。除标题、正文、清单、表格、架构节点、流程、时间线和图框等基础元素外，面向汇报场景的组件包括：
-
-| 组件 | 用途 |
-| --- | --- |
-| `builtin/insight-card` | 编号洞察与三栏观点 |
-| `builtin/value-card` | 大指标与价值说明 |
-| `builtin/kpi-band` | 四联指标横条 |
-| `builtin/decision-card` | 方案建议与决策取舍 |
-| `builtin/pros-cons` | 绿左红右利弊双栏 |
-| `builtin/swot` | 四色 SWOT 象限 |
-| `builtin/funnel` | 四级转化漏斗 |
-| `builtin/milestone-strip` | 阶段计划与里程碑 |
-| `builtin/stairs` | 三级上升演进阶梯 |
-| `builtin/status-row` | 事项状态行（可叠放成表） |
-| `builtin/scorecard` | 维度评分行（●○ 标记） |
-| `builtin/risk-card` | 风险描述与应对 |
-| `builtin/action-card` | 负责人及行动清单 |
-| `builtin/summary-band` | 页面摘要与重点导读 |
-| `builtin/comparison-row` | 现状与目标对比 |
-| `builtin/capability-tile` | 三栏能力地图 |
-| `builtin/takeaway-panel` | 评审结论与下一步 |
-
-第三方库在顶层配置 `"libraries":["library/library.json"]`，通过 `库ID/组件ID` 引用。库只提供声明式受限 HTML/CSS，不加载 JS 插件。创建或扩展组件时读 [元素库格式](references/library-format.md)。
-
-随附的 `assets/libraries/studio/library.json` 提供 14 个答辩风组件（`studio/` 前缀：编号页眉 `num-header`、阐述条 `statement`、结论带 `conclusion-band`、技术路线 `route-chain`、里程碑轴 `milestone-axis`、问题对策 `issue-fix`、大数字 `big-number`、左图右文 `figure-points`、优劣对比 `versus-panel` 等）与 40 枚 Lucide 线性图标（`assets/libraries/studio/images/icons/`）。在 deck 顶层加 `"libraries":["assets/libraries/studio/library.json"]"`（路径相对配置目录，可用 `starter` 的相对布局或把库目录复制到 deck 目录内）即可按 `studio/组件ID` 使用。
-
-更新库或示例后重新生成预览：
-
-```text
-python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo
-python SKILL_DIR/scripts/ppt_tool.py demo --out output/library-demo --library SKILL_DIR/assets/libraries/studio/library.json
-```
-
-IPD SR/AR 串讲参考 `examples/ipd-walkthrough.json`（29 页）：封面、SR/AR 需求列表（类型/编号/标题/工作量四列），每个 SR 先放标题页，再为各 AR 组织背景、主成功场景、异常场景、后置状态、前置条件和分支场景。`ar-header` 的 `crumb` 填 SR/AR/场景类型，`title` 填同一 AR 的统一名称，`meta` 填场景序号。
-
-## 提取与初始目录
-
-```text
-python SKILL_DIR/scripts/ppt_tool.py extract reference.pptx --out extracted --strict-layout
-python SKILL_DIR/scripts/ppt_tool.py render extracted/deck.json --out output/rebuilt --strict-layout
-python SKILL_DIR/scripts/ppt_tool.py starter --out my-deck --strict-layout
-```
-
-提取输出 `master.pptx`、本地元素库/图片、`deck.json` 和提取报告。先确认报告中哪些对象仍留在母版，避免重复叠加。复杂原生列表等不能安全提取的对象保留在母版并报告，不静默丢失语义。范围见 [提取和安全边界](references/extraction-security.md)。
-
-`starter` 复制全部场景示例和默认母版。默认不覆盖非空目录；只有本工具生成并带 `.pptx-builder-output` 标记的目录才可 `--overwrite`。
-
-## 本地环境与维护
-
-依赖 Python 3.10+、python-pptx、Pillow、lxml，版本范围见 `scripts/requirements.txt`。缺依赖时使用内网 wheel：`python -m pip install --no-index --find-links 本地wheel目录 -r SKILL_DIR/scripts/requirements.txt`。不自动联网安装，不上传模板或内容，不使用云转换、外部字体或遥测。
-
-配置中的母版、库和图片路径相对于配置目录，必须位于其中；HTML 文件及静态图片相对于库目录。禁止网络、UNC、远程图片、路径穿越及符号链接逃逸。
-
-维护时本目录文件总数保持 ≤100；临时配置与输出放仓库 `temp/` 或用户指定目录。修改库、示例、文字或样式后更新预生成演示，并对生成的 PPTX 检查布局。
+- 读取公司母版安全区域：`python SKILL_DIR/scripts/ppt_tool.py inspect-master master.pptx`，在顶层或逐页用 `masterRegions`（`titleHeight`/`footerHeight`/`detect`）指定保留区；元素 `region` 支持 `body`/`title`/`footer`/`full`。
+- 提取现有 PPTX：`python SKILL_DIR/scripts/ppt_tool.py extract reference.pptx --out extracted --strict-layout`；初始化全套示例：`starter --out my-deck`。
+- 双击 `SKILL_DIR/assets/demo/library-demo.html` 离线查看 73 个内置 + 14 个 `studio/` 组件与 7 份整页示例；更新库或示例后用 `demo --out ... --library studio --overwrite` 刷新预览。IPD SR/AR 串讲参考 `examples/ipd-walkthrough.json`。
+- 全程离线：依赖 Python 3.10+、python-pptx、Pillow、lxml（内网 wheel 安装见 `scripts/requirements.txt`）；路径须位于配置目录内（`"studio"` 简写除外），禁止外网/UNC/符号链接逃逸；本目录文件总数保持 ≤100。

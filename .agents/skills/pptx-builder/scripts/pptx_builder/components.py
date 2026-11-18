@@ -389,16 +389,41 @@ def _slot_capacity(component):
     return caps
 
 
-def catalog(libraries):
-    """Return the compact, JSON-serializable model-facing component catalog."""
+def catalog(libraries, *, compact=False, filter_text=None, comp_id=None):
+    """Return the model-facing component catalog (full or compact/filtered)."""
     entries = []
+    needle = str(filter_text).strip().lower() if filter_text else ""
     for key, value in libraries.items():
-        entry = {"id": key, "name": value.get("name", value["id"]), "description": value.get("description", ""), "size": value["size"], "inputs": value.get("inputs", {})}
+        if comp_id and key != comp_id and value["id"] != comp_id:
+            continue
+        name = str(value.get("name", value["id"]))
+        desc = str(value.get("description", ""))
+        if needle and needle not in f"{key} {name} {desc}".lower():
+            continue
         capacity = _slot_capacity(value)
-        if capacity:
-            entry["capacity"] = capacity
-        entries.append(entry)
-    return {"schemaVersion": 1, "components": entries}
+        if compact:
+            sig = {}
+            for slot, spec in value.get("inputs", {}).items():
+                mark = "*" if spec.get("required") else ""
+                kind = spec.get("type", "text")
+                cap = capacity.get(slot)
+                hint = ""
+                if isinstance(cap, dict):
+                    if "approxChars" in cap:
+                        hint = f"~{cap['approxChars']}字"
+                    elif "lines" in cap and "itemCharsPerLine" in cap:
+                        hint = f"{cap['lines']}x{cap['itemCharsPerLine']}字"
+                    elif "maxRows" in cap:
+                        hint = f"<= {cap['maxRows']}行"
+                sig[f"{slot}{mark}"] = f"{kind}({hint})" if hint else kind
+            sz = value["size"]
+            entries.append({"id": key, "name": name, "size": f"{sz['width']:g}x{sz['height']:g}", "inputs": sig})
+        else:
+            entry = {"id": key, "name": name, "description": desc, "size": value["size"], "inputs": value.get("inputs", {})}
+            if capacity:
+                entry["capacity"] = capacity
+            entries.append(entry)
+    return {"schemaVersion": 1, "count": len(entries), "components": entries}
 
 
 def _style(css, inherited, tag):
