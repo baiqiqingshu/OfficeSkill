@@ -214,5 +214,59 @@
       "danger-soft": "#f7e3e6"
     },
     "guidance": "高对比主题：瓷面形态不变，文字与边界对比度余量加大——描边加深至可辨阈值以上、状态色压暗、聚焦光环更醒目。适合弱视力用户与高环境光场景，其余交互与其他主题一致。"
+  },
+  "indigo": {
+    "title": "深靛 · 研发平台",
+    "tokens": {
+      "primary": "#4338ca",
+      "primary-ink": "#ffffff",
+      "soft": "#e8e9fc",
+      "bg": "#f5f6fb",
+      "surface": "#ffffff",
+      "ink": "#11162b",
+      "muted": "#525b78",
+      "border": "#e1e4f0",
+      "radius": "14px",
+      "surface-2": "#ecedf6",
+      "line-strong": "#bfc6dd",
+      "shadow": "0 1px 2px rgb(17 22 43/.04),0 16px 40px -16px rgb(17 22 43/.12)",
+      "shadow-pop": "0 4px 14px -4px rgb(17 22 43/.10),0 28px 56px -18px rgb(17 22 43/.20)",
+      "ring": "rgb(67 56 202/.26)",
+      "scheme": "light",
+      "success": "#17724f",
+      "success-soft": "#e7f3ec",
+      "warning": "#8a5a10",
+      "warning-soft": "#f7eeda",
+      "danger": "#b03846",
+      "danger-soft": "#fae9eb"
+    },
+    "guidance": "深靛研发主题：冷靛中性阶配深靛实色主操作，适合 DevOps、研发效能与工程管理平台。"
+  },
+  "nordic": {
+    "title": "极简白 · 清爽现代",
+    "tokens": {
+      "primary": "#0f62fe",
+      "primary-ink": "#ffffff",
+      "soft": "#e8f0fe",
+      "bg": "#f8fafc",
+      "surface": "#ffffff",
+      "ink": "#0f172a",
+      "muted": "#475569",
+      "border": "#e2e8f0",
+      "radius": "12px",
+      "surface-2": "#f1f5f9",
+      "line-strong": "#cbd5e1",
+      "shadow": "0 1px 3px rgb(15 23 42/.05),0 12px 32px -16px rgb(15 23 42/.10)",
+      "shadow-pop": "0 4px 14px -4px rgb(15 23 42/.10),0 24px 48px -16px rgb(15 23 42/.18)",
+      "ring": "rgb(15 98 254/.26)",
+      "scheme": "light",
+      "success": "#157347",
+      "success-soft": "#e6f4ed",
+      "warning": "#8a5a10",
+      "warning-soft": "#f7eeda",
+      "danger": "#b03846",
+      "danger-soft": "#fae9eb"
+    },
+    "guidance": "极简白主题：高亮通透工作区配鲜明钴蓝主操作，适合现代 SaaS 风格内网工作台。"
   }
 }

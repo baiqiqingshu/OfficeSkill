@@ -4,6 +4,9 @@
   "product": "协同工作台",
   "description": "16 种生成区块的完整预览；基础按钮、字段与弹窗可通过本地检索按需获取。",
   "action": "体验弹窗",
+  "actions": [
+    "导出台账"
+  ],
   "eyebrow": "",
   "layout": "dashboard",
   "style": "ocean",

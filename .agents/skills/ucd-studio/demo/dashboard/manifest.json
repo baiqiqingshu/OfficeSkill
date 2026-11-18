@@ -1,6 +1,6 @@
 {
   "tool": "ucd-studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "mode": "single",
   "style": "ocean",
   "components": [
@@ -15,6 +15,9 @@
     "product": "协同工作台",
     "description": "从待办开始，了解申请进度和最近的处理记录。",
     "action": "新建申请",
+    "actions": [
+      "导出台账"
+    ],
     "eyebrow": "",
     "layout": "dashboard",
     "style": "ocean",
@@ -40,6 +43,7 @@
           {
             "label": "待我审批",
             "value": "4",
+            "change": "↑ 2",
             "hint": "等待处理"
           },
           {
@@ -50,11 +54,13 @@
           {
             "label": "已通过",
             "value": "3",
+            "change": "↑ 15%",
             "hint": "当前示例记录"
           },
           {
             "label": "已退回",
             "value": "1",
+            "change": "↓ 1",
             "hint": "等待补充信息"
           }
         ]
@@ -220,9 +226,9 @@
       }
     }
   },
-  "specSha256": "dc640d0afb997fa08243773e5d638df7d87746e354c3391c358279ff44266ede",
+  "specSha256": "32328976d907a84bd50ee92a3ef1af148c9170383f21b3e6a9a9d27223be2ccb",
   "files": {
-    "index.html": "595bf34077be785f773341da123075dc3e78c083330a482d46a9b885a908a6d2",
-    "design-system.md": "e490d21e326beaef20242ae14f4e57f14cae8b47d1c90fe66726bdcead0ff3c3"
+    "index.html": "a0130844020aed06041c8c60cb7e5a2f441d755f3ddb0413ad43c73d754a766f",
+    "design-system.md": "e83b8a71c97b819a6fa59b96b78ea1b92a69bdc5c4e97157f1071c2b41caaeb8"
   }
 }

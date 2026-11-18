@@ -1,6 +1,6 @@
 {
   "tool": "ucd-studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "mode": "library",
   "style": "ocean",
   "components": [
@@ -13,6 +13,9 @@
     "product": "协同工作台",
     "description": "筛选申请、核对信息，优先处理待审批事项。",
     "action": "新建申请",
+    "actions": [
+      "导出清单"
+    ],
     "eyebrow": "",
     "layout": "admin",
     "style": "ocean",
@@ -38,6 +41,7 @@
           {
             "label": "待我审批",
             "value": "4",
+            "change": "↑ 2",
             "hint": "等待处理"
           },
           {
@@ -48,11 +52,13 @@
           {
             "label": "已通过",
             "value": "3",
+            "change": "↑ 18%",
             "hint": "当前示例记录"
           },
           {
             "label": "已退回",
             "value": "1",
+            "change": "↓ 1",
             "hint": "等待补充信息"
           }
         ]
@@ -176,10 +182,10 @@
       }
     }
   },
-  "specSha256": "944b493a1d9225b2d93596a07a7583a8b53274648f4d415188cfcc02b020cd92",
+  "specSha256": "c6feb6c9ed2f8c14cebda54809cace048e0a39214a9c1682cbf96e22c3f7d4b9",
   "files": {
-    "index.html": "c72fbcba49ab8aeaba8e674c62fbbec7f2960266ba81b2f458afe816e706c9db",
-    "design-system.md": "73735689bcaf2bb262f57f51ac7ca6b976e0c45019eb96dcb502c913ff9cce97",
-    "assets/ucd-runtime.js": "63ad99c312c8a7319c02050e0719a736ee8b743b536bb3ef7f1e9768df9e77d6"
+    "index.html": "6763bf5ab1c1b60944b17550eed6b44ea3e262cab0828df7cf69b0f66f98fc44",
+    "design-system.md": "83a0a3eb8212f43b0244c9e7e4261a93f0767103ed36201b6fb2197e46369bf8",
+    "assets/ucd-runtime.js": "d739a4524dc15c0312d43b25770faf974e6e2ff0668d559d0bf69cdf894b9497"
   }
 }

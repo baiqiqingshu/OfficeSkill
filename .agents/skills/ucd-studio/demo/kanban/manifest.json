@@ -1,6 +1,6 @@
 {
   "tool": "ucd-studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "mode": "single",
   "style": "slate",
   "components": [
@@ -81,7 +81,7 @@
   },
   "specSha256": "39b36b5bf58c85c15e4c5a453d8bccfe88da6c5a1e0e0bfb6277cbbe5dad3d8c",
   "files": {
-    "index.html": "1f1ac0b5763d96a1ea889c1d93ac7a7a2242266310b9134f76b5f1002bc8c048",
-    "design-system.md": "44fc705cfc95d566c6933f867cdbc4d142294d1ccf37ab1567ac60fbd7958d3f"
+    "index.html": "72c76df3e1b644b6826941d9faa6894bcc2ba6714ac6147f39f7f445fa63b463",
+    "design-system.md": "2372d7a6b1f373d668f2b0f5ed13b7060ec3f14786885a4f98a82b8813318f56"
   }
 }

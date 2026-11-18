@@ -10,7 +10,7 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 ## 生成与布局检查
 
 1. 查看输入：`python SKILL_DIR/scripts/ppt_tool.py catalog`。第三方库追加 `--library 本地/library.json`；组件 ID 和输入名以目录为准。每个组件附带 `capacity`：各输入槽的安全文字量（`charsPerLine`×`lines`≈`approxChars`，列表为 `itemCharsPerLine`/`lines`，表格为 `rowCharsPerLine`）。**先按容量预算写内容再填 JSON**；超出预算时精简、拆分或换更大组件，不靠缩小字号补救。
-2. 编写配置。完整方案参考 `examples/technical-proposal.json`；现代卡片、价值指标、决策、里程碑和结论编排参考 `examples/modern-elements.json`（5 页）。其他示例包括技术进展、方案评审、需求评审、场景走查及 IPD SR/AR 串讲。
+2. 编写配置。完整方案参考 `examples/technical-proposal.json`；现代卡片、深色封面、指标进度、支柱能力、四步流程、路线图和结论编排参考 `examples/modern-elements.json`（8 页）。其他示例包括技术进展、方案评审、需求评审、场景走查及 IPD SR/AR 串讲。
 3. 校验并生成：
 
    ```text
@@ -69,16 +69,16 @@ description: 用 JSON、原生 PPTX 母版和本地元素库生成可编辑 Powe
 
 | 页面角色 | 推荐组件 |
 | --- | --- |
-| 封面 / 章节页 | `cover`、`section-break`、`title`+`eyebrow`+`lead` |
-| 结论 / 要点 | `summary-band`、`takeaway-panel`、`conclusion`、`insight-card` |
-| 指标速览 | `value-card`、`kpi-band`、`stat-card`、`metric` |
+| 封面 / 章节页 | `cover-dark`、`cover`、`section-break`、`header-bar`、`title`+`eyebrow`+`lead` |
+| 结论 / 要点 | `summary-band`、`takeaway-panel`、`conclusion`、`insight-card`、`highlight-quote` |
+| 指标速览 | `value-card`、`kpi-band`、`bar-metric`、`stat-card`、`metric` |
 | 对比取舍 | `table`、`compare`、`pros-cons`、`comparison-row`、`matrix2x2` |
 | 内外部分析 | `swot` |
-| 计划推进 | `steps`、`milestone-strip`、`stairs`、`phase`、`timeline-h-item` |
+| 计划推进 | `process-4step`、`roadmap-4col`、`steps`、`milestone-strip`、`stairs`、`phase`、`timeline-h-item` |
 | 状态跟踪 | `status-row`、`scorecard`、`status`、`checklist` |
 | 风险决策 | `risk-card`、`decision-card`、`action-card`、`callout-danger` |
 | 转化 / 筛选 | `funnel` |
-| 架构流程 | `arch-zone`+`arch-node`+`flow-arrow`、`flow-step`、`layer` |
+| 架构流程 | `pillars`、`arch-zone`+`arch-node`+`flow-arrow`、`flow-step`、`layer` |
 | 场景串讲 | `ar-header`、`agenda-item`、`outline`、`person-card` |
 
 内容多于容量时的固定处理顺序：精简文字 → 拆成两页 → 换更大的组件 → 最后才考虑 `autoFitFonts`。每页先写 `title`，其余元素自上而下排布，`y` 间隔保持 8 的倍数。
@@ -117,7 +117,7 @@ python SKILL_DIR/scripts/ppt_tool.py inspect-master master.pptx
 
 双击 `SKILL_DIR/assets/demo/library-demo.html` 离线查看整页示例和组件。目录可搜索名称/ID/描述、切换主题、放大翻页，并复制示例元素 JSON。
 
-内置库提供 66 个组件。除标题、正文、清单、表格、架构节点、流程、时间线和图框等基础元素外，面向汇报场景的组件包括：
+内置库提供 73 个组件。除标题、正文、清单、表格、架构节点、流程、时间线和图框等基础元素外，面向汇报场景的组件包括：
 
 | 组件 | 用途 |
 | --- | --- |

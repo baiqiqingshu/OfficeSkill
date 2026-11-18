@@ -1488,6 +1488,274 @@
         }
       },
       "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0px;top:200px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:16px;top:200px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num1' style='position:absolute;left:20px;top:218px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title1' style='position:absolute;left:68px;top:218px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc1' style='position:absolute;left:20px;top:264px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:392px;top:100px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:408px;top:100px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num2' style='position:absolute;left:412px;top:118px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title2' style='position:absolute;left:460px;top:118px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc2' style='position:absolute;left:412px;top:164px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><section style='position:absolute;left:784px;top:0px;width:368px;height:150px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><div style='position:absolute;left:800px;top:0px;width:336px;height:4px;background-color:#1476B8'></div><div data-slot='num3' style='position:absolute;left:804px;top:18px;width:44px;height:34px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#1476B8;line-height:1.2'></div><div data-slot='title3' style='position:absolute;left:852px;top:18px;width:280px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.35'></div><div data-slot='desc3' style='position:absolute;left:804px;top:64px;width:328px;height:72px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.45'></div><div style='position:absolute;left:0;top:352px;width:100%;height:1px;background-color:#D8E4EF'></div></div>"
+    },
+    {
+      "id": "cover-dark",
+      "name": "深色主视觉封面",
+      "description": "1280×720 全幅深主色封面（region: full）：左文右几何块 + 顶部浅色胶囊标签 + 50px 白色主标题 + 副标题 + 底部深主色元信息条。适合正式汇报、方案评审与立项启动。",
+      "size": {
+        "width": 1280,
+        "height": 720
+      },
+      "inputs": {
+        "tag": {
+          "type": "text",
+          "description": "顶部胶囊标签，如“技术方案评审”"
+        },
+        "title": {
+          "type": "richtext",
+          "required": true
+        },
+        "subtitle": {
+          "type": "richtext"
+        },
+        "meta": {
+          "type": "text",
+          "description": "汇报人、部门、日期"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#145D93'><div style='position:absolute;left:0;top:0;width:10px;height:720px;background-color:#3F92CC'></div><div data-slot='tag' style='position:absolute;left:72px;top:112px;width:240px;height:36px;background-color:#E4EFF8;border-radius:18px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><h1 data-slot='title' style='position:absolute;left:72px;top:176px;width:760px;height:180px;font-family:Microsoft YaHei;font-size:50px;font-weight:bold;color:#FFFFFF;line-height:1.25'></h1><p data-slot='subtitle' style='position:absolute;left:72px;top:376px;width:760px;height:68px;font-family:Microsoft YaHei;font-size:22px;color:#E4EFF8;line-height:1.5'></p><div style='position:absolute;left:72px;top:468px;width:88px;height:5px;background-color:#3F92CC;border-radius:2px'></div><div style='position:absolute;left:72px;top:560px;width:1136px;height:64px;background-color:#1476B9;border-radius:10px'></div><p data-slot='meta' style='position:absolute;left:96px;top:560px;width:1088px;height:64px;font-family:Microsoft YaHei;font-size:17px;color:#FFFFFF;vertical-align:middle'></p><div style='position:absolute;left:888px;top:116px;width:316px;height:340px;background-color:#1476B9;border-radius:16px'></div><div style='position:absolute;left:924px;top:156px;width:244px;height:136px;background-color:#3F92CC;border-radius:12px'></div><div style='position:absolute;left:924px;top:312px;width:112px;height:104px;background-color:#E4EFF8;border-radius:10px'></div><div style='position:absolute;left:1056px;top:312px;width:112px;height:104px;background-color:#145D93;border-radius:10px'></div></div>"
+    },
+    {
+      "id": "header-bar",
+      "name": "现代页头",
+      "description": "1152×76 现代正文页头：左侧竖条 + 30px 标题 + 右侧分类胶囊与页标 + 底部强调线。放在 (x=64,y=20)，一页只用一个。",
+      "size": {
+        "width": 1152,
+        "height": 76
+      },
+      "inputs": {
+        "title": {
+          "type": "richtext",
+          "required": true
+        },
+        "badge": {
+          "type": "text",
+          "description": "右侧分类胶囊，如“方案架构”"
+        },
+        "meta": {
+          "type": "text",
+          "description": "右侧补充页标，如“02 / 08”"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:0;top:8px;width:6px;height:34px;background-color:#1476B8;border-radius:3px'></div><h1 data-slot='title' style='position:absolute;left:20px;top:4px;width:780px;height:42px;font-family:Microsoft YaHei;font-size:30px;font-weight:bold;color:#17324D;line-height:1.25'></h1><div data-slot='badge' style='position:absolute;left:820px;top:9px;width:132px;height:30px;background-color:#E4EFF8;border-radius:15px;font-family:Microsoft YaHei;font-size:13px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><div data-slot='meta' style='position:absolute;left:964px;top:12px;width:188px;height:24px;font-family:Microsoft YaHei;font-size:13px;color:#000000;text-align:right;vertical-align:middle'></div><div style='position:absolute;left:0;top:62px;width:1152px;height:1px;background-color:#D8E4EF'></div><div style='position:absolute;left:0;top:60px;width:72px;height:4px;background-color:#1476B8;border-radius:2px'></div></div>"
+    },
+    {
+      "id": "bar-metric",
+      "name": "横向条形指标卡",
+      "description": "552×260 排名条形指标卡：标题 + 四行横向占比条（按高低顺序排列）与右对齐数值。适合模块覆盖率、资源占比、进度排行展示。",
+      "size": {
+        "width": 552,
+        "height": 260
+      },
+      "inputs": {
+        "title": {
+          "type": "richtext",
+          "required": true
+        },
+        "label1": {
+          "type": "text",
+          "required": true
+        },
+        "val1": {
+          "type": "text",
+          "required": true
+        },
+        "label2": {
+          "type": "text",
+          "required": true
+        },
+        "val2": {
+          "type": "text",
+          "required": true
+        },
+        "label3": {
+          "type": "text",
+          "required": true
+        },
+        "val3": {
+          "type": "text",
+          "required": true
+        },
+        "label4": {
+          "type": "text",
+          "required": true
+        },
+        "val4": {
+          "type": "text",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:24px;top:0;width:72px;height:4px;background-color:#1476B8'></div><h3 data-slot='title' style='position:absolute;left:24px;top:20px;width:504px;height:32px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D'></h3><div data-slot='label1' style='position:absolute;left:24px;top:70px;width:148px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;vertical-align:middle'></div><div style='position:absolute;left:180px;top:76px;width:260px;height:12px;background-color:#F0F5FA;border-radius:6px'></div><div style='position:absolute;left:180px;top:76px;width:236px;height:12px;background-color:#145D93;border-radius:6px'></div><div data-slot='val1' style='position:absolute;left:452px;top:70px;width:76px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:right;vertical-align:middle'></div><div data-slot='label2' style='position:absolute;left:24px;top:114px;width:148px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;vertical-align:middle'></div><div style='position:absolute;left:180px;top:120px;width:260px;height:12px;background-color:#F0F5FA;border-radius:6px'></div><div style='position:absolute;left:180px;top:120px;width:198px;height:12px;background-color:#1476B9;border-radius:6px'></div><div data-slot='val2' style='position:absolute;left:452px;top:114px;width:76px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:right;vertical-align:middle'></div><div data-slot='label3' style='position:absolute;left:24px;top:158px;width:148px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;vertical-align:middle'></div><div style='position:absolute;left:180px;top:164px;width:260px;height:12px;background-color:#F0F5FA;border-radius:6px'></div><div style='position:absolute;left:180px;top:164px;width:156px;height:12px;background-color:#3F92CC;border-radius:6px'></div><div data-slot='val3' style='position:absolute;left:452px;top:158px;width:76px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:right;vertical-align:middle'></div><div data-slot='label4' style='position:absolute;left:24px;top:202px;width:148px;height:24px;font-family:Microsoft YaHei;font-size:15px;color:#000000;vertical-align:middle'></div><div style='position:absolute;left:180px;top:208px;width:260px;height:12px;background-color:#F0F5FA;border-radius:6px'></div><div style='position:absolute;left:180px;top:208px;width:112px;height:12px;background-color:#1E7A46;border-radius:6px'></div><div data-slot='val4' style='position:absolute;left:452px;top:202px;width:76px;height:24px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#1E7A46;text-align:right;vertical-align:middle'></div></div>"
+    },
+    {
+      "id": "pillars",
+      "name": "三栏支柱卡",
+      "description": "1152×340 三栏支柱架构卡：深主色标题栏 + 浅色定位带 + 原生要点列表，一卡完成三栏核心能力/架构域/建设重点展示。",
+      "size": {
+        "width": 1152,
+        "height": 340
+      },
+      "inputs": {
+        "col1": {
+          "type": "text",
+          "required": true
+        },
+        "sub1": {
+          "type": "text"
+        },
+        "items1": {
+          "type": "list",
+          "required": true
+        },
+        "col2": {
+          "type": "text",
+          "required": true
+        },
+        "sub2": {
+          "type": "text"
+        },
+        "items2": {
+          "type": "list",
+          "required": true
+        },
+        "col3": {
+          "type": "text",
+          "required": true
+        },
+        "sub3": {
+          "type": "text"
+        },
+        "items3": {
+          "type": "list",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:360px;height:340px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:0;top:0;width:360px;height:52px;background-color:#145D93;border-radius:10px'></div><div data-slot='col1' style='position:absolute;left:16px;top:0;width:328px;height:52px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:16px;top:66px;width:328px;height:36px;background-color:#E4EFF8;border-radius:6px'></div><div data-slot='sub1' style='position:absolute;left:24px;top:66px;width:312px;height:36px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><ul data-slot='items1' style='position:absolute;left:20px;top:118px;width:320px;height:200px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.6'></ul><section style='position:absolute;left:396px;top:0;width:360px;height:340px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:396px;top:0;width:360px;height:52px;background-color:#1476B9;border-radius:10px'></div><div data-slot='col2' style='position:absolute;left:412px;top:0;width:328px;height:52px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:412px;top:66px;width:328px;height:36px;background-color:#E4EFF8;border-radius:6px'></div><div data-slot='sub2' style='position:absolute;left:420px;top:66px;width:312px;height:36px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><ul data-slot='items2' style='position:absolute;left:416px;top:118px;width:320px;height:200px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.6'></ul><section style='position:absolute;left:792px;top:0;width:360px;height:340px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:792px;top:0;width:360px;height:52px;background-color:#145D93;border-radius:10px'></div><div data-slot='col3' style='position:absolute;left:808px;top:0;width:328px;height:52px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:808px;top:66px;width:328px;height:36px;background-color:#E4EFF8;border-radius:6px'></div><div data-slot='sub3' style='position:absolute;left:816px;top:66px;width:312px;height:36px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'></div><ul data-slot='items3' style='position:absolute;left:812px;top:118px;width:320px;height:200px;font-family:Microsoft YaHei;font-size:16px;color:#000000;line-height:1.6'></ul></div>"
+    },
+    {
+      "id": "process-4step",
+      "name": "四步流程横条",
+      "description": "1152×190 一体化四步横向流程：自动包含编号角标、顶部色条、箭头衔接与说明文字，替代零散拼接多个步骤卡片。",
+      "size": {
+        "width": 1152,
+        "height": 190
+      },
+      "inputs": {
+        "step1": {
+          "type": "text",
+          "required": true
+        },
+        "desc1": {
+          "type": "richtext",
+          "required": true
+        },
+        "step2": {
+          "type": "text",
+          "required": true
+        },
+        "desc2": {
+          "type": "richtext",
+          "required": true
+        },
+        "step3": {
+          "type": "text",
+          "required": true
+        },
+        "desc3": {
+          "type": "richtext",
+          "required": true
+        },
+        "step4": {
+          "type": "text",
+          "required": true
+        },
+        "desc4": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><section style='position:absolute;left:0;top:0;width:252px;height:190px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:0;top:0;width:252px;height:6px;background-color:#145D93;border-radius:3px'></div><div style='position:absolute;left:20px;top:24px;width:40px;height:32px;background-color:#E4EFF8;border-radius:8px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>01</div><h3 data-slot='step1' style='position:absolute;left:70px;top:24px;width:162px;height:32px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><div style='position:absolute;left:20px;top:70px;width:212px;height:1px;background-color:#D8E4EF'></div><p data-slot='desc1' style='position:absolute;left:20px;top:84px;width:212px;height:88px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p><div style='position:absolute;left:258px;top:76px;width:36px;height:36px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'>→</div><section style='position:absolute;left:300px;top:0;width:252px;height:190px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:300px;top:0;width:252px;height:6px;background-color:#1476B9;border-radius:3px'></div><div style='position:absolute;left:320px;top:24px;width:40px;height:32px;background-color:#E4EFF8;border-radius:8px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>02</div><h3 data-slot='step2' style='position:absolute;left:370px;top:24px;width:162px;height:32px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><div style='position:absolute;left:320px;top:70px;width:212px;height:1px;background-color:#D8E4EF'></div><p data-slot='desc2' style='position:absolute;left:320px;top:84px;width:212px;height:88px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p><div style='position:absolute;left:558px;top:76px;width:36px;height:36px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'>→</div><section style='position:absolute;left:600px;top:0;width:252px;height:190px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:600px;top:0;width:252px;height:6px;background-color:#3F92CC;border-radius:3px'></div><div style='position:absolute;left:620px;top:24px;width:40px;height:32px;background-color:#E4EFF8;border-radius:8px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>03</div><h3 data-slot='step3' style='position:absolute;left:670px;top:24px;width:162px;height:32px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><div style='position:absolute;left:620px;top:70px;width:212px;height:1px;background-color:#D8E4EF'></div><p data-slot='desc3' style='position:absolute;left:620px;top:84px;width:212px;height:88px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p><div style='position:absolute;left:858px;top:76px;width:36px;height:36px;font-family:Microsoft YaHei;font-size:24px;font-weight:bold;color:#1476B8;text-align:center;vertical-align:middle'>→</div><section style='position:absolute;left:900px;top:0;width:252px;height:190px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:12px'></section><div style='position:absolute;left:900px;top:0;width:252px;height:6px;background-color:#145D93;border-radius:3px'></div><div style='position:absolute;left:920px;top:24px;width:40px;height:32px;background-color:#E4EFF8;border-radius:8px;font-family:Microsoft YaHei;font-size:15px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>04</div><h3 data-slot='step4' style='position:absolute;left:970px;top:24px;width:162px;height:32px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D;vertical-align:middle'></h3><div style='position:absolute;left:920px;top:70px;width:212px;height:1px;background-color:#D8E4EF'></div><p data-slot='desc4' style='position:absolute;left:920px;top:84px;width:212px;height:88px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p></div>"
+    },
+    {
+      "id": "roadmap-4col",
+      "name": "四阶段路线图",
+      "description": "1152×250 四阶段横向路线图：横贯时间轴 + 4 枚深主色时间胶囊 + 圆环节点 + 四张计划卡，一次呈现全年节奏。",
+      "size": {
+        "width": 1152,
+        "height": 250
+      },
+      "inputs": {
+        "date1": {
+          "type": "text",
+          "required": true
+        },
+        "title1": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc1": {
+          "type": "richtext",
+          "required": true
+        },
+        "date2": {
+          "type": "text",
+          "required": true
+        },
+        "title2": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc2": {
+          "type": "richtext",
+          "required": true
+        },
+        "date3": {
+          "type": "text",
+          "required": true
+        },
+        "title3": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc3": {
+          "type": "richtext",
+          "required": true
+        },
+        "date4": {
+          "type": "text",
+          "required": true
+        },
+        "title4": {
+          "type": "richtext",
+          "required": true
+        },
+        "desc4": {
+          "type": "richtext",
+          "required": true
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%'><div style='position:absolute;left:40px;top:46px;width:1072px;height:4px;background-color:#D8E4EF;border-radius:2px'></div><div data-slot='date1' style='position:absolute;left:48px;top:0;width:168px;height:30px;background-color:#145D93;border-radius:15px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:122px;top:38px;width:20px;height:20px;background-color:#FDFDFD;border:3px solid #1476B8;border-radius:50%'></div><section style='position:absolute;left:0;top:74px;width:264px;height:176px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><h3 data-slot='title1' style='position:absolute;left:18px;top:92px;width:228px;height:30px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D'></h3><p data-slot='desc1' style='position:absolute;left:18px;top:130px;width:228px;height:104px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p><div data-slot='date2' style='position:absolute;left:344px;top:0;width:168px;height:30px;background-color:#1476B9;border-radius:15px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:418px;top:38px;width:20px;height:20px;background-color:#FDFDFD;border:3px solid #1476B8;border-radius:50%'></div><section style='position:absolute;left:296px;top:74px;width:264px;height:176px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><h3 data-slot='title2' style='position:absolute;left:314px;top:92px;width:228px;height:30px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D'></h3><p data-slot='desc2' style='position:absolute;left:314px;top:130px;width:228px;height:104px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p><div data-slot='date3' style='position:absolute;left:640px;top:0;width:168px;height:30px;background-color:#145D93;border-radius:15px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:714px;top:38px;width:20px;height:20px;background-color:#FDFDFD;border:3px solid #1476B8;border-radius:50%'></div><section style='position:absolute;left:592px;top:74px;width:264px;height:176px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><h3 data-slot='title3' style='position:absolute;left:610px;top:92px;width:228px;height:30px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D'></h3><p data-slot='desc3' style='position:absolute;left:610px;top:130px;width:228px;height:104px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p><div data-slot='date4' style='position:absolute;left:936px;top:0;width:168px;height:30px;background-color:#1476B9;border-radius:15px;font-family:Microsoft YaHei;font-size:14px;font-weight:bold;color:#FFFFFF;text-align:center;vertical-align:middle'></div><div style='position:absolute;left:1010px;top:38px;width:20px;height:20px;background-color:#FDFDFD;border:3px solid #1476B8;border-radius:50%'></div><section style='position:absolute;left:888px;top:74px;width:264px;height:176px;background-color:#FDFDFD;border:1px solid #D8E4EF;border-radius:10px'></section><h3 data-slot='title4' style='position:absolute;left:906px;top:92px;width:228px;height:30px;font-family:Microsoft YaHei;font-size:18px;font-weight:bold;color:#17324D'></h3><p data-slot='desc4' style='position:absolute;left:906px;top:130px;width:228px;height:104px;font-family:Microsoft YaHei;font-size:15px;color:#000000;line-height:1.55'></p></div>"
+    },
+    {
+      "id": "highlight-quote",
+      "name": "重点金句横幅",
+      "description": "1152×130 重点洞察/金句卡片：浅主色底 + 左侧竖条 + 引号方块 + 20px 核心结论 + 右侧出处。适合页面中部或底部收束。",
+      "size": {
+        "width": 1152,
+        "height": 130
+      },
+      "inputs": {
+        "text": {
+          "type": "richtext",
+          "required": true
+        },
+        "source": {
+          "type": "text",
+          "description": "出处或补充署名"
+        }
+      },
+      "html": "<div style='position:absolute;left:0;top:0;width:100%;height:100%;background-color:#F0F5FA;border:1px solid #D8E4EF;border-radius:12px'><div style='position:absolute;left:0;top:0;width:6px;height:130px;background-color:#1476B8;border-radius:3px'></div><div style='position:absolute;left:26px;top:24px;width:42px;height:42px;background-color:#E4EFF8;border-radius:10px;font-family:Microsoft YaHei;font-size:26px;font-weight:bold;color:#145D92;text-align:center;vertical-align:middle'>“</div><p data-slot='text' style='position:absolute;left:88px;top:22px;width:1032px;height:62px;font-family:Microsoft YaHei;font-size:20px;font-weight:bold;color:#17324D;line-height:1.45'></p><p data-slot='source' style='position:absolute;left:88px;top:90px;width:1032px;height:26px;font-family:Microsoft YaHei;font-size:14px;color:#000000;text-align:right'></p></div>"
     }
   ]
 }

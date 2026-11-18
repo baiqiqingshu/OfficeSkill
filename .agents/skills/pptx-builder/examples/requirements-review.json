@@ -1,93 +1,179 @@
 {
   "schemaVersion": 1,
   "title": "需求评审（示例）",
-  "pageCount": 3,
+  "theme": "emerald",
+  "pageCount": 5,
+  "masterRegions": {
+    "detect": true,
+    "titleHeight": 96,
+    "footerHeight": 32
+  },
   "pages": [
+    {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-main",
+          "component": "builtin/cover",
+          "region": "full",
+          "box": {"x": 64, "y": 150, "w": 1152, "h": 420},
+          "inputs": {
+            "tag": "需求基线评审 · REQ-2026-042",
+            "title": "企业内部审批工作台\nV1.0 需求范围与验收评审",
+            "subtitle": "明确提交、审批、规则配置三端核心流程，锁定本期边界与验收口径",
+            "meta": "产品经理：林晓 ｜ 协同办公产品部 ｜ 2026-04"
+          }
+        }
+      ]
+    },
     {
       "id": "scope",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "需求范围与用户流程"
+            "title": "需求范围与三端角色分工",
+            "badge": "范围边界",
+            "meta": "01 / 04"
           }
         },
         {
-          "id": "scope-list",
-          "component": "builtin/bullets",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 1152,
-            "h": 350
-          },
+          "id": "summary",
+          "component": "builtin/summary-band",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 150},
           "inputs": {
-            "items": [
-              "用户提交申请并查看处理进展",
-              "审批人根据权限查看和处理待办",
-              "管理员维护审批规则与角色",
-              "本期不包含跨系统历史数据迁移"
+            "eyebrow": "本期目标",
+            "title": "打通内部申请提交、多级审批与规则治理全流程",
+            "text": "本期聚焦核心高频审批场景，暂不包含跨系统历史台账全量迁移与移动端原生离线能力。"
+          }
+        },
+        {
+          "id": "pillars",
+          "component": "builtin/pillars",
+          "region": "body",
+          "box": {"x": 64, "y": 292, "w": 1152, "h": 340},
+          "inputs": {
+            "col1": "申请人端",
+            "sub1": "高效填报 · 进度透明",
+            "items1": [
+              "标准模板发起各类资源申请",
+              "草稿自动暂存与表单校验",
+              "实时查看节点耗时与审批意见"
+            ],
+            "col2": "审批人端",
+            "sub2": "快速筛选 · 一键处置",
+            "items2": [
+              "按紧急度与类型聚合待办列表",
+              "抽屉查看上下文与历史记录",
+              "支持同意、退回补正与转交"
+            ],
+            "col3": "管理员端",
+            "sub3": "规则配置 · 审计留痕",
+            "items3": [
+              "可视化维护审批链路与角色",
+              "超时自动提醒与代理策略",
+              "全量操作留痕支持合规导出"
             ]
           }
         }
       ]
     },
     {
-      "id": "acceptance",
+      "id": "flow-acceptance",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "验收条件"
+            "title": "标准审批主流程与核心验收条件",
+            "badge": "流程与验收",
+            "meta": "02 / 04"
+          }
+        },
+        {
+          "id": "flow",
+          "component": "builtin/process-4step",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 190},
+          "inputs": {
+            "step1": "发起申请",
+            "desc1": "校验必填字段与权限，生成唯一单号",
+            "step2": "队列分发",
+            "desc2": "按规则路由至对应部门或接口人待办",
+            "step3": "审核处置",
+            "desc3": "核对上下文后执行通过、退回或转派",
+            "step4": "归档通知",
+            "desc4": "写入审计日志并同步通知申请人"
           }
         },
         {
           "id": "criteria",
           "component": "builtin/table",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 1152,
-            "h": 360
-          },
+          "region": "body",
+          "box": {"x": 64, "y": 334, "w": 1152, "h": 300},
           "inputs": {
             "rows": [
-              [
-                "场景",
-                "前置条件",
-                "预期结果"
-              ],
-              [
-                "提交申请",
-                "必填项完整",
-                "生成申请编号"
-              ],
-              [
-                "审批通过",
-                "具备处理权限",
-                "记录审批意见和时间"
-              ],
-              [
-                "重复提交",
-                "同一请求重复到达",
-                "避免生成重复记录"
-              ]
+              ["验收场景", "前置条件", "预期结果", "优先级"],
+              ["提交新申请", "必填项校验通过且未重复", "生成 REQ 编号并进入待审批队列", "P0"],
+              ["审批通过", "当前处理人具备有效权限", "更新状态、记录意见与精确时间戳", "P0"],
+              ["重复点击防重", "同一请求 3 秒内重复到达", "幂等拦截，避免生成重复审批单", "P0"],
+              ["退回补正", "审批人填写必填退回原因", "退回草稿态并通知申请人修改", "P1"]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "priority",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
+          "inputs": {
+            "title": "需求优先级四象限分布",
+            "badge": "优先级排期",
+            "meta": "03 / 04"
+          }
+        },
+        {
+          "id": "matrix",
+          "component": "builtin/matrix2x2",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 520},
+          "inputs": {
+            "titleTL": "重要且紧急（V1.0 必做）",
+            "itemsTL": [
+              "标准申请表单与幂等提交",
+              "待办列表筛选、排序与抽屉审批",
+              "全链路操作审计与权限校验"
+            ],
+            "titleTR": "重要不紧急（V1.1 规划）",
+            "itemsTR": [
+              "自定义审批流编排器",
+              "部门效率分析大盘与导出",
+              "企微/邮件卡片快捷审批"
+            ],
+            "titleBL": "紧急不重要（临时兜底）",
+            "itemsBL": [
+              "旧版申请单只读链接跳转",
+              "批量导入初始化角色名单"
+            ],
+            "titleBR": "暂不纳入（后续评估）",
+            "itemsBR": [
+              "跨系统历史附件全量迁移",
+              "自定义主题皮肤编辑器"
             ]
           }
         }
@@ -98,30 +184,55 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "待确认事项"
+            "title": "评审结论与待确认规则",
+            "badge": "待决事项",
+            "meta": "04 / 04"
           }
         },
         {
-          "id": "questions",
-          "component": "builtin/card",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 1152,
-            "h": 300
-          },
+          "id": "takeaway",
+          "component": "builtin/takeaway-panel",
+          "region": "body",
+          "box": {"x": 64, "y": 122, "w": 1152, "h": 220},
           "inputs": {
-            "title": "请业务方确认",
-            "text": "审批超时是否自动转派？\n撤回后是否允许重新提交？\n审计记录需要保留多长时间？"
+            "title": "建议冻结 V1.0 核心需求范围，进入技术设计",
+            "items": [
+              "三端核心流程与 4 项 P0 验收口径已达成一致",
+              "历史数据迁移明确切出 V1.0，采用只读链接兜底",
+              "待业务方两日内确认超时转派与撤回规则"
+            ],
+            "next": "下一步\n冻结规则口径\n下周设计评审"
+          }
+        },
+        {
+          "id": "action",
+          "component": "builtin/action-card",
+          "region": "body",
+          "box": {"x": 64, "y": 382, "w": 552, "h": 220},
+          "inputs": {
+            "owner": "负责人：业务规则接口人 · 周五前反馈",
+            "title": "待业务方书面确认事项",
+            "items": [
+              "审批超时 48 小时是否自动转派代理人？",
+              "撤回后的单据是否允许保留原编号重提？"
+            ]
+          }
+        },
+        {
+          "id": "risk",
+          "component": "builtin/risk-card",
+          "region": "body",
+          "box": {"x": 664, "y": 382, "w": 552, "h": 220},
+          "inputs": {
+            "level": "合规约束 · 审计留痕",
+            "title": "审计记录保留周期需满足内控要求",
+            "text": "若要求保留 3 年以上原始快照，需提前规划冷存储归档成本。",
+            "action": "应对：已同步安全合规组确认最低留存年限。"
           }
         }
       ]

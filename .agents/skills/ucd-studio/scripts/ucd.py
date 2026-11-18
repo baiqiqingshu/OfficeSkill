@@ -18,8 +18,15 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 from render import ROOT, TYPES, component_css, render_block, render_page
 
-VERSION = '1.1.0'
+VERSION = '1.2.0'
 MODES = ('single', 'library', 'editable')
+SHELLS = ('sidebar', 'topnav')
+DEFAULT_TITLES = {
+    'stats': '关键指标', 'table': '记录列表', 'bar-chart': '占比分布', 'line-chart': '趋势变化',
+    'activity': '处理动态', 'form': '信息填报', 'detail': '详情信息', 'cards': '常用入口',
+    'kanban': '任务看板', 'steps': '流程步骤', 'accordion': '常见问题', 'alert': '提示信息',
+    'empty': '暂无记录', 'progress': '进度跟踪', 'image': '图示', 'tabs': '详情页签',
+}
 IMAGE_EXT = {'.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico'}
 ASSET_EXT = IMAGE_EXT | {'.woff', '.woff2', '.ttf', '.otf'}
 SKIP_DIRS = {'.git', '.history', 'node_modules', 'vendor', 'dist', 'build', 'coverage',
@@ -71,16 +78,24 @@ def require(condition, message):
 def validate(spec):
     require(isinstance(spec, dict), 'page.json 必须是对象')
     allowed = {'version', 'title', 'product', 'description', 'action', 'eyebrow', 'layout', 'style',
-               'density', 'tokens', 'audience', 'goal', 'primaryTask', 'successCriteria',
-               'assumptions', 'sources', 'assets', 'blocks'}
+               'density', 'shell', 'workspace', 'user', 'actions', 'tokens', 'audience', 'goal',
+               'primaryTask', 'successCriteria', 'assumptions', 'sources', 'assets', 'blocks'}
     require(not set(spec) - allowed, f'未知页面字段：{set(spec)-allowed}')
     require(spec.get('version') == 1, 'version 必须是 1')
     require(spec.get('layout') in read_json(ROOT/'data/layouts.json'), '未知 layout，请 search --kind layout')
     require(spec.get('style') in styles(), '未知 style，请 search --kind style')
     require(spec.get('density', 'comfortable') in ('comfortable', 'compact'), 'density 仅支持 comfortable/compact')
-    for key in ('title', 'product', 'description', 'action', 'eyebrow', 'audience', 'goal', 'primaryTask'):
+    require(spec.get('shell', 'sidebar') in SHELLS, 'shell 仅支持 sidebar/topnav')
+    for key in ('title', 'product', 'description', 'action', 'eyebrow', 'audience', 'goal', 'primaryTask', 'workspace'):
         require(isinstance(spec.get(key, ''), str), f'{key} 必须是字符串')
     require(bool(spec.get('title', '').strip()), 'title 不能为空')
+    if 'user' in spec:
+        require(isinstance(spec['user'], dict) and not set(spec['user']) - {'name', 'role'}, 'user 仅支持 name/role')
+        require(all(isinstance(v, str) for v in spec['user'].values()), 'user 字段必须是字符串')
+    if 'actions' in spec:
+        require(isinstance(spec['actions'], list) and len(spec['actions']) <= 4, 'actions 最多 4 项')
+        for act in spec['actions']:
+            require(isinstance(act, str) or (isinstance(act, dict) and isinstance(act.get('label'), str)), 'actions 项须为字符串或含 label 的对象')
     for key in ('successCriteria', 'assumptions', 'sources'):
         require(isinstance(spec.get(key, []), list) and all(isinstance(v, str) for v in spec.get(key, [])), f'{key} 必须是字符串数组')
     tokens = spec.get('tokens', {})
@@ -122,6 +137,10 @@ def validate(spec):
             require(isinstance(rows, list) and len(rows) <= 500 and all(isinstance(r, list) and len(r) == len(columns) for r in rows), f'{key}: rows 长度必须与 columns 相同，最多 500 行')
             require(type(block.get('statusColumn', len(columns)-1)) is int and 0 <= block.get('statusColumn', len(columns)-1) < len(columns), f'{key}: statusColumn 越界')
             require(type(block.get('pageSize', 5)) is int and 1 <= block.get('pageSize', 5) <= 50, f'{key}: pageSize 需 1–50')
+            if 'rowAction' in block:
+                require(isinstance(block['rowAction'], (bool, str)), f'{key}: rowAction 需为布尔值或字符串')
+            if 'showStateTools' in block:
+                require(isinstance(block['showStateTools'], bool), f'{key}: showStateTools 需为布尔值')
         if kind == 'line-chart':
             require(isinstance(block['values'], list) and 2 <= len(block['values']) <= 30 and all(type(v) in (int,float) and 0 <= v <= 1e12 for v in block['values']), f'{key}: values 需 2–30 个非负数字')
             require(isinstance(block['labels'], list) and len(block['labels']) == len(block['values']) and all(isinstance(x,str) for x in block['labels']), f'{key}: labels 与 values 不一致')
@@ -607,15 +626,198 @@ def inspect_source(root, out, max_files=100, max_bytes=160000):
     return {'ok':True,'report':str(out.absolute()),'fileCount':len(records),'bytesRead':used,'truncated':truncated}
 
 
+def normalize_spec(raw):
+    """Tolerantly normalize partial/AI-authored specs before strict validation."""
+    if not isinstance(raw, dict):
+        return raw
+    spec = copy.deepcopy(raw)
+    if 'blocks' in spec and isinstance(spec['blocks'], list):
+        converted = {}
+        for idx, blk in enumerate(spec['blocks'], 1):
+            if not isinstance(blk, dict):
+                continue
+            bid = blk.pop('id', None) or f'{blk.get("type", "block")}-{idx}'
+            bid = re.sub(r'[^a-z0-9-]+', '-', str(bid).lower()).strip('-') or f'block-{idx}'
+            if not bid[0].isalpha():
+                bid = f'b-{bid}'
+            while bid in converted:
+                bid = f'{bid}-{idx}'
+            converted[bid] = blk
+        spec['blocks'] = converted
+    if isinstance(spec.get('blocks'), dict):
+        for blk in spec['blocks'].values():
+            if not isinstance(blk, dict):
+                continue
+            kind = blk.get('type')
+            if kind and not blk.get('title'):
+                blk['title'] = DEFAULT_TITLES.get(kind, '内容区块')
+            if kind == 'stats' and isinstance(blk.get('items'), list):
+                for item in blk['items']:
+                    if isinstance(item, dict) and 'value' in item and isinstance(item['value'], (int, float)):
+                        item['value'] = str(item['value'])
+            if kind == 'table' and isinstance(blk.get('columns'), list) and isinstance(blk.get('rows'), list) and 'statusColumn' not in blk:
+                cols = blk['columns']
+                detected = None
+                for row in blk['rows']:
+                    if isinstance(row, list):
+                        for ci, cell in enumerate(row):
+                            if isinstance(cell, dict) and 'text' in cell:
+                                detected = ci
+                                break
+                    if detected is not None:
+                        break
+                if detected is None:
+                    for ci, cname in enumerate(cols):
+                        if any(tok in str(cname).lower() for tok in ('状态', 'status', '阶段')):
+                            detected = ci
+                            break
+                if detected is not None and 0 <= detected < len(cols):
+                    blk['statusColumn'] = detected
+    return spec
+
+
+def load_json_input(source=None, inline=None):
+    if inline is not None:
+        return json.loads(inline)
+    if source is None:
+        return {}
+    text = str(source).strip()
+    if text == '-':
+        return json.loads(sys.stdin.read())
+    if text.startswith('{'):
+        return json.loads(text)
+    return read_json(source)
+
+
+def apply_sets(spec, pairs):
+    if not pairs:
+        return spec
+    patch = {}
+    for pair in pairs:
+        require('=' in pair, f'--set 参数须为 key=value：{pair}')
+        key, val_raw = pair.split('=', 1)
+        parts = [p for p in key.strip().split('.') if p]
+        require(parts, f'无效字段路径：{key}')
+        try:
+            val = json.loads(val_raw)
+        except json.JSONDecodeError:
+            val = val_raw
+        cursor = patch
+        for p in parts[:-1]:
+            cursor = cursor.setdefault(p, {})
+        cursor[parts[-1]] = val
+    return merge(spec, patch)
+
+
+def presets_info():
+    return {
+        'layouts': list(read_json(ROOT/'data/layouts.json').keys()),
+        'styles': list(styles().keys()),
+        'shells': list(SHELLS),
+        'densities': ['compact', 'comfortable'],
+        'blocks': {
+            'stats': 'items:[{label,value,change?,hint?}]',
+            'table': 'columns:[str], rows:[[str|{text,tone}]], statusColumn?, pageSize?',
+            'form': 'fields:[{label,type?:text|email|date|number|select|textarea,options?,required?,placeholder?,help?}], submit?',
+            'detail': 'items:[{label,value:str|{text,tone}}]',
+            'cards': 'items:[{title,description?,action?}]',
+            'activity': 'items:[{title,time?,description?}]',
+            'kanban': 'columns:[{title,items:[{title,owner?,tag?}]}]',
+            'tabs': 'items:[{label,content}]',
+            'bar-chart': 'items:[{label,value:0..100}]',
+            'line-chart': 'labels:[str], values:[num], summary?, change?',
+            'steps': 'items:[str], current?:0',
+            'progress': 'items:[{label,value:0..100}]',
+            'accordion': 'items:[{title,content}]',
+            'alert': 'text',
+            'empty': 'text, heading?, action?',
+            'image': 'src:assets/x.png, alt, caption?',
+        },
+        'quickCommand': 'python scripts/ucd.py quick --out <dir> --layout admin --style ocean --shell sidebar --title "标题" --json \'{"blocks":{...}}\'',
+    }
+
+
+def export_kit(out_dir, style_id='ocean'):
+    out = local_path(out_dir).absolute()
+    require(not any(linked(p) for p in [out, *out.parents]), '输出目录不能经过链接')
+    style = styles()[style_id]
+    tokens = ';'.join(f'--{k}:{v}' for k, v in style['tokens'].items()) + ';'
+    css_text = f':root{{{tokens}}}\n' + (ROOT/'assets/base.css').read_text(encoding='utf-8')
+    js_text = (ROOT/'assets/runtime.js').read_text(encoding='utf-8')
+    starter_html = f'''<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UCD Kit · 原型骨架</title>
+  <link rel="stylesheet" href="ucd.css">
+</head>
+<body class="dense shell-topnav">
+  <div class="app">
+    <aside class="sidebar">
+      <a class="brand" href="#main"><span class="brand-mark">U</span><span>内部系统原型</span></a>
+      <nav><div class="nav-list"><a class="active" href="#main"><span>总览</span></a></div></nav>
+    </aside>
+    <div class="workspace">
+      <main id="main" class="main">
+        <div class="page-heading">
+          <div><h1>页面标题</h1><p>使用 ucd.css + ucd.js 直接编写语义化 HTML。</p></div>
+          <div class="heading-actions"><button type="button" class="btn btn-primary" data-notify="主操作已触发">新建事项</button></div>
+        </div>
+        <div class="grid">
+          <section class="block block-stats full">
+            <div class="stats-grid">
+              <div class="stat"><div class="stat-head"><span class="stat-label">待处理</span><span class="stat-dot"></span></div><div class="stat-value">12</div><div class="stat-foot"><span class="stat-change up">↑ 8%</span><span>本周新增</span></div></div>
+              <div class="stat"><div class="stat-head"><span class="stat-label">已完成</span><span class="stat-dot"></span></div><div class="stat-value">86</div><div class="stat-foot"><span class="stat-change">96%</span><span>按时率</span></div></div>
+            </div>
+          </section>
+          <section class="block full">
+            <div class="panel"><div class="panel-head"><div><h2>内容面板</h2><p>直接复用 .panel / .data-table / .detail-grid / .form-grid 类名。</p></div></div><div class="panel-body">在此填写自定义业务原型内容。</div></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script defer src="ucd.js"></script>
+</body>
+</html>
+'''
+    out.mkdir(parents=True, exist_ok=True)
+    (out/'ucd.css').write_text(css_text, encoding='utf-8')
+    (out/'ucd.js').write_text(js_text, encoding='utf-8')
+    if not (out/'index.html').exists():
+        (out/'index.html').write_text(starter_html, encoding='utf-8')
+    return {'ok': True, 'directory': str(out), 'style': style_id, 'files': ['ucd.css', 'ucd.js', 'index.html']}
+
+
+def prepare_force_dir(out):
+    out = local_path(out).absolute()
+    if not out.exists() or not any(out.iterdir()):
+        return
+    if (out/'manifest.json').is_file():
+        old = read_json(out/'manifest.json')
+        require(old.get('tool') == 'ucd-studio', '目录非 ucd-studio 产物，拒绝强制覆盖')
+        for name in [*old.get('files', {}), 'page.json', 'manifest.json']:
+            p = out / name
+            if p.is_file():
+                p.unlink()
+    else:
+        fail('目录非空且无 ucd-studio manifest，请使用新目录')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('search');p.add_argument('query');p.add_argument('--kind',choices=('all','style','component','layout'),default='all');p.add_argument('--limit',type=int,choices=range(1,6),default=2);p.add_argument('--code',action='store_true');p.add_argument('--max-chars',type=int,default=2500)
     p=sub.add_parser('show');p.add_argument('id');p.add_argument('--kind',choices=('style','component','layout'));p.add_argument('--code',action='store_true');p.add_argument('--example',action='store_true');p.add_argument('--max-chars',type=int,default=4500)
-    p=sub.add_parser('init');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--config')
+    p=sub.add_parser('init');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'));p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--config');p.add_argument('--json');p.add_argument('--set',action='append',default=[]);p.add_argument('--force',action='store_true')
+    p=sub.add_parser('quick');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'));p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--product');p.add_argument('--description');p.add_argument('--action');p.add_argument('--config');p.add_argument('--json');p.add_argument('--set',action='append',default=[])
     p=sub.add_parser('summary');p.add_argument('--dir',required=True);p.add_argument('--block');p.add_argument('--max-chars',type=int,default=2500)
     p=sub.add_parser('build');p.add_argument('--dir',required=True);p.add_argument('--mode',choices=MODES)
-    p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch',required=True)
+    p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch');p.add_argument('--json');p.add_argument('--set',action='append',default=[])
     p=sub.add_parser('check');p.add_argument('--dir',required=True)
+    p=sub.add_parser('presets')
+    p=sub.add_parser('kit');p.add_argument('--out',required=True);p.add_argument('--style',default='ocean')
     p=sub.add_parser('inspect');p.add_argument('--root',required=True);p.add_argument('--out',required=True);p.add_argument('--max-files',type=int,default=100);p.add_argument('--max-bytes',type=int,default=160000)
     args=parser.parse_args()
     if args.command in ('search','show'):
@@ -625,21 +827,47 @@ def main():
             matches=[e for e in catalog() if e['id']==args.id and (not args.kind or e['kind']==args.kind)]
             require(len(matches)>0,'未知 ID');require(len(matches)==1,'ID 存在多个种类，请加 --kind component 或 --kind layout')
             result=bounded(show_entry(matches[0],args.code,args.example),args.max_chars)
-    elif args.command=='init':
-        out=local_path(args.out);require(not out.exists() or not any(out.iterdir()),'init 只允许新目录或空目录')
+    elif args.command in ('init', 'quick'):
+        out=local_path(args.out)
+        if args.command=='quick' or args.force:
+            prepare_force_dir(out)
+        else:
+            require(not out.exists() or not any(out.iterdir()),'init 只允许新目录或空目录（追加 --force 或使用 quick 可更新）')
         require(args.layout in read_json(ROOT/'data/layouts.json'),'未知 layout')
         spec=read_json(ROOT/f'examples/{args.layout}.json');spec['style']=args.style
-        if args.config:
-            patch=read_json(args.config);require(isinstance(patch,dict),'配置必须是对象');spec=merge(spec,patch)
+        if args.shell:spec['shell']=args.shell
+        if args.density:spec['density']=args.density
+        if args.config or args.json:
+            patch=load_json_input(args.config, args.json)
+            require(isinstance(patch,dict),'配置必须是对象')
+            spec=merge(spec,patch)
+        spec=apply_sets(spec, args.set)
         if args.title is not None:spec['title']=args.title
-        result=build(spec,out,args.mode,source_base=local_path(args.config).absolute().parent if args.config else None)
+        if args.command=='quick':
+            for k in ('product','description','action'):
+                v=getattr(args,k,None)
+                if v is not None:spec[k]=v
+            spec=normalize_spec(spec)
+        elif args.json or (args.config == '-'):
+            spec=normalize_spec(spec)
+        src_base=local_path(args.config).absolute().parent if args.config and args.config != '-' and not args.config.strip().startswith('{') else None
+        result=build(spec,out,args.mode,source_base=src_base)
     elif args.command=='summary':
         require(1000<=args.max_chars<=50000,'max-chars 需 1000–50000')
         result=page_summary(args.dir,args.block,args.max_chars)
     elif args.command=='build':result=build(read_json(Path(args.dir)/'page.json'),args.dir,args.mode)
     elif args.command=='patch':
-        patch=read_json(args.patch);require(isinstance(patch,dict),'补丁必须是对象');result=build(merge(read_json(Path(args.dir)/'page.json'),patch),args.dir)
+        require(args.patch or args.json or args.set, 'patch 需要提供 --patch、--json 或 --set')
+        base_spec=read_json(Path(args.dir)/'page.json')
+        if args.patch or args.json:
+            patch=load_json_input(args.patch, args.json)
+            require(isinstance(patch,dict),'补丁必须是对象')
+            base_spec=merge(base_spec, patch)
+        base_spec=normalize_spec(apply_sets(base_spec, args.set))
+        result=build(base_spec,args.dir)
     elif args.command=='check':result=check(args.dir)
+    elif args.command=='presets':result=presets_info()
+    elif args.command=='kit':result=export_kit(args.out, args.style)
     else:
         require(1<=args.max_files<=500 and 1000<=args.max_bytes<=1000000,'扫描预算：1–500 文件、1000–1000000 bytes')
         result=inspect_source(args.root,args.out,args.max_files,args.max_bytes)

@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
-  "title": "现代元素 · 方案评审示例",
-  "pageCount": 6,
+  "title": "现代汇报 · 综合方案评审示例",
+  "theme": "navy",
+  "pageCount": 8,
   "masterRegions": {
     "detect": true,
     "titleHeight": 96,
@@ -9,213 +10,213 @@
   },
   "pages": [
     {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-hero",
+          "component": "builtin/cover-dark",
+          "region": "full",
+          "box": {"x": 0, "y": 0, "w": 1280, "h": 720},
+          "inputs": {
+            "tag": "技术方案评审 · 2026",
+            "title": "统一身份与接入平台\n年度建设方案",
+            "subtitle": "收敛 47 套业务系统认证入口，实现安全可控、毫秒级校验与灰度可回退",
+            "meta": "汇报人：平台架构组 ｜ 产品研发中心 ｜ 2026-04"
+          }
+        }
+      ]
+    },
+    {
       "id": "insights",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
+          "id": "head",
+          "component": "builtin/header-bar",
           "region": "title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "三个洞察，让方案更容易理解"
+            "title": "三个核心洞察，明确建设切入点",
+            "badge": "问题洞察",
+            "meta": "01 / 07"
           }
         },
         {
           "id": "insight1",
           "component": "builtin/insight-card",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 126,
-            "w": 360,
-            "h": 240
-          },
+          "box": {"x": 64, "y": 126, "w": 360, "h": 240},
           "inputs": {
             "number": "01",
-            "title": "减少认知负担",
-            "text": "把常用操作集中到工作台，让每一步都有明确的下一步。"
+            "title": "减少重复接入",
+            "text": "将 47 个系统的登录入口收口到统一网关，新系统 2 天完成接入。"
           }
         },
         {
           "id": "insight2",
           "component": "builtin/insight-card",
           "region": "body",
-          "box": {
-            "x": 460,
-            "y": 126,
-            "w": 360,
-            "h": 240
-          },
+          "box": {"x": 460, "y": 126, "w": 360, "h": 240},
           "inputs": {
             "number": "02",
-            "title": "统一关键口径",
-            "text": "把目标、边界和验收条件放到同一张清单中。"
+            "title": "统一安全口径",
+            "text": "口令强度、离职回收与多因素策略集中下发，消除跨系统审计盲区。"
           }
         },
         {
           "id": "insight3",
           "component": "builtin/insight-card",
           "region": "body",
-          "box": {
-            "x": 856,
-            "y": 126,
-            "w": 360,
-            "h": 240
-          },
+          "box": {"x": 856, "y": 126, "w": 360, "h": 240},
           "inputs": {
             "number": "03",
-            "title": "及时验证反馈",
-            "text": "用小范围试点验证假设，再逐步扩大覆盖范围。"
+            "title": "灰度平稳切换",
+            "text": "保留旧认证通道作为应急回退路径，先验证核心链路再分批扩面。"
           }
         },
         {
           "id": "summary",
           "component": "builtin/summary-band",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 406,
-            "w": 1152,
-            "h": 150
-          },
+          "box": {"x": 64, "y": 406, "w": 1152, "h": 150},
           "inputs": {
-            "eyebrow": "本页结论",
-            "title": "用统一能力支撑业务快速接入",
-            "text": "先标准化接口与验收口径，再分批扩大覆盖范围。"
+            "eyebrow": "核心结论",
+            "title": "以统一身份底座支撑全业务安全高效协同",
+            "text": "先标准化协议与审计口径，再分三批灰度推进，确保零停机平滑切换。"
           }
         }
       ]
     },
     {
-      "id": "value",
+      "id": "architecture-pillars",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
+          "id": "head",
+          "component": "builtin/header-bar",
           "region": "title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "用价值与能力说明建设重点"
+            "title": "三层架构支柱与价值指标",
+            "badge": "总体架构",
+            "meta": "02 / 07"
           }
         },
         {
-          "id": "value1",
+          "id": "pillars",
+          "component": "builtin/pillars",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 340},
+          "inputs": {
+            "col1": "统一接入层",
+            "sub1": "标准协议与零侵入适配",
+            "items1": [
+              "兼容 OAuth2 / OIDC / CAS",
+              "提供轻量 SDK 与网关插件",
+              "新业务 2 天内快速上线"
+            ],
+            "col2": "核心认证层",
+            "sub2": "高可用与毫秒级校验",
+            "items2": [
+              "无状态集群，P99 延迟 ≤26ms",
+              "支持多因素与风险动态拦截",
+              "离职账号秒级吊销全局生效"
+            ],
+            "col3": "治理审计层",
+            "sub3": "可观测与全链路留痕",
+            "items3": [
+              "全量登录审计保留 180 天",
+              "实时异常告警与大盘监控",
+              "灰度切换支持一键回退"
+            ]
+          }
+        },
+        {
+          "id": "quote",
+          "component": "builtin/highlight-quote",
+          "region": "body",
+          "box": {"x": 64, "y": 490, "w": 1152, "h": 130},
+          "inputs": {
+            "text": "用统一平台能力替代各系统重复造轮子，把安全合规内化为默认基础设施。",
+            "source": "—— 平台架构委员会方案评审意见"
+          }
+        }
+      ]
+    },
+    {
+      "id": "metrics-progress",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
+          "inputs": {
+            "title": "量化收益目标与业务域覆盖进度",
+            "badge": "价值评估",
+            "meta": "03 / 07"
+          }
+        },
+        {
+          "id": "val1",
           "component": "builtin/value-card",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 126,
-            "w": 360,
-            "h": 240
-          },
+          "box": {"x": 64, "y": 120, "w": 360, "h": 240},
           "inputs": {
-            "label": "接入周期",
+            "label": "标准接入周期",
             "value": "2 天",
-            "note": "标准接口接入，复用认证能力。"
+            "note": "复用统一 SDK 与认证网关，缩短 80% 研发投入。"
           }
         },
         {
-          "id": "value2",
+          "id": "val2",
           "component": "builtin/value-card",
           "region": "body",
-          "box": {
-            "x": 460,
-            "y": 126,
-            "w": 360,
-            "h": 240
-          },
+          "box": {"x": 460, "y": 120, "w": 360, "h": 240},
           "inputs": {
-            "label": "系统覆盖",
-            "value": "47 个",
-            "note": "统一接入标准，覆盖核心业务系统。"
+            "label": "纳管业务系统",
+            "value": "47 套",
+            "note": "覆盖核心办公、研发工具与数据报表全链路。"
           }
         },
         {
-          "id": "value3",
+          "id": "val3",
           "component": "builtin/value-card",
           "region": "body",
-          "box": {
-            "x": 856,
-            "y": 126,
-            "w": 360,
-            "h": 240
-          },
+          "box": {"x": 856, "y": 120, "w": 360, "h": 240},
           "inputs": {
-            "label": "服务目标",
+            "label": "服务可用目标",
             "value": "99.95%",
-            "note": "建立可监控、可回退的运行机制。"
+            "note": "多活集群容灾，单节点故障零感知。"
           }
         },
         {
-          "id": "capability1",
-          "component": "builtin/capability-tile",
+          "id": "bars",
+          "component": "builtin/bar-metric",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 398,
-            "w": 360,
-            "h": 220
-          },
+          "box": {"x": 64, "y": 392, "w": 552, "h": 260},
           "inputs": {
-            "symbol": "A",
-            "title": "接入能力",
-            "items": [
-              "标准协议适配",
-              "统一回调接口",
-              "配置化验收"
-            ]
+            "title": "各业务域当前接入完成率",
+            "label1": "核心办公与审批",
+            "val1": "96%",
+            "label2": "研发效能工具链",
+            "val2": "84%",
+            "label3": "数据与报表平台",
+            "val3": "68%",
+            "label4": "历史外围系统",
+            "val4": "42%"
           }
         },
         {
-          "id": "capability2",
-          "component": "builtin/capability-tile",
+          "id": "process-note",
+          "component": "builtin/panel",
           "region": "body",
-          "box": {
-            "x": 460,
-            "y": 398,
-            "w": 360,
-            "h": 220
-          },
+          "box": {"x": 664, "y": 392, "w": 552, "h": 260},
           "inputs": {
-            "symbol": "B",
-            "title": "运行保障",
-            "items": [
-              "全链路监控",
-              "灰度与回退",
-              "审计留痕"
-            ]
-          }
-        },
-        {
-          "id": "capability3",
-          "component": "builtin/capability-tile",
-          "region": "body",
-          "box": {
-            "x": 856,
-            "y": 398,
-            "w": 360,
-            "h": 220
-          },
-          "inputs": {
-            "symbol": "C",
-            "title": "组织协同",
-            "items": [
-              "明确接口人",
-              "统一验收",
-              "按期复盘"
-            ]
+            "title": "压测与容量基线结论",
+            "text": "• 认证核心集群在 8,000 QPS 持续压测下，校验 P99 延迟稳定在 26ms 以内。\n• 本地缓存 + 短 TTL 策略可将中心库读压力降低 92%。\n• 异常熔断演练通过：单可用区切换耗时 < 15 秒。"
           }
         }
       ]
@@ -225,161 +226,100 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
+          "id": "head",
+          "component": "builtin/header-bar",
           "region": "title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "明确方案选择与实施取舍"
+            "title": "关键架构取舍与方案对比",
+            "badge": "方案决策",
+            "meta": "04 / 07"
           }
         },
         {
-          "id": "recommend",
-          "component": "builtin/decision-card",
+          "id": "pros-cons",
+          "component": "builtin/pros-cons",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 126,
-            "w": 552,
-            "h": 240
-          },
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 360},
           "inputs": {
-            "status": "推荐方案",
-            "title": "统一平台，分批接入",
-            "text": "保留旧通道作为回退路径，先验证核心链路，再逐步扩大覆盖范围。"
-          }
-        },
-        {
-          "id": "alternative",
-          "component": "builtin/decision-card",
-          "region": "body",
-          "box": {
-            "x": 664,
-            "y": 126,
-            "w": 552,
-            "h": 240
-          },
-          "inputs": {
-            "status": "保留备选",
-            "title": "保持适配边界清晰",
-            "text": "旧系统通过适配层逐步接入，避免把历史差异带入平台核心。"
+            "titleL": "推荐方案：统一网关 + 渐进切流",
+            "itemsL": [
+              "复用现有组织账号体系，改造成本仅为重建的 40%",
+              "年内即可覆盖 85% 核心业务场景，风险可控",
+              "全局会话支持秒级强退与统一安全审计",
+              "保留旧通道回退能力，业务方上线无心理负担"
+            ],
+            "titleR": "对比方案：一次性全量推倒重建",
+            "itemsR": [
+              "需所有业务系统同步配合改造，排期协调极难",
+              "历史协议兼容包袱重，上线前收益无法显现",
+              "一旦核心切换异常，缺乏低成本快速回退路径",
+              "首年研发与运维人力投入预计翻倍"
+            ]
           }
         },
         {
           "id": "compare",
           "component": "builtin/comparison-row",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 410,
-            "w": 1152,
-            "h": 140
-          },
+          "box": {"x": 64, "y": 506, "w": 1152, "h": 140},
           "inputs": {
             "label": "接入方式",
-            "before": "现状：各系统自行维护登录逻辑，重复开发且口径不一。",
-            "after": "目标：统一认证，一次接入，共享平台能力。"
+            "before": "现状：各系统自建登录页与账号表，平均接入耗时 2 周以上。",
+            "after": "目标：标准 OIDC 协议 + 统一 SDK，2 天内完成联调上线。"
           }
         }
       ]
     },
     {
-      "id": "delivery",
+      "id": "delivery-roadmap",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
+          "id": "head",
+          "component": "builtin/header-bar",
           "region": "title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "阶段推进，责任到人"
+            "title": "实施步骤与年度路线图",
+            "badge": "推进节奏",
+            "meta": "05 / 07"
           }
         },
         {
-          "id": "phase1",
-          "component": "builtin/milestone-strip",
+          "id": "steps4",
+          "component": "builtin/process-4step",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 126,
-            "w": 1152,
-            "h": 130
-          },
+          "box": {"x": 64, "y": 118, "w": 1152, "h": 190},
           "inputs": {
-            "phase": "阶段 01",
-            "title": "试点验证",
-            "items": [
-              "完成核心系统接入",
-              "沉淀监控与回退方案",
-              "形成标准接入清单"
-            ]
+            "step1": "基线对齐",
+            "desc1": "盘点系统清单，锁定回调地址与账号映射口径",
+            "step2": "试点验证",
+            "desc2": "首批 5 套核心系统灰度切流并完成压测演练",
+            "step3": "分批推广",
+            "desc3": "按业务域分三批迁移，保留旧认证回退开关",
+            "step4": "收口运营",
+            "desc4": "下线旧登录页，纳入常态化巡检与审计报表"
           }
         },
         {
-          "id": "phase2",
-          "component": "builtin/milestone-strip",
+          "id": "roadmap",
+          "component": "builtin/roadmap-4col",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 280,
-            "w": 1152,
-            "h": 130
-          },
+          "box": {"x": 64, "y": 356, "w": 1152, "h": 250},
           "inputs": {
-            "phase": "阶段 02",
-            "title": "扩大覆盖",
-            "items": [
-              "复用试点接入经验",
-              "完善运维交接",
-              "分批完成系统迁移"
-            ]
-          }
-        },
-        {
-          "id": "action",
-          "component": "builtin/action-card",
-          "region": "body",
-          "box": {
-            "x": 64,
-            "y": 442,
-            "w": 552,
-            "h": 220
-          },
-          "inputs": {
-            "owner": "负责人：平台组 · 本周完成",
-            "title": "锁定试点范围",
-            "items": [
-              "确认首批三个系统",
-              "完成接入排期和验收口径"
-            ]
-          }
-        },
-        {
-          "id": "risk",
-          "component": "builtin/risk-card",
-          "region": "body",
-          "box": {
-            "x": 664,
-            "y": 442,
-            "w": 552,
-            "h": 220
-          },
-          "inputs": {
-            "level": "重点关注 · 兼容性",
-            "title": "存量协议差异",
-            "text": "部分旧系统使用自定义登录协议，接入成本尚待确认。",
-            "action": "应对：提前盘点，安排独立适配窗口。"
+            "date1": "2026 Q2 · 奠基",
+            "title1": "网关与内核上线",
+            "desc1": "完成认证内核压测与首批 5 个核心系统试点接入",
+            "date2": "2026 Q3 · 扩面",
+            "title2": "研发数据域覆盖",
+            "desc2": "完成 28 套系统切流，上线多因素风险识别",
+            "date3": "2026 Q4 · 收口",
+            "title3": "旧通道全部下线",
+            "desc3": "全部 47 套系统迁移完成，安全审计闭环验收",
+            "date4": "2027 Q1 · 演进",
+            "title4": "零信任深化",
+            "desc4": "引入设备指纹与细粒度权限动态评估能力"
           }
         }
       ]
@@ -389,37 +329,29 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
+          "id": "head",
+          "component": "builtin/header-bar",
           "region": "title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "关键事项进展与能力评估"
+            "title": "关键里程碑进展与成熟度评估",
+            "badge": "状态跟踪",
+            "meta": "06 / 07"
           }
         },
         {
           "id": "kpi",
           "component": "builtin/kpi-band",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 126,
-            "w": 1152,
-            "h": 140
-          },
+          "box": {"x": 64, "y": 118, "w": 1152, "h": 140},
           "inputs": {
-            "label1": "接入系统",
+            "label1": "已接入系统",
             "value1": "36 套",
-            "label2": "交付周期",
+            "label2": "交付周期缩短",
             "value2": "-42%",
-            "label3": "系统可用率",
+            "label3": "在线可用率",
             "value3": "99.95%",
-            "label4": "节约成本",
+            "label4": "年度节约成本",
             "value4": "¥1,280万"
           }
         },
@@ -427,65 +359,45 @@
           "id": "track1",
           "component": "builtin/status-row",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 290,
-            "w": 1152,
-            "h": 64
-          },
+          "box": {"x": 64, "y": 284, "w": 1152, "h": 64},
           "inputs": {
             "num": "01",
-            "name": "统一接入平台一期",
+            "name": "统一接入平台一期核心链路",
             "status": [{"text": "正常", "bold": true, "color": "#1E7A46"}],
-            "note": "里程碑 M2 已达成"
+            "note": "里程碑 M2 已按期达成"
           }
         },
         {
           "id": "track2",
           "component": "builtin/status-row",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 370,
-            "w": 1152,
-            "h": 64
-          },
+          "box": {"x": 64, "y": 364, "w": 1152, "h": 64},
           "inputs": {
             "num": "02",
-            "name": "历史接口迁移",
+            "name": "历史异构系统协议适配迁移",
             "status": [{"text": "延期", "bold": true, "color": "#B3372F"}],
-            "note": "依赖方确认推迟 2 周"
+            "note": "依赖方确认推迟 2 周，已建缓冲窗口"
           }
         },
         {
           "id": "track3",
           "component": "builtin/status-row",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 450,
-            "w": 1152,
-            "h": 64
-          },
+          "box": {"x": 64, "y": 444, "w": 1152, "h": 64},
           "inputs": {
             "num": "03",
-            "name": "监控大盘上线",
+            "name": "安全审计与实时告警大盘上线",
             "status": [{"text": "关注", "bold": true, "color": "#A86A00"}],
-            "note": "性能压测排期中"
+            "note": "全链路压测排期中"
           }
         },
         {
           "id": "score",
           "component": "builtin/scorecard",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 538,
-            "w": 1152,
-            "h": 64
-          },
+          "box": {"x": 64, "y": 532, "w": 1152, "h": 64},
           "inputs": {
-            "name": "接口标准化成熟度",
+            "name": "接口标准化与可回退成熟度",
             "rating": [{"text": "●●●●", "color": "#1476B8"}, {"text": "○", "color": "#D8E4EF"}],
             "note": "4/5 较成熟"
           }
@@ -497,55 +409,42 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
+          "id": "head",
+          "component": "builtin/header-bar",
           "region": "title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "形成可执行的评审结论"
+            "title": "评审结论与下一步行动",
+            "badge": "评审收尾",
+            "meta": "07 / 07"
           }
         },
         {
           "id": "takeaway",
           "component": "builtin/takeaway-panel",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 146,
-            "w": 1152,
-            "h": 220
-          },
+          "box": {"x": 64, "y": 126, "w": 1152, "h": 220},
           "inputs": {
-            "title": "建议通过方案评审",
+            "title": "建议通过方案评审，按三批灰度节奏启动实施",
             "items": [
-              "范围、架构与验收口径已明确",
-              "关键风险已有负责人和应对计划",
-              "保持灰度推进与可回退能力"
+              "范围、三层架构与 99.95% 可用性验收口径已对齐",
+              "关键异构适配风险已有缓冲窗口与回退预案",
+              "首批 5 套核心系统下周启动联合接入测试"
             ],
-            "next": "下一步\n启动试点接入\n完成首轮验证"
+            "next": "下一步\n锁定试点名单\n下周启动联调"
           }
         },
         {
           "id": "next-action",
           "component": "builtin/action-card",
           "region": "body",
-          "box": {
-            "x": 64,
-            "y": 406,
-            "w": 552,
-            "h": 220
-          },
+          "box": {"x": 64, "y": 386, "w": 552, "h": 220},
           "inputs": {
-            "owner": "负责人：业务组 · 下周完成",
-            "title": "确认验收清单",
+            "owner": "负责人：平台组 & 业务接口人 · 本周完成",
+            "title": "锁定试点范围与排期",
             "items": [
-              "对齐业务成功场景",
-              "确认上线和回退条件"
+              "确认首批 5 套试点业务系统清单",
+              "完成回调白名单与灰度开关配置"
             ]
           }
         },
@@ -553,17 +452,12 @@
           "id": "dependency",
           "component": "builtin/risk-card",
           "region": "body",
-          "box": {
-            "x": 664,
-            "y": 406,
-            "w": 552,
-            "h": 220
-          },
+          "box": {"x": 664, "y": 386, "w": 552, "h": 220},
           "inputs": {
-            "level": "需要协同 · 资源依赖",
-            "title": "跨团队窗口需提前确认",
-            "text": "试点系统上线时段需与业务维护计划保持一致。",
-            "action": "行动：评审后两日内锁定协同窗口。"
+            "level": "重点关注 · 跨团队协同",
+            "title": "存量协议兼容窗口需提前锁定",
+            "text": "部分老旧系统使用自定义登录协议，需业务团队预留联合联调窗口。",
+            "action": "应对：评审后两日内完成排期确认并冻结协议。"
           }
         }
       ]

@@ -4,6 +4,7 @@
   "product": "协同工作台",
   "description": "从待办开始，了解申请进度和最近的处理记录。",
   "action": "新建申请",
+  "actions": ["导出台账"],
   "eyebrow": "",
   "layout": "dashboard",
   "style": "ocean",
@@ -29,6 +30,7 @@
         {
           "label": "待我审批",
           "value": "4",
+          "change": "↑ 2",
           "hint": "等待处理"
         },
         {
@@ -39,11 +41,13 @@
         {
           "label": "已通过",
           "value": "3",
+          "change": "↑ 15%",
           "hint": "当前示例记录"
         },
         {
           "label": "已退回",
           "value": "1",
+          "change": "↓ 1",
           "hint": "等待补充信息"
         }
       ]

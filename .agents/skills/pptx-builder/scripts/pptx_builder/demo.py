@@ -133,21 +133,54 @@ def _inputs_for(component, stage, index=0):
     return _stage_image_inputs(component, inputs, stage)
 
 
-def _placeholder(stage):
-    """Draw a light 552×360 placeholder PNG used for image inputs."""
-    target = stage / "images" / "sample.png"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if target.exists():
-        return
+def _draw_placeholder_image(target):
+    """Draw a clean 552×360 modern architecture/dashboard schematic PNG."""
     from PIL import Image, ImageDraw
     image = Image.new("RGB", (552, 360), "#F0F5FA")
     draw = ImageDraw.Draw(image)
-    draw.rectangle([16, 16, 535, 343], outline="#C5D3DF", width=2)
-    draw.line([16, 16, 535, 343], fill="#D8E4EF", width=2)
-    draw.line([535, 16, 16, 343], fill="#D8E4EF", width=2)
-    draw.rectangle([16, 300, 535, 343], fill="#E4EFF8")
-    draw.rectangle([236, 312, 315, 330], fill="#3F92CC")
+    # Outer window card
+    draw.rounded_rectangle([18, 18, 534, 342], radius=12, fill="#FFFFFF", outline="#D8E4EF", width=2)
+    # Top bar + traffic dots
+    draw.rounded_rectangle([18, 18, 534, 54], radius=12, fill="#145D93")
+    draw.rectangle([18, 40, 534, 54], fill="#145D93")
+    for idx, col in enumerate(("#E4EFF8", "#3F92CC", "#1476B9")):
+        cx = 38 + idx * 16
+        draw.ellipse([cx - 4, 32, cx + 4, 40], fill=col)
+    draw.rounded_rectangle([96, 30, 232, 42], radius=4, fill="#3F92CC")
+    # Left architecture stack (3 layers)
+    for idx, (y0, fill, bar) in enumerate((
+        (74, "#E4EFF8", "#145D93"),
+        (158, "#F5F8FB", "#1476B9"),
+        (242, "#F5F8FB", "#3F92CC"),
+    )):
+        draw.rounded_rectangle([36, y0, 290, y0 + 68], radius=8, fill=fill, outline="#D8E4EF", width=1)
+        draw.rounded_rectangle([48, y0 + 14, 54, y0 + 54], radius=2, fill=bar)
+        draw.rounded_rectangle([66, y0 + 16, 178, y0 + 28], radius=4, fill="#17324D")
+        draw.rounded_rectangle([66, y0 + 38, 256, y0 + 48], radius=4, fill="#C5D3DF")
+    # Right telemetry/bar card
+    draw.rounded_rectangle([308, 74, 514, 186], radius=8, fill="#F5F8FB", outline="#D8E4EF", width=1)
+    draw.rounded_rectangle([324, 90, 412, 102], radius=4, fill="#145D92")
+    draw.rounded_rectangle([324, 114, 396, 134], radius=4, fill="#1476B9")
+    draw.rounded_rectangle([408, 114, 494, 134], radius=4, fill="#E4EFF8")
+    draw.rounded_rectangle([324, 148, 494, 158], radius=4, fill="#C5D3DF")
+    draw.rounded_rectangle([324, 166, 456, 174], radius=4, fill="#D8E4EF")
+    # Bottom right bar chart
+    draw.rounded_rectangle([308, 202, 514, 310], radius=8, fill="#FFFFFF", outline="#D8E4EF", width=1)
+    heights = (44, 68, 52, 80, 62)
+    colors = ("#3F92CC", "#1476B9", "#3F92CC", "#145D93", "#1E7A46")
+    for idx, (bh, col) in enumerate(zip(heights, colors)):
+        x0 = 330 + idx * 34
+        draw.rounded_rectangle([x0, 296 - bh, x0 + 20, 296], radius=4, fill=col)
+    target.parent.mkdir(parents=True, exist_ok=True)
     image.save(target)
+
+
+def _placeholder(stage):
+    """Draw a clean 552×360 placeholder PNG used for image inputs."""
+    target = stage / "images" / "sample.png"
+    if target.exists():
+        return
+    _draw_placeholder_image(target)
 
 
 def _canvas(nodes, width, height, fallback_width, grid):
@@ -288,8 +321,17 @@ def _load_decks(libraries, stage):
             continue
         decks.append({"title": str(data.get("title") or path.stem), "file": path.name,
                       "pageSize": size, "pages": pages})
-    # 页数多的示例排前面：默认选中的就是 11 页的 technical-proposal。
-    decks.sort(key=lambda deck: (-len(deck["pages"]), deck["title"]))
+    # 优先展示现代综合示例与常用汇报场景；长流程串讲放后面。
+    priority = {
+        "modern-elements.json": 0,
+        "technical-proposal.json": 1,
+        "solution-review.json": 2,
+        "technical-report.json": 3,
+        "requirements-review.json": 4,
+        "scenario-walkthrough.json": 5,
+        "ipd-walkthrough.json": 6,
+    }
+    decks.sort(key=lambda deck: (priority.get(deck["file"], 99), -len(deck["pages"]), deck["title"]))
     return decks, warnings
 
 
@@ -372,8 +414,9 @@ a{color:var(--accent)}
 /* ---------- main ---------- */
 main{margin-left:248px;padding:34px 40px 64px}
 .wrap{max-width:1200px;margin:0 auto}
-.hero h1{margin:0 0 10px;font-size:30px;letter-spacing:.5px;color:#0F1B2A}
-.hero p{margin:0 0 16px;max-width:860px;font-size:14px;line-height:1.8;color:var(--muted)}
+.hero{padding:22px 26px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(135deg,#ffffff 0%,#F7FAFE 100%);box-shadow:var(--shadow)}
+.hero h1{margin:0 0 8px;font-size:28px;letter-spacing:.3px;color:#0F1B2A}
+.hero p{margin:0 0 16px;max-width:860px;font-size:13.5px;line-height:1.75;color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:10px}
 .chip{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);font-size:12px;color:var(--muted)}
 .chip b{margin-right:4px;font-size:14px;color:var(--accent)}

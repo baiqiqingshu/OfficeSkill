@@ -1,6 +1,6 @@
 {
   "tool": "ucd-studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "mode": "single",
   "style": "ocean",
   "components": [
@@ -27,6 +27,9 @@
     "product": "协同工作台",
     "description": "16 种生成区块的完整预览；基础按钮、字段与弹窗可通过本地检索按需获取。",
     "action": "体验弹窗",
+    "actions": [
+      "导出台账"
+    ],
     "eyebrow": "",
     "layout": "dashboard",
     "style": "ocean",
@@ -489,10 +492,10 @@
       }
     }
   },
-  "specSha256": "992db428b09616341fdca395d89fb322534a3ea1b08070bb4a7ce652dffb282a",
+  "specSha256": "867f8dd6d42cce9e82b7f424909c0f6517b895ce0becb317ad8c5cd2b9742676",
   "files": {
     "assets/cover.png": "d6f02e17952fdc3297f39960e4f08a6c1a69ba9b0fde774e8ab53580bf2f9eb3",
-    "index.html": "5336af7a199de840a1d9e83d62535a0d7adc1bb2478334638d26ee0c8b1b3635",
-    "design-system.md": "dc398ce3d52e92cb41260f81181a67c4796e99f6c5399aca6f9a5b7aafecf6db"
+    "index.html": "49879d93c37f48b32b5073de097dc2467b958e23c779f62d3915eede357af71d",
+    "design-system.md": "f87950caf1dae5448d3bdc89f8e14ebf32bee66f229447373c6de198558a66d2"
   }
 }

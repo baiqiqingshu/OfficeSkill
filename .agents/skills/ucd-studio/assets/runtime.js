@@ -1,4 +1,4 @@
-/* UCD Studio 1.1.0 — offline, original vanilla JS. No network or storage. */
+/* UCD Studio 1.2.0 — offline, original vanilla JS. No network or storage. */
 (()=>{'use strict';
   const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>[...r.querySelectorAll(s)];
   const toast=q('#toast');let toastTimer;
@@ -6,8 +6,6 @@
   qa('[data-notify]').forEach(button=>button.addEventListener('click',()=>notify(button.dataset.notify)));
   qa('.nav-list a').forEach(a=>a.addEventListener('click',()=>{qa('.nav-list a').forEach(n=>{n.classList.remove('active');n.removeAttribute('aria-current');});a.classList.add('active');a.setAttribute('aria-current','location');}));
 
-  /* Custom dropdown: the real <select> stays as the data/validation layer,
-     visually hidden; a styled trigger + popup mirror it. */
   const CHECK='<svg class="select-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   let dropdown=null,suppressClick=false,typed='',typedTimer,popSeq=0;
   function closeDropdown(focus){
@@ -164,6 +162,52 @@
   }
   qa('.select-wrap select').forEach(enhanceSelect);
 
+  const drawer=q('#detail-drawer'),drawerBackdrop=q('#drawer-backdrop'),drawerKv=q('[data-drawer-kv]',drawer),drawerTitle=q('#drawer-title',drawer);
+  let activeRow=null,drawerReturn=null;
+  function closeDrawer(){
+    if(!drawer||drawer.hidden)return;
+    drawer.hidden=true;if(drawerBackdrop)drawerBackdrop.hidden=true;
+    if(drawerReturn&&drawerReturn.focus)drawerReturn.focus();
+    drawerReturn=null;activeRow=null;
+  }
+  function openDrawer(row,panel,trigger){
+    if(!drawer||!drawerKv)return;
+    const headers=qa('thead th[data-col]',panel).map(th=>th.dataset.col);
+    const cells=qa('td:not(.row-actions)',row);
+    drawerTitle.textContent=(cells[0]?cells[0].textContent.trim():'记录详情');
+    drawerKv.innerHTML='';
+    headers.forEach((label,i)=>{
+      const item=document.createElement('div');
+      const dt=document.createElement('dt');dt.textContent=label;
+      const dd=document.createElement('dd');
+      const cell=cells[i];
+      if(cell&&cell.querySelector('.badge'))dd.innerHTML=cell.innerHTML;
+      else dd.textContent=cell?cell.textContent.trim():'-';
+      item.append(dt,dd);drawerKv.append(item);
+    });
+    activeRow={row,panel};drawerReturn=trigger||document.activeElement;
+    drawer.hidden=false;if(drawerBackdrop)drawerBackdrop.hidden=false;
+    const closeBtn=q('[data-drawer-close]',drawer);if(closeBtn)closeBtn.focus();
+  }
+  if(drawerBackdrop)drawerBackdrop.addEventListener('click',closeDrawer);
+  if(drawer){
+    qa('[data-drawer-close]',drawer).forEach(b=>b.addEventListener('click',closeDrawer));
+    qa('[data-drawer-action]',drawer).forEach(b=>b.addEventListener('click',()=>{
+      const status=b.dataset.drawerAction;
+      if(activeRow){
+        const badgeEl=q('.badge',activeRow.row);
+        if(badgeEl){
+          badgeEl.textContent=status;
+          badgeEl.className='badge '+(status==='已通过'?'success':'danger');
+          activeRow.row.dataset.status=status;
+        }
+      }
+      notify(`本地演示状态已更新为「${status}」`);
+      closeDrawer();
+    }));
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!drawer.hidden){e.preventDefault();closeDrawer();}});
+  }
+
   qa('[data-table]').forEach(panel=>{
     const rows=qa('tbody tr',panel), search=q('[data-search]',panel), filter=q('[data-filter]',panel), status=q('[data-table-status]',panel), state=q('[data-state]',panel), message=q('[data-state-message]',panel), statePanel=q('[data-table-state]',panel), skeleton=q('[data-skeleton]',panel), retry=q('[data-retry]',panel), empty=q('[data-empty]',panel), table=q('.table-scroll',panel), prev=q('[data-prev]',panel),next=q('[data-next]',panel), pages=q('[data-pages]',panel);
     let page=0,sorted=[...rows],direction=1,lastColumn=-1;const size=Number(panel.dataset.pageSize)||5;
@@ -184,7 +228,12 @@
       const index=Number(button.dataset.sort);direction=lastColumn===index?-direction:1;lastColumn=index;
       sorted.sort((a,b)=>a.cells[index].textContent.localeCompare(b.cells[index].textContent,undefined,{numeric:true})*direction);
       const body=q('tbody',panel);sorted.forEach(row=>body.append(row));qa('th',panel).forEach(th=>th.removeAttribute('aria-sort'));button.closest('th').setAttribute('aria-sort',direction===1?'ascending':'descending');page=0;draw();
-    }));draw();
+    }));
+    rows.forEach(row=>row.addEventListener('click',e=>{
+      if(e.target.closest('button,a,input,select')&&!e.target.closest('[data-row-open]'))return;
+      openDrawer(row,panel,e.target.closest('[data-row-open]')||row);
+    }));
+    draw();
   });
   qa('[data-form]').forEach(form=>{
     form.addEventListener('submit',event=>{event.preventDefault();if(!form.reportValidity())return;q('[data-feedback]',form).textContent='已完成本地校验，未提交至服务器。';notify('表单校验通过 · 原型数据仅在当前页面展示');});
@@ -199,6 +248,8 @@
     const board=select.closest('.kanban'),task=select.closest('.task'),target=qa('[data-column]',board).find(c=>c.dataset.column===select.value);target.append(task);qa('[data-column]',board).forEach(column=>q('[data-count]',column).textContent=qa('.task',column).length);notify('任务状态已在当前页面更新');
   }));
   const dialog=q('#create-dialog'),opener=q('[data-open-dialog]');
-  opener.addEventListener('click',()=>dialog.showModal());q('[data-close-dialog]',dialog).addEventListener('click',()=>dialog.close());
-  q('form',dialog).addEventListener('submit',event=>{event.preventDefault();if(!event.target.reportValidity())return;dialog.close();notify('已创建本地草稿：'+new FormData(event.target).get('title')+'（未连接后端）');event.target.reset();opener.focus();});
+  if(dialog&&opener){
+    opener.addEventListener('click',()=>dialog.showModal());q('[data-close-dialog]',dialog).addEventListener('click',()=>dialog.close());
+    q('form',dialog).addEventListener('submit',event=>{event.preventDefault();if(!event.target.reportValidity())return;dialog.close();notify('已创建本地草稿：'+new FormData(event.target).get('title')+'（未连接后端）');event.target.reset();opener.focus();});
+  }
 })();

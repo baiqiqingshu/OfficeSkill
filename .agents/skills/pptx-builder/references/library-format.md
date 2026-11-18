@@ -119,7 +119,7 @@ python scripts/ppt_tool.py demo --out output/library-demo [--library 本地/libr
 
 ## 现代组件编排
 
-内置库另有面向汇报编排的 `insight-card`、`value-card`、`decision-card`、`milestone-strip`、`risk-card`、`action-card`、`summary-band`、`comparison-row`、`capability-tile`、`takeaway-panel`、`swot`、`pros-cons`、`status-row`、`scorecard`、`funnel`、`kpi-band`、`stairs`，合计 66 个组件。6 页完整编排见 `examples/modern-elements.json`，默认样例输入位于 `samples.json`。
+内置库另有面向汇报编排的 `cover-dark`、`header-bar`、`bar-metric`、`pillars`、`process-4step`、`roadmap-4col`、`highlight-quote`、`insight-card`、`value-card`、`decision-card`、`milestone-strip`、`risk-card`、`action-card`、`summary-band`、`comparison-row`、`capability-tile`、`takeaway-panel`、`swot`、`pros-cons`、`status-row`、`scorecard`、`funnel`、`kpi-band`、`stairs`，合计 73 个组件。8 页完整编排见 `examples/modern-elements.json`，默认样例输入位于 `samples.json`。
 
 组件正文使用黑色，标题和编号使用强调色；卡片背景用 `SURFACE`、`BG_SOFT` 等主题 token，避免暗色主题下不可读。文字叶子需留足行高和内边距，示例保持短句。列表使用 `list` 输入绑定，不手写项目符号字符。
 

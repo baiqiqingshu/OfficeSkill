@@ -1,73 +1,88 @@
 {
   "schemaVersion": 1,
   "title": "技术方案评审（示例）",
-  "pageCount": 3,
+  "theme": "crimson",
+  "pageCount": 5,
+  "masterRegions": {
+    "detect": true,
+    "titleHeight": 96,
+    "footerHeight": 32
+  },
   "pages": [
+    {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-main",
+          "component": "builtin/cover-dark",
+          "region": "full",
+          "box": {"x": 0, "y": 0, "w": 1280, "h": 720},
+          "inputs": {
+            "tag": "技术架构评审 · AR-08",
+            "title": "统一服务网关与\n流量治理技术方案",
+            "subtitle": "集中收口服务间鉴权、限流与全链路审计，保障高可用与平滑降级",
+            "meta": "汇报人：后端架构组 ｜ 平台技术部 ｜ 2026-04"
+          }
+        }
+      ]
+    },
     {
       "id": "goals",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "方案目标与边界"
+            "title": "建设目标、范围与关键约束",
+            "badge": "目标边界",
+            "meta": "01 / 04"
           }
         },
         {
-          "id": "goal",
-          "component": "builtin/card",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 552,
-            "h": 280
-          },
+          "id": "i1",
+          "component": "builtin/insight-card",
+          "region": "body",
+          "box": {"x": 64, "y": 122, "w": 360, "h": 240},
           "inputs": {
-            "title": "建设目标",
-            "text": "统一数据入口，提供鉴权、限流与审计能力。"
+            "number": "01",
+            "title": "统一入口治理",
+            "text": "集中收口内部服务调用入口，提供标准鉴权、限流与审计能力。"
           }
         },
         {
-          "id": "scope",
-          "component": "builtin/card",
-          "box": {
-            "x": 664,
-            "y": 132,
-            "w": 552,
-            "h": 280
-          },
+          "id": "i2",
+          "component": "builtin/insight-card",
+          "region": "body",
+          "box": {"x": 460, "y": 122, "w": 360, "h": 240},
           "inputs": {
-            "title": "本次范围",
-            "text": "覆盖内部服务间调用；历史接口迁移单独评审。"
+            "number": "02",
+            "title": "明确本期边界",
+            "text": "先覆盖全部新增与核心微服务调用；历史遗留接口另立专项。"
           }
         },
         {
-          "id": "decision",
-          "component": "builtin/text",
-          "box": {
-            "x": 64,
-            "y": 472,
-            "w": 1152,
-            "h": 160
-          },
+          "id": "i3",
+          "component": "builtin/insight-card",
+          "region": "body",
+          "box": {"x": 856, "y": 122, "w": 360, "h": 240},
           "inputs": {
-            "text": [
-              {
-                "text": "评审事项：",
-                "bold": true,
-                "color": "#1476B8"
-              },
-              {
-                "text": "确认架构边界、数据流向和降级策略。"
-              }
-            ]
+            "number": "03",
+            "title": "降级可回退",
+            "text": "任意策略异常支持秒级旁路降级，确保业务主链路不受牵连。"
+          }
+        },
+        {
+          "id": "quote",
+          "component": "builtin/highlight-quote",
+          "region": "body",
+          "box": {"x": 64, "y": 402, "w": 1152, "h": 130},
+          "inputs": {
+            "text": "本次评审重点确认架构分层边界、核心数据流向以及异常场景的降级策略。",
+            "source": "—— 技术方案评审会议议题"
           }
         }
       ]
@@ -77,50 +92,126 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "备选方案对比"
+            "title": "集中式网关 vs 各服务独立集成对比",
+            "badge": "方案比选",
+            "meta": "02 / 04"
           }
         },
         {
-          "id": "options",
-          "component": "builtin/table",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 1152,
-            "h": 360
-          },
+          "id": "pros-cons",
+          "component": "builtin/pros-cons",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 360},
           "inputs": {
-            "rows": [
-              [
-                "维度",
-                "集中网关",
-                "各服务集成"
-              ],
-              [
-                "策略一致性",
-                "集中管理",
-                "依赖版本治理"
-              ],
-              [
-                "运行成本",
-                "需保障网关容量",
-                "分散在各服务"
-              ],
-              [
-                "建议",
-                "优先验证",
-                "作为备选"
-              ]
+            "titleL": "集中网关方案（推荐）",
+            "itemsL": [
+              "鉴权、限流与审计策略集中下发，口径 100% 一致",
+              "业务服务零 SDK 升级包袱，版本治理成本低",
+              "观测指标与故障熔断可统一在大盘闭环",
+              "支持按租户或接口维度动态灰度切流"
+            ],
+            "titleR": "各服务独立集成（备选）",
+            "itemsR": [
+              "强依赖各语言 SDK 同步升级，跨团队推动极慢",
+              "限流与审计口径分散，故障排查需跨多服务日志",
+              "高并发突发时缺少全局统一流量整形能力",
+              "长期维护多版本兼容带来沉重技术债"
             ]
+          }
+        },
+        {
+          "id": "compare",
+          "component": "builtin/comparison-row",
+          "region": "body",
+          "box": {"x": 64, "y": 506, "w": 1152, "h": 140},
+          "inputs": {
+            "label": "策略变更",
+            "before": "分散集成：需推动 20+ 服务逐个改配置并重启发布。",
+            "after": "集中网关：控制台一次发布，3 秒内全节点热生效。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
+          "inputs": {
+            "title": "分层架构设计与性能指标预算",
+            "badge": "架构拓扑",
+            "meta": "03 / 04"
+          }
+        },
+        {
+          "id": "zone1",
+          "component": "builtin/arch-zone",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 160},
+          "inputs": {"title": "接入与路由层（无状态横向扩展）"}
+        },
+        {
+          "id": "n1",
+          "component": "builtin/arch-node",
+          "region": "body",
+          "box": {"x": 92, "y": 166, "w": 240, "h": 96},
+          "inputs": {"title": "四层负载均衡", "desc": "健康探测与跨机房调度"}
+        },
+        {
+          "id": "n2",
+          "component": "builtin/arch-node",
+          "region": "body",
+          "box": {"x": 376, "y": 166, "w": 240, "h": 96},
+          "inputs": {"title": "统一服务网关", "desc": "鉴权、限流与灰度路由"}
+        },
+        {
+          "id": "n3",
+          "component": "builtin/arch-node",
+          "region": "body",
+          "box": {"x": 660, "y": 166, "w": 240, "h": 96},
+          "inputs": {"title": "异步审计采集", "desc": "无阻塞旁路写入日志总线"}
+        },
+        {
+          "id": "n4",
+          "component": "builtin/arch-node",
+          "region": "body",
+          "box": {"x": 944, "y": 166, "w": 240, "h": 96},
+          "inputs": {"title": "降级旁路开关", "desc": "异常时直通核心业务服务"}
+        },
+        {
+          "id": "bars",
+          "component": "builtin/bar-metric",
+          "region": "body",
+          "box": {"x": 64, "y": 310, "w": 552, "h": 260},
+          "inputs": {
+            "title": "单次请求延迟预算分布（目标 ≤10ms）",
+            "label1": "本地签名缓存校验",
+            "val1": "1.2ms",
+            "label2": "动态限流计数",
+            "val2": "1.8ms",
+            "label3": "协议转发开销",
+            "val3": "2.4ms",
+            "label4": "审计日志异步入队",
+            "val4": "0.5ms"
+          }
+        },
+        {
+          "id": "warn",
+          "component": "builtin/panel",
+          "region": "body",
+          "box": {"x": 664, "y": 310, "w": 552, "h": 260},
+          "inputs": {
+            "title": "容灾与高可用设计要点",
+            "text": "• 控制面与数据面解耦：配置中心不可用时，网关依托本地快照正常运行。\n• 限流组件降级：Redis 异常时自动切换本地令牌桶限流。\n• 全集群双活部署：单集群满载率控制在 45% 以内。"
           }
         }
       ]
@@ -130,34 +221,45 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "实施与验收"
+            "title": "实施计划与上线验收标准",
+            "badge": "交付计划",
+            "meta": "04 / 04"
           }
         },
         {
-          "id": "delivery-plan",
-          "component": "builtin/steps",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 1152,
-            "h": 350
-          },
+          "id": "steps4",
+          "component": "builtin/process-4step",
+          "region": "body",
+          "box": {"x": 64, "y": 122, "w": 1152, "h": 190},
           "inputs": {
+            "step1": "原型验证",
+            "desc1": "完成鉴权、限流及标准化日志字段验证",
+            "step2": "灰度接入",
+            "desc2": "保留回退开关，按 5% 流量试运行两周",
+            "step3": "全面验收",
+            "desc3": "功能、压测容量与故障恢复演练签字",
+            "step4": "正式上线",
+            "desc4": "明确值班责任人与黄金观测大盘指标"
+          }
+        },
+        {
+          "id": "takeaway",
+          "component": "builtin/takeaway-panel",
+          "region": "body",
+          "box": {"x": 64, "y": 360, "w": 1152, "h": 220},
+          "inputs": {
+            "title": "建议批准采用集中网关方案，启动一期试点建设",
             "items": [
-              "原型验证：鉴权、限流、日志字段",
-              "灰度接入：保留回退开关",
-              "验收：功能、性能、故障恢复",
-              "上线：明确责任人与观测指标"
-            ]
+              "架构边界清晰，单跳额外延迟可控在 6ms 以内",
+              "数据面无单点依赖，具备秒级旁路降级能力",
+              "请评审明确首批 3 个接入试点业务服务"
+            ],
+            "next": "评审决策\n确认采用集中网关\n启动试点开发"
           }
         }
       ]

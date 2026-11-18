@@ -56,6 +56,20 @@
     "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
   },
   {
+    "id": "indigo",
+    "kind": "style",
+    "title": "深靛 · 研发平台",
+    "tags": "研发 工程 科技 深靛 devops indigo",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
+    "id": "nordic",
+    "kind": "style",
+    "title": "极简白 · 清爽现代",
+    "tags": "极简 现代 清爽 白色 saas nordic clean",
+    "description": "完整语义 token，可单独覆盖；系统字体，全部离线。"
+  },
+  {
     "id": "stats",
     "kind": "component",
     "title": "统计卡片",
@@ -109,7 +123,9 @@
       "columns",
       "rows",
       "statusColumn",
-      "pageSize"
+      "pageSize",
+      "rowAction",
+      "showStateTools"
     ],
     "example": {
       "type": "table",

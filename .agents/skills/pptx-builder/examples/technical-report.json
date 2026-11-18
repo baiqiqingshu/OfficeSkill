@@ -1,61 +1,154 @@
 {
   "schemaVersion": 1,
   "title": "技术进展汇报（示例）",
-  "pageCount": 3,
+  "theme": "blue",
+  "pageCount": 5,
+  "masterRegions": {
+    "detect": true,
+    "titleHeight": 96,
+    "footerHeight": 32
+  },
   "pages": [
+    {
+      "id": "cover",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "cover-main",
+          "component": "builtin/cover-dark",
+          "region": "full",
+          "box": {"x": 0, "y": 0, "w": 1280, "h": 720},
+          "inputs": {
+            "tag": "双周技术进展汇报",
+            "title": "核心链路升级项目\n阶段进展与风险同步",
+            "subtitle": "完成核心网关原型与压测验证，下一阶段进入跨系统端到端联调",
+            "meta": "汇报人：研发交付组 ｜ 基础架构部 ｜ 2026-04"
+          }
+        }
+      ]
+    },
     {
       "id": "overview",
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "技术进展概览"
+            "title": "本期总体进展与核心指标",
+            "badge": "进展概览",
+            "meta": "01 / 04"
+          }
+        },
+        {
+          "id": "kpis",
+          "component": "builtin/kpi-band",
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 140},
+          "inputs": {
+            "label1": "需求完成率",
+            "value1": "82%",
+            "label2": "核心链路 P99",
+            "value2": "24ms",
+            "label3": "自动化覆盖",
+            "value3": "91.5%",
+            "label4": "遗留阻塞项",
+            "value4": "1 项"
+          }
+        },
+        {
+          "id": "bars",
+          "component": "builtin/bar-metric",
+          "region": "body",
+          "box": {"x": 64, "y": 284, "w": 552, "h": 260},
+          "inputs": {
+            "title": "各模块开发与联调完成度",
+            "label1": "网关鉴权内核",
+            "val1": "100%",
+            "label2": "数据同步链路",
+            "val2": "85%",
+            "label3": "监控告警接入",
+            "val3": "70%",
+            "label4": "异常降级演练",
+            "val4": "50%"
+          }
+        },
+        {
+          "id": "highlights",
+          "component": "builtin/panel",
+          "region": "body",
+          "box": {"x": 664, "y": 284, "w": 552, "h": 260},
+          "inputs": {
+            "title": "本期关键交付成果",
+            "text": "• 需求边界与核心数据模型已通过架构评审冻结。\n• 完成 8,000 QPS 基准压测，满足峰值 2 倍冗余要求。\n• 灰度开关与回退脚本已就绪，具备试点接入条件。"
+          }
+        },
+        {
+          "id": "quote",
+          "component": "builtin/callout",
+          "region": "body",
+          "box": {"x": 64, "y": 564, "w": 1152, "h": 108},
+          "inputs": {
+            "label": "本期结论",
+            "text": "核心链路已达到准入联调标准，下周重点围绕外部接口契约冻结与容量复核推进。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "workstreams",
+      "masterSlide": 1,
+      "elements": [
+        {
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
+          "inputs": {
+            "title": "三大工作流交付详情",
+            "badge": "交付拆解",
+            "meta": "02 / 04"
+          }
+        },
+        {
+          "id": "pillars",
+          "component": "builtin/pillars",
+          "region": "body",
+          "box": {"x": 64, "y": 118, "w": 1152, "h": 340},
+          "inputs": {
+            "col1": "网关与协议层",
+            "sub1": "已冻结 · 待全量切流",
+            "items1": [
+              "完成路由策略与限流规则",
+              "统一签名校验延迟降至 4ms",
+              "兼容历史 3 种回调格式"
+            ],
+            "col2": "数据与存储层",
+            "sub2": "联调中 · 85% 完成",
+            "items2": [
+              "主从读写分离压测达标",
+              "本地缓存击穿兜底策略上线",
+              "脱敏压测数据集准备就绪"
+            ],
+            "col3": "可观测与保障",
+            "sub3": "接入中 · 70% 完成",
+            "items3": [
+              "核心黄金指标大盘已搭建",
+              "链路追踪采样率动态可调",
+              "下周补齐自动巡检告警"
+            ]
           }
         },
         {
           "id": "summary",
-          "component": "builtin/text",
-          "box": {
-            "x": 64,
-            "y": 122,
-            "w": 1152,
-            "h": 160
-          },
+          "component": "builtin/highlight-quote",
+          "region": "body",
+          "box": {"x": 64, "y": 490, "w": 1152, "h": 130},
           "inputs": {
-            "text": [
-              {
-                "text": "本期",
-                "bold": true
-              },
-              {
-                "text": "完成核心链路原型，下一阶段进入联调。"
-              }
-            ]
-          }
-        },
-        {
-          "id": "milestones",
-          "component": "builtin/bullets",
-          "box": {
-            "x": 64,
-            "y": 312,
-            "w": 1152,
-            "h": 300
-          },
-          "inputs": {
-            "items": [
-              "完成需求边界确认",
-              "核心接口与数据模型已评审",
-              "待完成：异常流程及容量验证"
-            ]
+            "text": "坚持以可回退、可观测作为联调准入前提，不带病进入生产灰度。",
+            "source": "—— 交付质量门禁要求"
           }
         }
       ]
@@ -65,44 +158,53 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "风险与应对"
+            "title": "当前风险台账与应对闭环",
+            "badge": "风险管理",
+            "meta": "03 / 04"
           }
         },
         {
           "id": "risk-table",
           "component": "builtin/table",
-          "box": {
-            "x": 64,
-            "y": 122,
-            "w": 1152,
-            "h": 360
-          },
+          "region": "body",
+          "box": {"x": 64, "y": 116, "w": 1152, "h": 280},
           "inputs": {
             "rows": [
-              [
-                "风险",
-                "影响",
-                "应对措施"
-              ],
-              [
-                "外部接口未冻结",
-                "联调时间不确定",
-                "建立版本兼容清单"
-              ],
-              [
-                "缺少生产量级数据",
-                "容量结论待验证",
-                "准备脱敏压测数据"
-              ]
+              ["风险项", "等级", "影响范围", "应对措施"],
+              ["外部接口尚未冻结", [{"text": "高", "bold": true, "color": "#B3372F"}], "跨系统联调排期", "建立版本兼容清单并设 Mock 兜底"],
+              ["生产级压测样本不足", [{"text": "中", "bold": true, "color": "#A86A00"}], "容量极限结论", "本周完成脱敏流量回放构建"],
+              ["值班工具链未打通", [{"text": "低", "bold": true, "color": "#1E7A46"}], "告警自动派单", "纳入二期迭代，一期人工值守"]
+            ]
+          }
+        },
+        {
+          "id": "risk-card",
+          "component": "builtin/risk-card",
+          "region": "body",
+          "box": {"x": 64, "y": 424, "w": 552, "h": 220},
+          "inputs": {
+            "level": "高风险阻塞项 · 需协同",
+            "title": "外部接口契约待最终签字",
+            "text": "上游系统字段口径仍有两处待确认，可能影响下周联调启动。",
+            "action": "应对：已约周五联合对齐会锁定终版契约。"
+          }
+        },
+        {
+          "id": "action-card",
+          "component": "builtin/action-card",
+          "region": "body",
+          "box": {"x": 664, "y": 424, "w": 552, "h": 220},
+          "inputs": {
+            "owner": "负责人：测试与基础架构组 · 下周三前",
+            "title": "完成脱敏压测与故障演练",
+            "items": [
+              "构建 10 倍峰值脱敏流量回放脚本",
+              "验证主备切换时在线会话零丢失"
             ]
           }
         }
@@ -113,34 +215,43 @@
       "masterSlide": 1,
       "elements": [
         {
-          "id": "title",
-          "component": "builtin/title",
-          "box": {
-            "x": 64,
-            "y": 24,
-            "w": 1152,
-            "h": 52
-          },
+          "id": "head",
+          "component": "builtin/header-bar",
+          "region": "title",
+          "box": {"x": 64, "y": 20, "w": 1152, "h": 76},
           "inputs": {
-            "text": "下一阶段计划"
+            "title": "下一阶段实施节奏与收口目标",
+            "badge": "下阶段计划",
+            "meta": "04 / 04"
           }
         },
         {
-          "id": "plan",
-          "component": "builtin/steps",
-          "box": {
-            "x": 64,
-            "y": 132,
-            "w": 1152,
-            "h": 350
-          },
+          "id": "roadmap",
+          "component": "builtin/roadmap-4col",
+          "region": "body",
+          "box": {"x": 64, "y": 130, "w": 1152, "h": 250},
           "inputs": {
-            "items": [
-              "确认接口契约和验收口径",
-              "完成端到端联调",
-              "复核容量及异常恢复方案",
-              "提交上线评审"
-            ]
+            "date1": "第 1 周 · 契约锁定",
+            "title1": "确认接口与验收口径",
+            "desc1": "冻结全部上下游接口版本，锁定自动化验收用例",
+            "date2": "第 2 周 · 全链路联调",
+            "title2": "端到端联调闭环",
+            "desc2": "完成主流程、分支及异常场景全覆盖联调",
+            "date3": "第 3 周 · 容量演练",
+            "title3": "压测与灾备复核",
+            "desc3": "复核 8,000 QPS 容量及单机房故障切换演练",
+            "date4": "第 4 周 · 上线评审",
+            "title4": "提交准入上线",
+            "desc4": "完成安全审计检查，按 5% 流量开启首批灰度"
+          }
+        },
+        {
+          "id": "takeaway",
+          "component": "builtin/conclusion",
+          "region": "body",
+          "box": {"x": 64, "y": 430, "w": 1152, "h": 80},
+          "inputs": {
+            "text": "整体进度受控，建议按计划推进下周全链路联调与容量复核。"
           }
         }
       ]
