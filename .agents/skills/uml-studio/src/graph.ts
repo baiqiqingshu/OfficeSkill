@@ -441,7 +441,11 @@ function intersects(a: Rect, b: Rect, margin = 0): boolean {
   return a.x < b.x + b.width + margin && a.x + a.width + margin > b.x && a.y < b.y + b.height + margin && a.y + a.height + margin > b.y;
 }
 
-function obstacleRouter(start: Point, end: Point, obstacles: Rect[], used: Point[][]): Point[] | undefined {
+function outward(side: Side): Point {
+  return side === 'right' ? { x: 1, y: 0 } : side === 'left' ? { x: -1, y: 0 } : side === 'bottom' ? { x: 0, y: 1 } : { x: 0, y: -1 };
+}
+
+function obstacleRouter(start: Point, end: Point, obstacles: Rect[], used: Point[][], guards?: { startSide?: Side; endSide?: Side; turnBias?: 'early' | 'late' }): Point[] | undefined {
   const xs = new Set<number>([start.x, end.x]);
   const ys = new Set<number>([start.y, end.y]);
   let left = Math.min(start.x, end.x), right = Math.max(start.x, end.x);
@@ -508,6 +512,14 @@ function obstacleRouter(start: Point, end: Point, obstacles: Rect[], used: Point
     for (const neighbor of neighbors) {
       if (neighbor < 0 || !valid[neighbor]) continue;
       const b = { x: columns[neighbor % columnsCount], y: rows[Math.floor(neighbor / columnsCount)] };
+      if (guards?.startSide && vertex === startVertex) {
+        const out = outward(guards.startSide);
+        if ((b.x - a.x) * out.x + (b.y - a.y) * out.y < -0.01) continue;
+      }
+      if (guards?.endSide && neighbor === endVertex) {
+        const out = outward(guards.endSide);
+        if ((b.x - a.x) * out.x + (b.y - a.y) * out.y > 0.01) continue;
+      }
       const horizontal = a.y === b.y;
       const blocked = obstacles.some(box => horizontal
         ? a.y > box.y + 0.01 && a.y < box.y + box.height - 0.01 && Math.max(a.x, b.x) > box.x + 0.01 && Math.min(a.x, b.x) < box.x + box.width - 0.01
@@ -526,7 +538,10 @@ function obstacleRouter(start: Point, end: Point, obstacles: Rect[], used: Point
       }
       const direction = horizontal ? 1 : 2;
       const state = neighbor * 3 + direction;
-      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + crossings * 80;
+      const startAligned = guards?.startSide ? horizontal === (guards.startSide === 'left' || guards.startSide === 'right') : false;
+      const bias = guards?.startSide && guards.turnBias && vertex === startVertex
+        && ((guards.turnBias === 'early' && startAligned) || (guards.turnBias === 'late' && !startAligned)) ? 0.5 : 0;
+      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + crossings * 80 + bias;
       if (cost >= costs[state]) continue;
       costs[state] = cost; previous[state] = current.state;
       push({ state, cost, score: cost + Math.abs(b.x - end.x) + Math.abs(b.y - end.y) });
@@ -565,7 +580,12 @@ function directEndpoint(box: NodeBox, other: NodeBox): Point {
   const destination = other.ref.kind === 'actor' ? directEndpoint(other, box) : { x: other.x + other.width / 2, y: other.y + other.height / 2 };
   const dx = destination.x - cx, dy = destination.y - cy;
   if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return { x: cx, y: cy };
-  if (box.ref.kind === 'usecase') {
+  if (box.ref.kind === 'decision') {
+    const rx = box.width / 2, ry = box.height / 2;
+    const scale = 1 / (Math.abs(dx) / rx + Math.abs(dy) / ry);
+    return { x: cx + dx * scale, y: cy + dy * scale };
+  }
+  if (box.ref.kind === 'usecase' || box.ref.kind === 'start' || box.ref.kind === 'end') {
     const rx = box.width / 2, ry = box.height / 2;
     const scale = 1 / Math.sqrt((dx * dx) / (rx * rx) + (dy * dy) / (ry * ry));
     return { x: cx + dx * scale, y: cy + dy * scale };
@@ -760,6 +780,22 @@ function layoutUsecases(refs: NodeRef[], edges: EdgeRef[], spec: DiagramSpec, th
   return { nodes, containers, routes: [], width: placed.width, height: placed.height };
 }
 
+function uncoveredOverlap(lo: number, hi: number, allowed: [number, number][]): number {
+  if (hi <= lo) return 0;
+  if (!allowed.length) return hi - lo;
+  const clipped = allowed.map(([a, b]): [number, number] => [Math.max(lo, a), Math.min(hi, b)]).filter(([a, b]) => b > a).sort((first, second) => first[0] - second[0]);
+  let covered = 0, cursor = lo;
+  for (const [a, b] of clipped) {
+    const start = Math.max(cursor, a);
+    if (b > start) { covered += b - start; cursor = b; }
+  }
+  return Math.max(0, hi - lo - covered);
+}
+
+function opposite(side: Side): Side {
+  return side === 'right' ? 'left' : side === 'left' ? 'right' : side === 'bottom' ? 'top' : 'bottom';
+}
+
 function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme, type: DiagramSpec['type'], adjustments?: DiagramAdjustments): void {
   const byId = new Map(result.nodes.map(box => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
@@ -773,51 +809,56 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
     }
     else obstacles.push({ x: box.x + 3, y: box.y + 3, width: box.width - 6, height: box.ref.header - 3 });
   }
-  const counts = new Map<string, number>();
   const assignments = edges.map(ref => {
     const source = byId.get(ref.edge.from)!;
     const target = byId.get(ref.edge.to)!;
     const sourceX = source.x + source.width / 2, sourceY = source.y + source.height / 2;
     const targetX = target.x + target.width / 2, targetY = target.y + target.height / 2;
+    const gapX = target.x >= source.x + source.width ? target.x - (source.x + source.width) : source.x >= target.x + target.width ? -(source.x - (target.x + target.width)) : 0;
+    const gapY = target.y >= source.y + source.height ? target.y - (source.y + source.height) : source.y >= target.y + target.height ? -(source.y - (target.y + target.height)) : 0;
     const forward = direction === 'TB' ? targetY > sourceY : targetX > sourceX;
-    const side: Side = source === target ? 'right' : forward && target.ref.kind === 'end' ? (direction === 'TB' ? 'bottom' : 'right')
-      : Math.abs(targetX - sourceX) > Math.abs(targetY - sourceY) ? (sourceX < targetX ? 'right' : 'left') : (sourceY < targetY ? 'bottom' : 'top');
-    const targetSide: Side = source === target ? 'top' : target.ref.kind === 'end' ? (direction === 'TB' ? 'top' : 'left')
-      : side === 'right' ? 'left' : side === 'left' ? 'right' : side === 'bottom' ? 'top' : 'bottom';
-    const sourceKey = `${source.ref.id}-${side}`, targetKey = `${target.ref.id}-${targetSide}`;
-    counts.set(sourceKey, (counts.get(sourceKey) ?? 0) + 1); counts.set(targetKey, (counts.get(targetKey) ?? 0) + 1);
-    return { ref, source, target, side, targetSide, sourceKey, targetKey };
+    const forwardFlow = source !== target && (direction === 'TB' ? gapY > 0 : gapX > 0);
+    let side: Side;
+    if (source === target) side = 'right';
+    else if (forward && target.ref.kind === 'end') side = direction === 'TB' ? 'bottom' : 'right';
+    else if (gapX === 0 && gapY !== 0) side = gapY > 0 ? 'bottom' : 'top';
+    else if (gapY === 0 && gapX !== 0) side = gapX > 0 ? 'right' : 'left';
+    else if (gapX !== 0 && gapY !== 0) side = forwardFlow ? (direction === 'TB' ? 'bottom' : 'right')
+      : Math.abs(gapX) > Math.abs(gapY) ? (gapX > 0 ? 'right' : 'left') : (gapY > 0 ? 'bottom' : 'top');
+    else side = Math.abs(targetX - sourceX) > Math.abs(targetY - sourceY) ? (sourceX < targetX ? 'right' : 'left') : (sourceY < targetY ? 'bottom' : 'top');
+    const targetSide: Side = source === target ? 'top' : target.ref.kind === 'end' ? (direction === 'TB' ? 'top' : 'left') : opposite(side);
+    return { ref, source, target, side, targetSide, forwardFlow };
   });
-  const seen = new Map<string, number>();
   const used = result.routes.flatMap(route => route.paths);
+  const routed: { path: Point[]; exitKey: string; entryKey: string; sourceStem: [Point, Point]; targetStem: [Point, Point] }[] =
+    used.map(path => ({ path, exitKey: '', entryKey: '', sourceStem: [path[0], path[0]], targetStem: [path[path.length - 1], path[path.length - 1]] }));
+  const usedExits = new Set<string>();
+  const usedEntries = new Set<string>();
   for (const item of assignments) {
     const waypoints = adjustments?.edges?.[item.ref.key]?.waypoints ?? [];
     if (type === 'usecase' && item.source !== item.target && !waypoints.length) {
       const route = [directEndpoint(item.source, item.target), directEndpoint(item.target, item.source)];
       result.routes.push({ ref: item.ref, paths: [route] });
       used.push(route);
+      routed.push({ path: route, exitKey: '', entryKey: '', sourceStem: [route[0], route[0]], targetStem: [route[1], route[1]] });
       continue;
     }
-    const sourceIndex = (seen.get(item.sourceKey) ?? 0) + 1, targetIndex = (seen.get(item.targetKey) ?? 0) + 1;
-    seen.set(item.sourceKey, sourceIndex); seen.set(item.targetKey, targetIndex);
-    const sameRow = Math.abs(item.source.y + item.source.height / 2 - item.target.y - item.target.height / 2) < 0.01;
-    const sameColumn = Math.abs(item.source.x + item.source.width / 2 - item.target.x - item.target.width / 2) < 0.01;
-    const straight = item.source !== item.target && (sameRow || sameColumn);
-    const sourceFraction = 0.5;
-    const targetFraction = straight ? 0.5 : targetIndex / ((counts.get(item.targetKey) ?? 1) + 1);
+    const sourceFanout = assignments.filter(candidate => candidate.source === item.source && candidate.side === item.side).length;
+    const targetFanin = assignments.filter(candidate => candidate.target === item.target && candidate.targetSide === item.targetSide).length;
     const sides: Side[] = [item.side, ...(['left', 'right', 'top', 'bottom'] as Side[]).filter(side => side !== item.side)];
     const targetSides: Side[] = [item.targetSide, ...(['left', 'right', 'top', 'bottom'] as Side[]).filter(side => side !== item.targetSide)];
-    let route: Point[] | undefined, bestScore = Infinity;
+    let best: { route: Point[]; exitKey: string; entryKey: string; sourceStem: [Point, Point]; targetStem: [Point, Point] } | undefined;
+    let bestScore = Infinity;
     for (const side of sides) {
       for (const targetSide of targetSides) {
         if (item.source === item.target && side === targetSide) continue;
-        const endpoints = [[item.source, side, sourceFraction], [item.target, targetSide, targetFraction]] as const;
-        const anchors = endpoints.map(([box, attach, fraction]) => {
+        const endpoints = [[item.source, side], [item.target, targetSide]] as const;
+        const anchors = endpoints.map(([box, attach]) => {
           const symbol = box.ref.symbol;
           const bounds = symbol ? { x: box.x + symbol.x * box.width / box.ref.renderWidth, y: box.y + symbol.y * box.height / box.ref.renderHeight,
             width: symbol.width * box.width / box.ref.renderWidth, height: symbol.height * box.height / box.ref.renderHeight } : box;
-          const x = attach === 'left' ? bounds.x : attach === 'right' ? bounds.x + bounds.width : bounds.x + bounds.width * fraction;
-          const y = attach === 'top' ? bounds.y : attach === 'bottom' ? bounds.y + bounds.height : bounds.y + bounds.height * fraction;
+          const x = attach === 'left' ? bounds.x : attach === 'right' ? bounds.x + bounds.width : bounds.x + bounds.width * 0.5;
+          const y = attach === 'top' ? bounds.y : attach === 'bottom' ? bounds.y + bounds.height : bounds.y + bounds.height * 0.5;
           const distance = Math.max(clearance + 1, Math.min(28, theme.gap / 2));
           const stub = { x: attach === 'right' ? box.x + box.width + distance : attach === 'left' ? box.x - distance : x,
             y: attach === 'bottom' ? box.y + box.height + distance : attach === 'top' ? box.y - distance : y };
@@ -837,42 +878,73 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
         const stops = [anchors[0].stub, ...waypoints, anchors[1].stub];
         const middle: Point[] = [];
         let reachable = true;
+        const turnBias: 'early' | 'late' | undefined = side !== opposite(targetSide) ? undefined
+          : sourceFanout > 1 && side === item.side ? 'early'
+          : targetFanin > 1 && targetSide === item.targetSide ? 'late' : undefined;
         for (let index = 1; index < stops.length; index++) {
-          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used);
+          const guards = { startSide: index === 1 ? side : undefined, endSide: index === stops.length - 1 ? targetSide : undefined,
+            turnBias: stops.length === 2 ? turnBias : undefined };
+          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used, guards)
+            ?? obstacleRouter(stops[index - 1], stops[index], obstacles, used);
           if (!section) { reachable = false; break; }
           middle.push(...(index === 1 ? section : section.slice(1)));
         }
         if (!reachable) continue;
         const candidate = simplify([anchors[0].port, ...middle, anchors[1].port]);
+        const exitKey = `${item.source.ref.id}:${side}`;
+        const entryKey = `${item.target.ref.id}:${targetSide}`;
+        const sourceStem: [Point, Point] = [anchors[0].port, anchors[0].stub];
+        const targetStem: [Point, Point] = [anchors[1].stub, anchors[1].port];
         let length = 0, overlaps = 0, crossings = 0;
         for (let i = 1; i < candidate.length; i++) {
           const a = candidate[i - 1], b = candidate[i], horizontal = Math.abs(a.y - b.y) < 0.01;
           length += Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-          for (const path of used) for (let j = 1; j < path.length; j++) {
-            const c = path[j - 1], d = path[j], otherHorizontal = Math.abs(c.y - d.y) < 0.01;
-            if (horizontal && otherHorizontal && Math.abs(a.y - c.y) < 0.01) overlaps += Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
-            else if (!horizontal && !otherHorizontal && Math.abs(a.x - c.x) < 0.01) overlaps += Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
-            else if (horizontal !== otherHorizontal) {
+          for (const prev of routed) for (let j = 1; j < prev.path.length; j++) {
+            const c = prev.path[j - 1], d = prev.path[j], otherHorizontal = Math.abs(c.y - d.y) < 0.01;
+            if (horizontal && otherHorizontal && Math.abs(a.y - c.y) < 0.01) {
+              const lo = Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)), hi = Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x));
+              if (hi > lo) {
+                const allowed: [number, number][] = [];
+                if (prev.exitKey === exitKey && Math.abs(sourceStem[0].y - sourceStem[1].y) < 0.01 && Math.abs(sourceStem[0].y - a.y) < 0.01)
+                  allowed.push([Math.min(sourceStem[0].x, sourceStem[1].x), Math.max(sourceStem[0].x, sourceStem[1].x)]);
+                if (prev.entryKey === entryKey && Math.abs(targetStem[0].y - targetStem[1].y) < 0.01 && Math.abs(targetStem[0].y - a.y) < 0.01)
+                  allowed.push([Math.min(targetStem[0].x, targetStem[1].x), Math.max(targetStem[0].x, targetStem[1].x)]);
+                overlaps += uncoveredOverlap(lo, hi, allowed);
+              }
+            } else if (!horizontal && !otherHorizontal && Math.abs(a.x - c.x) < 0.01) {
+              const lo = Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)), hi = Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y));
+              if (hi > lo) {
+                const allowed: [number, number][] = [];
+                if (prev.exitKey === exitKey && Math.abs(sourceStem[0].x - sourceStem[1].x) < 0.01 && Math.abs(sourceStem[0].x - a.x) < 0.01)
+                  allowed.push([Math.min(sourceStem[0].y, sourceStem[1].y), Math.max(sourceStem[0].y, sourceStem[1].y)]);
+                if (prev.entryKey === entryKey && Math.abs(targetStem[0].x - targetStem[1].x) < 0.01 && Math.abs(targetStem[0].x - a.x) < 0.01)
+                  allowed.push([Math.min(targetStem[0].y, targetStem[1].y), Math.max(targetStem[0].y, targetStem[1].y)]);
+                overlaps += uncoveredOverlap(lo, hi, allowed);
+              }
+            } else if (horizontal !== otherHorizontal) {
               const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
               if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01
                 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
             }
           }
         }
-        const sourceFanout = assignments.filter(candidate => candidate.source === item.source && candidate.side === item.side).length;
-        const targetFanin = assignments.filter(candidate => candidate.target === item.target && candidate.targetSide === item.targetSide).length;
         const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80
+          + (usedEntries.has(exitKey) ? 220 : 0)
+          + (usedExits.has(entryKey) ? 220 : 0)
           + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32)
-          + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 160 : 32)
+          + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 240 : (item.forwardFlow ? 96 : 32))
           + (item.target.ref.kind === 'end' && targetSide !== item.targetSide ? 200 : 0);
-        if (score < bestScore) { bestScore = score; route = candidate; }
+        if (score < bestScore) { bestScore = score; best = { route: candidate, exitKey, entryKey, sourceStem, targetStem }; }
       }
     }
-    if (!route) throw new Error(waypoints.length
+    if (!best) throw new Error(waypoints.length
       ? `连线 ${item.ref.edge.from} → ${item.ref.edge.to} 无法经过指定途经点；请将点移出节点、标题或过窄的间隙。`
       : `Unable to route relationship ${item.ref.edge.from} → ${item.ref.edge.to}.`);
-    used.push(route);
-    result.routes.push({ ref: item.ref, paths: [route] });
+    used.push(best.route);
+    routed.push({ path: best.route, exitKey: best.exitKey, entryKey: best.entryKey, sourceStem: best.sourceStem, targetStem: best.targetStem });
+    usedExits.add(best.exitKey);
+    usedEntries.add(best.entryKey);
+    result.routes.push({ ref: item.ref, paths: [best.route] });
   }
 }
 
@@ -915,6 +987,20 @@ function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
     point.y = box.y + 13 - 11 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / 11) ** 2));
   } else if (kind === 'database' && !horizontal) {
     point.y = neighbor.y < cy ? box.y + 10 - 10 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2)) : box.y + box.height - 10 + 10 * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2));
+  } else if (kind === 'queue' && horizontal) {
+    point.x = neighbor.x < cx ? box.x + 10 - 10 * Math.sqrt(Math.max(0, 1 - ((point.y - cy) / ry) ** 2)) : box.x + box.width - 10 + 10 * Math.sqrt(Math.max(0, 1 - ((point.y - cy) / ry) ** 2));
+  } else if (kind === 'package') {
+    const tab = Math.min(box.width - 28, Math.max(56, box.width * 0.4));
+    if (!horizontal && neighbor.y < cy && point.x > box.x + tab) point.y = box.y + 20;
+    else if (horizontal && neighbor.x > cx && point.y < box.y + 20) point.x = box.x + tab;
+  } else if (kind === 'note') {
+    if (!horizontal && neighbor.y < cy && point.x > box.x + box.width - 18) point.y = box.y + point.x - (box.x + box.width - 18);
+    else if (horizontal && neighbor.x > cx && point.y < box.y + 18) point.x = box.x + box.width - 18 + (point.y - box.y);
+  } else if (kind === 'server') {
+    if (!horizontal && neighbor.y < cy && point.x < box.x + 14) point.y = box.y + 12 * (1 - (point.x - box.x) / 14);
+    else if (horizontal && neighbor.x < cx && point.y < box.y + 12) point.x = box.x + 14 * (1 - (point.y - box.y) / 12);
+    else if (!horizontal && neighbor.y > cy && point.x > box.x + box.width - 14) point.y = box.y + box.height - 12 * ((point.x - (box.x + box.width - 14)) / 14);
+    else if (horizontal && neighbor.x > cx && point.y > box.y + box.height - 12) point.x = box.x + box.width - 14 * ((point.y - (box.y + box.height - 12)) / 12);
   }
 }
 
@@ -1139,7 +1225,7 @@ function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox
         const steps = Math.min(60, Math.ceil((end - start) / 12));
         for (let step = 0; step <= steps; step++) positions.add(start + (end - start) * step / Math.max(1, steps));
         const shifts = end - start < Math.abs(ux) * label.width + Math.abs(uy) * label.height + 16 ? [0, -12, 12, -24, 24] : [0];
-        for (const position of positions) for (const gap of (finalPass ? [8, 12, 18, 28, 44, 68, 100, 160, 256, 512] : [8, 12, 18, 28, 44])) for (const sign of [1, -1]) for (const shift of shifts) {
+        for (const position of positions) for (const gap of (finalPass ? [8, 5, 12, 18, 28, 44, 68, 100, 160, 256, 512] : [8, 5, 12, 18, 28, 44])) for (const sign of [1, -1]) for (const shift of shifts) {
           const anchor = { x: a.x + ux * position, y: a.y + uy * position };
           const normalX = -uy * sign, normalY = ux * sign;
           const distance = gap + Math.abs(normalX) * label.width / 2 + Math.abs(normalY) * label.height / 2;
@@ -1150,7 +1236,7 @@ function placeLabels(routes: Route[], nodes: NodeBox[], containers: ContainerBox
           const ambiguous = shared || nearest < own + 3;
           box.leader = ambiguous || own > 18;
           candidates.push({ box, score: Math.abs(offset + position - desired) * (branch || label.role !== 'main' ? 0.3 : 0.1)
-            + gap * 2 + Math.abs(shift) + (shared ? 4000 : ambiguous ? 1000 : 0) + (gap > 18 ? 500 : 0) });
+            + gap * 2 + (gap < 8 ? 20 : 0) + Math.abs(shift) + (shared ? 4000 : ambiguous ? 1000 : 0) + (gap > 18 ? 500 : 0) });
         }
       }
     }
@@ -1600,7 +1686,8 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
     for (const route of result.routes) {
       const first = route.paths[0], last = route.paths[route.paths.length - 1];
       const source = nodeById.get(route.ref.edge.from), target = nodeById.get(route.ref.edge.to);
-      if (spec.type !== 'usecase') {
+      const direct = spec.type === 'usecase' && route.ref.edge.from !== route.ref.edge.to && !(adjustments?.edges?.[route.ref.key]?.waypoints?.length);
+      if (!direct) {
         if (source && first.length > 1) clipEndpoint(first[0], first[1], source);
         if (target && last.length > 1) clipEndpoint(last[last.length - 1], last[last.length - 2], target);
       }
