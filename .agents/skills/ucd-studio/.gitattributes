@@ -1,0 +1,2 @@
+# Recoverable HTML contains hashes of exact bytes; preserve its line endings.
+demo/project/*.html -text

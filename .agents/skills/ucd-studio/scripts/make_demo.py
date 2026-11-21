@@ -3,11 +3,24 @@ import argparse
 import html
 import struct
 import sys
+import tempfile
 import zlib
 from pathlib import Path
 
 sys.dont_write_bytecode = True
 from ucd import ROOT, build, catalog, read_json, styles
+import workspace
+
+
+def make_project_demo(out):
+    """Ship only the recoverable HTML; its source project is embedded."""
+    target = Path(out)/'project'
+    with tempfile.TemporaryDirectory(prefix='ucd-demo-') as temporary:
+        source = Path(temporary)/'project'
+        workspace.create(source)
+        workspace.engine.verify_output(target/'index.html')
+        for name in ('index.html', 'index.manifest.json'):
+            workspace.engine.atomic_write(target/name, (source/name).read_bytes())
 
 
 def banner():
@@ -53,6 +66,7 @@ def make(out):
     build(spec,component_out)
     for mode in ('library','editable'):
         build(read_json(ROOT/'examples/admin.json'),out/mode,mode)
+    make_project_demo(out)
     panels=[]
     descriptions={
         'admin':'查询与筛选申请记录，核对状态并批量处理',
@@ -80,7 +94,7 @@ def make(out):
     gallery=(ROOT/'assets/gallery.html').read_text(encoding='utf-8')
     from string import Template
     (out/'index.html').write_text(Template(gallery).substitute(panels=''.join(panels),swatches=swatches),encoding='utf-8')
-    print(f'Generated 9 interactive pages + gallery: {out.absolute()}')
+    print(f'Generated 9 legacy pages + recoverable project + gallery: {out.absolute()}')
 
 
 if __name__=='__main__':

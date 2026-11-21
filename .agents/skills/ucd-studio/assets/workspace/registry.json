@@ -1,0 +1,11 @@
+{
+  "field": {"file":"components/field.js","dependencies":[],"description":"原生字段：text/email/date/number/select/textarea/checkbox"},
+  "form": {"file":"components/form.js","dependencies":["field"],"description":"fields/record/submitLabel；支持 before/after 插槽"},
+  "detail": {"file":"components/detail.js","dependencies":[],"description":"fields/record；支持 before/after 插槽"},
+  "table": {"file":"components/table.js","dependencies":["field","form","detail"],"description":"data/fields/columns/filters/rowActions/batchActions；支持 toolbar/before/after/cell:<key>/form/detail 插槽"},
+  "stats": {"file":"components/stats.js","dependencies":[],"description":"items：label/value 或 data/field/equals 动态统计"},
+  "panel": {"file":"components/panel.js","dependencies":[],"description":"title/description；支持 default/actions 插槽和 columns 栅格"},
+  "tabs": {"file":"components/tabs.js","dependencies":[],"description":"items:[{key,label}]；每个 key 对应同名插槽"},
+  "alert": {"file":"components/alert.js","dependencies":[],"description":"title/text/tone"},
+  "image": {"file":"components/image.js","dependencies":[],"description":"src/alt/caption；本地 assets 自动内联"}
+}

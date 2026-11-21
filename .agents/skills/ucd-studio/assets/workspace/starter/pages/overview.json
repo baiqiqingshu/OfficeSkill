@@ -1,0 +1,11 @@
+{
+  "title": "工作概览",
+  "description": "通过配置组合页签、内容面板和自定义组件。",
+  "content": [
+    {"component": "request-summary", "id": "overview-stats", "props": {"data": "requests"}},
+    {"component": "tabs", "id": "guide", "props": {"items": [{"key": "tasks", "label": "待办说明"}, {"key": "notes", "label": "使用说明"}]}, "slots": {
+      "tasks": {"component": "panel", "props": {"title": "今日待办", "description": "优先处理待审批记录，再跟进办理进度。"}, "slots": {"default": {"component": "alert", "props": {"text": "打开申请管理，可筛选记录、查看详情、编辑申请和批量审批。"}}}},
+      "notes": {"component": "alert", "props": {"title": "本地演示", "text": "操作会更新当前页面的示例数据，切换页面保留，刷新后恢复初始数据。"}}
+    }}
+  ]
+}

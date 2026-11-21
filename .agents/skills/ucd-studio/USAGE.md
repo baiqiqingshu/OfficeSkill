@@ -1,6 +1,30 @@
 # UCD Studio 离线技能包
 
-本目录是完整可搬运技能，无需联网安装依赖。把整个 ucd-studio 目录复制到目标工具的技能目录（如 .agents/skills/ucd-studio），不要只复制 SKILL.md。默认针对公司内网工具网站设计，入口优先直接生成，仅按需读取组件与参考。
+本目录是完整可搬运技能，无需联网安装依赖。把整个 ucd-studio 目录复制到目标工具的技能目录（如 .agents/skills/ucd-studio），不要只复制 SKILL.md。新建后台原型默认使用配置工程，只修改小型 JSON 和自定义组件，交付可恢复源码的单 HTML。
+
+## 推荐：配置 + 自定义组件
+
+```text
+python ucd-studio/scripts/ucd.py project --out output/approval --title "申请管理"
+python ucd-studio/scripts/ucd.py patch --dir output/approval --file pages/requests.json --node requests --set props.pageSize=10
+python ucd-studio/scripts/ucd.py build --dir output/approval
+```
+
+工作目录包含 app.json、pages、data、components、runtime 和独立 build.py。生成前先复制所用配置、组件及依赖到临时目录，在其中构建；最终 HTML 内嵌资源和工程源码。新增/编辑/详情/删除/筛选/排序/分页/批量审批均为可用的本地交互，特殊区域通过插槽与独立 JS 组件扩展。
+
+接手单个 HTML 后继续修改：
+
+```text
+python ucd-studio/scripts/ucd.py unpack --html approval.html --out output/approval-edit
+python ucd-studio/scripts/ucd.py summary --dir output/approval-edit
+python ucd-studio/scripts/ucd.py build --dir output/approval-edit
+```
+
+脱离 skill 也能 `python output/approval-edit/build.py` 独立重建。外部手改的 HTML 默认受到保护；`unpack --allow-modified` 仅恢复内嵌源码，不自动合并手改内容。源码包内不包含浏览器操作后的临时数据。
+
+打开 [配置工程示例](demo/project/index.html) 体验。配置、组件接口和常用操作见 [workspace.md](references/workspace.md)；`components` 命令返回内置组件速查。已有配置目录可用 `project --config <目录>/app.json --out <新目录>` 导入，无需重新编写页面。
+
+## 兼容：旧版 page.json 原型
 
 生成端：Python 3.10+，标准库。预览端：现代 Chromium/Edge/Firefox，直接双击 HTML，无需服务。下列命令在包的上级目录执行：
 
@@ -28,7 +52,7 @@ python ucd-studio/scripts/ucd.py patch --dir output/approval --patch change.json
 
 > 使用 $ucd-studio 阅读当前项目中的申请管理界面，按实际字段生成 HTML 原型和规范，注明源码依据与设计假设。禁止外网调用，不运行原项目代码。
 
-8 套主题、24 个组件（16 个生成区块 + 8 个基础代码片段）、6 类完整布局。打开 [demo/index.html](demo/index.html) 选择页面；另外提供完整组件和两种 JS 分离模式示例。默认使用单 HTML 模式；另支持 --mode library 和 --mode editable。三种取舍见 [output-modes.md](references/output-modes.md)。
+旧版提供 24 个组件（16 个生成区块 + 8 个基础代码片段）、6 类完整布局；当前共 10 套主题。打开 [demo/index.html](demo/index.html) 选择页面；另外提供完整组件和两种 JS 分离模式示例。旧版默认使用 single 模式，另支持 --mode library 和 --mode editable。三种取舍见 [output-modes.md](references/output-modes.md)。
 
 默认设计以业务操作为中心：统一字号、4px 间距基准、语义色与控件状态，桌面保持数据密度，窄屏重排并保留表格局部滚动。浅色企业蓝用于日常办公，深色需符合实际使用环境，不自动随系统偏好切换。详细决策及六类模板的结构约定见 [design-guidelines.md](references/design-guidelines.md)，只在定制规范时读取。
 

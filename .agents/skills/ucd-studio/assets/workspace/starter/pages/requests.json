@@ -1,0 +1,30 @@
+{
+  "title": "申请管理",
+  "description": "集中查看申请进度，完成核对与审批。",
+  "content": [
+    {"component": "request-summary", "id": "summary", "props": {"data": "requests"}},
+    {
+      "component": "table",
+      "id": "requests",
+      "props": {
+        "title": "申请记录", "data": "requests", "rowKey": "id", "pageSize": 6,
+        "fields": [
+          {"key": "title", "label": "申请名称", "required": true},
+          {"key": "owner", "label": "申请人", "required": true},
+          {"key": "department", "label": "所属部门", "type": "select", "options": ["研发部", "产品部", "运营部"]},
+          {"key": "date", "label": "提交日期", "type": "date"},
+          {"key": "status", "label": "状态", "type": "select", "default": "待审批", "options": ["待审批", "处理中", "已通过", "已退回"], "tones": {"待审批": "warning", "处理中": "primary", "已通过": "success", "已退回": "danger"}},
+          {"key": "description", "label": "申请说明", "type": "textarea"}
+        ],
+        "columns": ["title", "owner", "department", "date", "status"],
+        "filters": ["title", "department", "status"],
+        "actions": [{"type": "create", "label": "新建申请", "primary": true}],
+        "rowActions": ["detail", "edit", {"type": "update", "label": "通过", "values": {"status": "已通过"}, "when": {"field": "status", "equals": "待审批"}}, "delete"],
+        "batchActions": [{"type": "update", "label": "批量通过", "values": {"status": "已通过"}}, "delete"]
+      },
+      "slots": {
+        "detail": {"component": "alert", "props": {"text": "确认申请信息后，可返回列表进行编辑或审批。", "tone": "primary"}}
+      }
+    }
+  ]
+}

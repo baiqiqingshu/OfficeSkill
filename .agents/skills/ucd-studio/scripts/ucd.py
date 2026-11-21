@@ -17,6 +17,7 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 from render import ROOT, TYPES, component_css, render_block, render_page
+import workspace
 
 VERSION = '1.2.0'
 MODES = ('single', 'library', 'editable')
@@ -813,8 +814,11 @@ def main():
     p=sub.add_parser('init');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'));p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--config');p.add_argument('--json');p.add_argument('--set',action='append',default=[]);p.add_argument('--force',action='store_true')
     p=sub.add_parser('quick');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'));p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--product');p.add_argument('--description');p.add_argument('--action');p.add_argument('--config');p.add_argument('--json');p.add_argument('--set',action='append',default=[])
     p=sub.add_parser('summary');p.add_argument('--dir',required=True);p.add_argument('--block');p.add_argument('--max-chars',type=int,default=2500)
-    p=sub.add_parser('build');p.add_argument('--dir',required=True);p.add_argument('--mode',choices=MODES)
-    p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch');p.add_argument('--json');p.add_argument('--set',action='append',default=[])
+    p=sub.add_parser('project',help='创建可恢复源码的配置工程');p.add_argument('--out',required=True);p.add_argument('--config');p.add_argument('--title');p.add_argument('--style')
+    p=sub.add_parser('components',help='列出配置工程的内置组件和依赖')
+    p=sub.add_parser('unpack',help='从单 HTML 恢复配置工程');p.add_argument('--html',required=True);p.add_argument('--out',required=True);p.add_argument('--allow-modified',action='store_true')
+    p=sub.add_parser('build');p.add_argument('--dir',required=True);p.add_argument('--mode',choices=MODES);p.add_argument('--out',help='配置工程的 HTML 交付路径')
+    p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch');p.add_argument('--json');p.add_argument('--set',action='append',default=[]);p.add_argument('--file',help='配置工程内的目标 JSON，如 pages/requests.json');p.add_argument('--node',help='只修改目标页面中具有此 id 的组件节点')
     p=sub.add_parser('check');p.add_argument('--dir',required=True)
     p=sub.add_parser('presets')
     p=sub.add_parser('kit');p.add_argument('--out',required=True);p.add_argument('--style',default='ocean')
@@ -854,18 +858,42 @@ def main():
         result=build(spec,out,args.mode,source_base=src_base)
     elif args.command=='summary':
         require(1000<=args.max_chars<=50000,'max-chars 需 1000–50000')
-        result=page_summary(args.dir,args.block,args.max_chars)
-    elif args.command=='build':result=build(read_json(Path(args.dir)/'page.json'),args.dir,args.mode)
+        result=bounded(workspace.summary(args.dir),args.max_chars) if (Path(args.dir)/'app.json').is_file() else page_summary(args.dir,args.block,args.max_chars)
+    elif args.command=='project':result=workspace.create(args.out,args.config,args.title,args.style)
+    elif args.command=='components':result=workspace.component_catalog()
+    elif args.command=='unpack':result=workspace.engine.unpack(args.html,args.out,args.allow_modified)
+    elif args.command=='build':
+        if (Path(args.dir)/'app.json').is_file():
+            require(args.mode is None,'配置工程固定输出单 HTML，无需 --mode')
+            result=workspace.build_project(args.dir,args.out)
+        else:
+            require(args.out is None,'--out 仅用于配置工程；旧版产物输出到 --dir')
+            result=build(read_json(Path(args.dir)/'page.json'),args.dir,args.mode)
     elif args.command=='patch':
         require(args.patch or args.json or args.set, 'patch 需要提供 --patch、--json 或 --set')
-        base_spec=read_json(Path(args.dir)/'page.json')
+        project=(Path(args.dir)/'app.json').is_file()
+        require(project or args.file is None and args.node is None,'--file/--node 仅用于配置工程')
+        target=workspace.engine.source_path(workspace.engine.local_root(args.dir),args.file or 'app.json') if project else Path(args.dir)/'page.json'
+        require(target.suffix == '.json','patch 仅修改 JSON；组件请直接编辑小型 JS 文件')
+        base_spec=read_json(target)
+        target_spec=base_spec
+        if args.node:
+            matches=[node for node in workspace.engine.nodes_in(base_spec) if node.get('id') == args.node]
+            require(len(matches) == 1,f'需要唯一节点 id：{args.node}')
+            target_spec=matches[0]
         if args.patch or args.json:
             patch=load_json_input(args.patch, args.json)
             require(isinstance(patch,dict),'补丁必须是对象')
-            base_spec=merge(base_spec, patch)
-        base_spec=normalize_spec(apply_sets(base_spec, args.set))
-        result=build(base_spec,args.dir)
-    elif args.command=='check':result=check(args.dir)
+            target_spec=merge(target_spec, patch)
+        target_spec=workspace.apply_sets(target_spec,args.set) if project else apply_sets(target_spec,args.set)
+        if args.node:
+            matches[0].clear();matches[0].update(target_spec)
+        else:base_spec=target_spec
+        if project:
+            workspace.engine.atomic_write(target,json_text(base_spec).encode('utf-8'))
+            result=workspace.build_project(args.dir)
+        else:result=build(normalize_spec(base_spec),args.dir)
+    elif args.command=='check':result=workspace.check(args.dir) if (Path(args.dir)/'app.json').is_file() else check(args.dir)
     elif args.command=='presets':result=presets_info()
     elif args.command=='kit':result=export_kit(args.out, args.style)
     else:
@@ -876,6 +904,7 @@ def main():
 
 if __name__=='__main__':
     if hasattr(sys.stdout,'reconfigure'):sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr,'reconfigure'):sys.stderr.reconfigure(encoding='utf-8')
     try:main()
-    except (ValueError,OSError,KeyError,TypeError,json.JSONDecodeError) as exc:
+    except (ValueError,OSError,KeyError,TypeError,json.JSONDecodeError,workspace.engine.zipfile.BadZipFile) as exc:
         print(json_text({'ok':False,'error':str(exc)}),file=sys.stderr,end='');sys.exit(1)

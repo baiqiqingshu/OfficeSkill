@@ -1,0 +1,10 @@
+[
+  {"id":"REQ-1024","title":"研发环境资源申请","owner":"陈晨","department":"研发部","date":"2026-11-20","status":"待审批","description":"申请一套项目联调环境。"},
+  {"id":"REQ-1025","title":"季度项目预算调整","owner":"林晓","department":"产品部","date":"2026-11-20","status":"待审批","description":"调整本季度项目协作预算。"},
+  {"id":"REQ-1026","title":"数据访问权限开通","owner":"周亦","department":"运营部","date":"2026-11-19","status":"已通过","description":"开通脱敏业务数据只读权限。"},
+  {"id":"REQ-1027","title":"设备采购申请","owner":"王宁","department":"研发部","date":"2026-11-19","status":"处理中","description":"补充研发办公设备。"},
+  {"id":"REQ-1028","title":"新成员入组申请","owner":"李然","department":"产品部","date":"2026-11-18","status":"已通过","description":"新成员项目空间权限申请。"},
+  {"id":"REQ-1029","title":"设计资源归档申请","owner":"张若","department":"产品部","date":"2026-11-18","status":"待审批","description":"归档本阶段设计资源。"},
+  {"id":"REQ-1030","title":"测试环境扩容申请","owner":"刘航","department":"研发部","date":"2026-11-17","status":"处理中","description":"扩容性能验证资源。"},
+  {"id":"REQ-1031","title":"办公设备调拨","owner":"赵清","department":"运营部","date":"2026-11-17","status":"已退回","description":"请补充设备使用明细。"}
+]

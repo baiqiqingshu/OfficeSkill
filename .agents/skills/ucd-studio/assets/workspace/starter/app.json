@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "title": "协同管理平台",
+  "workspace": "企业工作空间",
+  "user": "林晓",
+  "style": "ocean",
+  "density": "compact",
+  "shell": "sidebar",
+  "startPage": "requests",
+  "pages": {"requests": "pages/requests.json", "overview": "pages/overview.json"},
+  "data": {"requests": "data/requests.json"},
+  "assets": {}
+}

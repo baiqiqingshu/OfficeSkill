@@ -1,5 +1,9 @@
 # 修改规则
 
+配置工程（含 app.json）：修改对应 pages/data JSON 或 components JS，再执行 build；小改可 `patch --file pages/requests.json --node requests --set props.pageSize=10`。仅有 HTML 时先 unpack 恢复工程。新工程不采用下述 page.json 历史目录规则；源码与交付的校验、手工 HTML 修改恢复方式见 [workspace.md](workspace.md)。
+
+以下适用于旧版 page.json 原型。
+
 page.json 是生成源。patch 使用 RFC 7396：对象递归合并，数组整体替换；删除区块用 `{"blocks":{"id":null}}`。保留未受影响区块 ID；顺序为 blocks 对象的键顺序。
 
 build/patch 核对 manifest：index.html、design-system.md、固定 lib、复制资源若被手工修改则拒绝覆盖。page.json 允许修改；editable 模式的 page.js 允许修改并保留。每次成功生成前保存 `.history/<时间戳>/`；校验失败不改已有交付物。

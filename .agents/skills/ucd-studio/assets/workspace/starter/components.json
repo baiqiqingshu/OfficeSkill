@@ -1,0 +1,3 @@
+{
+  "request-summary": {"file": "components/request-summary.js", "dependencies": ["stats"]}
+}
