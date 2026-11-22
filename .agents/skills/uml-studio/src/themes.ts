@@ -69,10 +69,10 @@ export const layoutModes: { label: string; value: NonNullable<DiagramLayoutOptio
 ]
 
 const layoutDefaults: Record<NonNullable<DiagramLayoutOptions['mode']>, {elementGap:number;regionGap:number;maxPerColumn:number}> = {
-  compact: { elementGap: 32, regionGap: 48, maxPerColumn: 0 },
-  balanced: { elementGap: 56, regionGap: 84, maxPerColumn: 0 },
-  spacious: { elementGap: 88, regionGap: 120, maxPerColumn: 0 },
-  grid: { elementGap: 36, regionGap: 56, maxPerColumn: 3 },
+  compact: { elementGap: 32, regionGap: 56, maxPerColumn: 0 },
+  balanced: { elementGap: 56, regionGap: 96, maxPerColumn: 0 },
+  spacious: { elementGap: 88, regionGap: 132, maxPerColumn: 0 },
+  grid: { elementGap: 36, regionGap: 64, maxPerColumn: 3 },
 }
 
 /** Explicit layout fields win over legacy style.gap, which wins over mode defaults. */

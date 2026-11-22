@@ -203,10 +203,10 @@ var layoutModes = [
   { label: "\u5206\u680F\u7F51\u683C", value: "grid" }
 ];
 var layoutDefaults = {
-  compact: { elementGap: 32, regionGap: 48, maxPerColumn: 0 },
-  balanced: { elementGap: 56, regionGap: 84, maxPerColumn: 0 },
-  spacious: { elementGap: 88, regionGap: 120, maxPerColumn: 0 },
-  grid: { elementGap: 36, regionGap: 56, maxPerColumn: 3 }
+  compact: { elementGap: 32, regionGap: 56, maxPerColumn: 0 },
+  balanced: { elementGap: 56, regionGap: 96, maxPerColumn: 0 },
+  spacious: { elementGap: 88, regionGap: 132, maxPerColumn: 0 },
+  grid: { elementGap: 36, regionGap: 64, maxPerColumn: 3 }
 };
 function resolveLayout(spec) {
   const mode = spec.layout?.mode ?? "balanced";
@@ -846,8 +846,12 @@ function layoutOptions(direction, padding, spec) {
     "elk.layered.edgeLabels.sideSelection": "SMART_DOWN"
   };
 }
+function containerPad(spec) {
+  return Math.max(40, Math.min(56, Math.round((spec.layout?.regionGap ?? 96) * 0.45)));
+}
 function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, additionalGroups) {
   const direction = spec.direction ?? "TB";
+  const pad = containerPad(spec);
   const groupById = new Map(groups.map((group) => [group.id, group]));
   const included = /* @__PURE__ */ new Set();
   const memberships = [...refs.map((ref) => ref.node.group), ...additionalGroups ?? []];
@@ -878,7 +882,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
     const groupHeader = labelSize.height + (group.kind === "node" ? 40 : 22);
     const width = Math.max(180, labelSize.width + 48);
     const height = groupHeader + 64;
-    const options = layoutOptions(direction, `[top=${groupHeader + 24},left=28,bottom=28,right=28]`, spec);
+    const options = layoutOptions(direction, `[top=${groupHeader + Math.round(pad * 0.85)},left=${pad},bottom=${pad},right=${pad}]`, spec);
     options["elk.nodeSize.constraints"] = "[MINIMUM_SIZE]";
     options["elk.nodeSize.minimum"] = `(${width},${height})`;
     groupNodes.set(group.id, { id: id2, width, height, layoutOptions: options, children: [] });
@@ -1099,7 +1103,35 @@ function compactCoords(values, keep) {
   }
   return result;
 }
-function obstacleRouter(start, end, obstacles, used, guards) {
+function borderHugPenalty(a, b, containers) {
+  if (!containers.length) return 0;
+  const zone = 18;
+  const horizontal = Math.abs(a.y - b.y) < 0.01;
+  let penalty = 0;
+  if (horizontal) {
+    const lo = Math.min(a.x, b.x), hi = Math.max(a.x, b.x);
+    if (hi - lo < 1) return 0;
+    for (const box of containers) {
+      const overlap = Math.min(hi, box.x + box.width + zone) - Math.max(lo, box.x - zone);
+      if (overlap <= 2) continue;
+      let dist = Math.min(Math.abs(a.y - box.y), Math.abs(a.y - (box.y + box.height)));
+      if (box.ref.kind === "node") dist = Math.min(dist, Math.abs(a.y - (box.y + 10)));
+      if (dist < zone) penalty += (zone - dist) * overlap * 0.6 + (zone - dist) * 8 + 70;
+    }
+  } else {
+    const lo = Math.min(a.y, b.y), hi = Math.max(a.y, b.y);
+    if (hi - lo < 1) return 0;
+    for (const box of containers) {
+      const overlap = Math.min(hi, box.y + box.height + zone) - Math.max(lo, box.y - zone);
+      if (overlap <= 2) continue;
+      let dist = Math.min(Math.abs(a.x - box.x), Math.abs(a.x - (box.x + box.width)));
+      if (box.ref.kind === "node") dist = Math.min(dist, Math.abs(a.x - (box.x + box.width - 12)));
+      if (dist < zone) penalty += (zone - dist) * overlap * 0.6 + (zone - dist) * 8 + 70;
+    }
+  }
+  return penalty;
+}
+function obstacleRouter(start, end, obstacles, used, guards, containers = []) {
   const xs = /* @__PURE__ */ new Set([start.x, end.x]);
   const ys = /* @__PURE__ */ new Set([start.y, end.y]);
   const obsXs = /* @__PURE__ */ new Set(), obsYs = /* @__PURE__ */ new Set();
@@ -1114,6 +1146,23 @@ function obstacleRouter(start, end, obstacles, used, guards) {
     obsXs.add(box.x + box.width);
     obsYs.add(box.y);
     obsYs.add(box.y + box.height);
+    left = Math.min(left, box.x);
+    right = Math.max(right, box.x + box.width);
+    top = Math.min(top, box.y);
+    bottom = Math.max(bottom, box.y + box.height);
+  }
+  for (const box of containers) {
+    obsXs.add(box.x);
+    obsXs.add(box.x + box.width);
+    obsYs.add(box.y);
+    obsYs.add(box.y + box.height);
+    xs.add(box.x - 24);
+    xs.add(box.x + 22);
+    xs.add(box.x + box.width - 22);
+    xs.add(box.x + box.width + 24);
+    ys.add(box.y - 24);
+    ys.add(box.y + box.height - 22);
+    ys.add(box.y + box.height + 24);
     left = Math.min(left, box.x);
     right = Math.max(right, box.x + box.width);
     top = Math.min(top, box.y);
@@ -1241,11 +1290,12 @@ function obstacleRouter(start, end, obstacles, used, guards) {
       }
       const segLen = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
       const wallHug = obstacles.some((box) => horizontal ? (Math.abs(a.y - box.y) < 3 || Math.abs(a.y - (box.y + box.height)) < 3) && Math.max(a.x, b.x) > box.x + 1 && Math.min(a.x, b.x) < box.x + box.width - 1 : (Math.abs(a.x - box.x) < 3 || Math.abs(a.x - (box.x + box.width)) < 3) && Math.max(a.y, b.y) > box.y + 1 && Math.min(a.y, b.y) < box.y + box.height - 1) ? Math.min(44, segLen * 0.55 + 22) : 0;
+      const borderHug = borderHugPenalty(a, b, containers);
       const direction = horizontal ? 1 : 2;
       const state = neighbor * 3 + direction;
       const startAligned = guards?.startSide ? horizontal === (guards.startSide === "left" || guards.startSide === "right") : false;
       const bias = guards?.startSide && guards.turnBias && vertex === startVertex && (guards.turnBias === "early" && startAligned || guards.turnBias === "late" && !startAligned) ? 0.5 : 0;
-      const cost = current.cost + segLen + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + nearParallel + crossings * 80 + wallHug + bias;
+      const cost = current.cost + segLen + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + nearParallel + crossings * 80 + wallHug + borderHug + bias;
       if (cost >= costs[state]) continue;
       costs[state] = cost;
       previous[state] = current.state;
@@ -1519,7 +1569,7 @@ function opposite(side) {
 }
 function routeEdges(edges, result, direction, theme, type, adjustments2) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
-  const baseClearance = Math.max(12, Math.min(18, Math.round(theme.gap * 0.32)));
+  const baseClearance = Math.max(14, Math.min(20, Math.round(theme.gap * 0.34)));
   const nodeClearance = /* @__PURE__ */ new Map();
   const nodeObstacleIndex = /* @__PURE__ */ new Map();
   for (const box of result.nodes) {
@@ -1602,7 +1652,12 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
           const x = attach === "left" ? bounds.x : attach === "right" ? bounds.x + bounds.width : bounds.x + bounds.width * 0.5;
           const y = attach === "top" ? bounds.y : attach === "bottom" ? bounds.y + bounds.height : bounds.y + bounds.height * 0.5;
           const c = nodeClearance.get(box) ?? baseClearance;
-          let distance = Math.max(c + 2, Math.min(28, Math.round(theme.gap * 0.45)));
+          let distance = Math.max(c + 2, Math.min(24, Math.round(theme.gap * 0.4)));
+          for (const container of result.containers) {
+            if (box.x < container.x || box.x + box.width > container.x + container.width || box.y < container.y || box.y + box.height > container.y + container.height) continue;
+            const toEdge = attach === "right" ? container.x + container.width - (box.x + box.width) : attach === "left" ? box.x - container.x : attach === "bottom" ? container.y + container.height - (box.y + box.height) : box.y - container.y;
+            if (toEdge >= c + 18) distance = Math.min(distance, Math.floor(toEdge - 18));
+          }
           for (const other of result.nodes) {
             if (other === box) continue;
             if (attach === "right" && other.x > box.x + box.width && y > other.y - c && y < other.y + other.height + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((other.x - (box.x + box.width)) / 2)));
@@ -1635,7 +1690,7 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
             endSide: index === stops.length - 1 ? targetSide : void 0,
             turnBias: stops.length === 2 ? turnBias : void 0
           };
-          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used, guards) ?? obstacleRouter(stops[index - 1], stops[index], obstacles, used);
+          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used, guards, result.containers) ?? obstacleRouter(stops[index - 1], stops[index], obstacles, used, void 0, result.containers);
           if (!section) {
             reachable = false;
             break;
@@ -1648,10 +1703,11 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
         const entryKey = `${item.target.ref.id}:${targetSide}`;
         const sourceStem = [anchors[0].port, anchors[0].stub];
         const targetStem = [anchors[1].stub, anchors[1].port];
-        let length = 0, overlaps = 0, crossings = 0;
+        let length = 0, overlaps = 0, crossings = 0, borderHug = 0;
         for (let i = 1; i < candidate.length; i++) {
           const a = candidate[i - 1], b = candidate[i], horizontal = Math.abs(a.y - b.y) < 0.01;
           length += Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+          borderHug += borderHugPenalty(a, b, result.containers);
           for (const prev of routed) for (let j = 1; j < prev.path.length; j++) {
             const c = prev.path[j - 1], d = prev.path[j], otherHorizontal = Math.abs(c.y - d.y) < 0.01;
             if (horizontal && otherHorizontal && Math.abs(a.y - c.y) < 0.01) {
@@ -1680,7 +1736,7 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
             }
           }
         }
-        const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + (usedEntries.has(exitKey) ? 220 : 0) + (usedExits.has(entryKey) ? 220 : 0) + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32) + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 240 : item.forwardFlow ? 96 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
+        const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + borderHug * 0.5 + (usedEntries.has(exitKey) ? 220 : 0) + (usedExits.has(entryKey) ? 220 : 0) + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32) + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 240 : item.forwardFlow ? 96 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
         if (score < bestScore) {
           bestScore = score;
           best = { route: candidate, exitKey, entryKey, sourceStem, targetStem };
@@ -2299,7 +2355,9 @@ function alignConnectedNodes(result, edges, columns, spec) {
     box[axis] = values.get(find(i)) - box[size] / 2;
   });
   const groups = new Map((spec.groups ?? []).map((group) => [group.id, group.parent]));
+  const pad = containerPad(spec);
   for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) {
+    const cPad = container.ref.kind === "lane" ? 28 : pad;
     const members = nodes.filter((box) => {
       if (container.ref.kind === "lane") return box.ref.node.lane === container.ref.originalId || !box.ref.node.lane && container.ref.originalId.startsWith("__uml_unassigned_lane__");
       let group = box.ref.node.group;
@@ -2311,10 +2369,10 @@ function alignConnectedNodes(result, edges, columns, spec) {
     });
     for (const box of members) {
       const occupied = occupiedNode(box);
-      container[size] = Math.max(container[size], occupied[axis] + occupied[size] + 24 - container[axis]);
+      container[size] = Math.max(container[size], occupied[axis] + occupied[size] + cPad - container[axis]);
     }
     for (const child of result.containers) if (child.depth > container.depth && child.ref.lane === container.ref.lane && (container.ref.kind === "lane" || groups.get(child.ref.originalId) === container.ref.originalId)) {
-      container[size] = Math.max(container[size], child[axis] + child[size] + 24 - container[axis]);
+      container[size] = Math.max(container[size], child[axis] + child[size] + cPad - container[axis]);
     }
   }
 }
@@ -2395,16 +2453,18 @@ function applyManualElements(result, spec, direction) {
     node.y += delta.y;
   }
   if (!moved) return;
+  const pad = containerPad(spec);
   for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) {
+    const cPad = container.ref.kind === "lane" ? 28 : pad;
     const members = result.nodes.filter((node) => !["start", "end"].includes(node.ref.kind) && nodeWithin(node, container)).map(occupiedNode);
     members.push(...result.containers.filter((child) => containerWithin(child, container)));
     if (!members.length) continue;
     const headerX = container.ref.kind === "lane" && direction === "LR" ? container.ref.header : 0;
     const headerY = container.ref.kind === "lane" && direction === "LR" ? 0 : container.ref.header;
-    const right = Math.max(container.x + container.width, ...members.map((box) => box.x + box.width + 24));
-    const bottom = Math.max(container.y + container.height, ...members.map((box) => box.y + box.height + 24));
-    container.x = Math.min(container.x, ...members.map((box) => box.x - 24 - headerX));
-    container.y = Math.min(container.y, ...members.map((box) => box.y - 24 - headerY));
+    const right = Math.max(container.x + container.width, ...members.map((box) => box.x + box.width + cPad));
+    const bottom = Math.max(container.y + container.height, ...members.map((box) => box.y + box.height + cPad));
+    container.x = Math.min(container.x, ...members.map((box) => box.x - cPad - headerX));
+    container.y = Math.min(container.y, ...members.map((box) => box.y - cPad - headerY));
     container.width = right - container.x;
     container.height = bottom - container.y;
   }
@@ -2439,6 +2499,15 @@ function hasCrowdedRoutes(result, elementGap) {
         for (const box of result.nodes) {
           if (box.ref.node.id === route.ref.edge.from || box.ref.node.id === route.ref.edge.to) continue;
           if (segmentRectDistance(a, b, box) < minNodeDist) return true;
+        }
+        for (const container of result.containers) {
+          if (horizontal) {
+            const overlap = Math.min(Math.max(a.x, b.x), container.x + container.width) - Math.max(Math.min(a.x, b.x), container.x);
+            if (overlap > 18 && Math.min(Math.abs(a.y - container.y), Math.abs(a.y - (container.y + container.height))) < 10) return true;
+          } else {
+            const overlap = Math.min(Math.max(a.y, b.y), container.y + container.height) - Math.max(Math.min(a.y, b.y), container.y);
+            if (overlap > 18 && Math.min(Math.abs(a.x - container.x), Math.abs(a.x - (container.x + container.width))) < 10) return true;
+          }
         }
       }
     }
