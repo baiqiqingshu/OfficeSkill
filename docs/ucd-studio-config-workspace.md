@@ -74,3 +74,13 @@ python output/approval-edit/build.py
 ### 当前范围
 
 这是可迭代的后台原型框架。数据操作只在浏览器内存保留，刷新恢复初始数据；不写回源 JSON、不接业务后端。只恢复携带本格式源码包的 HTML，不反编译旧版/第三方 HTML。尚未加入拖拽设计器、通用表达式引擎或 Vue 构建链。
+
+## v1.1.0 体验与效率升级（2026-11-22）
+
+针对首版视觉粗糙（裸原生 `<select>`、汉字方框图标、未复用 `styles.json` 阴影/圆角 token、`window.confirm`、宽屏留白失衡）及内网模型提效短板，完成以下升级：
+
+- **视觉体系拉齐 r4「霁蓝瓷面」**：重写 `assets/workspace/runtime/style.css`，完整接入 `--radius`/`--shadow`/`--shadow-pop`/`--ring`/`--motion`，采用 `surface-2` 凹陷侧栏轨道 + 浮动白 pill 导航、磨砂玻璃顶栏渐变发丝线、带圆点与微描边的 pill 状态徽章、上下文多选条（仅在勾选后出现）与更均衡的表格列宽。
+- **消灭原生丑控件**：在 `runtime.js` 移植支持键盘导航与浮层定位的自定义下拉框 `enhanceSelects`，以 `<dialog id="ucd-confirm">` 替代 `window.confirm()`，内置 30 个精简内联 SVG 图标并支持侧栏分组导航。
+- **组件库扩充至 19 个并按需单文件拆出**：Skill 内按类别维护在 `assets/workspace/bundles/{core,data,layout,charts}.js`（4 个文件），`prepare/build` 按依赖自动拆出为工作目录与临时构建目录下的 `components/<name>.js` 一组件一文件；新增 `split`、`tree`（支持 `target+filterField` 联动筛选表格）、`kanban`、`empty`、`steps`、`cards`、`bar-chart`、`line-chart`、`timeline`、`progress`，`field` 补充 `switch`/`radio`/`tags`/`search`，`form` 支持 `sections` 分组，自定义组件支持独立 `.css` 文件。
+- **内网模型提效命令与模板**：新增 5 套后台模板（`crud/tree-table/dashboard/approval/settings`）、`--from-spec` 单规格一步拆盘、`add-page`、`add-component`、`components <name>` 单组件最小示例、`patch --append/--remove`、`unpack --force` 以及更精确定位的构建校验报错；外部 `--out` 默认不产生冗余 `.manifest.json`。
+

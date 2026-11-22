@@ -3,6 +3,7 @@
 import argparse
 import base64
 import hashlib
+import html as html_lib
 import io
 import json
 import mimetypes
@@ -14,11 +15,13 @@ import tempfile
 import zipfile
 
 sys.dont_write_bytecode = True
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 MAX_SOURCE = 50 * 1024 * 1024
 SOURCE = re.compile(r'<script id="ucd-source" type="application/octet-stream" data-format="1" data-source-sha="([a-f0-9]{64})" data-page-sha="([a-f0-9]{64})">([A-Za-z0-9+/=\r\n]+)</script>')
 IDENTIFIER = re.compile(r'^[a-z][a-z0-9-]{0,63}$')
+FIELD_KEY = re.compile(r'^[A-Za-z][A-Za-z0-9_]*$')
 ASSET_TYPES = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.otf'}
+SUPPORTED_FIELD_TYPES = {'text', 'email', 'date', 'number', 'select', 'textarea', 'checkbox', 'switch', 'radio', 'tags', 'search', 'tel', 'url'}
 
 
 def require(condition, message):
@@ -62,7 +65,10 @@ def source_path(root, name):
 def read_json(root, name):
     path = source_path(root, name)
     require(path.is_file() and path.stat().st_size <= 2 * 1024 * 1024, f'JSON 缺失或超过 2 MB：{name}')
-    return json.loads(path.read_text(encoding='utf-8-sig'))
+    try:
+        return json.loads(path.read_text(encoding='utf-8-sig'))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f'{name} JSON 语法错误（第 {exc.lineno} 行第 {exc.colno} 列）：{exc.msg}') from exc
 
 
 def nodes_in(value):
@@ -80,65 +86,78 @@ def nodes_in(value):
 
 def load_project(root):
     app = read_json(root, 'app.json')
-    require(isinstance(app, dict) and app.get('version') == 1, 'app.json.version 必须为 1')
-    require(isinstance(app.get('title'), str) and app['title'].strip(), 'app.title 不能为空')
-    require(app.get('density', 'compact') in ('compact', 'comfortable'), 'density 仅支持 compact/comfortable')
-    require(app.get('shell', 'sidebar') in ('sidebar', 'topnav'), 'shell 仅支持 sidebar/topnav')
+    require(isinstance(app, dict) and app.get('version') == 1, '[app.json] version 必须为 1')
+    require(isinstance(app.get('title'), str) and app['title'].strip(), '[app.json] title 不能为空')
+    require(app.get('density', 'compact') in ('compact', 'comfortable'), '[app.json] density 仅支持 compact 或 comfortable')
+    require(app.get('shell', 'sidebar') in ('sidebar', 'topnav'), '[app.json] shell 仅支持 sidebar 或 topnav')
     refs = app.get('pages')
-    require(isinstance(refs, dict) and 0 < len(refs) <= 30, 'app.pages 需要 1–30 个页面路径')
+    require(isinstance(refs, dict) and 0 < len(refs) <= 30, '[app.json] pages 需要 1–30 个页面路径映射')
     pages, data = {}, {}
     for key, name in refs.items():
-        require(IDENTIFIER.fullmatch(key) is not None and isinstance(name, str) and name.startswith('pages/'), f'非法页面引用：{key}')
+        require(IDENTIFIER.fullmatch(key) is not None and isinstance(name, str) and name.startswith('pages/'), f'[app.json] 非法页面引用 {key} -> {name}（id 需小写字母/数字/短横线，路径以 pages/ 开头）')
         page = read_json(root, name)
-        require(isinstance(page, dict) and isinstance(page.get('title'), str) and isinstance(page.get('content'), list), f'{name} 需要 title 和 content 数组')
-        def validate_node(node):
-            require(isinstance(node, dict) and isinstance(node.get('component'), str), f'{name} 的节点需要 component，插槽不能直接放文本')
+        require(isinstance(page, dict) and isinstance(page.get('title'), str) and isinstance(page.get('content'), list), f'[{name}] 需要 title 字符串和 content 数组')
+
+        def validate_node(node, ctx_path):
+            require(isinstance(node, dict) and isinstance(node.get('component'), str), f'[{name} {ctx_path}] 节点需要 component 字符串，插槽不能直接放文本')
             slots = node.get('slots', {})
-            require(isinstance(slots, dict), f'{name} 节点 slots 必须是对象')
-            for children in slots.values():
-                require(isinstance(children, (dict, list)), f'{name} 插槽需要节点或节点数组')
-                for child in children if isinstance(children, list) else [children]:
-                    validate_node(child)
-        require(isinstance(page.get('views', {}), dict), f'{name}.views 必须是视图名称到节点的映射')
-        for node in [*page['content'], *page.get('views', {}).values()]:
-            validate_node(node)
+            require(isinstance(slots, dict), f'[{name} {ctx_path}] slots 必须是对象')
+            for slot_name, children in slots.items():
+                require(isinstance(children, (dict, list)), f'[{name} {ctx_path}.slots.{slot_name}] 插槽需要节点对象或节点数组')
+                for idx, child in enumerate(children if isinstance(children, list) else [children]):
+                    validate_node(child, f'{ctx_path}.slots.{slot_name}[{idx}]')
+
+        require(isinstance(page.get('views', {}), dict), f'[{name}] views 必须是视图名称到节点的映射')
+        for idx, node in enumerate(page['content']):
+            validate_node(node, f'content[{idx}]')
+        for view_name, node in page.get('views', {}).items():
+            validate_node(node, f'views.{view_name}')
         ids = set()
         for node in nodes_in(page):
-            require(isinstance(node['component'], str) and IDENTIFIER.fullmatch(node['component']), f'{name} 包含非法 component')
+            require(isinstance(node['component'], str) and IDENTIFIER.fullmatch(node['component']), f'[{name}] 包含非法 component：{node.get("component")}')
             if 'id' in node:
-                require(isinstance(node['id'], str) and IDENTIFIER.fullmatch(node['id']) and node['id'] not in ids, f'{name} 包含重复或非法节点 id：{node["id"]}')
+                require(isinstance(node['id'], str) and IDENTIFIER.fullmatch(node['id']) and node['id'] not in ids, f'[{name}] 包含重复或非法节点 id：{node["id"]}')
                 ids.add(node['id'])
-            require(isinstance(node.get('props', {}), dict), f'{name} 节点 props 必须是对象')
-            slots = node.get('slots', {})
-            require(isinstance(slots, dict) and all(isinstance(v, (dict, list)) for v in slots.values()), f'{name} 节点 slots 必须包含节点或节点数组')
+            require(isinstance(node.get('props', {}), dict), f'[{name} #{node.get("id", node["component"])}] props 必须是对象')
         pages[key] = page
-    require(app.get('startPage', next(iter(pages))) in pages, 'startPage 指向不存在的页面')
-    require(isinstance(app.get('data', {}), dict), 'app.data 必须是数据名称到文件路径的映射')
+    require(app.get('startPage', next(iter(pages))) in pages, f'[app.json] startPage "{app.get("startPage")}" 不在 pages {list(pages)} 中')
+    require(isinstance(app.get('data', {}), dict), '[app.json] data 必须是数据名称到文件路径的映射')
     for key, name in app.get('data', {}).items():
-        require(IDENTIFIER.fullmatch(key) is not None and isinstance(name, str) and name.startswith('data/'), f'非法数据引用：{key}')
+        require(IDENTIFIER.fullmatch(key) is not None and isinstance(name, str) and name.startswith('data/'), f'[app.json] 非法数据引用：{key} -> {name}')
         rows = read_json(root, name)
-        require(isinstance(rows, list) and all(isinstance(row, dict) for row in rows), f'{name} 必须是记录对象数组')
+        require(isinstance(rows, list) and all(isinstance(row, dict) for row in rows), f'[{name}] 必须是记录对象数组')
         data[key] = rows
-    for page in pages.values():
+    for page_key, page in pages.items():
+        page_file = refs[page_key]
         for node in nodes_in(page):
             props = node.get('props', {})
-            if 'data' in props:
-                require(props['data'] in data, f'组件引用了不存在的数据集：{props["data"]}')
+            label = f'[{page_file} #{node.get("id", node["component"])}]'
+            if 'data' in props and isinstance(props['data'], str):
+                require(props['data'] in data, f'{label} 引用了不存在的数据集 "{props["data"]}"，可用数据集：{list(data)}')
             if node['component'] == 'table':
                 fields = props.get('fields', [])
-                require(isinstance(fields, list) and fields and all(isinstance(f, dict) and isinstance(f.get('key'), str) and re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', f['key']) and isinstance(f.get('label'), str) for f in fields), 'table.fields 需要带稳定 key/label 的字段数组，key 使用字母开头的字母数字下划线')
+                require(
+                    isinstance(fields, list) and fields and all(
+                        isinstance(f, dict) and isinstance(f.get('key'), str) and FIELD_KEY.fullmatch(f['key']) and isinstance(f.get('label'), str)
+                        for f in fields
+                    ),
+                    f'{label} table.fields 需要带稳定 key/label 的字段数组（key 需字母开头的字母数字下划线）'
+                )
+                for f in fields:
+                    ftype = f.get('type', 'text')
+                    require(ftype in SUPPORTED_FIELD_TYPES, f'{label} 字段 "{f["key"]}" 类型 "{ftype}" 不受支持，可选：{sorted(SUPPORTED_FIELD_TYPES)}')
                 keys = [f['key'] for f in fields]
-                require(len(set(keys)) == len(keys), 'table.fields.key 不允许重复')
+                require(len(set(keys)) == len(keys), f'{label} table.fields.key 不允许重复')
                 for option in ('columns', 'filters'):
-                    require(isinstance(props.get(option, []), list) and all(k in keys for k in props.get(option, [])), f'table.{option} 必须引用已定义字段')
-                require(type(props.get('pageSize', 8)) is int and 1 <= props.get('pageSize', 8) <= 100, 'table.pageSize 需要 1–100')
-                require('data' in props, 'table 需要 data 数据集名称')
+                    require(isinstance(props.get(option, []), list) and all(k in keys for k in props.get(option, [])), f'{label} table.{option} 必须引用 fields 中已定义的 key：{keys}')
+                require(type(props.get('pageSize', 8)) is int and 1 <= props.get('pageSize', 8) <= 100, f'{label} table.pageSize 需要 1–100 的整数')
+                require('data' in props, f'{label} table 缺少 data 数据集名称')
                 row_key = props.get('rowKey', 'id')
                 records = data[props['data']]
                 values = [r.get(row_key) for r in records]
-                require(all(isinstance(v, (str, int)) and not isinstance(v, bool) for v in values) and len({str(v) for v in values}) == len(values), f'{props["data"]} 每条记录需要唯一的 {row_key}')
+                require(all(isinstance(v, (str, int)) and not isinstance(v, bool) for v in values) and len({str(v) for v in values}) == len(values), f'{label} 数据集 "{props["data"]}" 每条记录需要唯一的 {row_key}')
     registry = read_json(root, 'components.json')
-    require(isinstance(registry, dict), 'components.json 必须是组件注册表')
+    require(isinstance(registry, dict), '[components.json] 必须是组件注册表对象')
     return app, pages, data, registry
 
 
@@ -147,17 +166,20 @@ def dependency_order(pages, registry):
 
     def visit(name):
         require(isinstance(name, str) and IDENTIFIER.fullmatch(name), f'非法组件名称：{name}')
-        require(name in registry, f'组件未注册：{name}，请在 components.json 声明 file/dependencies')
+        require(name in registry, f'组件未注册：{name}；请确认名称正确（运行 ucd.py components 查看内置组件），或在 components.json 声明自定义组件')
         require(name not in active, f'组件依赖存在循环：{name}')
         if name in done:
             return
         entry = registry[name]
-        require(isinstance(entry, dict) and isinstance(entry.get('file'), str) and entry['file'].startswith('components/') and entry['file'].endswith('.js'), f'{name} 需要 components/ 下的 JS 文件')
+        require(isinstance(entry, dict) and isinstance(entry.get('file'), str) and entry['file'].startswith('components/') and entry['file'].endswith('.js'), f'[components.json] {name}.file 需要 components/ 下的 .js 文件')
         relative(entry['file'])
-        require(isinstance(entry.get('dependencies', []), list), f'{name}.dependencies 必须是数组')
+        if 'css' in entry and entry['css'] is not None:
+            require(isinstance(entry['css'], str) and entry['css'].startswith('components/') and entry['css'].endswith('.css'), f'[components.json] {name}.css 需要 components/ 下的 .css 文件')
+            relative(entry['css'])
+        require(isinstance(entry.get('dependencies', []), list), f'[components.json] {name}.dependencies 必须是数组')
         active.add(name)
         for dep in entry.get('dependencies', []):
-            require(isinstance(dep, str), f'{name}.dependencies 项必须为组件名称')
+            require(isinstance(dep, str), f'[components.json] {name}.dependencies 项必须为组件名称')
             visit(dep)
         active.remove(name)
         done.add(name)
@@ -175,9 +197,12 @@ def collect(root):
     files = {'build.py', 'app.json', 'components.json', 'project.json', 'runtime/runtime.js', 'runtime/style.css', 'runtime/themes.json'}
     files.update(app['pages'].values())
     files.update(app.get('data', {}).values())
-    files.update(registry[name]['file'] for name in order)
+    for name in order:
+        files.add(registry[name]['file'])
+        if registry[name].get('css'):
+            files.add(registry[name]['css'])
     assets = app.get('assets', {})
-    require(isinstance(assets, dict) and all(isinstance(v, str) and v.startswith('assets/') for v in assets.values()), 'app.assets 必须映射到 assets/ 本地素材')
+    require(isinstance(assets, dict) and all(isinstance(v, str) and v.startswith('assets/') for v in assets.values()), '[app.json] assets 必须映射到 assets/ 本地素材')
     files.update(assets.values())
 
     def find_assets(value):
@@ -257,7 +282,7 @@ def atomic_write(path, data):
             os.unlink(name)
 
 
-def build(root, output=None):
+def build(root, output=None, write_manifest=True):
     root = local_root(root)
     output = local_root(output or root/'index.html')
     verify_output(output)
@@ -280,11 +305,18 @@ def build(root, output=None):
         return value
 
     themes = json.loads(sources['runtime/themes.json'].decode('utf-8-sig'))
-    require(app.get('style', 'ocean') in themes, '未知 app.style')
+    require(app.get('style', 'ocean') in themes, f'[app.json] 未知 style "{app.get("style")}"，可选：{list(themes)}')
     tokens = {**themes[app.get('style', 'ocean')]['tokens'], **app.get('tokens', {})}
     for key, value in tokens.items():
         require(re.fullmatch(r'[a-z][a-z0-9-]*', key) and isinstance(value, str) and not re.search(r'[;{}<>]|url\s*\(|@import', value, re.I), f'非法主题 token：{key}')
-    css = ':root{' + ';'.join(f'--{k}:{v}' for k, v in tokens.items()) + '}\n' + sources['runtime/style.css'].decode('utf-8-sig')
+    css_parts = [':root{' + ';'.join(f'--{k}:{v}' for k, v in tokens.items()) + '}', sources['runtime/style.css'].decode('utf-8-sig')]
+    included_css = set()
+    for name in order:
+        css_file = registry[name].get('css')
+        if css_file and css_file not in included_css:
+            css_parts.append(sources[css_file].decode('utf-8-sig'))
+            included_css.add(css_file)
+    css = '\n'.join(css_parts)
     payload = {'app': inline(app), 'pages': inline(pages), 'data': inline(data), 'assets': {k: urls[v] for k, v in app.get('assets', {}).items()}}
     script = sources['runtime/runtime.js'].decode('utf-8-sig') + '\n'
     included = set()
@@ -300,13 +332,13 @@ def build(root, output=None):
     script = re.sub(r'</script', r'<\\/script', script, flags=re.I)
     css = re.sub(r'</style', r'<\\/style', css, flags=re.I)
     payload_json = json.dumps(payload, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c').replace('\u2028', '\\u2028').replace('\u2029', '\\u2029')
-    import html
-    title = html.escape(app['title'])
+    title = html_lib.escape(app['title'])
     document = f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
 <title>{title}</title><style>{css}</style></head><body><div id="ucd-app"></div>
 <dialog id="ucd-overlay"><div class="overlay-head"><h2 id="ucd-overlay-title"></h2><button type="button" class="btn btn-small" data-overlay-close aria-label="关闭">关闭</button></div><div id="ucd-overlay-body"></div></dialog>
+<dialog id="ucd-confirm" class="modal confirm-modal"><div class="overlay-head"><h2 id="ucd-confirm-title">请确认操作</h2></div><div class="confirm-body" id="ucd-confirm-message"></div><div class="confirm-foot"><button type="button" class="btn" data-confirm-cancel>取消</button><button type="button" class="btn btn-primary" data-confirm-ok>确认</button></div></dialog>
 <div id="ucd-toast" role="status" aria-live="polite" hidden></div>
 <script id="ucd-config" type="application/json">{payload_json}</script><script>{script}
 UCD.boot(JSON.parse(document.getElementById('ucd-config').textContent));</script>
@@ -318,15 +350,18 @@ UCD.boot(JSON.parse(document.getElementById('ucd-config').textContent));</script
     source_tag = f'<script id="ucd-source" type="application/octet-stream" data-format="1" data-source-sha="{sha(package)}" data-page-sha="{sha(clean.encode("utf-8"))}">{base64.b64encode(package).decode("ascii")}</script>'
     content = document.replace('<!-- UCD:SOURCE -->', source_tag).encode('utf-8')
     atomic_write(output, content)
-    manifest = {'tool': 'ucd-studio-project', 'engineVersion': VERSION, 'components': order, 'sourceFiles': {name: sha(value) for name, value in sources.items()}, 'htmlSha256': sha(content)}
-    atomic_write(output.with_suffix('.manifest.json'), json_bytes(manifest))
+    if write_manifest:
+        manifest = {'tool': 'ucd-studio-project', 'engineVersion': VERSION, 'components': order, 'sourceFiles': {name: sha(value) for name, value in sources.items()}, 'htmlSha256': sha(content)}
+        atomic_write(output.with_suffix('.manifest.json'), json_bytes(manifest))
     return {'ok': True, 'html': str(output), 'components': order, 'sourceFiles': len(sources), 'bytes': len(content)}
 
 
-def unpack(html_path, output, allow_modified=False):
+def unpack(html_path, output, allow_modified=False, force=False):
     html_path, root = local_root(html_path), local_root(output)
     require(html_path.is_file() and html_path.stat().st_size <= 100 * 1024 * 1024, 'HTML 不存在或超过 100 MB')
-    require(not root.exists() or root.is_dir() and not any(root.iterdir()), '解包目录必须不存在或为空，避免覆盖已有源码')
+    if root.exists() and any(root.iterdir()):
+        require(force, '解包目录必须不存在或为空，避免覆盖已有源码（若目录为旧 UCD 工程可加 --force 覆盖）')
+        require((root/'project.json').is_file() and (root/'app.json').is_file(), '目标目录非 UCD 配置工程，拒绝 --force 覆盖')
     sources, modified = decode_html(html_path.read_bytes().decode('utf-8'), allow_modified)
     # Validate the complete archive before exposing the recovered project.
     with tempfile.TemporaryDirectory(prefix='ucd-unpack-') as temporary:
@@ -349,13 +384,14 @@ def unpack(html_path, output, allow_modified=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', help='HTML 路径，默认工程目录/index.html')
+    parser.add_argument('--no-manifest', action='store_true', help='不生成旁的 .manifest.json 文件')
     args = parser.parse_args()
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
     if hasattr(sys.stderr, 'reconfigure'):
         sys.stderr.reconfigure(encoding='utf-8')
     try:
-        print(json_bytes(build(Path(__file__).resolve().parent, args.out)).decode('utf-8'), end='')
+        print(json_bytes(build(Path(__file__).resolve().parent, args.out, write_manifest=not args.no_manifest)).decode('utf-8'), end='')
     except (ValueError, OSError, KeyError, TypeError, zipfile.BadZipFile) as exc:
         print(json.dumps({'ok': False, 'error': str(exc)}, ensure_ascii=False), file=sys.stderr)
         sys.exit(1)

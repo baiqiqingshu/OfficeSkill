@@ -1,11 +1,64 @@
 {
   "title": "工作概览",
-  "description": "通过配置组合页签、内容面板和自定义组件。",
+  "icon": "dashboard",
+  "group": "日常办理",
+  "description": "汇总申请指标、趋势分布与近期审批动态。",
   "content": [
     {"component": "request-summary", "id": "overview-stats", "props": {"data": "requests"}},
-    {"component": "tabs", "id": "guide", "props": {"items": [{"key": "tasks", "label": "待办说明"}, {"key": "notes", "label": "使用说明"}]}, "slots": {
-      "tasks": {"component": "panel", "props": {"title": "今日待办", "description": "优先处理待审批记录，再跟进办理进度。"}, "slots": {"default": {"component": "alert", "props": {"text": "打开申请管理，可筛选记录、查看详情、编辑申请和批量审批。"}}}},
-      "notes": {"component": "alert", "props": {"title": "本地演示", "text": "操作会更新当前页面的示例数据，切换页面保留，刷新后恢复初始数据。"}}
-    }}
+    {
+      "component": "split",
+      "id": "overview-charts",
+      "props": {"columns": [7, 5]},
+      "slots": {
+        "left": {
+          "component": "line-chart",
+          "props": {
+            "title": "近 7 日申请趋势",
+            "description": "每日新增申请量走势",
+            "summary": "48 条",
+            "change": "↑ 14.3%",
+            "trend": "up",
+            "labels": ["11-16", "11-17", "11-18", "11-19", "11-20", "11-21", "11-22"],
+            "values": [5, 7, 6, 8, 10, 5, 7]
+          }
+        },
+        "right": {
+          "component": "bar-chart",
+          "props": {
+            "title": "部门申请分布",
+            "description": "按申请数据动态统计",
+            "data": "requests",
+            "groupBy": "department",
+            "unit": " 条"
+          }
+        }
+      }
+    },
+    {
+      "component": "tabs",
+      "id": "guide",
+      "props": {"items": [{"key": "activity", "label": "审批动态"}, {"key": "notes", "label": "操作说明"}]},
+      "slots": {
+        "activity": {
+          "component": "timeline",
+          "props": {
+            "panel": false,
+            "items": [
+              {"title": "陈晨 提交了「研发环境资源申请」", "time": "今天 10:20", "description": "研发部 · 等待审批", "tone": "primary"},
+              {"title": "林晓 提交了「季度项目预算调整」", "time": "今天 09:45", "description": "产品部 · 等待审批", "tone": "warning"},
+              {"title": "周亦 的「数据访问权限开通」已通过", "time": "昨天 17:10", "description": "运营部 · 审批完成", "tone": "success"}
+            ]
+          }
+        },
+        "notes": {
+          "component": "alert",
+          "props": {
+            "title": "本地演示模式",
+            "text": "列表中的筛选、排序、新建、编辑与批量审批均在浏览器内存生效，切换页面保留，刷新后恢复初始数据。",
+            "tone": "primary"
+          }
+        }
+      }
+    }
   ]
 }

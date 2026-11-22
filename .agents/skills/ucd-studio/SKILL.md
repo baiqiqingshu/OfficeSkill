@@ -1,73 +1,71 @@
 ---
 name: ucd-studio
-description: 用配置和可定制组件创建、修改内网后台管理系统的离线 UCD 原型，交付单 HTML 并可恢复源工程。适用于管理列表、表单、详情和工作台；Python 标准库与原生 JS，无需联网、安装依赖或前端构建环境。
+description: 用配置和可定制组件创建、修改内网后台管理系统的离线 UCD 原型，交付单 HTML 并可恢复源工程。适用于管理列表、左树右表、仪表盘、审批流、系统设置和工作台；Python 标准库与原生 JS，无需联网、安装依赖或前端构建环境。
 ---
 
 # UCD Studio
 
-以小型配置工程编辑原型，以单 HTML 交付。Python 3.10+，原生 JS，纯离线。生成的 HTML 携带压缩源码包，接手单个 HTML 时可恢复工程。
+以小型配置工程编辑后台原型，以可恢复源码的单 HTML 交付。Python 3.10+ 标准库与原生 JS，纯离线，内置“霁蓝瓷面”视觉规范（自定义下拉框、内联 SVG 图标、统一弹窗/抽屉、10 套主题）。
 
-## 默认流程：配置工程
-
-先创建可交互的后台管理原型，再按需求修改对应小文件：
+## 快速起盘：选模板或单份 Spec
 
 ```text
-python <skill>/scripts/ucd.py project --out output/approval --title "申请管理" --style ocean
+python <skill>/scripts/ucd.py project --out output/approval --template crud --title "申请管理" --style ocean
 ```
 
-- `app.json`：系统标题、主题、密度、导航、页面/数据/素材路径。
-- `pages/*.json`：页面结构、字段、筛选、操作和命名插槽。
-- `data/*.json`：脱敏示例数据，记录使用稳定 `id`。
-- `components/*.js`：所用内置组件快照与自定义组件，一组件一文件。
-- `runtime/`、`build.py`：随工程固定版本的运行时与独立构建器，无需让模型阅读或重写。
+- `--template`：`crud`（默认，指标+列表+图表概览）、`tree-table`（左树右表联动筛选）、`dashboard`（指标+趋势/占比图+进度+时间线+看板）、`approval`（步骤条+审批队列+状态看板）、`settings`（分页签分组表单+开关/单选/标签）。
+- 一步起盘：已知全部页面与数据时，可用 `project --out output/app --from-spec spec.json`（或内联 JSON / `-` stdin）自动拆分为标准工程目录并构建单 HTML。
+- 导入已有配置目录：`project --config <配置目录>/app.json --out <新目录>`，仅复制配置引用的页面、数据、组件和素材。
 
-已有配置目录可用 `project --config <配置目录>/app.json --out <新目录>` 导入。只复制配置引用的页面、数据、组件和素材，不扫描整个业务项目。
+工程目录结构（模型只改业务小文件，不读不改 `runtime/`、`build.py` 或交付 HTML）：
 
-修改后构建：
+- `app.json`：标题、主题、密度、导航外壳、页面/数据/素材路径。
+- `pages/*.json`：页面结构、图标/分组、组件节点与命名插槽。
+- `data/*.json`：脱敏示例数据（记录使用稳定 `id`）。
+- `components/*.js`（及可选 `.css`）：所用内置组件按一组件一文件拆出快照，与自定义组件同协议。
+
+## 增量修改与构建
 
 ```text
-python <skill>/scripts/ucd.py build --dir output/approval
+python <skill>/scripts/ucd.py add-page --dir output/approval --id users --title "成员管理" --template tree-table --group "组织权限"
+python <skill>/scripts/ucd.py add-component --dir output/approval --name biz-card --deps panel --css
+python <skill>/scripts/ucd.py patch --dir output/approval --file pages/requests.json --node requests --set props.pageSize=10 --append props.columns=priority
+python <skill>/scripts/ucd.py build --dir output/approval --out delivery/approval.html
 ```
 
-构建命令补齐所用内置组件的显式依赖，复制源码到临时目录，在临时目录执行工程构建器，产出 `index.html`。CSS、JS、图片、字体和源工程均内嵌；交付只需 HTML。
+- `patch` 支持 `--set path=val`、`--append path=val`（数组追加）、`--remove path`（删字段或数组项）与 `--json/--patch`。
+- `build` 自动从 skill 内置组件包拆出缺失内置组件为一组件一文件，再将所有源文件复制到系统临时目录执行工程自带 `build.py`，输出单 HTML（外部 `--out` 默认不附带 `.manifest.json`，保持交付目录整洁）。
 
-已知局部修改，直接按稳定节点 ID 定位：
-
-```text
-python <skill>/scripts/ucd.py patch --dir output/approval --file pages/requests.json --node requests --set props.pageSize=10
-python <skill>/scripts/ucd.py patch --dir output/approval --set style=jade
-```
-
-`--set` 支持对象路径及现有数组索引，如 `props.fields.0.label=事项名称`；`--json/--patch` 为对象递归合并、数组整体替换。大块字段或复杂逻辑直接编辑对应 JSON/JS 小文件。
-
-## 接手 HTML 与继续编辑
+## 接手单 HTML 继续编辑
 
 ```text
 python <skill>/scripts/ucd.py unpack --html approval.html --out output/approval-edit
 python <skill>/scripts/ucd.py summary --dir output/approval-edit
-python <skill>/scripts/ucd.py build --dir output/approval-edit
+python <skill>/scripts/ucd.py build --dir output/approval-edit --out approval.html
 ```
 
-只支持恢复携带源码包的工程模式 HTML。HTML 存在外部手改时默认拒绝；`unpack --allow-modified` 只恢复原内嵌源码，不合并外部修改。解包目录必须为空或不存在。
+- `unpack` 恢复完整配置工程，重复迭代到已有 UCD 工程目录可加 `--force`。
+- 若 HTML 曾被外部手改，默认拒绝覆盖；`unpack --allow-modified` 仅恢复原内嵌源码。
+- 工程脱离 skill 后可直接 `python <工程>/build.py` 独立重建。
 
-工程脱离 skill 后，可用 `python <工程>/build.py` 独立重建；新增尚未快照的内置组件时，用 skill 的 build 命令补齐依赖。
+## 内置 19 个组件与自定义扩展
 
-## 组件与定制
+- 核心：`field`（含 `select` 自定义下拉、`switch`、`radio`、`tags`、`search`）、`form`（支持 `sections` 分组）、`detail`、`alert`、`image`。
+- 数据与交互：`table`（搜索/筛选/排序/分页/上下文多选/CRUD 抽屉/确认弹窗）、`stats`（支持点击联动筛选）、`tree`（支持 `target+filterField` 联动过滤表格）、`kanban`（卡片跨列流转）、`empty`。
+- 布局与流程：`panel`、`split`（多栏/左树右表）、`tabs`（胶囊分段页签）、`steps`、`cards`。
+- 图表与动态：`bar-chart`（支持 `data+groupBy` 动态聚合）、`line-chart`（SVG 面积折线）、`timeline`、`progress`。
 
-内置管理列表 `table` 已封装筛选、排序、分页、选择、新建/编辑表单、详情抽屉、确认删除和批量更新。另有 `field/form/detail/stats/panel/tabs/alert/image`。
+查询单组件最小示例而不必通读文档：
 
-- 优先用配置表达字段、布局和常见操作，用插槽组合；特殊区域写独立 JS 组件，不重写整页或框架。
-- 节点协议为 `{component, id?, props?, slots?}`。容器和页签支持嵌套节点。
-- 自定义组件在 `components.json` 声明 `file/dependencies`，用 `UCD.register(name, {render, mount?, css?})` 注册；使用组件自身 root 和 context，无需全局选择器。
-- `python <skill>/scripts/ucd.py components` 返回内置组件及依赖速查；仅在定制配置/组件时读取 [工程协议](references/workspace.md)。
-- 主题：`ocean/nordic/indigo/slate/jade/plum/warm/rose/midnight/contrast`；支持 `shell: sidebar|topnav`、`density: compact|comfortable` 和 tokens 覆盖。
+```text
+python <skill>/scripts/ucd.py components
+python <skill>/scripts/ucd.py components table
+```
 
-## 兼容已有原型
+仅在定制高级配置、操作协议或自定义组件 API 时读取 [工程协议](references/workspace.md)。
 
-目录只有 `page.json` 时，继续使用旧版 `quick/init/patch/build`；其配置见 [page-spec.md](references/page-spec.md)，旧版模式和手改规则见 [output-modes.md](references/output-modes.md)、[editing.md](references/editing.md)。旧版 HTML 无源码包时不支持自动恢复为新工程。不要因为新任务而重建用户已有原型。
+## 主题与约束
 
-按本地项目源码提取字段时读取 [source-workflow.md](references/source-workflow.md)；需要额外设计决策时读取 [design-guidelines.md](references/design-guidelines.md)。
-
-## 约束
-
-不访问外网、CDN、远程字体或图片。浏览器交互使用本地演示数据，刷新后恢复；不连接生产后端。交付带 CSP。任意自定义 JS 的行为仍需按需求检查；打包摘要用于识别改动，不代表源码可信认证。
+- 10 套离线主题：`ocean/nordic/indigo/slate/jade/plum/warm/rose/midnight/contrast`；`shell: sidebar|topnav`；`density: compact|comfortable`。
+- 禁止外网、CDN、远程字体与图片；交付带 CSP；浏览器数据变更仅在内存生效，刷新重置。
+- 兼容旧版：仅当目录存在旧版 `page.json`（无 `app.json`）时沿用 `init/quick/patch/build`（见 [page-spec.md](references/page-spec.md)）；新建任务一律使用配置工程。

@@ -1,11 +1,135 @@
 {
-  "field": {"file":"components/field.js","dependencies":[],"description":"原生字段：text/email/date/number/select/textarea/checkbox"},
-  "form": {"file":"components/form.js","dependencies":["field"],"description":"fields/record/submitLabel；支持 before/after 插槽"},
-  "detail": {"file":"components/detail.js","dependencies":[],"description":"fields/record；支持 before/after 插槽"},
-  "table": {"file":"components/table.js","dependencies":["field","form","detail"],"description":"data/fields/columns/filters/rowActions/batchActions；支持 toolbar/before/after/cell:<key>/form/detail 插槽"},
-  "stats": {"file":"components/stats.js","dependencies":[],"description":"items：label/value 或 data/field/equals 动态统计"},
-  "panel": {"file":"components/panel.js","dependencies":[],"description":"title/description；支持 default/actions 插槽和 columns 栅格"},
-  "tabs": {"file":"components/tabs.js","dependencies":[],"description":"items:[{key,label}]；每个 key 对应同名插槽"},
-  "alert": {"file":"components/alert.js","dependencies":[],"description":"title/text/tone"},
-  "image": {"file":"components/image.js","dependencies":[],"description":"src/alt/caption；本地 assets 自动内联"}
+  "field": {
+    "file": "components/field.js",
+    "bundle": "bundles/core.js",
+    "dependencies": [],
+    "description": "表单字段：text/search/email/date/number/select(自定义下拉)/textarea/checkbox/switch/radio/tags",
+    "example": {"component": "field", "props": {"field": {"key": "status", "label": "状态", "type": "select", "options": ["待审批", "已通过"]}}}
+  },
+  "form": {
+    "file": "components/form.js",
+    "bundle": "bundles/core.js",
+    "dependencies": ["field"],
+    "description": "配置表单：支持 fields 或 sections 分组、columns(1-3)、panel 包裹、data 独立保存及 before/after 插槽",
+    "example": {"component": "form", "id": "settings-form", "props": {"panel": true, "title": "基础配置", "submitLabel": "保存", "fields": [{"key": "name", "label": "名称", "required": true}, {"key": "enabled", "label": "启用通知", "type": "switch", "default": true}]}}
+  },
+  "detail": {
+    "file": "components/detail.js",
+    "bundle": "bundles/core.js",
+    "dependencies": [],
+    "description": "字段详情网格：fields/record/panel；抽屉中可读取 ctx.row，支持 before/after 插槽",
+    "example": {"component": "detail", "props": {"panel": true, "title": "基本信息", "fields": [{"key": "name", "label": "名称"}], "record": {"name": "示例"}}}
+  },
+  "alert": {
+    "file": "components/alert.js",
+    "bundle": "bundles/core.js",
+    "dependencies": [],
+    "description": "带图标提示横幅：title/text/tone(neutral|primary|success|warning|danger)",
+    "example": {"component": "alert", "props": {"title": "提示", "text": "操作仅更新本地演示数据。", "tone": "primary"}}
+  },
+  "image": {
+    "file": "components/image.js",
+    "bundle": "bundles/core.js",
+    "dependencies": [],
+    "description": "本地图片卡片：src 或 asset(app.assets 键名)/alt/caption，构建自动内联",
+    "example": {"component": "image", "props": {"asset": "cover", "alt": "示意", "caption": "本地素材"}}
+  },
+  "table": {
+    "file": "components/table.js",
+    "bundle": "bundles/data.js",
+    "dependencies": ["field", "form", "detail"],
+    "description": "管理数据表格：搜索、下拉筛选、排序、分页、上下文多选条、新建/编辑/详情/删除/批量更新；支持 toolbar/before/after/cell:<key>/form/detail 插槽",
+    "example": {"component": "table", "id": "items", "props": {"title": "记录列表", "data": "items", "pageSize": 8, "fields": [{"key": "name", "label": "名称", "required": true}, {"key": "status", "label": "状态", "type": "select", "options": ["待审批", "已通过"], "tones": {"待审批": "warning", "已通过": "success"}}], "columns": ["name", "status"], "filters": ["name", "status"]}}
+  },
+  "stats": {
+    "file": "components/stats.js",
+    "bundle": "bundles/data.js",
+    "dependencies": [],
+    "description": "指标卡片阵列：支持静态 value 或 data/field/equals 动态计数、icon、change/trend、点击 action(如联动筛选表格)",
+    "example": {"component": "stats", "id": "kpi", "props": {"items": [{"label": "待审批", "data": "requests", "field": "status", "equals": "待审批", "tone": "warning", "icon": "clock", "hint": "点击筛选", "action": {"type": "filter", "target": "requests", "field": "status", "value": "待审批"}}]}}
+  },
+  "tree": {
+    "file": "components/tree.js",
+    "bundle": "bundles/data.js",
+    "dependencies": [],
+    "description": "组织/分类树：搜索、展开折叠、计数角标；配置 target + filterField 可直接联动筛选同页表格",
+    "example": {"component": "tree", "id": "dept-tree", "props": {"title": "组织架构", "target": "users", "filterField": "department", "items": [{"id": "rd", "label": "研发部", "count": 4, "children": [{"id": "fe", "label": "前端组", "count": 2}]}]}}
+  },
+  "kanban": {
+    "file": "components/kanban.js",
+    "bundle": "bundles/data.js",
+    "dependencies": [],
+    "description": "多列状态看板：绑定 data + groupField + columns，支持卡片内下拉跨列流转并实时同步数据",
+    "example": {"component": "kanban", "id": "board", "props": {"title": "任务流转", "data": "requests", "groupField": "status", "columns": ["待审批", "处理中", "已通过"], "titleField": "title", "metaFields": ["owner", "date"]}}
+  },
+  "empty": {
+    "file": "components/empty.js",
+    "bundle": "bundles/data.js",
+    "dependencies": [],
+    "description": "空状态占位卡片：icon/title/text/action",
+    "example": {"component": "empty", "props": {"icon": "inbox", "title": "暂无数据", "text": "可点击下方按钮新建。", "action": {"type": "toast", "label": "新建记录", "message": "已触发新建"}}}
+  },
+  "panel": {
+    "file": "components/panel.js",
+    "bundle": "bundles/layout.js",
+    "dependencies": [],
+    "description": "内容面板容器：title/description/columns(1-4)，支持 default 和 actions 插槽",
+    "example": {"component": "panel", "props": {"title": "概况", "columns": 2}, "slots": {"default": []}}
+  },
+  "split": {
+    "file": "components/split.js",
+    "bundle": "bundles/layout.js",
+    "dependencies": [],
+    "description": "多栏响应式布局：columns 支持比例数组如 [8,4] 或宽度如 [\"260px\",\"1fr\"]，每个命名插槽为一栏（适合左树右表、双栏看板）",
+    "example": {"component": "split", "props": {"columns": ["260px", "1fr"]}, "slots": {"left": {"component": "tree", "props": {"title": "部门", "items": []}}, "right": {"component": "alert", "props": {"text": "右侧内容"}}}}
+  },
+  "tabs": {
+    "file": "components/tabs.js",
+    "bundle": "bundles/layout.js",
+    "dependencies": [],
+    "description": "分段胶囊页签：items:[{key,label}]，每个 key 对应同名插槽，支持方向键切换",
+    "example": {"component": "tabs", "id": "main-tabs", "props": {"items": [{"key": "a", "label": "概览"}, {"key": "b", "label": "日志"}]}, "slots": {"a": {"component": "alert", "props": {"text": "概览"}}, "b": {"component": "alert", "props": {"text": "日志"}}}}
+  },
+  "steps": {
+    "file": "components/steps.js",
+    "bundle": "bundles/layout.js",
+    "dependencies": [],
+    "description": "流程步骤条：title/items([字符串或{title,description}])/current(0-based)",
+    "example": {"component": "steps", "props": {"title": "审批流程", "current": 1, "items": [{"title": "提交申请", "description": "已完成"}, {"title": "主管审批", "description": "处理中"}, {"title": "归档生效"}]}}
+  },
+  "cards": {
+    "file": "components/cards.js",
+    "bundle": "bundles/layout.js",
+    "dependencies": [],
+    "description": "快捷入口/服务卡片网格：items:[{title,description?,icon?,badge?,tone?,action?}]",
+    "example": {"component": "cards", "props": {"title": "常用入口", "items": [{"title": "申请管理", "description": "查看待办审批", "icon": "table", "badge": "常用", "action": {"type": "navigate", "page": "requests", "label": "进入"}}]}}
+  },
+  "bar-chart": {
+    "file": "components/bar-chart.js",
+    "bundle": "bundles/charts.js",
+    "dependencies": [],
+    "description": "横向占比条形图：支持静态 items:[{label,value,tone?}] 或绑定 data + groupBy 动态聚合统计",
+    "example": {"component": "bar-chart", "props": {"title": "部门申请分布", "data": "requests", "groupBy": "department", "unit": " 条"}}
+  },
+  "line-chart": {
+    "file": "components/line-chart.js",
+    "bundle": "bundles/charts.js",
+    "dependencies": [],
+    "description": "内联 SVG 趋势折线面积图：title/summary/change/trend/labels/values",
+    "example": {"component": "line-chart", "props": {"title": "近 7 日申请趋势", "summary": "48 条", "change": "↑ 14%", "trend": "up", "labels": ["周一", "周二", "周三", "周四", "周五"], "values": [6, 9, 8, 12, 13]}}
+  },
+  "timeline": {
+    "file": "components/timeline.js",
+    "bundle": "bundles/charts.js",
+    "dependencies": [],
+    "description": "审批记录/操作日志时间线：items:[{title,time?,description?,tone?}] 或绑定 data",
+    "example": {"component": "timeline", "props": {"title": "最近动态", "items": [{"title": "林晓 提交了年度预算申请", "time": "10 分钟前", "description": "产品部 · 待审批", "tone": "primary"}]}}
+  },
+  "progress": {
+    "file": "components/progress.js",
+    "bundle": "bundles/charts.js",
+    "dependencies": [],
+    "description": "进度条列表：items:[{label,value(0-100),hint?,tone?}]",
+    "example": {"component": "progress", "props": {"title": "SLA 达成率", "items": [{"label": "审批按时率", "value": 92, "tone": "success"}]}}
+  }
 }

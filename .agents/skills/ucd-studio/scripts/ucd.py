@@ -684,7 +684,7 @@ def load_json_input(source=None, inline=None):
         return {}
     text = str(source).strip()
     if text == '-':
-        return json.loads(sys.stdin.read())
+        return json.loads(sys.stdin.buffer.read().decode('utf-8-sig'))
     if text.startswith('{'):
         return json.loads(text)
     return read_json(source)
@@ -814,11 +814,13 @@ def main():
     p=sub.add_parser('init');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'));p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--config');p.add_argument('--json');p.add_argument('--set',action='append',default=[]);p.add_argument('--force',action='store_true')
     p=sub.add_parser('quick');p.add_argument('--layout',default='admin');p.add_argument('--style',default='ocean');p.add_argument('--mode',choices=MODES,default='single');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'));p.add_argument('--out',required=True);p.add_argument('--title');p.add_argument('--product');p.add_argument('--description');p.add_argument('--action');p.add_argument('--config');p.add_argument('--json');p.add_argument('--set',action='append',default=[])
     p=sub.add_parser('summary');p.add_argument('--dir',required=True);p.add_argument('--block');p.add_argument('--max-chars',type=int,default=2500)
-    p=sub.add_parser('project',help='创建可恢复源码的配置工程');p.add_argument('--out',required=True);p.add_argument('--config');p.add_argument('--title');p.add_argument('--style')
-    p=sub.add_parser('components',help='列出配置工程的内置组件和依赖')
-    p=sub.add_parser('unpack',help='从单 HTML 恢复配置工程');p.add_argument('--html',required=True);p.add_argument('--out',required=True);p.add_argument('--allow-modified',action='store_true')
-    p=sub.add_parser('build');p.add_argument('--dir',required=True);p.add_argument('--mode',choices=MODES);p.add_argument('--out',help='配置工程的 HTML 交付路径')
-    p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch');p.add_argument('--json');p.add_argument('--set',action='append',default=[]);p.add_argument('--file',help='配置工程内的目标 JSON，如 pages/requests.json');p.add_argument('--node',help='只修改目标页面中具有此 id 的组件节点')
+    p=sub.add_parser('project',help='创建可恢复源码的配置工程');p.add_argument('--out',required=True);p.add_argument('--template',choices=workspace.TEMPLATES,default='crud');p.add_argument('--config');p.add_argument('--from-spec',help='单份紧凑 JSON 规格（文件路径、内联 JSON 或 -）自动拆分为工程并构建');p.add_argument('--title');p.add_argument('--style');p.add_argument('--shell',choices=SHELLS);p.add_argument('--density',choices=('compact','comfortable'))
+    p=sub.add_parser('components',help='列出配置工程的内置组件，或查询单个组件的最小示例');p.add_argument('name',nargs='?')
+    p=sub.add_parser('add-page',help='向配置工程新增页面并自动注册与构建');p.add_argument('--dir',required=True);p.add_argument('--id',required=True);p.add_argument('--title',required=True);p.add_argument('--template',choices=('blank',*workspace.TEMPLATES),default='blank');p.add_argument('--icon');p.add_argument('--group');p.add_argument('--json',help='自定义页面 JSON（覆盖模板）')
+    p=sub.add_parser('add-component',help='生成自定义组件脚手架并在 components.json 注册');p.add_argument('--dir',required=True);p.add_argument('--name',required=True);p.add_argument('--deps',default='',help='逗号分隔的依赖组件名，如 stats,panel');p.add_argument('--css',action='store_true',help='同时生成独立组件 CSS 文件')
+    p=sub.add_parser('unpack',help='从单 HTML 恢复配置工程');p.add_argument('--html',required=True);p.add_argument('--out',required=True);p.add_argument('--allow-modified',action='store_true');p.add_argument('--force',action='store_true',help='目标已是 UCD 工程目录时安全覆盖恢复')
+    p=sub.add_parser('build');p.add_argument('--dir',required=True);p.add_argument('--mode',choices=MODES);p.add_argument('--out',help='配置工程的 HTML 交付路径');p.add_argument('--manifest',action='store_true',help='即使指定外部 --out 也同时写入 .manifest.json');p.add_argument('--no-manifest',action='store_true',help='不生成 .manifest.json')
+    p=sub.add_parser('patch');p.add_argument('--dir',required=True);p.add_argument('--patch');p.add_argument('--json');p.add_argument('--set',action='append',default=[]);p.add_argument('--append',action='append',default=[],help='向配置工程数组字段追加元素：path=value');p.add_argument('--remove',action='append',default=[],help='删除配置工程字段或数组项：path');p.add_argument('--file',help='配置工程内的目标 JSON，如 pages/requests.json');p.add_argument('--node',help='只修改目标页面中具有此 id 的组件节点')
     p=sub.add_parser('check');p.add_argument('--dir',required=True)
     p=sub.add_parser('presets')
     p=sub.add_parser('kit');p.add_argument('--out',required=True);p.add_argument('--style',default='ocean')
@@ -859,20 +861,29 @@ def main():
     elif args.command=='summary':
         require(1000<=args.max_chars<=50000,'max-chars 需 1000–50000')
         result=bounded(workspace.summary(args.dir),args.max_chars) if (Path(args.dir)/'app.json').is_file() else page_summary(args.dir,args.block,args.max_chars)
-    elif args.command=='project':result=workspace.create(args.out,args.config,args.title,args.style)
-    elif args.command=='components':result=workspace.component_catalog()
-    elif args.command=='unpack':result=workspace.engine.unpack(args.html,args.out,args.allow_modified)
+    elif args.command=='project':
+        spec_obj = load_json_input(args.from_spec) if args.from_spec else None
+        result=workspace.create(args.out,args.config,args.title,args.style,template=args.template,shell=args.shell,density=args.density,from_spec=spec_obj)
+    elif args.command=='components':result=workspace.component_catalog(args.name)
+    elif args.command=='add-page':
+        page_obj = load_json_input(inline=args.json) if args.json else None
+        result=workspace.add_page(args.dir,args.id,args.title,template=args.template,icon=args.icon,group=args.group,page_spec=page_obj)
+    elif args.command=='add-component':
+        deps=[d.strip() for d in args.deps.split(',') if d.strip()]
+        result=workspace.add_component(args.dir,args.name,dependencies=deps,with_css=args.css)
+    elif args.command=='unpack':result=workspace.engine.unpack(args.html,args.out,args.allow_modified,force=args.force)
     elif args.command=='build':
         if (Path(args.dir)/'app.json').is_file():
             require(args.mode is None,'配置工程固定输出单 HTML，无需 --mode')
-            result=workspace.build_project(args.dir,args.out)
+            write_manifest = True if args.manifest else (False if args.no_manifest else None)
+            result=workspace.build_project(args.dir,args.out,write_manifest=write_manifest)
         else:
             require(args.out is None,'--out 仅用于配置工程；旧版产物输出到 --dir')
             result=build(read_json(Path(args.dir)/'page.json'),args.dir,args.mode)
     elif args.command=='patch':
-        require(args.patch or args.json or args.set, 'patch 需要提供 --patch、--json 或 --set')
+        require(args.patch or args.json or args.set or args.append or args.remove, 'patch 需要提供 --patch、--json、--set、--append 或 --remove')
         project=(Path(args.dir)/'app.json').is_file()
-        require(project or args.file is None and args.node is None,'--file/--node 仅用于配置工程')
+        require(project or (args.file is None and args.node is None and not args.append and not args.remove),'--file/--node/--append/--remove 仅用于配置工程')
         target=workspace.engine.source_path(workspace.engine.local_root(args.dir),args.file or 'app.json') if project else Path(args.dir)/'page.json'
         require(target.suffix == '.json','patch 仅修改 JSON；组件请直接编辑小型 JS 文件')
         base_spec=read_json(target)
@@ -885,7 +896,7 @@ def main():
             patch=load_json_input(args.patch, args.json)
             require(isinstance(patch,dict),'补丁必须是对象')
             target_spec=merge(target_spec, patch)
-        target_spec=workspace.apply_sets(target_spec,args.set) if project else apply_sets(target_spec,args.set)
+        target_spec=workspace.apply_mutations(target_spec,args.set,args.append,args.remove) if project else apply_sets(target_spec,args.set)
         if args.node:
             matches[0].clear();matches[0].update(target_spec)
         else:base_spec=target_spec
