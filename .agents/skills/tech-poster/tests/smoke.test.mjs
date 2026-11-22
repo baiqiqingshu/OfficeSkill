@@ -60,6 +60,16 @@ async function run() {
   assert.ok(darkHtml.includes('data-theme="slate-dark"') && darkHtml.includes('data-bg="starfield"'));
   console.log('[PASS] 4. HTML 数据块跨目录自包含恢复与暗夜/旧背景 id 兼容重渲染通过');
 
+  // 4b. 只写背景不写主题时自动匹配配套主题（含芯片半导体背景）
+  const pairs = { 'chip-die': 'silicon-dark', 'wafer-fab': 'wafer-iris', 'pcb-trace': 'pcb-gold', 'euv-litho': 'litho-violet', starfield: 'cosmos-night' };
+  for (const [bg, theme] of Object.entries(pairs)) {
+    const { theme: _drop, ...noTheme } = raw;
+    const h = await renderPosterHtml({ ...noTheme, background: bg }, { baseDir: dirname(EXAMPLE_JSON) });
+    assert.ok(h.includes(`data-theme="${theme}"`) && h.includes(`data-bg="${bg}"`), `${bg} 应自动匹配主题 ${theme}`);
+    assert.equal(auditHtmlOffline(h).ok, true);
+  }
+  console.log('[PASS] 4b. 背景自动关联配套主题（含 4 套芯片半导体背景）');
+
   // 5. Playwright CLI 离线 PNG 导出 + 分段导出 + 零外网拦截 + 尺寸与溢出校验
   const outHtml = join(TEMP_DIR, 'gateway-poster.html');
   const outPng = join(TEMP_DIR, 'gateway-poster.png');
@@ -120,8 +130,11 @@ async function run() {
     // 6d. 切换背景为一体式星际光柱，再切回珠峰蓝
     await page.selectOption('#tp-bg-select', 'starfield');
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-bg')), 'starfield');
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'cosmos-night', '切换背景应联动切换主题');
+    assert.equal(await page.inputValue('#tp-theme-select'), 'cosmos-night');
     await page.selectOption('#tp-bg-select', 'everest-blue');
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-bg')), 'everest-blue');
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), 'blueprint');
 
     // 6e. 在 file:// 协议下验证浏览器端离线 DOM → PNG 光栅化管线（复制到剪贴板与下载 PNG 共用核心）
     const pngRes = await page.evaluate(async () => {

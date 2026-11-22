@@ -34,8 +34,8 @@
 ### 顶层字段说明
 - `title`（必填）：海报主标题。
 - `subtitle`（可选）：一句话副标题，解释框架或组件的核心价值。
-- `theme`（可选）：`"blueprint"`（默认）| `"slate-dark"` | `"paper-tech"` | `"emerald-ops"`。
-- `background`（可选）：`"everest-blue"`（默认：珠峰蓝，分体）| `"skyline-tech"`（分体）| `"starfield"`（一体）| `"glass-aurora"`（一体）| `"clean-slate"`（一体）。旧 id 自动兼容：`everest-night`/`nebula-tech` → `starfield`，`pixel-summit` → `skyline-tech`，`glass-wave`/`aurora-mesh` → `glass-aurora`，`blueprint-grid`/`circuit-board` → `everest-blue`。
+- `theme`（可选）：省略时使用 `background` 的配套主题（默认背景对应 `blueprint`）。可选 `blueprint` | `sky-azure` | `cosmos-night` | `lavender-glass` | `ink-print` | `silicon-dark` | `wafer-iris` | `pcb-gold` | `litho-violet` | `slate-dark` | `paper-tech` | `emerald-ops`。
+- `background`（可选）：`"everest-blue"`（默认：珠峰蓝，分体）| `"skyline-tech"`（分体）| `"starfield"`（一体）| `"glass-aurora"`（一体）| `"clean-slate"`（一体）| 芯片半导体：`"chip-die"`（一体）| `"wafer-fab"`（分体）| `"pcb-trace"`（分体）| `"euv-litho"`（一体）。旧 id 自动兼容：`everest-night`/`nebula-tech` → `starfield`，`pixel-summit` → `skyline-tech`，`glass-wave`/`aurora-mesh` → `glass-aurora`，`blueprint-grid` → `everest-blue`，`circuit-board` → `pcb-trace`。
 - `width`（可选）：逻辑画布宽度（px），默认 `1080`，建议 `900`~`1200`。
 - `brand`（可选）：顶栏眉标 `{ kicker, badge, org }`。
 - `meta`（可选）：顶栏元数据键值对数组 `[{ label, value }]`。

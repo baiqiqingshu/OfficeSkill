@@ -1,3 +1,5 @@
+import { buildChipBackgroundCss } from './backgrounds-chip-css.mjs';
+
 /* 内置画布背景 CSS（仅 Node 端构建时内联进 HTML；全部为 CSS 渐变 + 内联 SVG data-uri，零外链） */
 
 function uri(svgStr) {
@@ -37,7 +39,7 @@ const glassBottom = uri(`<svg ${X} width="1080" height="300" viewBox="0 0 1080 3
 
 export function buildBackgroundCss() {
   return `
-/* ======================== 5 套内置画布背景（默认：珠峰蓝） ======================== */
+/* ======================== 9 套内置画布背景（默认：珠峰蓝；含 4 套芯片半导体） ======================== */
 /* split：Hero 自带深色渐变 + 主视觉，主视觉底部渐隐为画布色，正文上移叠压，无接缝 */
 /* unified：Hero 透明，渐变/纹理统一画在 .poster-canvas 上，全局一体 */
 
@@ -110,7 +112,6 @@ export function buildBackgroundCss() {
 /* 玻璃浪潮（unified · 浅色） */
 [data-bg="glass-aurora"] {
   --canvas-bg: #eaf0fd;
-  --surface: rgba(255, 255, 255, 0.9);
   --hero-bg: transparent;
   --hero-text: #0b2a6f;
   --hero-sub: #3d5482;
@@ -170,5 +171,5 @@ export function buildBackgroundCss() {
 [data-bg="clean-slate"] .hero-kicker { color: #2563eb; }
 [data-bg="glass-aurora"] .hero-meta { box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08); }
 [data-bg="starfield"] .hero-title { text-shadow: 0 0 28px rgba(96, 165, 250, 0.55), 0 2px 10px rgba(2, 8, 30, 0.6); }
-`;
+${buildChipBackgroundCss()}`;
 }

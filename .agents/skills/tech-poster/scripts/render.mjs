@@ -8,11 +8,13 @@ import {
   esc,
   sanitizeInlineSvg,
   renderCanvasInnerHtml,
-  resolveBackground
+  resolveBackground,
+  themeForBackground
 } from './poster-core.mjs';
 import { buildBackgroundCss } from './backgrounds-css.mjs';
+import { buildExtraThemeCss } from './themes-css.mjs';
 
-export { THEMES, BACKGROUNDS, SECTION_TYPES };
+export { THEMES, BACKGROUNDS, SECTION_TYPES, themeForBackground };
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -84,8 +86,8 @@ export function normalizeSpec(raw) {
   if (!spec.title || typeof spec.title !== 'string') {
     throw new Error('海报配置缺少必填字段 title');
   }
-  spec.theme = spec.theme && THEMES[spec.theme] ? spec.theme : 'blueprint';
   spec.background = resolveBackground(spec.background);
+  spec.theme = spec.theme && THEMES[spec.theme] ? spec.theme : themeForBackground(spec.background);
   spec.width = Number.isFinite(Number(spec.width)) ? Math.max(720, Math.min(1600, Number(spec.width))) : 1080;
   if (!Array.isArray(spec.sections) || spec.sections.length === 0) {
     throw new Error('海报配置缺少必填数组 sections（至少包含 1 个栏目）');
@@ -251,6 +253,8 @@ function buildStyles(width) {
   --code-text: #e2f3ec;
   --shadow-card: 0 4px 18px rgba(4, 47, 36, 0.06);
 }
+
+${buildExtraThemeCss()}
 
 ${buildBackgroundCss()}
 * { box-sizing: border-box; }
@@ -1110,7 +1114,8 @@ async function getInlineClientBundle() {
     readFile(join(HERE, 'poster-core.mjs'), 'utf8'),
     readFile(join(HERE, 'client-app.js'), 'utf8')
   ]);
-  const bgSrc = await readFile(join(HERE, 'backgrounds.mjs'), 'utf8');
+  const chipSrc = await readFile(join(HERE, 'backgrounds-chip.mjs'), 'utf8');
+  const bgSrc = chipSrc + '\n' + (await readFile(join(HERE, 'backgrounds.mjs'), 'utf8'));
   const toBrowser = (src) => src.replace(/^import\s[^\n]*\n/gm, '').replace(/^export\s*\{[^}]*\};?\s*$/gm, '').replace(/^export\s+/gm, '');
   const browserCore = toBrowser(bgSrc) + '\n' + toBrowser(coreSrc);
   cachedInlineBundle = `(function(){\n${browserCore}\n${appSrc}\n})();`.replace(/<\/script/gi, '<\\/script');

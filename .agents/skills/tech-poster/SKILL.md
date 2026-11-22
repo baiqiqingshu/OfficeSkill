@@ -44,8 +44,8 @@ node .agents/skills/tech-poster/scripts/poster.mjs --example
 ```
 
 常用参数：
-- `--theme blueprint|slate-dark|paper-tech|emerald-ops`（默认 `blueprint`）
-- `--bg everest-blue|skyline-tech|starfield|glass-aurora|clean-slate`（默认 `everest-blue` 珠峰蓝；旧 id 如 `everest-night`/`glass-wave`/`circuit-board` 自动映射到新背景）
+- `--bg <背景>`（默认 `everest-blue`；**未同时指定 `--theme` 时自动切换到该背景的配套主题**；旧 id 如 `everest-night`/`glass-wave`/`circuit-board` 自动映射到新背景）
+- `--theme <主题>`（显式指定时优先于背景推荐主题；`--presets` 列出全部主题与背景配对）
 - `--width 900|1080|1200`（逻辑宽度，默认 `1080`）
 - `--scale 1|2|3`（PNG 缩放倍率，默认 `2`，1080px × 2 = 2160px 宽）
 - `--split`（在 PNG 同级目录生成 `<name>-panels/panel-01.png` ... 按栏目完整切图，不截断文字）
@@ -57,19 +57,27 @@ node .agents/skills/tech-poster/scripts/poster.mjs --example
 - `demo/demo.html`：默认蓝色珠峰背景的完整技术分享长图（内置侧边栏可视化编辑、背景/主题切换、一键复制 PNG 到剪贴板、下载 PNG、保存 HTML）
 - `demo/demo.svg`：配套离线矢量时序图（演示 `diagram` 栏目如何内嵌现成 SVG/PNG 图片）
 
-## 四套色彩主题与五套内置背景
+## 背景与主题（自动联动）
 
-背景分两种构图模式，全部以内联 SVG / CSS 渐变实现，零外链：
-- **分体（split）**：Hero 自带深色渐变与主视觉插画，插画底部以云雾/光雾渐隐为正文画布色，首个栏目卡片上移叠压在主视觉上，头部与正文之间无接缝。
-- **一体（unified）**：Hero 透明，渐变、星野、浪带等纹理统一绘制在整张画布上，头部与正文是同一张背景。
+**背景决定画面，主题决定卡片/强调色/代码块/流程图配色。** 每套背景都有配套主题：工具栏切换背景、CLI 用 `--bg` / `--set background=` 改背景、或 JSON 只写 `background` 不写 `theme` 时，主题自动切到配套主题；之后仍可用主题下拉框、`--theme` 或 JSON `theme` 手动覆盖。
 
-- **色彩主题（`theme`）**：`blueprint`（珠峰蓝/工程蓝图 · 默认）、`slate-dark`（暗夜架构）、`paper-tech`（工业白皮书）、`emerald-ops`（云原生运维）
-- **画布背景（`background`，工具栏与 `--bg` 均可随时切换）**：
-  - `everest-blue`（**珠峰蓝 · 默认 · 分体**）：深蓝晨光 Hero + 低多边形珠峰雪顶与 8848.86 标注 + 多层远山云雾，正文浅蓝底部雪岭
-  - `skyline-tech`（科技城市 · 分体）：亮蓝天空 Hero + 3D 立体柱群 + 透视地面网格与光环 + 侧向光束，正文两侧玻璃光条
-  - `starfield`（星际光柱 · 一体）：全画布深空蓝，光环星球 + 竖直光柱 + 地平光晕，正文延续星野、星云与底部地平光
-  - `glass-aurora`（玻璃浪潮 · 一体）：全画布浅蓝紫，玻璃浪带 + 悬浮代码晶片 + 柔光球与细线圆环，深色渐变标题
-  - `clean-slate`（纯净极简 · 一体）：浅色纸面 + 顶部色条，打印友好
+背景分两种构图，全部以内联 SVG / CSS 渐变实现，零外链：
+- **分体（split）**：Hero 自带渐变与主视觉插画，插画底部渐隐为正文画布色，首个栏目卡片上移叠压，头部与正文无接缝。
+- **一体（unified）**：Hero 透明，纹理统一绘制在整张画布上，头部与正文是同一张背景。
+
+| 背景 `background` | 构图 | 视觉 | 配套主题 `theme` |
+|---|---|---|---|
+| `everest-blue`（默认） | 分体 | 深蓝晨光 + 低多边形珠峰雪顶 + 远山云雾 | `blueprint` 珠峰蓝 |
+| `skyline-tech` | 分体 | 亮蓝天空 + 3D 柱群城市 + 透视网格光环 | `sky-azure` 科技天蓝 |
+| `starfield` | 一体 | 深空蓝 + 光环星球 + 光柱 + 星野星云 | `cosmos-night` 星际深蓝（半透明深色卡片） |
+| `glass-aurora` | 一体 | 浅蓝紫 + 玻璃浪带 + 悬浮代码晶片 | `lavender-glass` 玻璃靛紫 |
+| `clean-slate` | 一体 | 浅色纸面 + 顶部色条，打印友好 | `ink-print` 墨印极简 |
+| `chip-die` **芯片晶核** | 一体 | 深青黑 + 等轴测芯片封装 + 电路网格晶核 + 放射走线 | `silicon-dark` 硅晶暗青 |
+| `wafer-fab` **晶圆制造** | 分体 | 靛紫渐变 + 虹彩透视晶圆 + 晶粒网格 + 照明光束 | `wafer-iris` 晶圆虹彩 |
+| `pcb-trace` **电路板金线** | 分体 | 深绿 PCB + 俯视 SoC + 金色扇出走线/过孔/贴片元件 | `pcb-gold` 电路金绿 |
+| `euv-litho` **光刻紫光** | 一体 | 深紫 + EUV 光源→反射镜→掩模版→投影光锥→晶圆曝光 | `litho-violet` 光刻暗紫 |
+
+另有 `slate-dark`（暗夜架构）、`paper-tech`（工业白皮书）、`emerald-ops`（云原生运维）三套通用主题可手动选择。芯片、EDA、制程、封测、硬件驱动类主题优先选后四套半导体背景。
 
 ## 十种技术栏目积木（`sections[]`）
 
@@ -111,5 +119,5 @@ node .agents/skills/tech-poster/scripts/poster.mjs --example
 - **少用无意义装饰**：不用满屏 emoji 堆砌；图标和色块服务于信息层级和语义区分。
 - **HTML 交互工作台**：生成的单文件 HTML 双击打开后，顶部自带离线工具栏（截图/打印时自动隐藏）：
   - **编辑元素（侧边栏）**：展开左侧编辑器，可对顶栏/页脚与所有 10 类栏目的文字进行手动修改，支持新增/删除/上下移动/复制整个栏目以及增删栏目内部子元素（指标、卡片、架构层、流程节点/连线、表格行、代码注解、Q&A 等），并支持从本地选择 `.svg`/`.png`/`.jpg`/`.webp` 离线内联替换图表；支持点击画布栏目自动定位，也支持切换 JSON 源码编辑。
-  - **背景 & 主题切换**：5 套内置背景（默认珠峰蓝，含分体/一体两种构图）与 4 套主题实时切换。
+  - **背景 & 主题切换**：9 套内置背景（含 4 套芯片半导体，分体/一体两种构图）与 12 套主题实时切换；切换背景时自动匹配配套主题，可再手动改主题。
   - **复制为 PNG / 下载 PNG / 保存 HTML**：内置纯离线浏览器光栅化管线，支持一键复制高清 PNG 到系统剪贴板、直接下载 PNG，或把修改后的内容保存为新的单文件 HTML。

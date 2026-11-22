@@ -5,7 +5,7 @@ import { dirname, resolve, extname, basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
-import { THEMES, BACKGROUNDS, SECTION_TYPES, renderPosterHtml, extractSpecFromHtml } from './render.mjs';
+import { THEMES, BACKGROUNDS, SECTION_TYPES, themeForBackground, renderPosterHtml, extractSpecFromHtml } from './render.mjs';
 import { auditHtmlOffline } from './audit.mjs';
 
 const SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,8 +27,8 @@ const USAGE = `Tech Poster — 内网离线技术分享长图海报生成与导�
   --png <file.png>       离线导出高清 PNG 长图（Playwright + 本地 Edge/Chrome，严格零外网拦截）
   --scale <1..3>         PNG 缩放倍率（默认 2，如 1080px × 2 = 2160px 宽）
   --split                额外按栏目 [data-poster-panel] 导出分段独立 PNG（<png名>-panels/）
-  --theme <name>         覆盖色彩主题：blueprint | slate-dark | paper-tech | emerald-ops
-  --bg <name>            覆盖画布背景（默认 everest-blue 珠峰蓝；运行 --presets 查看全部 5 套）
+  --theme <name>         覆盖色彩主题（运行 --presets 查看全部；不指定时跟随背景推荐主题）
+  --bg <name>            覆盖画布背景（默认 everest-blue；未同时指定 --theme 时自动切换到该背景的配套主题）
   --width <px>           覆盖逻辑宽度（720..1600，默认 1080）
   --set <k=v>            增量修改 spec 字段（可重复，如 --set title="新标题"）
   --json <str>           直接传入 JSON 字符串（免建临时文件）
@@ -287,7 +287,7 @@ async function main() {
     }
     console.log('\n=== 内置画布背景（--bg，默认 everest-blue 珠峰蓝） ===');
     for (const [k, v] of Object.entries(BACKGROUNDS)) {
-      console.log(`  - ${k.padEnd(16)} ${v.name}：${v.desc}`);
+      console.log(`  - ${k.padEnd(16)} ${v.name} → 主题 ${v.theme}：${v.desc}`);
     }
     console.log('\n=== 支持的栏目类型（sections[].type） ===');
     console.log('  ' + SECTION_TYPES.join(', '));
@@ -337,6 +337,9 @@ async function main() {
     if (opts.bg) spec.background = opts.bg;
     if (opts.width) spec.width = opts.width;
     spec = applySets(spec, opts.sets);
+    const bgChanged = Boolean(opts.bg) || opts.sets.some((p) => /^background=/.test(p));
+    const themeGiven = Boolean(opts.theme) || opts.sets.some((p) => /^theme=/.test(p));
+    if (bgChanged && !themeGiven) spec.theme = themeForBackground(spec.background);
     html = await renderPosterHtml(spec, { baseDir });
   }
 

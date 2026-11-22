@@ -23,8 +23,8 @@
   } catch (e) {
     state.spec = { title: '未命名技术海报', theme: 'blueprint', background: 'everest-blue', width: 1080, sections: [] };
   }
-  if (!state.spec.theme || !THEMES[state.spec.theme]) state.spec.theme = 'blueprint';
   state.spec.background = resolveBackground(state.spec.background);
+  if (!state.spec.theme || !THEMES[state.spec.theme]) state.spec.theme = themeForBackground(state.spec.background);
   if (!Array.isArray(state.spec.sections)) state.spec.sections = [];
 
   var toastTimer = null;
@@ -914,9 +914,11 @@
   if (bgSelect) {
     bgSelect.value = state.spec.background;
     bgSelect.addEventListener('change', function () {
-      state.spec.background = bgSelect.value;
+      state.spec.background = resolveBackground(bgSelect.value);
+      state.spec.theme = themeForBackground(state.spec.background);
       renderCanvas();
-      showToast('已切换背景：' + (BACKGROUNDS[state.spec.background] ? BACKGROUNDS[state.spec.background].name : state.spec.background));
+      var themeName = THEMES[state.spec.theme] ? THEMES[state.spec.theme].name : state.spec.theme;
+      showToast('已切换背景：' + BACKGROUNDS[state.spec.background].name + '，并匹配主题：' + themeName);
     });
   }
 
@@ -957,8 +959,8 @@
           throw new Error('JSON 须包含 title 与 sections 数组');
         }
         state.spec = parsed;
-        if (!state.spec.theme || !THEMES[state.spec.theme]) state.spec.theme = 'blueprint';
         state.spec.background = resolveBackground(state.spec.background);
+        if (!state.spec.theme || !THEMES[state.spec.theme]) state.spec.theme = themeForBackground(state.spec.background);
         renderCanvas();
         showToast('已应用 JSON 修改');
       } catch (e) {
@@ -1001,7 +1003,11 @@
     getSpec: function () { return JSON.parse(JSON.stringify(state.spec)); },
     setSpec: function (next) { state.spec = JSON.parse(JSON.stringify(next)); renderCanvas(); if (document.body.classList.contains('sidebar-open')) renderSidebarForm(); },
     setTheme: function (t) { if (THEMES[t]) { state.spec.theme = t; renderCanvas(); } },
-    setBackground: function (bg) { state.spec.background = resolveBackground(bg); renderCanvas(); },
+    setBackground: function (bg, opts) {
+      state.spec.background = resolveBackground(bg);
+      if (!(opts && opts.keepTheme)) state.spec.theme = themeForBackground(state.spec.background);
+      renderCanvas();
+    },
     setSidebarOpen: setSidebarOpen,
     renderPngBlob: renderPosterToPngBlob,
     copyPngToClipboard: copyPngToClipboard,

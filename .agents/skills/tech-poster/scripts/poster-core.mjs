@@ -1,5 +1,5 @@
-import { BACKGROUNDS, BACKGROUND_ALIASES, resolveBackground, renderHeroDecoSvg } from './backgrounds.mjs';
-export { BACKGROUNDS, BACKGROUND_ALIASES, resolveBackground, renderHeroDecoSvg };
+import { BACKGROUNDS, BACKGROUND_ALIASES, resolveBackground, themeForBackground, renderHeroDecoSvg } from './backgrounds.mjs';
+export { BACKGROUNDS, BACKGROUND_ALIASES, resolveBackground, themeForBackground, renderHeroDecoSvg };
 /**
  * 同构核心渲染模块（Node SSR 与浏览器离线侧边栏实时重渲染共用）
  * 零外部依赖、零网络请求。
@@ -21,7 +21,15 @@ export const THEMES = {
   'emerald-ops': {
     name: '云原生运维',
     desc: '森林深绿顶栏 + 清爽浅绿底 + 状态色，适合网关/可观测/高可用组件'
-  }
+  },
+  'sky-azure': { name: '科技天蓝', desc: '明亮天蓝强调 + 青色辅助，配套 skyline-tech 背景' },
+  'cosmos-night': { name: '星际深蓝', desc: '半透明深蓝卡片 + 天蓝/星紫点缀，配套 starfield 背景' },
+  'lavender-glass': { name: '玻璃靛紫', desc: '半透明白卡 + 靛紫强调，配套 glass-aurora 背景' },
+  'ink-print': { name: '墨印极简', desc: '纯白卡片 + 墨蓝单色强调、几乎无阴影，配套 clean-slate，打印友好' },
+  'silicon-dark': { name: '硅晶暗青', desc: '深青黑卡片 + 电光青/信号绿，配套 chip-die 芯片背景' },
+  'wafer-iris': { name: '晶圆虹彩', desc: '浅紫白卡 + 晶圆紫/青强调，配套 wafer-fab 背景' },
+  'pcb-gold': { name: '电路金绿', desc: '象牙白卡 + 金线强调 + PCB 绿辅助，配套 pcb-trace 背景' },
+  'litho-violet': { name: '光刻暗紫', desc: '深紫半透明卡片 + 光刻紫/青强调，配套 euv-litho 背景' }
 };
 
 export const SECTION_TYPES = [

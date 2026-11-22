@@ -1,30 +1,61 @@
+import { chipDieArt, waferFabArt, pcbTraceArt, euvLithoArt } from './backgrounds-chip.mjs';
+
 /* 内置画布背景：清单 + 旧 id 兼容 + Hero 主视觉 SVG（Node 与浏览器端共用，零外链） */
 
 export const BACKGROUNDS = {
   'everest-blue': {
     name: '珠峰蓝（默认 · 分体）',
     mode: 'split',
+    theme: 'blueprint',
     desc: '深蓝晨光 Hero + 低多边形珠峰雪顶 + 多层远山云雾，底部无缝渐隐到浅蓝正文'
   },
   'skyline-tech': {
     name: '科技城市（分体）',
     mode: 'split',
+    theme: 'sky-azure',
     desc: '亮蓝天空 Hero + 3D 立体柱群城市 + 透视地面网格与光环，底部雾化过渡'
   },
   'starfield': {
     name: '星际光柱（一体）',
     mode: 'unified',
+    theme: 'cosmos-night',
     desc: '全画布深空蓝：光环星球 + 竖直光柱 + 地平光晕，正文延续星野星云'
   },
   'glass-aurora': {
     name: '玻璃浪潮（一体）',
     mode: 'unified',
+    theme: 'lavender-glass',
     desc: '全画布浅蓝紫：玻璃浪带 + 悬浮代码晶片 + 柔光球与细线圆环，深色标题'
   },
   'clean-slate': {
     name: '纯净极简（一体）',
     mode: 'unified',
-    desc: '浅色纸面 + 极轻点阵角标，打印友好'
+    theme: 'ink-print',
+    desc: '浅色纸面 + 顶部色条，打印友好'
+  },
+  'chip-die': {
+    name: '芯片晶核（一体 · 半导体）',
+    mode: 'unified',
+    theme: 'silicon-dark',
+    desc: '深青黑全画布：等轴测芯片封装 + 电路网格晶核 + 放射走线焊盘 + 上升光束'
+  },
+  'wafer-fab': {
+    name: '晶圆制造（分体 · 半导体）',
+    mode: 'split',
+    theme: 'wafer-iris',
+    desc: '靛紫渐变 Hero：虹彩透视晶圆 + 晶粒网格 + 照明光束，底部渐隐到浅紫正文'
+  },
+  'pcb-trace': {
+    name: '电路板金线（分体 · 半导体）',
+    mode: 'split',
+    theme: 'pcb-gold',
+    desc: '深绿 PCB Hero：俯视 SoC 芯片 + 四边引脚 + 金色扇出走线与过孔 + 贴片元件丝印'
+  },
+  'euv-litho': {
+    name: '光刻紫光（一体 · 半导体）',
+    mode: 'unified',
+    theme: 'litho-violet',
+    desc: '深紫全画布：EUV 光源 → 反射镜 → 掩模版 → 投影光锥 → 晶圆曝光光斑'
   }
 };
 
@@ -35,7 +66,7 @@ export const BACKGROUND_ALIASES = {
   'glass-wave': 'glass-aurora',
   'aurora-mesh': 'glass-aurora',
   'blueprint-grid': 'everest-blue',
-  'circuit-board': 'everest-blue',
+  'circuit-board': 'pcb-trace',
   'dot-matrix': 'clean-slate',
   'topo-contour': 'everest-blue'
 };
@@ -44,6 +75,10 @@ export function resolveBackground(id) {
   if (id && BACKGROUNDS[id]) return id;
   if (id && BACKGROUND_ALIASES[id]) return BACKGROUND_ALIASES[id];
   return 'everest-blue';
+}
+
+export function themeForBackground(id) {
+  return BACKGROUNDS[resolveBackground(id)].theme || 'blueprint';
 }
 
 function bgRng(seed) {
@@ -337,6 +372,10 @@ export function renderHeroDecoSvg(bgId) {
     case 'starfield': return starfieldArt();
     case 'glass-aurora': return glassAuroraArt();
     case 'clean-slate': return cleanSlateArt();
+    case 'chip-die': return chipDieArt();
+    case 'wafer-fab': return waferFabArt();
+    case 'pcb-trace': return pcbTraceArt();
+    case 'euv-litho': return euvLithoArt();
     default: return everestArt();
   }
 }
