@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "theme": "blueprint",
+  "background": "everest-blue",
+  "width": 1080,
+  "brand": {
+    "kicker": "内网基础架构 · 技术分享长图",
+    "badge": "v2.4 · 仅限内部交流",
+    "org": "平台工程部"
+  },
+  "title": "ArkGateway 统一 API 网关架构与接入指南",
+  "subtitle": "面向内网微服务集群的高性能流量入口，集动态路由、零信任鉴权、熔断限流与全链路观测于一体，全程内网离线自治运行",
+  "meta": [
+    { "label": "适用人群", "value": "后端研发 / SRE / 架构师" },
+    { "label": "部署形态", "value": "内网 K8s 双活集群 · 零外网依赖" },
+    { "label": "更新日期", "value": "2026-11" }
+  ],
+  "tags": ["微服务网关", "动态路由", "统一鉴权", "熔断限流", "可观测性"],
+  "sections": [
+    {
+      "type": "overview",
+      "kicker": "OVERVIEW",
+      "title": "为什么建设统一内网网关",
+      "subtitle": "收敛过去分散在各业务线的 Nginx 手工配置，统一入口安全边界与治理标准",
+      "summary": "随着内网业务域增至 30+ 个，各团队自建反向代理导致证书续期遗漏、鉴权逻辑重复开发、故障排障链路断裂。ArkGateway 将入口流量收敛为声明式控制面与高性能数据面，做到配置热生效、插件可编排、故障可定位。",
+      "metrics": [
+        { "value": "120k+", "label": "单集群峰值 QPS", "note": "P99 代理延迟 < 4.2ms" },
+        { "value": "< 800ms", "label": "配置热生效耗时", "note": "双缓冲切换，连接零中断" },
+        { "value": "38 个", "label": "已接入核心业务域", "note": "覆盖 96% 内网东西/南北流量" },
+        { "value": "100%", "label": "内网离线自治", "note": "零公网依赖、零外联上报" }
+      ],
+      "highlights": [
+        "声明式路由 CRD：路由与插件配置全部纳入内网 GitLab 审批与版本回滚，彻底告别手工改 nginx.conf",
+        "统一插件执行链：JWT/mTLS 鉴权、令牌桶限流、灰度分流按路由粒度动态编排，业务代码零侵入"
+      ]
+    },
+    {
+      "type": "layers",
+      "kicker": "ARCHITECTURE",
+      "title": "系统分层架构全景",
+      "subtitle": "控制面与数据面解耦设计，控制面短暂不可用不影响在途流量转发",
+      "layers": [
+        {
+          "name": "流量接入层",
+          "desc": "四层高可用负载与 TLS 卸载",
+          "tone": "primary",
+          "modules": [
+            { "name": "LVS + Keepalived", "detail": "VIP 漂移高可用" },
+            { "name": "内网 TLS 终结", "detail": "国密 SM2 / RSA 自动轮换" },
+            { "name": "协议解析", "detail": "HTTP/1.1 · HTTP/2 · gRPC" }
+          ]
+        },
+        {
+          "name": "数据面核心引擎",
+          "desc": "无锁路由匹配与插件编排管道",
+          "tone": "secondary",
+          "modules": [
+            { "name": "RadixTree 路由引擎", "detail": "O(k) 前缀/正则/Header 匹配" },
+            { "name": "统一鉴权插件", "detail": "JWT · 内部 IAM · mTLS" },
+            { "name": "流量治理插件", "detail": "令牌桶限流 · 熔断摘除 · 重试" },
+            { "name": "灰度发布", "detail": "按权重 / 租户 / 标头切流" }
+          ]
+        },
+        {
+          "name": "上游服务网格",
+          "desc": "多形态内网后端自动发现与健康探活",
+          "tone": "success",
+          "modules": [
+            { "name": "K8s Service", "detail": "Endpoints 实时监听" },
+            { "name": "Nacos / Consul", "detail": "传统虚拟机集群纳管" },
+            { "name": "主动/被动探活", "detail": "连续失败自动隔离 30s" }
+          ]
+        }
+      ],
+      "sidebars": [
+        {
+          "name": "横切支撑能力",
+          "items": [
+            "Prometheus 黄金指标",
+            "OpenTelemetry 链路追踪",
+            "结构化安全审计日志",
+            "GitOps 配置中心同步",
+            "异常流量秒级熔断告警"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "flow",
+      "kicker": "REQUEST FLOW",
+      "title": "请求处理与限流保护主链路",
+      "subtitle": "内置纯离线 SVG 流程图：展示单次内网 API 请求经过网关的完整决策路径",
+      "direction": "LR",
+      "steps": [
+        { "id": "client", "title": "内网调用方", "subtitle": "HTTP / gRPC", "kind": "start" },
+        { "id": "auth", "title": "统一鉴权校验", "subtitle": "Token / mTLS", "kind": "process", "group": "安全与治理管道" },
+        { "id": "limit", "title": "触发限流阈值？", "subtitle": "QPS / 并发令牌", "kind": "decision", "group": "安全与治理管道" },
+        { "id": "reject", "title": "快速拒绝 429", "subtitle": "写审计与告警", "kind": "end" },
+        { "id": "route", "title": "灰度路由转发", "subtitle": "负载均衡与重试", "kind": "service", "group": "上游调度" },
+        { "id": "upstream", "title": "上游业务服务", "subtitle": "执行业务逻辑", "kind": "db", "group": "上游调度" }
+      ],
+      "edges": [
+        { "from": "client", "to": "auth" },
+        { "from": "auth", "to": "limit", "label": "验签通过" },
+        { "from": "limit", "to": "reject", "label": "超限", "style": "warn" },
+        { "from": "limit", "to": "route", "label": "放行", "style": "success" },
+        { "from": "route", "to": "upstream" }
+      ],
+      "caption": "注：鉴权失败直接返回 401/403 短路响应，不消耗限流配额也不穿透至上游业务集群。"
+    },
+    {
+      "type": "diagram",
+      "kicker": "SYNC DIAGRAM",
+      "title": "配置热更新时序图（嵌入现成 SVG 示例）",
+      "subtitle": "支持直接嵌入团队已有的 .svg / .png / .jpg / .webp 架构图或流程图文件，自动离线内联",
+      "file": "./config-sync.svg",
+      "surface": "light",
+      "caption": "示意图：控制面通过 Etcd Watch 机制向全集群数据面增量推送快照，单节点采用双缓冲原子切换，老连接平滑收尾。"
+    },
+    {
+      "type": "cards",
+      "kicker": "CORE FEATURES",
+      "title": "四大核心能力模块",
+      "columns": 2,
+      "items": [
+        {
+          "badge": "ROUTING",
+          "title": "多维路由与灰度切流",
+          "desc": "支持域名、路径前缀、正则与自定义 Header 组合匹配；内置金丝雀与蓝绿发布策略，支持按 1% 粒度平滑扩量。",
+          "tags": ["金丝雀灰度", "Header 染色", "秒级回滚"],
+          "accent": "primary"
+        },
+        {
+          "badge": "SECURITY",
+          "title": "零信任统一鉴权",
+          "desc": "网关层统一完成内部 IAM 令牌验签、服务间 mTLS 双向认证与 IP 白名单校验，同时向下游透传标准化身份上下文。",
+          "tags": ["JWT 验签", "mTLS 双向认证", "RBAC 策略"],
+          "accent": "secondary"
+        },
+        {
+          "badge": "RESILIENCE",
+          "title": "自适应限流与熔断",
+          "desc": "提供单机令牌桶与集群 Redis 分布式限流双模式；上游连续 5xx 异常自动触发慢启动摘除，阻断雪崩扩散。",
+          "tags": ["集群限流", "异常摘除", "超时保护"],
+          "accent": "warn"
+        },
+        {
+          "badge": "OBSERVABILITY",
+          "title": "开箱即用全链路观测",
+          "desc": "自动注入 TraceID，按路由维度输出 QPS、耗时分位、错误率与上游健康指标，一键对接内网 Grafana 看板。",
+          "tags": ["TraceID 注入", "P99 分位监控", "结构化审计"],
+          "accent": "success"
+        }
+      ]
+    },
+    {
+      "type": "compare",
+      "kicker": "COMPARISON",
+      "title": "与传统 Nginx 手工运维模式对比",
+      "headers": ["对比维度", "传统分散式 Nginx", "ArkGateway（推荐）"],
+      "highlightCol": 2,
+      "rows": [
+        { "cells": ["配置变更方式", "SSH 登录改配置 + reload，易出错", "声明式 CRD + GitOps 审批，热更新免 reload"] },
+        { "cells": ["鉴权与限流治理", "各业务重复造轮子，口径不统一", "网关插件链统一编排，分钟级生效"], "emphasis": true },
+        { "cells": ["灰度与回滚能力", "需手工切 upstream 权重，耗时久", "内置按比例/标头灰度，一键秒级回滚"] },
+        { "cells": ["可观测与排障", "仅裸 access.log，难关联链路", "原生 TraceID + 路由级指标大盘 + 审计日志"] }
+      ]
+    },
+    {
+      "type": "code",
+      "kicker": "QUICK START",
+      "title": "声明式路由接入示例（5 分钟上线）",
+      "language": "yaml",
+      "filename": "route-order-service.yaml",
+      "code": "# 提交至内网 gitops-gateway 仓库即可自动校验并发布\napiVersion: gateway.internal/v1\nkind: HttpRoute\nmetadata:\n  name: order-core-api\n  namespace: biz-trade\nspec:\n  hosts: [\"order.internal.corp\"]\n  paths: [\"/api/v2/orders\"]\n  upstream:\n    service: order-service.biz-trade.svc\n    timeoutMs: 3000\n    canary: { weight: 10, target: \"order-service-v2\" }\n  plugins:\n    iamAuth: { enabled: true, requiredRole: \"trade.reader\" }\n    rateLimit: { qps: 2000, burst: 400 }",
+      "annotations": [
+        { "title": "统一内网域名", "desc": "所有业务统一挂载 *.internal.corp，证书由内网 CA 自动签发续期。" },
+        { "title": "灰度与限流声明化", "desc": "无需改动业务代码即可完成 10% 灰度放量与 2000 QPS 保护。" }
+      ]
+    },
+    {
+      "type": "callout",
+      "kicker": "BEST PRACTICES",
+      "title": "生产上线最佳实践与避坑指南",
+      "items": [
+        {
+          "tone": "tip",
+          "title": "推荐做法",
+          "points": [
+            "所有写接口须显式配置合理 timeoutMs（建议 2~5s），避免慢请求拖垮工作线程",
+            "核心链路变更先走 5% 灰度观察 10 分钟，确认错误率与 P99 稳定后再全量",
+            "在控制台为高价值接口配置独立的限流策略与告警接收组"
+          ]
+        },
+        {
+          "tone": "warn",
+          "title": "常见风险与禁区",
+          "points": [
+            "严禁对非幂等 POST / 支付扣款接口开启自动重试（retry），防止重复执行",
+            "大文件上传/下载（> 20MB）禁止穿透网关缓冲，应走内网对象存储直传通道",
+            "禁止在路由正则中编写高回溯表达式，发布前须通过 CI 静态校验"
+          ]
+        }
+      ]
+    }
+  ],
+  "footer": {
+    "left": "平台工程部 · 内网技术分享材料（离线自包含，请勿外发至公网）",
+    "right": "内网交流群：#arch-gateway · 文档编号 ARCH-GW-2026-11"
+  }
+}
