@@ -1,3 +1,5 @@
+import { BACKGROUNDS, BACKGROUND_ALIASES, resolveBackground, renderHeroDecoSvg } from './backgrounds.mjs';
+export { BACKGROUNDS, BACKGROUND_ALIASES, resolveBackground, renderHeroDecoSvg };
 /**
  * 同构核心渲染模块（Node SSR 与浏览器离线侧边栏实时重渲染共用）
  * 零外部依赖、零网络请求。
@@ -19,41 +21,6 @@ export const THEMES = {
   'emerald-ops': {
     name: '云原生运维',
     desc: '森林深绿顶栏 + 清爽浅绿底 + 状态色，适合网关/可观测/高可用组件'
-  }
-};
-
-export const BACKGROUNDS = {
-  'everest-blue': {
-    name: '珠峰蓝（默认）',
-    desc: '蓝色珠峰雪岭剪影 + 冰川蓝渐变 + 细科技等高网格'
-  },
-  'everest-night': {
-    name: '珠峰星夜',
-    desc: '深海夜蓝珠峰雪峰 + 星点微光 + 高山等高线'
-  },
-  'blueprint-grid': {
-    name: '工程蓝图网格',
-    desc: '精密工程双层坐标方格 + 制图刻度底纹'
-  },
-  'dot-matrix': {
-    name: '科技点阵',
-    desc: '清爽科技蓝灰微渐变 + 均匀几何点阵'
-  },
-  'circuit-board': {
-    name: '芯片电路纹',
-    desc: '淡雅 PCB 走线与焊盘几何纹理，硬核架构风格'
-  },
-  'topo-contour': {
-    name: '等高线地形',
-    desc: '流体山脉等高线暗纹，兼顾自然意象与专业感'
-  },
-  'aurora-mesh': {
-    name: '极光蓝青',
-    desc: '柔和蓝青多层径向光晕渐变，现代技术发布会质感'
-  },
-  'clean-slate': {
-    name: '纯净极简',
-    desc: '无底纹纯净浅蓝灰纸面，极致清爽、打印友好'
   }
 };
 
@@ -706,70 +673,6 @@ function renderMediaSync(asset, maxHeight, altFallback = '技术图表') {
   return '<div class="empty-note">尚未加载图片或 SVG，可在侧边栏选择本地图片文件内联嵌入</div>';
 }
 
-export function renderHeroDecoSvg(bgId) {
-  if (bgId === 'everest-blue' || bgId === 'everest-night') {
-    const isNight = bgId === 'everest-night';
-    const snowOpacity = isNight ? '0.28' : '0.34';
-    const ridgeOpacity = isNight ? '0.32' : '0.26';
-    const stars = isNight
-      ? `<g fill="#e0f2fe" opacity="0.72">
-          <circle cx="140" cy="48" r="1.4"/><circle cx="290" cy="34" r="1.1"/><circle cx="460" cy="58" r="1.5"/>
-          <circle cx="630" cy="36" r="1.2"/><circle cx="770" cy="54" r="1.6"/><circle cx="940" cy="42" r="1.3"/>
-          <circle cx="1010" cy="82" r="1.1"/><circle cx="845" cy="90" r="1.2"/><circle cx="520" cy="24" r="1.1"/>
-        </g>`
-      : '';
-    return `
-      <svg class="hero-deco hero-deco--everest" viewBox="0 0 1080 340" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-        <defs>
-          <pattern id="everest-grid" width="36" height="36" patternUnits="userSpaceOnUse">
-            <path d="M 36 0 L 0 0 0 36" fill="none" stroke="white" stroke-width="0.65" opacity="0.24" />
-          </pattern>
-          <linearGradient id="ev-peak-far" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#bae6fd" stop-opacity="0.34"/>
-            <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.03"/>
-          </linearGradient>
-          <linearGradient id="ev-peak-main" x1="0" y1="0" x2="0.4" y2="1">
-            <stop offset="0%" stop-color="#f0f9ff" stop-opacity="${snowOpacity}"/>
-            <stop offset="48%" stop-color="#38bdf8" stop-opacity="0.16"/>
-            <stop offset="100%" stop-color="#0c4a6e" stop-opacity="0.02"/>
-          </linearGradient>
-          <linearGradient id="ev-peak-shade" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#020617" stop-opacity="0.28"/>
-            <stop offset="100%" stop-color="#0f172a" stop-opacity="0.02"/>
-          </linearGradient>
-        </defs>
-        <rect width="1080" height="340" fill="url(#everest-grid)" />
-        ${stars}
-        <!-- 远景雪脉 -->
-        <path d="M 0 340 L 0 268 L 155 215 L 285 250 L 435 170 L 560 226 L 688 142 L 805 204 L 936 126 L 1080 192 L 1080 340 Z" fill="url(#ev-peak-far)" />
-        <!-- 珠峰主峰阳面（右侧视觉焦点，避让右上徽章与右边界） -->
-        <path d="M 465 340 L 655 186 L 748 214 L 856 104 L 964 196 L 1080 154 L 1080 340 Z" fill="url(#ev-peak-main)" />
-        <!-- 珠峰主峰阴面棱脊 -->
-        <path d="M 856 104 L 892 184 L 938 232 L 1080 340 L 1080 154 L 964 196 Z" fill="url(#ev-peak-shade)" />
-        <!-- 雪岭冰脊高亮线 -->
-        <path d="M 515 340 L 655 186 L 748 214 L 856 104 L 964 196 L 1080 154" fill="none" stroke="#e0f2fe" stroke-width="1.6" opacity="${ridgeOpacity}" />
-        <path d="M 856 104 L 826 168 L 786 208" fill="none" stroke="#f8fafc" stroke-width="1.2" opacity="0.34" />
-        <!-- 科技海拔标尺（严格位于安全区内） -->
-        <circle cx="856" cy="104" r="4.5" fill="#e0f2fe" opacity="0.76" />
-        <circle cx="856" cy="104" r="14" fill="none" stroke="#bae6fd" stroke-width="1" stroke-dasharray="3 4" opacity="0.48" />
-        <line x1="874" y1="104" x2="928" y2="104" stroke="#bae6fd" stroke-width="0.95" opacity="0.48" />
-        <text x="934" y="108" fill="#e0f2fe" font-family="Consolas, monospace" font-size="11.5" font-weight="700" opacity="0.65">8848M · PEAK</text>
-      </svg>`;
-  }
-
-  return `
-    <svg class="hero-deco" viewBox="0 0 1080 320" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <pattern id="hero-grid-std" width="36" height="36" patternUnits="userSpaceOnUse">
-          <path d="M 36 0 L 0 0 0 36" fill="none" stroke="white" stroke-width="0.8" />
-        </pattern>
-      </defs>
-      <rect width="1080" height="320" fill="url(#hero-grid-std)" />
-      <circle cx="960" cy="40" r="190" fill="none" stroke="white" stroke-width="1.2" stroke-dasharray="6 8" />
-      <circle cx="960" cy="40" r="120" fill="none" stroke="white" stroke-width="1" />
-    </svg>`;
-}
-
 export function renderSectionBodySync(sec, width) {
   switch (sec.type) {
     case 'overview': {
@@ -1002,7 +905,7 @@ export function renderSectionBodySync(sec, width) {
 
 export function renderCanvasInnerHtml(spec) {
   const width = Number(spec.width) || 1080;
-  const bgId = spec.background && BACKGROUNDS[spec.background] ? spec.background : 'everest-blue';
+  const bgId = resolveBackground(spec.background);
   const brand = spec.brand || {};
   const meta = Array.isArray(spec.meta) ? spec.meta : [];
   const tags = Array.isArray(spec.tags) ? spec.tags : [];

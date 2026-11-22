@@ -7,8 +7,10 @@ import {
   SECTION_TYPES,
   esc,
   sanitizeInlineSvg,
-  renderCanvasInnerHtml
+  renderCanvasInnerHtml,
+  resolveBackground
 } from './poster-core.mjs';
+import { buildBackgroundCss } from './backgrounds-css.mjs';
 
 export { THEMES, BACKGROUNDS, SECTION_TYPES };
 
@@ -83,7 +85,7 @@ export function normalizeSpec(raw) {
     throw new Error('海报配置缺少必填字段 title');
   }
   spec.theme = spec.theme && THEMES[spec.theme] ? spec.theme : 'blueprint';
-  spec.background = spec.background && BACKGROUNDS[spec.background] ? spec.background : 'everest-blue';
+  spec.background = resolveBackground(spec.background);
   spec.width = Number.isFinite(Number(spec.width)) ? Math.max(720, Math.min(1600, Number(spec.width))) : 1080;
   if (!Array.isArray(spec.sections) || spec.sections.length === 0) {
     throw new Error('海报配置缺少必填数组 sections（至少包含 1 个栏目）');
@@ -103,23 +105,7 @@ export function normalizeSpec(raw) {
   return spec;
 }
 
-function encodeSvgDataUri(svgStr) {
-  return `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgStr.replace(/\s+/g, ' ').trim())}")`;
-}
-
 function buildStyles(width) {
-  const circuitBg = encodeSvgDataUri(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><g fill="none" stroke="#1d4ed8" stroke-opacity="0.11" stroke-width="1.2"><path d="M0 24 H36 L48 36 H84 M60 0 V24 M96 0 V44 L108 56 H120 M0 84 H26 L40 70 H76 L90 84 H120 M48 70 V120"/><circle cx="36" cy="24" r="2.6" fill="#1d4ed8" fill-opacity="0.14"/><circle cx="84" cy="36" r="2.6" fill="#0891b2" fill-opacity="0.16"/><circle cx="76" cy="70" r="2.6" fill="#1d4ed8" fill-opacity="0.14"/><circle cx="26" cy="84" r="2.6" fill="#0891b2" fill-opacity="0.16"/></g></svg>'
-  );
-
-  const topoBg = encodeSvgDataUri(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><g fill="none" stroke="#0284c7" stroke-opacity="0.11" stroke-width="1.15"><path d="M-20 40 C 40 10, 100 70, 160 40 S 220 20, 260 50"/><path d="M-20 96 C 50 62, 110 126, 175 90 S 225 76, 260 104"/><path d="M-20 156 C 46 124, 105 186, 178 150 S 220 132, 260 162"/><path d="M-20 212 C 52 184, 112 238, 184 206 S 228 190, 260 218"/></g></svg>'
-  );
-
-  const everestCanvasBg = encodeSvgDataUri(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220" viewBox="0 0 360 220"><g fill="none" stroke="#1e40af" stroke-opacity="0.065" stroke-width="1"><path d="M0 168 L58 124 L112 146 L186 76 L248 138 L312 104 L360 144"/><path d="M0 204 L74 166 L142 184 L214 126 L284 176 L360 152"/></g></svg>'
-  );
-
   return `
 :root, .tp-export-root {
   --poster-w: ${width}px;
@@ -266,78 +252,7 @@ function buildStyles(width) {
   --shadow-card: 0 4px 18px rgba(4, 47, 36, 0.06);
 }
 
-/* ======================== 8 套内置画布背景（默认：珠峰蓝） ======================== */
-[data-bg="everest-blue"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image:
-    ${everestCanvasBg},
-    linear-gradient(180deg, rgba(29, 78, 216, 0.10) 0%, rgba(14, 165, 233, 0.04) 38%, rgba(29, 78, 216, 0.08) 100%),
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 360px 220px, 100% 100%, 28px 28px, 28px 28px;
-}
-[data-bg="everest-blue"] .poster-hero {
-  background: linear-gradient(132deg, #071b3d 0%, #0e3a7a 46%, #1d63d8 84%, #0ea5e9 100%);
-}
-
-[data-bg="everest-night"] .poster-canvas {
-  background-color: #0b162c;
-  background-image:
-    ${everestCanvasBg},
-    radial-gradient(circle at 82% 8%, rgba(56, 189, 248, 0.22), transparent 36%),
-    radial-gradient(circle at 14% 52%, rgba(29, 78, 216, 0.18), transparent 44%),
-    linear-gradient(180deg, #0b162c 0%, #0f1f3d 55%, #091224 100%);
-  background-size: 360px 220px, 100% 100%, 100% 100%, 100% 100%;
-}
-[data-bg="everest-night"] .poster-hero {
-  background: linear-gradient(135deg, #030917 0%, #0a1e42 52%, #133c78 100%);
-}
-
-[data-bg="blueprint-grid"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image:
-    linear-gradient(to right, rgba(29, 78, 216, 0.11) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(29, 78, 216, 0.11) 1px, transparent 1px),
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 84px 84px, 84px 84px, 21px 21px, 21px 21px;
-}
-
-[data-bg="dot-matrix"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image:
-    radial-gradient(rgba(29, 78, 216, 0.20) 1.35px, transparent 1.35px),
-    linear-gradient(180deg, rgba(14, 165, 233, 0.05) 0%, transparent 100%);
-  background-size: 20px 20px, 100% 100%;
-}
-
-[data-bg="circuit-board"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image: ${circuitBg};
-  background-size: 120px 120px;
-}
-
-[data-bg="topo-contour"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image: ${topoBg};
-  background-size: 240px 240px;
-}
-
-[data-bg="aurora-mesh"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image:
-    radial-gradient(circle at 12% 10%, rgba(56, 189, 248, 0.20), transparent 34%),
-    radial-gradient(circle at 88% 30%, rgba(37, 99, 235, 0.16), transparent 38%),
-    radial-gradient(circle at 20% 72%, rgba(6, 182, 212, 0.16), transparent 36%),
-    radial-gradient(circle at 85% 92%, rgba(59, 130, 246, 0.18), transparent 38%);
-  background-size: 100% 100%;
-}
-
-[data-bg="clean-slate"] .poster-canvas {
-  background-color: var(--canvas-bg);
-  background-image: none;
-}
-
+${buildBackgroundCss()}
 * { box-sizing: border-box; }
 html, body {
   margin: 0;
@@ -707,22 +622,23 @@ body.sidebar-open .poster-hero:hover {
 }
 
 /* Hero 顶栏 */
+.poster-canvas { position: relative; }
 .poster-hero {
   position: relative;
   background: var(--hero-bg);
   color: var(--hero-text);
-  padding: 46px 52px 42px;
+  padding: 50px 56px var(--hero-pad-b, 48px);
   overflow: hidden;
 }
 .hero-deco {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  height: 100%;
+  height: var(--hero-art-h, 100%);
   pointer-events: none;
-  opacity: 0.24;
 }
-.hero-deco--everest { opacity: 0.92; }
 .hero-inner {
   position: relative;
   z-index: 1;
@@ -774,8 +690,8 @@ body.sidebar-open .poster-hero:hover {
   gap: 12px 24px;
   padding: 14px 18px;
   border-radius: 10px;
-  background: rgba(4, 15, 36, 0.36);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--hero-meta-bg, rgba(4, 15, 36, 0.36));
+  border: 1px solid var(--hero-meta-border, rgba(255, 255, 255, 0.18));
   margin-bottom: 16px;
 }
 .hero-meta-item {
@@ -799,13 +715,17 @@ body.sidebar-open .poster-hero:hover {
 
 /* 栏目列表容器 */
 .poster-body {
-  padding: 28px 36px 32px;
+  position: relative;
+  z-index: 2;
+  margin-top: calc(-1 * var(--body-lift, 0px));
+  padding: 0 36px 40px;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
 .poster-section {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -1159,15 +1079,18 @@ body.sidebar-open .poster-hero:hover {
 
 /* Footer */
 .poster-footer {
-  padding: 20px 40px 26px;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
+  position: relative;
+  z-index: 2;
+  margin: 0 36px;
+  padding: 18px 4px 28px;
+  border-top: 1px solid var(--footer-border, var(--border));
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--footer-text, var(--text-muted));
 }
 
 @media print {
@@ -1187,7 +1110,9 @@ async function getInlineClientBundle() {
     readFile(join(HERE, 'poster-core.mjs'), 'utf8'),
     readFile(join(HERE, 'client-app.js'), 'utf8')
   ]);
-  const browserCore = coreSrc.replace(/^export\s+/gm, '');
+  const bgSrc = await readFile(join(HERE, 'backgrounds.mjs'), 'utf8');
+  const toBrowser = (src) => src.replace(/^import\s[^\n]*\n/gm, '').replace(/^export\s*\{[^}]*\};?\s*$/gm, '').replace(/^export\s+/gm, '');
+  const browserCore = toBrowser(bgSrc) + '\n' + toBrowser(coreSrc);
   cachedInlineBundle = `(function(){\n${browserCore}\n${appSrc}\n})();`.replace(/<\/script/gi, '<\\/script');
   return cachedInlineBundle;
 }

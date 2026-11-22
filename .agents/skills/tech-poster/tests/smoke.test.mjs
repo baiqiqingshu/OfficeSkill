@@ -54,11 +54,11 @@ async function run() {
   const extracted = extractSpecFromHtml(html);
   assert.equal(extracted.title, raw.title);
   extracted.theme = 'slate-dark';
-  extracted.background = 'everest-night';
+  extracted.background = 'everest-night';  // 旧 id 兼容映射到 starfield
   const darkHtml = await renderPosterHtml(extracted, { baseDir: TEMP_DIR });
   assert.equal(auditHtmlOffline(darkHtml).ok, true);
-  assert.ok(darkHtml.includes('data-theme="slate-dark"') && darkHtml.includes('data-bg="everest-night"'));
-  console.log('[PASS] 4. HTML 数据块跨目录自包含恢复与暗夜/珠峰星夜重渲染通过');
+  assert.ok(darkHtml.includes('data-theme="slate-dark"') && darkHtml.includes('data-bg="starfield"'));
+  console.log('[PASS] 4. HTML 数据块跨目录自包含恢复与暗夜/旧背景 id 兼容重渲染通过');
 
   // 5. Playwright CLI 离线 PNG 导出 + 分段导出 + 零外网拦截 + 尺寸与溢出校验
   const outHtml = join(TEMP_DIR, 'gateway-poster.html');
@@ -92,7 +92,7 @@ async function run() {
     // 6a. 默认珠峰蓝背景与珠峰装饰 SVG 存在
     const initBg = await page.evaluate(() => ({
       bg: document.documentElement.getAttribute('data-bg'),
-      hasEverest: Boolean(document.querySelector('.hero-deco--everest')),
+      hasEverest: Boolean(document.querySelector('.hero-art')),
       sectionCount: document.querySelectorAll('.poster-section').length
     }));
     assert.equal(initBg.bg, 'everest-blue');
@@ -117,9 +117,9 @@ async function run() {
     const afterDelCount = await page.locator('.poster-section').count();
     assert.equal(afterDelCount, raw.sections.length, '删除栏目后画布栏目数应恢复');
 
-    // 6d. 切换背景为电路纹，再切回珠峰蓝
-    await page.selectOption('#tp-bg-select', 'circuit-board');
-    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-bg')), 'circuit-board');
+    // 6d. 切换背景为一体式星际光柱，再切回珠峰蓝
+    await page.selectOption('#tp-bg-select', 'starfield');
+    assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-bg')), 'starfield');
     await page.selectOption('#tp-bg-select', 'everest-blue');
     assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-bg')), 'everest-blue');
 

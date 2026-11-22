@@ -28,7 +28,7 @@ const USAGE = `Tech Poster — 内网离线技术分享长图海报生成与导�
   --scale <1..3>         PNG 缩放倍率（默认 2，如 1080px × 2 = 2160px 宽）
   --split                额外按栏目 [data-poster-panel] 导出分段独立 PNG（<png名>-panels/）
   --theme <name>         覆盖色彩主题：blueprint | slate-dark | paper-tech | emerald-ops
-  --bg <name>            覆盖画布背景（默认 everest-blue 珠峰蓝；运行 --presets 查看全部 8 套）
+  --bg <name>            覆盖画布背景（默认 everest-blue 珠峰蓝；运行 --presets 查看全部 5 套）
   --width <px>           覆盖逻辑宽度（720..1600，默认 1080）
   --set <k=v>            增量修改 spec 字段（可重复，如 --set title="新标题"）
   --json <str>           直接传入 JSON 字符串（免建临时文件）
