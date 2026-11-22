@@ -20,7 +20,7 @@ node scripts/diagram.mjs local.mmd --out out.html --image out.png      # Mermaid
 node scripts/diagram.mjs --mermaid 'sequenceDiagram\\n A->>B: hi' --out out.html
 
 --diagram 从 1 开始，或指定图形 id；多图图片导出必须明确选择或使用 --all。
---scale 0.1..4（位图默认 2，SVG 默认 1） --quality 0..1 --theme ocean
+--scale 0.1..4（位图默认 2，SVG 默认 1） --quality 0..1 --theme modern
 --json/-、--patch、--set 自动开启容错规范化；--tolerant 可显式开启。`
 
 function parse(args) {

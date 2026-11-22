@@ -505,7 +505,7 @@ async function appendDiagram(
   try {
     const candidate = structuredClone(toRaw(example));
     candidate.id = uniqueId();
-    candidate.theme ??= "ocean";
+    candidate.theme ??= "modern";
     if (duplicate) candidate.title = `${candidate.title}（副本）`;
     const next = structuredClone(
       validateDocument({
@@ -1317,7 +1317,7 @@ defineExpose({
                   ><strong>{{ spec.title }}</strong
                   ><small
                     >{{ labels[spec.type] }} ·
-                    {{ themeLabels[spec.theme ?? "ocean"]
+                    {{ themeLabels[spec.theme ?? "modern"]
                     }}<b v-if="sourceDrafts[index] !== json(spec)">
                       JSON 草稿</b
                     ></small
@@ -1542,7 +1542,7 @@ defineExpose({
           ><span>{{ itemCount }}</span
           ><span class="meta-dot">·</span
           ><span
-            >{{ themeLabels[applied.theme ?? "ocean"] }}主题{{
+            >{{ themeLabels[applied.theme ?? "modern"] }}主题{{
               applied.style ? " / 自定义" : ""
             }}</span
           ><span v-if="anySourceDirty || formDirty" class="draft-indicator" role="status">有未应用{{ formDirty ? '表单' : 'JSON' }}草稿</span>
@@ -1741,8 +1741,8 @@ defineExpose({
                       :key="name"
                       type="button"
                       class="theme-option"
-                      :class="{ selected: (applied.theme ?? 'ocean') === name }"
-                      :aria-pressed="(applied.theme ?? 'ocean') === name"
+                      :class="{ selected: (applied.theme ?? 'modern') === name }"
+                      :aria-pressed="(applied.theme ?? 'modern') === name"
                       @click="selectTheme(name)"
                     >
                       <span

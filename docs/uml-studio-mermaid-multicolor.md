@@ -95,7 +95,7 @@
 | Mermaid 导入 | `src/mermaid.ts`（导出于 `@office/uml-studio`：`mermaidToDocument / mermaidToSpec / isMermaidSource / extractMermaidBlocks`）；CLI `scripts/diagram.mjs` 识别 `.mmd/.mermaid/.md/.markdown`、stdin 与 `--mermaid`；网页“导入”、侧栏“粘贴 Mermaid 新增”、源码框粘贴后应用。样例 `examples/mermaid/samples.md` |
 | 时序扩展 | `src/special.ts` `renderSequence` 重写：note / divider 行、box、critical / break / rect、多分支 `elses`、箭头 `arrow/dashed/bidirectional`、5 种新参与者图元、`layout.autonumber` |
 | 节点图扩展 | `src/graph.ts`：6 种新形状及端点裁切、`arrow/startArrow/thick`、新增反向/圆头/叉头 marker |
-| 多色 | `src/palette.ts`；`themes.ts` 新增 6 套多色主题与 `paletteModes/paletteTargets`；样式面板“多色模式 / 着色依据”；主题卡片显示色板 |
+| 多色 | `src/palette.ts`；`themes.ts` 现提供 7 套多色主题（含默认主题 `modern` 现代多彩，详见 `docs/uml-studio-layout-and-style.md`）与 `paletteModes/paletteTargets`；样式面板“多色模式 / 着色依据”；主题卡片显示色板 |
 | 字体 | 基础主题 `fontSize 16 / fontWeight 500` |
 | 拖动 | `DiagramCanvas.vue`：rAF 合并、吸附参考线（Alt 关闭）、连线实时正交跟随、分组成员随动、松手保持预览 |
 | 表单按钮 | `FormEditor.vue` 顶部粘性工具区 |

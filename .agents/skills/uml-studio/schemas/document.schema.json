@@ -89,6 +89,7 @@
         "theme": {
           "type": "string",
           "enum": [
+            "modern",
             "ocean",
             "white",
             "industrial",

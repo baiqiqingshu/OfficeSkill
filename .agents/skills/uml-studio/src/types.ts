@@ -1,6 +1,6 @@
 export const diagramTypes = ['activity', 'sequence', 'swimlane', 'flowchart', 'usecase', 'class', 'state', 'component', 'package', 'architecture', 'module', 'deployment', 'logical', 'development', 'process', 'physical', 'scenario', 'fishbone'] as const
 export type DiagramType = typeof diagramTypes[number]
-export type ThemeName = 'paper' | 'ocean' | 'white' | 'industrial' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint' | 'vivid' | 'pastel' | 'business' | 'steel' | 'aurora' | 'neon'
+export type ThemeName = 'modern' | 'paper' | 'ocean' | 'white' | 'industrial' | 'forest' | 'blueprint' | 'midnight' | 'lavender' | 'rose' | 'amber' | 'slate' | 'mint' | 'vivid' | 'pastel' | 'business' | 'steel' | 'aurora' | 'neon'
 export type PaletteMode = 'mono' | 'tint' | 'solid' | 'gradient'
 export type PaletteBy = 'auto' | 'group' | 'kind' | 'node'
 export interface Theme {

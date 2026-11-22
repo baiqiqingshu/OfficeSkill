@@ -98036,6 +98036,21 @@ var base = {
   gap: 64
 };
 var themes = {
+  modern: {
+    ...base,
+    background: "#ffffff",
+    surface: "#eff6ff",
+    text: "#0f172a",
+    muted: "#475569",
+    primary: "#1d4ed8",
+    secondary: "#059669",
+    border: "#cbd5e1",
+    radius: 10,
+    lineWidth: 1.8,
+    palette: ["#1d4ed8", "#0891b2", "#059669", "#d97706", "#4f46e5", "#e11d48", "#7c3aed", "#0d9488"],
+    paletteMode: "tint",
+    paletteBy: "auto"
+  },
   ocean: { ...base },
   white: { ...base, background: "#ffffff", surface: "#ffffff", text: "#193b56", muted: "#526b7d", border: "#9bb7cc" },
   industrial: { ...base, background: "#ffffff", surface: "#fff4e8", text: "#333333", muted: "#666666", primary: "#555555", secondary: "#d7a777", border: "#808080", radius: 2, lineWidth: 1.3 },
@@ -98052,27 +98067,29 @@ var themes = {
     ...base,
     background: "#ffffff",
     surface: "#ffffff",
-    text: "#1e293b",
-    muted: "#64748b",
-    primary: "#475569",
-    secondary: "#3b82f6",
+    text: "#0f172a",
+    muted: "#475569",
+    primary: "#1d4ed8",
+    secondary: "#059669",
     border: "#cbd5e1",
     radius: 10,
-    palette: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"],
+    lineWidth: 1.8,
+    palette: ["#2563eb", "#0891b2", "#059669", "#d97706", "#7c3aed", "#e11d48", "#4f46e5", "#0d9488"],
     paletteMode: "solid",
     paletteBy: "auto"
   },
   pastel: {
     ...base,
-    background: "#fbfaf7",
+    background: "#ffffff",
     surface: "#ffffff",
-    text: "#2d3142",
-    muted: "#6b7083",
-    primary: "#5c6378",
-    secondary: "#5b8def",
-    border: "#d8dae3",
+    text: "#0f172a",
+    muted: "#475569",
+    primary: "#2563eb",
+    secondary: "#10b981",
+    border: "#cbd5e1",
     radius: 12,
-    palette: ["#5b8def", "#2fb5a3", "#f29e4c", "#e86a92", "#9b7bd8", "#52b788", "#e0b13c", "#4aa3c7"],
+    lineWidth: 1.7,
+    palette: ["#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#6366f1", "#14b8a6"],
     paletteMode: "tint",
     paletteBy: "auto"
   },
@@ -98080,28 +98097,29 @@ var themes = {
     ...base,
     background: "#ffffff",
     surface: "#ffffff",
-    text: "#1b2a3a",
-    muted: "#5c6b7a",
-    primary: "#3d4b5c",
-    secondary: "#1d4e89",
-    border: "#c9d2dc",
-    radius: 4,
-    palette: ["#1d4e89", "#00a6a6", "#e3a62f", "#d1495b", "#4f772d", "#6c4f9c"],
+    text: "#0f172a",
+    muted: "#475569",
+    primary: "#1e40af",
+    secondary: "#047857",
+    border: "#cbd5e1",
+    radius: 8,
+    lineWidth: 1.7,
+    palette: ["#1e40af", "#0e7490", "#047857", "#b45309", "#4338ca", "#be123c"],
     paletteMode: "tint",
     paletteBy: "auto"
   },
   steel: {
     ...base,
-    background: "#f4f6f9",
+    background: "#f8fafc",
     surface: "#ffffff",
-    text: "#1f2a37",
-    muted: "#5b6676",
-    primary: "#4a5868",
-    secondary: "#2b6cb0",
-    border: "#a9b4c2",
-    radius: 4,
-    lineWidth: 1.5,
-    palette: ["#1f5fa8", "#2f7fb8", "#3b8f9e", "#5a6f8f", "#d9772b", "#6b7a8c"],
+    text: "#0f172a",
+    muted: "#475569",
+    primary: "#1e40af",
+    secondary: "#0f766e",
+    border: "#cbd5e1",
+    radius: 8,
+    lineWidth: 1.6,
+    palette: ["#1d4ed8", "#0284c7", "#0d9488", "#475569", "#d97706", "#4f46e5"],
     paletteMode: "gradient",
     paletteBy: "auto"
   },
@@ -98109,13 +98127,14 @@ var themes = {
     ...base,
     background: "#ffffff",
     surface: "#ffffff",
-    text: "#1e1b4b",
-    muted: "#5b5b7a",
-    primary: "#4b5563",
-    secondary: "#6366f1",
-    border: "#d4d4e6",
-    radius: 12,
-    palette: ["#6366f1", "#0ea5e9", "#14b8a6", "#f97316", "#ec4899", "#a855f7"],
+    text: "#0f172a",
+    muted: "#475569",
+    primary: "#4f46e5",
+    secondary: "#0891b2",
+    border: "#cbd5e1",
+    radius: 10,
+    lineWidth: 1.7,
+    palette: ["#4f46e5", "#0284c7", "#059669", "#d97706", "#db2777", "#7c3aed"],
     paletteMode: "gradient",
     paletteBy: "auto"
   },
@@ -98125,16 +98144,18 @@ var themes = {
     surface: "#1f2937",
     text: "#e5e7eb",
     muted: "#9ca3af",
-    primary: "#9ca3af",
-    secondary: "#22d3ee",
-    border: "#374151",
-    radius: 8,
-    palette: ["#22d3ee", "#a3e635", "#f472b6", "#fbbf24", "#818cf8", "#34d399"],
+    primary: "#38bdf8",
+    secondary: "#34d399",
+    border: "#334155",
+    radius: 10,
+    lineWidth: 1.7,
+    palette: ["#22d3ee", "#34d399", "#f472b6", "#fbbf24", "#818cf8", "#a3e635"],
     paletteMode: "solid",
     paletteBy: "auto"
   }
 };
 var themeLabels = {
+  modern: "\u73B0\u4EE3\u591A\u5F69",
   ocean: "\u6D77\u6D0B\u84DD",
   white: "\u7EAF\u767D",
   industrial: "\u5DE5\u4E1A\u6C47\u62A5",
@@ -98208,8 +98229,9 @@ var paletteTargets = [
   { label: "\u6309\u5143\u7D20\u7C7B\u578B", value: "kind" },
   { label: "\u9010\u4E2A\u5143\u7D20", value: "node" }
 ];
+var defaultTheme = "modern";
 function resolveTheme(spec) {
-  return { ...themes[spec.theme ?? "ocean"], ...spec.style };
+  return { ...themes[spec.theme ?? defaultTheme], ...spec.style };
 }
 var layoutModes = [
   { label: "\u7D27\u51D1", value: "compact" },
@@ -98218,10 +98240,10 @@ var layoutModes = [
   { label: "\u5206\u680F\u7F51\u683C", value: "grid" }
 ];
 var layoutDefaults = {
-  compact: { elementGap: 24, regionGap: 40, maxPerColumn: 0 },
-  balanced: { elementGap: 48, regionGap: 72, maxPerColumn: 0 },
-  spacious: { elementGap: 80, regionGap: 112, maxPerColumn: 0 },
-  grid: { elementGap: 24, regionGap: 40, maxPerColumn: 3 }
+  compact: { elementGap: 32, regionGap: 48, maxPerColumn: 0 },
+  balanced: { elementGap: 56, regionGap: 84, maxPerColumn: 0 },
+  spacious: { elementGap: 88, regionGap: 120, maxPerColumn: 0 },
+  grid: { elementGap: 36, regionGap: 56, maxPerColumn: 3 }
 };
 function resolveLayout(spec) {
   const mode = spec.layout?.mode ?? "balanced";
@@ -98505,7 +98527,34 @@ function crossingPaths(paths, mode, lineWidth, obstacles = []) {
 }
 
 // src/palette.ts
-var defaultPalette = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
+var defaultPalette = ["#1d4ed8", "#0891b2", "#059669", "#d97706", "#4f46e5", "#e11d48", "#7c3aed", "#0d9488"];
+var crispTints = {
+  "#1d4ed8": "#eff6ff",
+  "#2563eb": "#eff6ff",
+  "#3b82f6": "#eff6ff",
+  "#1e40af": "#eff6ff",
+  "#0891b2": "#ecfeff",
+  "#06b6d4": "#ecfeff",
+  "#0284c7": "#f0f9ff",
+  "#0e7490": "#ecfeff",
+  "#059669": "#ecfdf5",
+  "#10b981": "#ecfdf5",
+  "#0d9488": "#f0fdfa",
+  "#047857": "#ecfdf5",
+  "#d97706": "#fffbeb",
+  "#f59e0b": "#fffbeb",
+  "#b45309": "#fffbeb",
+  "#ea580c": "#fff7ed",
+  "#4f46e5": "#eef2ff",
+  "#6366f1": "#eef2ff",
+  "#4338ca": "#eef2ff",
+  "#7c3aed": "#f5f3ff",
+  "#8b5cf6": "#f5f3ff",
+  "#e11d48": "#fff1f2",
+  "#be123c": "#fff1f2",
+  "#ec4899": "#fdf2f8",
+  "#dc2626": "#fef2f2"
+};
 function parseHex(value) {
   const match = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(value.trim());
   if (!match) return;
@@ -98544,17 +98593,22 @@ function paintFor(theme, palette, index) {
   const color2 = palette.colors[slot];
   const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
   if (palette.mode === "tint") {
-    const fill = darkBackground ? mix(color2, "#000000", 0.62) : mix(color2, "#ffffff", 0.86);
-    const text3 = darkBackground ? mix(color2, "#ffffff", 0.78) : mix(color2, "#111827", 0.62);
-    return { fill, stroke: color2, text: text3, muted: mix(text3, fill, 0.3), accent: darkBackground ? mix(color2, "#ffffff", 0.3) : mix(color2, "#000000", 0.15) };
+    const fill = darkBackground ? mix(color2, "#0f172a", 0.78) : crispTints[color2.toLowerCase()] ?? mix(color2, "#ffffff", 0.92);
+    const stroke = darkBackground ? mix(color2, "#ffffff", 0.22) : color2;
+    const text3 = darkBackground ? "#f8fafc" : "#0f172a";
+    const muted = darkBackground ? "#94a3b8" : "#475569";
+    return { fill, stroke, text: text3, muted, accent: darkBackground ? mix(color2, "#ffffff", 0.35) : color2 };
   }
   if (palette.mode === "solid") {
-    const text3 = contrastText(color2);
-    return { fill: color2, stroke: mix(color2, "#000000", 0.22), text: text3, muted: mix(text3, color2, 0.22), accent: text3 };
+    const text3 = contrastText(color2, "#0f172a");
+    return { fill: color2, stroke: mix(color2, "#0f172a", 0.24), text: text3, muted: mix(text3, color2, 0.24), accent: text3 };
   }
-  const from = mix(color2, "#ffffff", 0.38), to = mix(color2, "#000000", 0.12);
-  const text2 = contrastText(mix(from, to, 0.5));
-  return { fill: `url(#uml-palette-${slot})`, stroke: mix(color2, "#000000", 0.28), text: text2, muted: mix(text2, color2, 0.2), accent: text2, gradient: { id: `uml-palette-${slot}`, from, to } };
+  const from = mix(color2, "#ffffff", 0.24), to = mix(color2, "#0f172a", 0.14);
+  const text2 = contrastText(mix(from, to, 0.5), "#0f172a");
+  return { fill: `url(#uml-palette-${slot})`, stroke: mix(color2, "#0f172a", 0.26), text: text2, muted: mix(text2, color2, 0.22), accent: text2, gradient: { id: `uml-palette-${slot}`, from, to } };
+}
+function notePaint(darkBackground) {
+  return darkBackground ? { fill: "#3b2f16", stroke: "#d97706", text: "#fde68a", muted: "#fcd34d", accent: "#f59e0b" } : { fill: "#fef3c7", stroke: "#d97706", text: "#92400e", muted: "#b45309", accent: "#d97706" };
 }
 function gradientDefs(paints) {
   const seen = /* @__PURE__ */ new Map();
@@ -98565,7 +98619,7 @@ function gradientDefs(paints) {
 function regionPaint(theme, palette, index) {
   const color2 = palette.colors[(index % palette.colors.length + palette.colors.length) % palette.colors.length];
   const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
-  return darkBackground ? { fill: mix(color2, "#000000", 0.82), stroke: mix(color2, "#000000", 0.35), text: mix(color2, "#ffffff", 0.6), header: mix(color2, "#000000", 0.6) } : { fill: mix(color2, "#ffffff", 0.94), stroke: mix(color2, "#ffffff", 0.35), text: mix(color2, "#000000", 0.35), header: mix(color2, "#ffffff", 0.8) };
+  return darkBackground ? { fill: mix(color2, "#0f172a", 0.84), stroke: mix(color2, "#0f172a", 0.35), text: mix(color2, "#ffffff", 0.65), header: mix(color2, "#0f172a", 0.65) } : { fill: mix(color2, "#ffffff", 0.96), stroke: mix(color2, "#ffffff", 0.42), text: mix(color2, "#0f172a", 0.35), header: mix(color2, "#ffffff", 0.88) };
 }
 
 // src/graph.ts
@@ -98652,7 +98706,8 @@ function createNode(node, index, spec, base2) {
   const palette = paletteOf(theme);
   let paint3;
   if (palette && !sourceNode.style?.surface && !uncoloured.has(kind)) {
-    paint3 = paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
+    const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
+    paint3 = kind === "note" && palette.mode === "tint" ? notePaint(darkBackground) : paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
     if (kind === "actor") theme.primary = paint3.stroke;
     else Object.assign(theme, { surface: paint3.fill, border: paint3.stroke, text: paint3.text, muted: paint3.muted, primary: paint3.accent, secondary: palette.mode === "tint" ? paint3.stroke : paint3.text });
   }
@@ -98764,19 +98819,24 @@ ${label2}` : tag;
   return { id: id2, key: edge.id ?? `edge-${index}`, edge, labels };
 }
 function layoutOptions(direction2, padding, spec) {
+  const nodeGap = Math.max(24, spec.layout?.elementGap ?? 56);
+  const layerGap = Math.max(nodeGap, Math.round(nodeGap * 1.15));
+  const edgeNode = Math.max(22, Math.round(nodeGap * 0.42));
+  const edgeEdge = Math.max(16, Math.round(nodeGap * 0.3));
+  const edgeLabel = Math.max(12, Math.round(nodeGap * 0.22));
   return {
     "elk.algorithm": "layered",
     "elk.direction": direction2 === "LR" ? "RIGHT" : "DOWN",
     "elk.edgeRouting": "ORTHOGONAL",
     "elk.hierarchyHandling": "INCLUDE_CHILDREN",
     "elk.padding": padding,
-    "elk.spacing.nodeNode": String(spec.layout?.elementGap ?? 24),
-    "elk.layered.spacing.nodeNodeBetweenLayers": String(spec.layout?.elementGap ?? 24),
-    "elk.spacing.edgeNode": "18",
-    "elk.spacing.edgeEdge": "14",
-    "elk.spacing.edgeLabel": "10",
-    "elk.layered.spacing.edgeNodeBetweenLayers": "20",
-    "elk.layered.spacing.edgeEdgeBetweenLayers": "14",
+    "elk.spacing.nodeNode": String(nodeGap),
+    "elk.layered.spacing.nodeNodeBetweenLayers": String(layerGap),
+    "elk.spacing.edgeNode": String(edgeNode),
+    "elk.spacing.edgeEdge": String(edgeEdge),
+    "elk.spacing.edgeLabel": String(edgeLabel),
+    "elk.layered.spacing.edgeNodeBetweenLayers": String(Math.max(24, Math.round(nodeGap * 0.46))),
+    "elk.layered.spacing.edgeEdgeBetweenLayers": String(edgeEdge),
     "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
     "elk.layered.nodePlacement.bk.fixedAlignment": "BALANCED",
     "elk.layered.nodePlacement.bk.edgeStraightening": "IMPROVE_STRAIGHTNESS",
@@ -98784,7 +98844,7 @@ function layoutOptions(direction2, padding, spec) {
     "elk.layered.nodePlacement.favorStraightEdges": "true",
     "elk.layered.mergeEdges": "false",
     "elk.separateConnectedComponents": "true",
-    "elk.spacing.componentComponent": String(spec.layout?.regionGap ?? 40),
+    "elk.spacing.componentComponent": String(spec.layout?.regionGap ?? 84),
     "elk.edgeLabels.inline": "false",
     "elk.layered.edgeLabels.sideSelection": "SMART_DOWN"
   };
@@ -98804,7 +98864,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
   if (!lane) for (const group of groups) included.add(group.id);
   const root = { id: rootId, children: [], edges: [] };
   const header = lane ? direction2 === "TB" ? measure(lane.label, theme.fontSize).height + 24 : measure(lane.label, theme.fontSize).width + 32 : 0;
-  const padding = lane ? direction2 === "TB" ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]` : "[top=24,left=24,bottom=24,right=24]";
+  const padding = lane ? direction2 === "TB" ? `[top=${header + 28},left=28,bottom=30,right=28]` : `[top=28,left=${header + 28},bottom=28,right=30]` : "[top=28,left=28,bottom=28,right=28]";
   root.layoutOptions = layoutOptions(direction2, padding, spec);
   if (lane) {
     root.width = direction2 === "TB" ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
@@ -98821,7 +98881,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
     const groupHeader = labelSize.height + (group.kind === "node" ? 40 : 22);
     const width = Math.max(180, labelSize.width + 48);
     const height = groupHeader + 64;
-    const options = layoutOptions(direction2, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`, spec);
+    const options = layoutOptions(direction2, `[top=${groupHeader + 24},left=28,bottom=28,right=28]`, spec);
     options["elk.nodeSize.constraints"] = "[MINIMUM_SIZE]";
     options["elk.nodeSize.minimum"] = `(${width},${height})`;
     groupNodes.set(group.id, { id: id2, width, height, layoutOptions: options, children: [] });
@@ -99024,9 +99084,28 @@ function intersects(a, b, margin = 0) {
 function outward(side) {
   return side === "right" ? { x: 1, y: 0 } : side === "left" ? { x: -1, y: 0 } : side === "bottom" ? { x: 0, y: 1 } : { x: 0, y: -1 };
 }
+function compactCoords(values, keep) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const pinned = new Set(keep);
+  const result = [];
+  for (const v of sorted) {
+    const prev = result[result.length - 1];
+    if (prev !== void 0 && Math.abs(v - prev) < 0.75) {
+      if (pinned.has(v) && !pinned.has(prev)) result[result.length - 1] = v;
+      continue;
+    }
+    result.push(v);
+  }
+  for (const k of keep) if (!result.includes(k)) {
+    result.push(k);
+    result.sort((a, b) => a - b);
+  }
+  return result;
+}
 function obstacleRouter(start, end, obstacles, used, guards) {
   const xs = /* @__PURE__ */ new Set([start.x, end.x]);
   const ys = /* @__PURE__ */ new Set([start.y, end.y]);
+  const obsXs = /* @__PURE__ */ new Set(), obsYs = /* @__PURE__ */ new Set();
   let left = Math.min(start.x, end.x), right = Math.max(start.x, end.x);
   let top = Math.min(start.y, end.y), bottom = Math.max(start.y, end.y);
   for (const box of obstacles) {
@@ -99034,27 +99113,48 @@ function obstacleRouter(start, end, obstacles, used, guards) {
     xs.add(box.x + box.width);
     ys.add(box.y);
     ys.add(box.y + box.height);
+    obsXs.add(box.x);
+    obsXs.add(box.x + box.width);
+    obsYs.add(box.y);
+    obsYs.add(box.y + box.height);
     left = Math.min(left, box.x);
     right = Math.max(right, box.x + box.width);
     top = Math.min(top, box.y);
     bottom = Math.max(bottom, box.y + box.height);
   }
+  const addCorridors = (raw, target) => {
+    const sorted = [...raw].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      const span = sorted[i] - sorted[i - 1];
+      if (span >= 12) target.add(sorted[i - 1] + span / 2);
+      if (span >= 44) {
+        target.add(sorted[i - 1] + span / 3);
+        target.add(sorted[i - 1] + span * 2 / 3);
+      }
+    }
+  };
+  addCorridors(obsXs, xs);
+  addCorridors(obsYs, ys);
   for (const path of used) for (let index = 1; index < path.length; index++) {
     const a = path[index - 1], b = path[index];
     if (Math.abs(a.x - b.x) < 0.01) {
-      xs.add(a.x - 12);
-      xs.add(a.x + 12);
+      xs.add(a.x - 16);
+      xs.add(a.x + 16);
     } else {
-      ys.add(a.y - 12);
-      ys.add(a.y + 12);
+      ys.add(a.y - 16);
+      ys.add(a.y + 16);
     }
   }
-  xs.add(left - 36);
-  xs.add(right + 36);
-  ys.add(top - 36);
-  ys.add(bottom + 36);
-  const columns = [...xs].sort((a, b) => a - b);
-  const rows = [...ys].sort((a, b) => a - b);
+  xs.add(left - 24);
+  xs.add(left - 44);
+  xs.add(right + 24);
+  xs.add(right + 44);
+  ys.add(top - 24);
+  ys.add(top - 44);
+  ys.add(bottom + 24);
+  ys.add(bottom + 44);
+  const columns = compactCoords(xs, [start.x, end.x]);
+  const rows = compactCoords(ys, [start.y, end.y]);
   const columnsCount = columns.length;
   const vertexCount = columnsCount * rows.length;
   const valid = new Uint8Array(vertexCount);
@@ -99119,21 +99219,36 @@ function obstacleRouter(start, end, obstacles, used, guards) {
       const horizontal = a.y === b.y;
       const blocked = obstacles.some((box) => horizontal ? a.y > box.y + 0.01 && a.y < box.y + box.height - 0.01 && Math.max(a.x, b.x) > box.x + 0.01 && Math.min(a.x, b.x) < box.x + box.width - 0.01 : a.x > box.x + 0.01 && a.x < box.x + box.width - 0.01 && Math.max(a.y, b.y) > box.y + 0.01 && Math.min(a.y, b.y) < box.y + box.height - 0.01);
       if (blocked) continue;
-      let overlap = 0, crossings = 0;
+      let overlap = 0, crossings = 0, nearParallel = 0;
       for (const path of used) for (let index = 1; index < path.length; index++) {
         const c = path[index - 1], d = path[index];
-        if (horizontal && c.y === d.y && Math.abs(a.y - c.y) < 0.1) overlap += Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
-        if (!horizontal && c.x === d.x && Math.abs(a.x - c.x) < 0.1) overlap += Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+        if (horizontal && c.y === d.y) {
+          const span = Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
+          if (span > 0) {
+            const dist = Math.abs(a.y - c.y);
+            if (dist < 0.1) overlap += span;
+            else if (dist < 16) nearParallel += span * (16 - dist) * 0.9 + 18;
+          }
+        } else if (!horizontal && c.x === d.x) {
+          const span = Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+          if (span > 0) {
+            const dist = Math.abs(a.x - c.x);
+            if (dist < 0.1) overlap += span;
+            else if (dist < 16) nearParallel += span * (16 - dist) * 0.9 + 18;
+          }
+        }
         if (horizontal !== Math.abs(c.y - d.y) < 0.01) {
           const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
           if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
         }
       }
+      const segLen = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+      const wallHug = obstacles.some((box) => horizontal ? (Math.abs(a.y - box.y) < 3 || Math.abs(a.y - (box.y + box.height)) < 3) && Math.max(a.x, b.x) > box.x + 1 && Math.min(a.x, b.x) < box.x + box.width - 1 : (Math.abs(a.x - box.x) < 3 || Math.abs(a.x - (box.x + box.width)) < 3) && Math.max(a.y, b.y) > box.y + 1 && Math.min(a.y, b.y) < box.y + box.height - 1) ? Math.min(44, segLen * 0.55 + 22) : 0;
       const direction2 = horizontal ? 1 : 2;
       const state = neighbor * 3 + direction2;
       const startAligned = guards?.startSide ? horizontal === (guards.startSide === "left" || guards.startSide === "right") : false;
       const bias = guards?.startSide && guards.turnBias && vertex === startVertex && (guards.turnBias === "early" && startAligned || guards.turnBias === "late" && !startAligned) ? 0.5 : 0;
-      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction2 ? 28 : 0) + overlap * 8 + crossings * 80 + bias;
+      const cost = current.cost + segLen + (current.state % 3 && current.state % 3 !== direction2 ? 28 : 0) + overlap * 8 + nearParallel + crossings * 80 + wallHug + bias;
       if (cost >= costs[state]) continue;
       costs[state] = cost;
       previous[state] = current.state;
@@ -99407,8 +99522,29 @@ function opposite(side) {
 }
 function routeEdges(edges, result, direction2, theme, type, adjustments2) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
-  const clearance = Math.min(12, theme.gap / 4);
-  const obstacles = result.nodes.map((box) => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
+  const baseClearance = Math.max(12, Math.min(18, Math.round(theme.gap * 0.32)));
+  const nodeClearance = /* @__PURE__ */ new Map();
+  const nodeObstacleIndex = /* @__PURE__ */ new Map();
+  for (const box of result.nodes) {
+    let c = baseClearance;
+    for (const other of result.nodes) {
+      if (other === box) continue;
+      if (box.y < other.y + other.height && box.y + box.height > other.y) {
+        const gx = Math.max(other.x - (box.x + box.width), box.x - (other.x + other.width));
+        if (gx > 0) c = Math.min(c, Math.max(4, Math.floor(gx / 2) - 2));
+      }
+      if (box.x < other.x + other.width && box.x + box.width > other.x) {
+        const gy = Math.max(other.y - (box.y + box.height), box.y - (other.y + other.height));
+        if (gy > 0) c = Math.min(c, Math.max(4, Math.floor(gy / 2) - 2));
+      }
+    }
+    nodeClearance.set(box, c);
+  }
+  const obstacles = result.nodes.map((box, index) => {
+    nodeObstacleIndex.set(box, index);
+    const c = nodeClearance.get(box);
+    return { x: box.x - c, y: box.y - c, width: box.width + c * 2, height: box.height + c * 2 };
+  });
   for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 2, y: box.y + box.caption.y - 2, width: box.caption.width + 4, height: box.caption.height + 4 });
   for (const box of result.containers) {
     if (box.ref.kind === "lane") {
@@ -99468,7 +99604,15 @@ function routeEdges(edges, result, direction2, theme, type, adjustments2) {
           } : box;
           const x = attach === "left" ? bounds.x : attach === "right" ? bounds.x + bounds.width : bounds.x + bounds.width * 0.5;
           const y = attach === "top" ? bounds.y : attach === "bottom" ? bounds.y + bounds.height : bounds.y + bounds.height * 0.5;
-          const distance = Math.max(clearance + 1, Math.min(28, theme.gap / 2));
+          const c = nodeClearance.get(box) ?? baseClearance;
+          let distance = Math.max(c + 2, Math.min(28, Math.round(theme.gap * 0.45)));
+          for (const other of result.nodes) {
+            if (other === box) continue;
+            if (attach === "right" && other.x > box.x + box.width && y > other.y - c && y < other.y + other.height + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((other.x - (box.x + box.width)) / 2)));
+            else if (attach === "left" && box.x > other.x + other.width && y > other.y - c && y < other.y + other.height + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((box.x - (other.x + other.width)) / 2)));
+            else if (attach === "bottom" && other.y > box.y + box.height && x > other.x - c && x < other.x + other.width + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((other.y - (box.y + box.height)) / 2)));
+            else if (attach === "top" && box.y > other.y + other.height && x > other.x - c && x < other.x + other.width + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((box.y - (other.y + other.height)) / 2)));
+          }
           const stub = {
             x: attach === "right" ? box.x + box.width + distance : attach === "left" ? box.x - distance : x,
             y: attach === "bottom" ? box.y + box.height + distance : attach === "top" ? box.y - distance : y
@@ -99477,8 +99621,9 @@ function routeEdges(edges, result, direction2, theme, type, adjustments2) {
         });
         const clear = anchors.every((anchor, index) => {
           const box = index ? item.target : item.source;
-          return !obstacles.some((obstacle) => {
-            if (Math.abs(obstacle.x - (box.x - clearance)) < 0.01 && Math.abs(obstacle.y - (box.y - clearance)) < 0.01) return false;
+          const ownIndex = nodeObstacleIndex.get(box);
+          return !obstacles.some((obstacle, obsIndex) => {
+            if (obsIndex === ownIndex) return false;
             return anchor.port.y === anchor.stub.y ? anchor.port.y > obstacle.y && anchor.port.y < obstacle.y + obstacle.height && Math.max(anchor.port.x, anchor.stub.x) > obstacle.x && Math.min(anchor.port.x, anchor.stub.x) < obstacle.x + obstacle.width : anchor.port.x > obstacle.x && anchor.port.x < obstacle.x + obstacle.width && Math.max(anchor.port.y, anchor.stub.y) > obstacle.y && Math.min(anchor.port.y, anchor.stub.y) < obstacle.y + obstacle.height;
           });
         });
@@ -99618,30 +99763,34 @@ function clipEndpoint(point2, neighbor, box) {
     else if (horizontal && neighbor.x > cx && point2.y > box.y + box.height - 12) point2.x = box.x + box.width - 14 * ((point2.y - (box.y + box.height - 12)) / 12);
   }
 }
+function markerSet(prefix, suffix, stroke, background) {
+  return `<marker id="${prefix}-arrow${suffix}" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8 Z" fill="${stroke}"/></marker><marker id="${prefix}-open${suffix}" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle${suffix}" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation${suffix}" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition${suffix}" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${stroke}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-arrow-start${suffix}" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1.2 L1 6 L11 10.8 Z" fill="${stroke}"/></marker><marker id="${prefix}-open-start${suffix}" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1.2 L1 6 L11 10.8" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle-start${suffix}" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle${suffix}" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle-start${suffix}" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-cross${suffix}" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker><marker id="${prefix}-cross-start${suffix}" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker>`;
+}
 function markerDefinitions(prefix, theme) {
-  const stroke = esc(theme.primary), background = esc(theme.background === "transparent" ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker><marker id="${prefix}-arrow-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle-start" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle-start" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-cross" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker><marker id="${prefix}-cross-start" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker></defs>`;
+  const stroke = esc(theme.primary), secondary = esc(theme.secondary), background = esc(theme.background === "transparent" ? theme.surface : theme.background);
+  return `<defs>${markerSet(prefix, "", stroke, background)}${secondary !== stroke ? markerSet(prefix, "-sec", secondary, background) : ""}</defs>`;
 }
 function renderContainer(box, theme, direction2, region) {
   const { x, y, width: w, height: h, ref } = box;
   const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
   const headerOpacity = region ? "1" : "0.08";
+  const strokeW = numeric(Math.max(1.2, theme.lineWidth * 0.8));
   let shape = "";
   let labelX = x + 16, labelY = y + theme.fontSize + 10;
   if (ref.kind === "lane") {
-    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (direction2 === "TB") shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}"/>`;
-    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
+    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${strokeW}"/>`;
+    if (direction2 === "TB") shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}" stroke-width="${strokeW}"/>`;
+    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}" stroke-width="${strokeW}"/>`;
   } else if (ref.kind === "package") {
     const tabWidth = Math.min(w - 24, Math.max(80, measure(ref.label, theme.fontSize).width + 32));
     const tabHeight = ref.header;
-    shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tabWidth)} V${numeric(y + tabHeight)} H${numeric(x + w)} V${numeric(y + h)} Z" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/><path d="M${numeric(x)} ${numeric(y + tabHeight)} H${numeric(x + tabWidth)}" stroke="${border}"/>`;
+    shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tabWidth)} V${numeric(y + tabHeight)} H${numeric(x + w)} V${numeric(y + h)} Z" fill="${surface}" stroke="${border}" stroke-width="${strokeW}"/><path d="M${numeric(x)} ${numeric(y + tabHeight)} H${numeric(x + tabWidth)}" stroke="${border}" stroke-width="${strokeW}"/>`;
   } else if (ref.kind === "node") {
-    shape = `<path d="M${numeric(x)} ${numeric(y + 10)} L${numeric(x + 12)} ${numeric(y)} H${numeric(x + w)} V${numeric(y + h - 10)} L${numeric(x + w - 12)} ${numeric(y + h)} H${numeric(x)} Z" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/><path d="M${numeric(x)} ${numeric(y + 10)} H${numeric(x + w - 12)} L${numeric(x + w)} ${numeric(y)} M${numeric(x + w - 12)} ${numeric(y + 10)} V${numeric(y + h)}" fill="none" stroke="${border}"/>`;
+    shape = `<path d="M${numeric(x)} ${numeric(y + 10)} L${numeric(x + 12)} ${numeric(y)} H${numeric(x + w)} V${numeric(y + h - 10)} L${numeric(x + w - 12)} ${numeric(y + h)} H${numeric(x)} Z" fill="${surface}" stroke="${border}" stroke-width="${strokeW}"/><path d="M${numeric(x)} ${numeric(y + 10)} H${numeric(x + w - 12)} L${numeric(x + w)} ${numeric(y)} M${numeric(x + w - 12)} ${numeric(y + 10)} V${numeric(y + h)}" fill="none" stroke="${border}" stroke-width="${strokeW}"/>`;
     shape += text(labelX, y + 26, "\xABnode\xBB", theme, { size: Math.max(10, theme.fontSize - 3), anchor: "start", fill: theme.muted });
     labelY = y + 28 + theme.fontSize;
   } else {
-    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
+    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${strokeW}" stroke-dasharray="7 5"/>`;
   }
   return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === "lane" ? "lanes" : "groups"}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
 }
@@ -100278,10 +100427,46 @@ function preserveWaypoints(path, pins) {
   }
   return result;
 }
-async function renderGraph(spec, suppliedTheme) {
-  return renderGraphWithSpacing(spec, suppliedTheme, 0);
+function hasCrowdedRoutes(result, elementGap) {
+  const minNodeDist = Math.min(13, Math.max(9, Math.round(elementGap * 0.24)));
+  const minParallelDist = 11;
+  const segments = [];
+  for (const route of result.routes) {
+    for (const path of route.paths) {
+      for (let i = 1; i < path.length; i++) {
+        const a = path[i - 1], b = path[i];
+        const length = Math.hypot(b.x - a.x, b.y - a.y);
+        if (length < 0.1) continue;
+        const horizontal = Math.abs(a.y - b.y) < 0.01;
+        segments.push({ a, b, route, horizontal });
+        for (const box of result.nodes) {
+          if (box.ref.node.id === route.ref.edge.from || box.ref.node.id === route.ref.edge.to) continue;
+          if (segmentRectDistance(a, b, box) < minNodeDist) return true;
+        }
+      }
+    }
+  }
+  for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
+    const first = segments[i], second = segments[j];
+    if (first.route === second.route || first.horizontal !== second.horizontal) continue;
+    if (first.horizontal) {
+      const dist = Math.abs(first.a.y - second.a.y);
+      if (dist <= 0.5 || dist >= minParallelDist) continue;
+      const overlap = Math.min(Math.max(first.a.x, first.b.x), Math.max(second.a.x, second.b.x)) - Math.max(Math.min(first.a.x, first.b.x), Math.min(second.a.x, second.b.x));
+      if (overlap > 18) return true;
+    } else {
+      const dist = Math.abs(first.a.x - second.a.x);
+      if (dist <= 0.5 || dist >= minParallelDist) continue;
+      const overlap = Math.min(Math.max(first.a.y, first.b.y), Math.max(second.a.y, second.b.y)) - Math.max(Math.min(first.a.y, first.b.y), Math.min(second.a.y, second.b.y));
+      if (overlap > 18) return true;
+    }
+  }
+  return false;
 }
-async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
+async function renderGraph(spec, suppliedTheme) {
+  return renderGraphWithSpacing(spec, suppliedTheme, 0, 0);
+}
+async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPass = 0) {
   const requestedSpec = spec;
   const automaticColumns = spec.layout?.maxPerColumn === void 0;
   spec = { ...spec, layout: resolveLayout(spec) };
@@ -100370,13 +100555,21 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const manual = spec.layout?.adjustments;
   const hasManualPositions = !!(Object.keys(manual?.elements ?? {}).length || Object.keys(manual?.edges ?? {}).length);
   routeResult();
+  const currentGap = spec.layout?.elementGap ?? 56;
+  if (spec.type !== "usecase" && crowdingPass < 2 && currentGap < 110 && hasCrowdedRoutes(result, currentGap)) {
+    return renderGraphWithSpacing({ ...requestedSpec, layout: {
+      ...requestedSpec.layout,
+      elementGap: Math.ceil(currentGap * 1.35),
+      regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.3)
+    } }, suppliedTheme, labelPass, crowdingPass + 1);
+  }
   const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction2, labelPass >= 4);
   if (!baselineLabels) {
     return renderGraphWithSpacing({ ...requestedSpec, layout: {
       ...requestedSpec.layout,
-      elementGap: Math.ceil((spec.layout?.elementGap ?? 48) * 1.5),
-      regionGap: Math.ceil((spec.layout?.regionGap ?? 72) * 1.5)
-    } }, suppliedTheme, labelPass + 1);
+      elementGap: Math.ceil((spec.layout?.elementGap ?? 56) * 1.45),
+      regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.45)
+    } }, suppliedTheme, labelPass + 1, crowdingPass);
   }
   let labels = baselineLabels;
   if (hasManualPositions) {
@@ -100414,11 +100607,17 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
     const width2 = Math.max(...points.map((p) => p.x)) - x + 24, height2 = Math.max(...points.map((p) => p.y)) - y + 24;
     return `<mask id="${prefix}-crossing-${index}" maskUnits="userSpaceOnUse" x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width2)}" height="${numeric(height2)}"><rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width2)}" height="${numeric(height2)}" fill="white"/>${arcs.map((d) => `<path d="${d}" fill="none" stroke="black" stroke-width="${numeric(theme.lineWidth + 3)}"/>`).join("")}</mask>`;
   }).join("");
+  const palette = paletteOf(theme);
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
+  const secondaryEdgeColor = theme.secondary !== theme.primary;
   let displayIndex = 0;
   let paths = "";
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
     const dashed = route.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
+    const useSecondary = Boolean(dashed && palette && secondaryEdgeColor);
+    const edgeStroke = useSecondary ? theme.secondary : theme.primary;
+    const markerSuffix = useSecondary ? "-sec" : "";
     const edge = route.ref.edge;
     const defaultEnd = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
     const end = edge.arrow ? edge.arrow === "none" ? "" : edge.arrow : defaultEnd;
@@ -100428,11 +100627,10 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : "";
-      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(edgeStroke)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start}${markerSuffix})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end}${markerSuffix})"` : ""}/>`;
     }
     paths += "</g>";
   }
-  const palette = paletteOf(theme);
   const regionIds = [...(spec.groups ?? []).map((group) => group.id), ...(spec.lanes ?? []).map((lane) => lane.id)];
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(
     box,
@@ -100443,8 +100641,11 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const paletteDefs = gradientDefs(nodes.flatMap((node) => node.paint ? [node.paint] : []));
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
   const labelShapes = labels.map((label2) => {
+    const kind = edgeKind(label2.ref.edge, spec.type);
+    const dashed = label2.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
+    const labelColor = dashed && palette && secondaryEdgeColor ? darkBackground ? mix(theme.secondary, "#ffffff", 0.35) : mix(theme.secondary, "#0f172a", 0.24) : theme.text;
     const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
-    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label2.ref.key)}/${label2.role}" data-layout-x="${numeric(label2.x)}" data-layout-y="${numeric(label2.y)}" data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="3" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: theme.muted })}</g>`;
+    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label2.ref.key)}/${label2.role}" data-layout-x="${numeric(label2.x)}" data-layout-y="${numeric(label2.y)}" data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="4" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: labelColor, weight: 550 })}</g>`;
   }).join("");
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) {
@@ -100572,19 +100773,32 @@ function renderSequence(spec, theme) {
   const size = theme.fontSize;
   const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
   const participantWidth = Math.max(
-    128,
+    136,
     theme.nodeWidth,
-    ...participants.map((p) => Math.min(280, measure2(p.label, size) + 30))
+    ...participants.map((p) => Math.min(280, measure2(p.label, size) + 36))
   );
-  const gap = spec.layout?.regionGap ?? 40;
-  const messageGap = spec.layout?.elementGap ?? 24;
-  const labelWidth = Math.max(participantWidth + gap - 24, 190);
-  const column = participantWidth + gap;
+  const baseGap = spec.layout?.regionGap ?? 84;
+  const messageGap = Math.max(24, Math.round((spec.layout?.elementGap ?? 56) * 0.72));
+  const participantIndex = new Map(participants.map((p, i) => [p.id, i]));
+  let minColumn = participantWidth + baseGap;
+  for (const m of messages) {
+    if (isEvent(m) || m.from === m.to) continue;
+    const fi = participantIndex.get(m.from), ti = participantIndex.get(m.to);
+    if (fi === void 0 || ti === void 0) continue;
+    const span = Math.abs(ti - fi);
+    const labelLen = measure2(`${autonumber ? "88. " : ""}${m.label}`, size) + 64;
+    if (span === 1) minColumn = Math.max(minColumn, Math.min(340, labelLen));
+    else if (span > 1) minColumn = Math.max(minColumn, Math.min(320, Math.ceil(labelLen / span)));
+  }
+  const column = Math.ceil(minColumn);
+  const gap = Math.max(baseGap, column - participantWidth);
+  const labelWidth = Math.max(column - 32, 220);
   const lastCenter = 70 + participantWidth / 2 + (participants.length - 1) * column;
+  const lastId = participants[participants.length - 1]?.id;
+  const hasLastSelf = messages.some((m) => !isEvent(m) && m.from === m.to && m.from === lastId);
   const width = Math.max(
     720,
-    participants.length * column + 100,
-    lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40
+    lastCenter + Math.max(participantWidth / 2 + 24, hasLastSelf ? labelWidth - 38 : 0) + 46
   );
   const header = heading(spec, theme, width, "UML / SEQUENCE \xB7 \u65F6\u95F4\u5411\u4E0B");
   const boxOf = /* @__PURE__ */ new Map();
@@ -100593,10 +100807,10 @@ function renderSequence(spec, theme) {
   const top = header.bottom + boxHeader;
   const symbolic = /* @__PURE__ */ new Set(["actor", "boundary", "control", "entity"]);
   const boxHeight = Math.max(
-    76,
-    size * 4,
+    54,
+    size * 2.8,
     ...participants.map(
-      (p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (symbolic.has(p.kind ?? "") ? 76 : 28)
+      (p) => wrap(p.label, participantWidth - 24, size).length * size * 1.4 + (symbolic.has(p.kind ?? "") ? 76 : 26)
     )
   );
   const paints = participants.map((p, i) => palette ? paintFor(theme, palette, boxes.length && palette.by !== "node" && boxOf.has(p.id) ? boxOf.get(p.id) : i) : void 0);
@@ -100652,20 +100866,20 @@ function renderSequence(spec, theme) {
   for (const list of ends.values()) list.reverse();
   const noteSpan = (m) => {
     const sx = x.get(m.from) ?? 70, tx = x.get(m.to) ?? sx;
-    const textWidth = Math.min(300, Math.max(...m.label.split("\n").map((value) => measure2(value, size))) + 28);
+    const textWidth = Math.min(360, Math.max(...m.label.split("\n").map((value) => measure2(value, size))) + 36);
     if (m.position === "left") {
-      const w2 = Math.max(96, textWidth);
-      return { left: sx - 14 - w2, width: w2 };
+      const w2 = Math.max(120, textWidth);
+      return { left: sx - 16 - w2, width: w2 };
     }
     if (m.position === "right") {
-      const w2 = Math.max(96, textWidth);
-      return { left: sx + 14, width: w2 };
+      const w2 = Math.max(120, textWidth);
+      return { left: sx + 16, width: w2 };
     }
     const lo = Math.min(sx, tx), hi = Math.max(sx, tx);
-    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 110);
+    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 140);
     return { left: (lo + hi) / 2 - w / 2, width: w };
   };
-  let cursor = top + boxHeight + 40;
+  let cursor = top + boxHeight + 42;
   let number2 = 0;
   for (let i = 0; i < messages.length; i++) {
     for (const { branch } of alternatives.get(i) ?? []) {
@@ -100687,18 +100901,21 @@ function renderSequence(spec, theme) {
       cursor += height2 + messageGap / 2;
     } else if (msg.kind === "note") {
       const span = noteSpan(msg);
-      const lines = wrap(msg.label, span.width - 20, size);
-      const height2 = lines.length * size * 1.4 + 18;
-      events[i] = { ...span, top: cursor + 4, height: height2, lines };
-      ys.push(cursor + 4);
+      const lines = wrap(msg.label, span.width - 24, size);
+      const height2 = lines.length * size * 1.4 + 22;
+      events[i] = { ...span, top: cursor + 6, height: height2, lines };
+      ys.push(cursor + 6);
       rowLines.push(lines);
-      labelTops.push(cursor + 4);
-      cursor += height2 + 12 + messageGap / 2;
+      labelTops.push(cursor + 6);
+      cursor += height2 + 16 + Math.round(messageGap * 0.35);
     } else {
       number2++;
-      const label2 = `${autonumber ? `${number2}  ` : ""}${msg.label}${msg.kind === "create" ? " \xABcreate\xBB" : msg.kind === "destroy" ? " \xABdestroy\xBB" : ""}`;
-      const available = msg.from === msg.to ? labelWidth - 56 : Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 48;
-      const lines = label2.trim() ? wrap(label2, Math.max(48, Math.min(labelWidth, available)), size) : [];
+      const label2 = `${autonumber ? `${number2}. ` : ""}${msg.label}${msg.kind === "create" ? " \xABcreate\xBB" : msg.kind === "destroy" ? " \xABdestroy\xBB" : ""}`;
+      const wrapWidth = msg.from === msg.to ? Math.max(48, labelWidth - 56) : Math.max(
+        48,
+        Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 40
+      );
+      const lines = label2.trim() ? wrap(label2, wrapWidth, size) : [];
       const labelHeight = lines.length * size * 1.4;
       const before = msg.kind === "create" ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12;
       const y = cursor + before;
@@ -100738,7 +100955,9 @@ function renderSequence(spec, theme) {
     return positions.at(`participants/${p.id}`, 0, original).y;
   };
   const stroke = esc(theme.primary);
-  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${stroke}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="seq-filled-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 0 4 L 10 8 Z" fill="${stroke}"/></marker><marker id="seq-open-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 1 4 L 10 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker></defs>` + gradientDefs(paints.filter((paint3) => !!paint3));
+  const secondaryStroke = esc(theme.secondary);
+  const seqMarkers = (suffix, color2) => `<marker id="seq-filled${suffix}" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="10" refY="5" orient="auto"><path d="M 0 0.8 L 11 5 L 0 9.2 Z" fill="${color2}"/></marker><marker id="seq-open${suffix}" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="10" refY="5" orient="auto"><path d="M 0 0.8 L 10 5 L 0 9.2" fill="none" stroke="${color2}" stroke-width="1.6"/></marker><marker id="seq-filled${suffix}-start" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="2" refY="5" orient="auto"><path d="M 11 0.8 L 0 5 L 11 9.2 Z" fill="${color2}"/></marker><marker id="seq-open${suffix}-start" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="2" refY="5" orient="auto"><path d="M 11 0.8 L 1 5 L 11 9.2" fill="none" stroke="${color2}" stroke-width="1.6"/></marker>`;
+  let body = header.svg + `<defs>${seqMarkers("", stroke)}${secondaryStroke !== stroke ? seqMarkers("-sec", secondaryStroke) : ""}</defs>` + gradientDefs(paints.filter((paint3) => !!paint3));
   const canvasFill = esc(theme.background === "transparent" ? theme.surface : theme.background);
   boxes.forEach((box, index) => {
     const members = box.participants.map((id2) => x.get(id2)).filter((value) => value !== void 0);
@@ -100790,7 +101009,7 @@ function renderSequence(spec, theme) {
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)] : bottom;
     positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
-    body += line(cx, start, cx, Math.max(start, end), theme.border, theme.lineWidth, true);
+    body += line(cx, start, cx, Math.max(start, end), theme.border, Math.max(1.2, theme.lineWidth * 0.85), true);
     body += `</g>`;
   }
   const stacks = /* @__PURE__ */ new Map();
@@ -100871,13 +101090,14 @@ function renderSequence(spec, theme) {
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
         labelLines.join("\n"),
         theme,
-        { anchor: "middle", weight: 600, fill: ink }
+        { anchor: "middle", weight: 650, fill: ink }
       );
     }
     body += `</g>`;
   });
   body += fragmentAnnotations;
-  const noteFill = darkBackground ? "#3d3a2a" : "#fff8db", noteInk = darkBackground ? "#f5ecc8" : "#4a3f1c", noteEdge = darkBackground ? "#857a4a" : "#e2c870";
+  const np = notePaint(darkBackground);
+  const noteFill = np.fill, noteInk = np.text, noteEdge = np.stroke;
   messages.forEach((m, i) => {
     const position = messagePositions[i];
     if (isEvent(m)) {
@@ -100886,8 +101106,9 @@ function renderSequence(spec, theme) {
       positions.include(event.left + position.dx, event.top + position.dy, event.width, event.height);
       if (m.kind === "note") {
         const { left, top: top2, width: w, height: h } = event;
-        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><path d="M ${left} ${top2} H ${left + w - 12} L ${left + w} ${top2 + 12} V ${top2 + h} H ${left} Z" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/><path d="M ${left + w - 12} ${top2} V ${top2 + 12} H ${left + w}" fill="none" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/>`;
-        body += text(left + w / 2, top2 + 9 + size, event.lines.join("\n"), theme, { anchor: "middle", fill: noteInk });
+        const noteRx = Math.min(10, Math.max(6, theme.radius - 2));
+        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><rect x="${left}" y="${top2}" width="${w}" height="${h}" rx="${noteRx}" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${Math.max(1.4, theme.lineWidth * 0.9)}"/>`;
+        body += text(left + w / 2, top2 + 11 + size, event.lines.join("\n"), theme, { anchor: "middle", weight: 550, fill: noteInk });
       } else {
         const cy = event.top + event.height / 2;
         body += `<g class="uml-seq-divider" data-editor-key="messages/${i}" ${attrs}>${line(event.left, cy - 2, event.left + event.width, cy - 2, theme.border, theme.lineWidth)}${line(event.left, cy + 2, event.left + event.width, cy + 2, theme.border, theme.lineWidth)}`;
@@ -100910,28 +101131,32 @@ function renderSequence(spec, theme) {
     const kind = m.kind ?? "sync";
     const dashed = m.dashed ?? (kind === "return" || kind === "create");
     const head = m.arrow ?? (kind === "async" || kind === "create" ? "open" : "filled");
+    const isSecondary = (kind === "return" || dashed && kind !== "create") && secondaryStroke !== stroke;
+    const msgStroke = isSecondary ? secondaryStroke : stroke;
+    const markerSuffix = isSecondary ? "-sec" : "";
+    const msgTextFill = isSecondary ? darkBackground ? mix(theme.secondary, "#ffffff", 0.35) : mix(theme.secondary, "#0f172a", 0.24) : theme.text;
     const loopX = sx + Math.min(80, column / 3);
     const path = self2 ? `M ${start} ${y} H ${loopX} Q ${loopX + 8} ${y} ${loopX + 8} ${y + 8} V ${y + 22} Q ${loopX + 8} ${y + 30} ${loopX} ${y + 30} H ${sx + targetOffsets[i]}` : `M ${start} ${y} H ${end}`;
-    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head})"` : "";
-    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}-start)"` : "";
-    body += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
+    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head}${markerSuffix})"` : "";
+    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}${markerSuffix}-start)"` : "";
+    body += `<path d="${path}" fill="none" stroke="${msgStroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
     if (head === "cross") {
       const ex = self2 ? sx + targetOffsets[i] : end, ey = self2 ? y + 30 : y;
-      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${stroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
+      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
     }
     const labelLines = rowLines[i];
     if (labelLines.length) {
       const lx = (self2 ? sx + 18 : (start + end) / 2) + position.dx;
       const ly = labelTops[i] + size * 1.1;
-      const lw = Math.max(...labelLines.map((l) => measure2(l, size))) + 12;
+      const lw = Math.max(...labelLines.map((l) => measure2(l, size))) + 14;
       const labelLeft = self2 ? lx - 4 : lx - lw / 2;
       const messageLeft = Math.min(start, end, labelLeft);
       positions.include(messageLeft, labelTops[i], Math.max(start, end, labelLeft + lw, self2 ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
-      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${canvasFill}"/>`;
-      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self2 ? "start" : "middle" });
+      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" rx="3" fill="${canvasFill}"/>`;
+      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self2 ? "start" : "middle", weight: 600, fill: msgTextFill });
     }
     if (kind === "destroy")
-      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${stroke}" stroke-width="${theme.lineWidth + 1}"/>`;
+      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
   body += text(

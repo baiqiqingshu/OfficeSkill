@@ -9,7 +9,7 @@ import type {
 } from "./types";
 import { esc, text, frame } from "./svg";
 import { resolveLayout } from "./themes";
-import { contrastText, gradientDefs, luminance, mix, paintFor, paletteOf, regionPaint } from "./palette";
+import { contrastText, gradientDefs, luminance, mix, notePaint, paintFor, paletteOf, regionPaint } from "./palette";
 
 /** Positions stay in renderer coordinates; the outer frame only expands to keep edits visible. */
 class SpecialPositions {
@@ -127,20 +127,33 @@ export function renderSequence(
   const size = theme.fontSize;
   const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
   const participantWidth = Math.max(
-    128,
+    136,
     theme.nodeWidth,
-    ...participants.map((p) => Math.min(280, measure(p.label, size) + 30)),
+    ...participants.map((p) => Math.min(280, measure(p.label, size) + 36)),
   );
-  const gap = spec.layout?.regionGap ?? 40;
-  const messageGap = spec.layout?.elementGap ?? 24;
-  const labelWidth = Math.max(participantWidth + gap - 24, 190);
-  const column = participantWidth + gap;
+  const baseGap = spec.layout?.regionGap ?? 84;
+  const messageGap = Math.max(24, Math.round((spec.layout?.elementGap ?? 56) * 0.72));
+  const participantIndex = new Map(participants.map((p, i) => [p.id, i]));
+  let minColumn = participantWidth + baseGap;
+  for (const m of messages) {
+    if (isEvent(m) || m.from === m.to) continue;
+    const fi = participantIndex.get(m.from), ti = participantIndex.get(m.to);
+    if (fi === undefined || ti === undefined) continue;
+    const span = Math.abs(ti - fi);
+    const labelLen = measure(`${autonumber ? "88. " : ""}${m.label}`, size) + 64;
+    if (span === 1) minColumn = Math.max(minColumn, Math.min(340, labelLen));
+    else if (span > 1) minColumn = Math.max(minColumn, Math.min(320, Math.ceil(labelLen / span)));
+  }
+  const column = Math.ceil(minColumn);
+  const gap = Math.max(baseGap, column - participantWidth);
+  const labelWidth = Math.max(column - 32, 220);
   const lastCenter =
     70 + participantWidth / 2 + (participants.length - 1) * column;
+  const lastId = participants[participants.length - 1]?.id;
+  const hasLastSelf = messages.some((m) => !isEvent(m) && m.from === m.to && m.from === lastId);
   const width = Math.max(
     720,
-    participants.length * column + 100,
-    lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40,
+    lastCenter + Math.max(participantWidth / 2 + 24, hasLastSelf ? labelWidth - 38 : 0) + 46,
   );
   const header = heading(spec, theme, width, "UML / SEQUENCE · 时间向下");
   const boxOf = new Map<string, number>();
@@ -149,12 +162,12 @@ export function renderSequence(
   const top = header.bottom + boxHeader;
   const symbolic = new Set(["actor", "boundary", "control", "entity"]);
   const boxHeight = Math.max(
-    76,
-    size * 4,
+    54,
+    size * 2.8,
     ...participants.map(
       (p) =>
-        wrap(p.label, participantWidth - 20, size).length * size * 1.4 +
-        (symbolic.has(p.kind ?? "") ? 76 : 28),
+        wrap(p.label, participantWidth - 24, size).length * size * 1.4 +
+        (symbolic.has(p.kind ?? "") ? 76 : 26),
     ),
   );
   const paints = participants.map((p, i) =>
@@ -222,14 +235,14 @@ export function renderSequence(
   for (const list of ends.values()) list.reverse();
   const noteSpan = (m: Message): { left: number; width: number } => {
     const sx = x.get(m.from) ?? 70, tx = x.get(m.to) ?? sx;
-    const textWidth = Math.min(300, Math.max(...m.label.split("\n").map((value) => measure(value, size))) + 28);
-    if (m.position === "left") { const w = Math.max(96, textWidth); return { left: sx - 14 - w, width: w }; }
-    if (m.position === "right") { const w = Math.max(96, textWidth); return { left: sx + 14, width: w }; }
+    const textWidth = Math.min(360, Math.max(...m.label.split("\n").map((value) => measure(value, size))) + 36);
+    if (m.position === "left") { const w = Math.max(120, textWidth); return { left: sx - 16 - w, width: w }; }
+    if (m.position === "right") { const w = Math.max(120, textWidth); return { left: sx + 16, width: w }; }
     const lo = Math.min(sx, tx), hi = Math.max(sx, tx);
-    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 110);
+    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 140);
     return { left: (lo + hi) / 2 - w / 2, width: w };
   };
-  let cursor = top + boxHeight + 40;
+  let cursor = top + boxHeight + 42;
   let number = 0;
   for (let i = 0; i < messages.length; i++) {
     for (const { branch } of alternatives.get(i) ?? []) {
@@ -251,23 +264,26 @@ export function renderSequence(
       cursor += height + messageGap / 2;
     } else if (msg.kind === "note") {
       const span = noteSpan(msg);
-      const lines = wrap(msg.label, span.width - 20, size);
-      const height = lines.length * size * 1.4 + 18;
-      events[i] = { ...span, top: cursor + 4, height, lines };
-      ys.push(cursor + 4);
+      const lines = wrap(msg.label, span.width - 24, size);
+      const height = lines.length * size * 1.4 + 22;
+      events[i] = { ...span, top: cursor + 6, height, lines };
+      ys.push(cursor + 6);
       rowLines.push(lines);
-      labelTops.push(cursor + 4);
-      cursor += height + 12 + messageGap / 2;
+      labelTops.push(cursor + 6);
+      cursor += height + 16 + Math.round(messageGap * 0.35);
     } else {
       number++;
-      const label = `${autonumber ? `${number}  ` : ""}${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
-      const available =
+      const label = `${autonumber ? `${number}. ` : ""}${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
+      const wrapWidth =
         msg.from === msg.to
-          ? labelWidth - 56
-          : Math.abs(x.get(msg.to)! - x.get(msg.from)!) -
-            (msg.kind === "create" ? participantWidth / 2 : 0) -
-            48;
-      const lines = label.trim() ? wrap(label, Math.max(48, Math.min(labelWidth, available)), size) : [];
+          ? Math.max(48, labelWidth - 56)
+          : Math.max(
+              48,
+              Math.abs(x.get(msg.to)! - x.get(msg.from)!) -
+                (msg.kind === "create" ? participantWidth / 2 : 0) -
+                40,
+            );
+      const lines = label.trim() ? wrap(label, wrapWidth, size) : [];
       const labelHeight = lines.length * size * 1.4;
       const before =
         msg.kind === "create"
@@ -315,10 +331,15 @@ export function renderSequence(
     return positions.at(`participants/${p.id}`, 0, original).y;
   };
   const stroke = esc(theme.primary);
+  const secondaryStroke = esc(theme.secondary);
+  const seqMarkers = (suffix: string, color: string) =>
+    `<marker id="seq-filled${suffix}" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="10" refY="5" orient="auto"><path d="M 0 0.8 L 11 5 L 0 9.2 Z" fill="${color}"/></marker>`
+    + `<marker id="seq-open${suffix}" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="10" refY="5" orient="auto"><path d="M 0 0.8 L 10 5 L 0 9.2" fill="none" stroke="${color}" stroke-width="1.6"/></marker>`
+    + `<marker id="seq-filled${suffix}-start" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="2" refY="5" orient="auto"><path d="M 11 0.8 L 0 5 L 11 9.2 Z" fill="${color}"/></marker>`
+    + `<marker id="seq-open${suffix}-start" viewBox="0 0 12 10" markerWidth="11" markerHeight="9" refX="2" refY="5" orient="auto"><path d="M 11 0.8 L 1 5 L 11 9.2" fill="none" stroke="${color}" stroke-width="1.6"/></marker>`;
   let body =
     header.svg +
-    `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${stroke}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker>`
-    + `<marker id="seq-filled-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 0 4 L 10 8 Z" fill="${stroke}"/></marker><marker id="seq-open-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 1 4 L 10 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker></defs>`
+    `<defs>${seqMarkers("", stroke)}${secondaryStroke !== stroke ? seqMarkers("-sec", secondaryStroke) : ""}</defs>`
     + gradientDefs(paints.filter((paint): paint is NonNullable<typeof paint> => !!paint));
   const canvasFill = esc(theme.background === "transparent" ? theme.surface : theme.background);
   boxes.forEach((box, index) => {
@@ -375,7 +396,7 @@ export function renderSequence(
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)!]! : bottom;
     positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
-    body += line(cx, start, cx, Math.max(start, end), theme.border, theme.lineWidth, true);
+    body += line(cx, start, cx, Math.max(start, end), theme.border, Math.max(1.2, theme.lineWidth * 0.85), true);
     body += `</g>`;
   }
   type Activation = { start: number; depth: number };
@@ -460,13 +481,14 @@ export function renderSequence(
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
         labelLines.join("\n"),
         theme,
-        { anchor: "middle", weight: 600, fill: ink },
+        { anchor: "middle", weight: 650, fill: ink },
       );
     }
     body += `</g>`;
   });
   body += fragmentAnnotations;
-  const noteFill = darkBackground ? "#3d3a2a" : "#fff8db", noteInk = darkBackground ? "#f5ecc8" : "#4a3f1c", noteEdge = darkBackground ? "#857a4a" : "#e2c870";
+  const np = notePaint(darkBackground);
+  const noteFill = np.fill, noteInk = np.text, noteEdge = np.stroke;
   messages.forEach((m, i) => {
     const position = messagePositions[i]!;
     if (isEvent(m)) {
@@ -475,8 +497,9 @@ export function renderSequence(
       positions.include(event.left + position.dx, event.top + position.dy, event.width, event.height);
       if (m.kind === "note") {
         const { left, top, width: w, height: h } = event;
-        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><path d="M ${left} ${top} H ${left + w - 12} L ${left + w} ${top + 12} V ${top + h} H ${left} Z" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/><path d="M ${left + w - 12} ${top} V ${top + 12} H ${left + w}" fill="none" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/>`;
-        body += text(left + w / 2, top + 9 + size, event.lines.join("\n"), theme, { anchor: "middle", fill: noteInk });
+        const noteRx = Math.min(10, Math.max(6, theme.radius - 2));
+        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><rect x="${left}" y="${top}" width="${w}" height="${h}" rx="${noteRx}" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${Math.max(1.4, theme.lineWidth * 0.9)}"/>`;
+        body += text(left + w / 2, top + 11 + size, event.lines.join("\n"), theme, { anchor: "middle", weight: 550, fill: noteInk });
       } else {
         const cy = event.top + event.height / 2;
         body += `<g class="uml-seq-divider" data-editor-key="messages/${i}" ${attrs}>${line(event.left, cy - 2, event.left + event.width, cy - 2, theme.border, theme.lineWidth)}${line(event.left, cy + 2, event.left + event.width, cy + 2, theme.border, theme.lineWidth)}`;
@@ -504,30 +527,36 @@ export function renderSequence(
     const kind = m.kind ?? "sync";
     const dashed = m.dashed ?? (kind === "return" || kind === "create");
     const head = m.arrow ?? (kind === "async" || kind === "create" ? "open" : "filled");
+    const isSecondary = (kind === "return" || (dashed && kind !== "create")) && secondaryStroke !== stroke;
+    const msgStroke = isSecondary ? secondaryStroke : stroke;
+    const markerSuffix = isSecondary ? "-sec" : "";
+    const msgTextFill = isSecondary
+      ? (darkBackground ? mix(theme.secondary, "#ffffff", 0.35) : mix(theme.secondary, "#0f172a", 0.24))
+      : theme.text;
     const loopX = sx + Math.min(80, column / 3);
     const path = self
       ? `M ${start} ${y} H ${loopX} Q ${loopX + 8} ${y} ${loopX + 8} ${y + 8} V ${y + 22} Q ${loopX + 8} ${y + 30} ${loopX} ${y + 30} H ${sx + targetOffsets[i]!}`
       : `M ${start} ${y} H ${end}`;
-    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head})"` : "";
-    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}-start)"` : "";
-    body += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
+    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head}${markerSuffix})"` : "";
+    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}${markerSuffix}-start)"` : "";
+    body += `<path d="${path}" fill="none" stroke="${msgStroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
     if (head === "cross") {
       const ex = self ? sx + targetOffsets[i]! : end, ey = self ? y + 30 : y;
-      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${stroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
+      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
     }
     const labelLines = rowLines[i]!;
     if (labelLines.length) {
       const lx = (self ? sx + 18 : (start + end) / 2) + position.dx;
       const ly = labelTops[i]! + size * 1.1;
-      const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
+      const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 14;
       const labelLeft = self ? lx - 4 : lx - lw / 2;
       const messageLeft = Math.min(start, end, labelLeft);
       positions.include(messageLeft, labelTops[i]!, Math.max(start, end, labelLeft + lw, self ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
-      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${canvasFill}"/>`;
-      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self ? "start" : "middle" });
+      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" rx="3" fill="${canvasFill}"/>`;
+      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self ? "start" : "middle", weight: 600, fill: msgTextFill });
     }
     if (kind === "destroy")
-      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${stroke}" stroke-width="${theme.lineWidth + 1}"/>`;
+      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
   body += text(

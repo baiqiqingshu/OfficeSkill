@@ -2,7 +2,17 @@ import type { PaletteBy, PaletteMode, Theme } from './types';
 
 type RGB = [number, number, number];
 
-export const defaultPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+export const defaultPalette = ['#1d4ed8', '#0891b2', '#059669', '#d97706', '#4f46e5', '#e11d48', '#7c3aed', '#0d9488'];
+
+const crispTints: Record<string, string> = {
+  '#1d4ed8': '#eff6ff', '#2563eb': '#eff6ff', '#3b82f6': '#eff6ff', '#1e40af': '#eff6ff',
+  '#0891b2': '#ecfeff', '#06b6d4': '#ecfeff', '#0284c7': '#f0f9ff', '#0e7490': '#ecfeff',
+  '#059669': '#ecfdf5', '#10b981': '#ecfdf5', '#0d9488': '#f0fdfa', '#047857': '#ecfdf5',
+  '#d97706': '#fffbeb', '#f59e0b': '#fffbeb', '#b45309': '#fffbeb', '#ea580c': '#fff7ed',
+  '#4f46e5': '#eef2ff', '#6366f1': '#eef2ff', '#4338ca': '#eef2ff',
+  '#7c3aed': '#f5f3ff', '#8b5cf6': '#f5f3ff',
+  '#e11d48': '#fff1f2', '#be123c': '#fff1f2', '#ec4899': '#fdf2f8', '#dc2626': '#fef2f2',
+};
 
 export function parseHex(value: string): RGB | undefined {
   const match = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(value.trim());
@@ -46,17 +56,24 @@ export function paintFor(theme: Theme, palette: PaletteMember, index: number): E
   const color = palette.colors[slot]!;
   const darkBackground = luminance(theme.background === 'transparent' ? theme.surface : theme.background) < 0.2;
   if (palette.mode === 'tint') {
-    const fill = darkBackground ? mix(color, '#000000', 0.62) : mix(color, '#ffffff', 0.86);
-    const text = darkBackground ? mix(color, '#ffffff', 0.78) : mix(color, '#111827', 0.62);
-    return { fill, stroke: color, text, muted: mix(text, fill, 0.3), accent: darkBackground ? mix(color, '#ffffff', 0.3) : mix(color, '#000000', 0.15) };
+    const fill = darkBackground ? mix(color, '#0f172a', 0.78) : (crispTints[color.toLowerCase()] ?? mix(color, '#ffffff', 0.92));
+    const stroke = darkBackground ? mix(color, '#ffffff', 0.22) : color;
+    const text = darkBackground ? '#f8fafc' : '#0f172a';
+    const muted = darkBackground ? '#94a3b8' : '#475569';
+    return { fill, stroke, text, muted, accent: darkBackground ? mix(color, '#ffffff', 0.35) : color };
   }
   if (palette.mode === 'solid') {
-    const text = contrastText(color);
-    return { fill: color, stroke: mix(color, '#000000', 0.22), text, muted: mix(text, color, 0.22), accent: text };
+    const text = contrastText(color, '#0f172a');
+    return { fill: color, stroke: mix(color, '#0f172a', 0.24), text, muted: mix(text, color, 0.24), accent: text };
   }
-  const from = mix(color, '#ffffff', 0.38), to = mix(color, '#000000', 0.12);
-  const text = contrastText(mix(from, to, 0.5));
-  return { fill: `url(#uml-palette-${slot})`, stroke: mix(color, '#000000', 0.28), text, muted: mix(text, color, 0.2), accent: text, gradient: { id: `uml-palette-${slot}`, from, to } };
+  const from = mix(color, '#ffffff', 0.24), to = mix(color, '#0f172a', 0.14);
+  const text = contrastText(mix(from, to, 0.5), '#0f172a');
+  return { fill: `url(#uml-palette-${slot})`, stroke: mix(color, '#0f172a', 0.26), text, muted: mix(text, color, 0.22), accent: text, gradient: { id: `uml-palette-${slot}`, from, to } };
+}
+export function notePaint(darkBackground: boolean): ElementPaint {
+  return darkBackground
+    ? { fill: '#3b2f16', stroke: '#d97706', text: '#fde68a', muted: '#fcd34d', accent: '#f59e0b' }
+    : { fill: '#fef3c7', stroke: '#d97706', text: '#92400e', muted: '#b45309', accent: '#d97706' };
 }
 export function gradientDefs(paints: Iterable<ElementPaint>): string {
   const seen = new Map<string, ElementPaint['gradient']>();
@@ -69,6 +86,6 @@ export function regionPaint(theme: Theme, palette: PaletteMember, index: number)
   const color = palette.colors[((index % palette.colors.length) + palette.colors.length) % palette.colors.length]!;
   const darkBackground = luminance(theme.background === 'transparent' ? theme.surface : theme.background) < 0.2;
   return darkBackground
-    ? { fill: mix(color, '#000000', 0.82), stroke: mix(color, '#000000', 0.35), text: mix(color, '#ffffff', 0.6), header: mix(color, '#000000', 0.6) }
-    : { fill: mix(color, '#ffffff', 0.94), stroke: mix(color, '#ffffff', 0.35), text: mix(color, '#000000', 0.35), header: mix(color, '#ffffff', 0.8) };
+    ? { fill: mix(color, '#0f172a', 0.84), stroke: mix(color, '#0f172a', 0.35), text: mix(color, '#ffffff', 0.65), header: mix(color, '#0f172a', 0.65) }
+    : { fill: mix(color, '#ffffff', 0.96), stroke: mix(color, '#ffffff', 0.42), text: mix(color, '#0f172a', 0.35), header: mix(color, '#ffffff', 0.88) };
 }

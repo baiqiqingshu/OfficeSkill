@@ -4,7 +4,7 @@ import type { DiagramAdjustments, DiagramEdge, DiagramGroup, DiagramNode, Diagra
 import { esc, frame, text } from './svg';
 import { resolveLayout } from './themes';
 import { crossingPaths } from './crossings';
-import { gradientDefs, paintFor, paletteOf, regionPaint } from './palette';
+import { gradientDefs, luminance, mix, notePaint, paintFor, paletteOf, regionPaint } from './palette';
 import type { ElementPaint, PaletteMember } from './palette';
 
 type Kind = NonNullable<DiagramNode['kind']>;
@@ -116,7 +116,10 @@ function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: T
   const palette = paletteOf(theme);
   let paint: ElementPaint | undefined;
   if (palette && !sourceNode.style?.surface && !uncoloured.has(kind)) {
-    paint = paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
+    const darkBackground = luminance(theme.background === 'transparent' ? theme.surface : theme.background) < 0.2;
+    paint = kind === 'note' && palette.mode === 'tint'
+      ? notePaint(darkBackground)
+      : paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
     if (kind === 'actor') theme.primary = paint.stroke;
     else Object.assign(theme, { surface: paint.fill, border: paint.stroke, text: paint.text, muted: paint.muted, primary: paint.accent, secondary: palette.mode === 'tint' ? paint.stroke : paint.text });
   }
@@ -232,20 +235,25 @@ function createEdge(edge: DiagramEdge, index: number, theme: Theme, type: Diagra
 }
 
 function layoutOptions(direction: 'TB' | 'LR', padding: string, spec: DiagramSpec): Record<string, string> {
+  const nodeGap = Math.max(24, spec.layout?.elementGap ?? 56);
+  const layerGap = Math.max(nodeGap, Math.round(nodeGap * 1.15));
+  const edgeNode = Math.max(22, Math.round(nodeGap * 0.42));
+  const edgeEdge = Math.max(16, Math.round(nodeGap * 0.3));
+  const edgeLabel = Math.max(12, Math.round(nodeGap * 0.22));
   return {
     'elk.algorithm': 'layered', 'elk.direction': direction === 'LR' ? 'RIGHT' : 'DOWN',
     'elk.edgeRouting': 'ORTHOGONAL', 'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
-    'elk.padding': padding, 'elk.spacing.nodeNode': String(spec.layout?.elementGap ?? 24),
-    'elk.layered.spacing.nodeNodeBetweenLayers': String(spec.layout?.elementGap ?? 24),
-    'elk.spacing.edgeNode': '18', 'elk.spacing.edgeEdge': '14', 'elk.spacing.edgeLabel': '10',
-    'elk.layered.spacing.edgeNodeBetweenLayers': '20', 'elk.layered.spacing.edgeEdgeBetweenLayers': '14',
+    'elk.padding': padding, 'elk.spacing.nodeNode': String(nodeGap),
+    'elk.layered.spacing.nodeNodeBetweenLayers': String(layerGap),
+    'elk.spacing.edgeNode': String(edgeNode), 'elk.spacing.edgeEdge': String(edgeEdge), 'elk.spacing.edgeLabel': String(edgeLabel),
+    'elk.layered.spacing.edgeNodeBetweenLayers': String(Math.max(24, Math.round(nodeGap * 0.46))), 'elk.layered.spacing.edgeEdgeBetweenLayers': String(edgeEdge),
     'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
     'elk.layered.nodePlacement.bk.fixedAlignment': 'BALANCED',
     'elk.layered.nodePlacement.bk.edgeStraightening': 'IMPROVE_STRAIGHTNESS',
     'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
     'elk.layered.nodePlacement.favorStraightEdges': 'true',
     'elk.layered.mergeEdges': 'false', 'elk.separateConnectedComponents': 'true',
-    'elk.spacing.componentComponent': String(spec.layout?.regionGap ?? 40),
+    'elk.spacing.componentComponent': String(spec.layout?.regionGap ?? 84),
     'elk.edgeLabels.inline': 'false', 'elk.layered.edgeLabels.sideSelection': 'SMART_DOWN',
   };
 }
@@ -271,8 +279,8 @@ function buildGraph(
   const root: ElkNode = { id: rootId, children: [], edges: [] };
   const header = lane ? (direction === 'TB' ? measure(lane.label, theme.fontSize).height + 24 : measure(lane.label, theme.fontSize).width + 32) : 0;
   const padding = lane
-    ? (direction === 'TB' ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]`)
-    : '[top=24,left=24,bottom=24,right=24]';
+    ? (direction === 'TB' ? `[top=${header + 28},left=28,bottom=30,right=28]` : `[top=28,left=${header + 28},bottom=28,right=30]`)
+    : '[top=28,left=28,bottom=28,right=28]';
   root.layoutOptions = layoutOptions(direction, padding, spec);
   if (lane) {
     root.width = direction === 'TB' ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
@@ -289,7 +297,7 @@ function buildGraph(
     const groupHeader = labelSize.height + (group.kind === 'node' ? 40 : 22);
     const width = Math.max(180, labelSize.width + 48);
     const height = groupHeader + 64;
-    const options = layoutOptions(direction, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`, spec);
+    const options = layoutOptions(direction, `[top=${groupHeader + 24},left=28,bottom=28,right=28]`, spec);
     options['elk.nodeSize.constraints'] = '[MINIMUM_SIZE]';
     options['elk.nodeSize.minimum'] = `(${width},${height})`;
     groupNodes.set(group.id, { id, width, height, layoutOptions: options, children: [] });
@@ -476,25 +484,55 @@ function outward(side: Side): Point {
   return side === 'right' ? { x: 1, y: 0 } : side === 'left' ? { x: -1, y: 0 } : side === 'bottom' ? { x: 0, y: 1 } : { x: 0, y: -1 };
 }
 
+function compactCoords(values: Set<number>, keep: number[]): number[] {
+  const sorted = [...values].sort((a, b) => a - b);
+  const pinned = new Set(keep);
+  const result: number[] = [];
+  for (const v of sorted) {
+    const prev = result[result.length - 1];
+    if (prev !== undefined && Math.abs(v - prev) < 0.75) {
+      if (pinned.has(v) && !pinned.has(prev)) result[result.length - 1] = v;
+      continue;
+    }
+    result.push(v);
+  }
+  for (const k of keep) if (!result.includes(k)) { result.push(k); result.sort((a, b) => a - b); }
+  return result;
+}
+
 function obstacleRouter(start: Point, end: Point, obstacles: Rect[], used: Point[][], guards?: { startSide?: Side; endSide?: Side; turnBias?: 'early' | 'late' }): Point[] | undefined {
   const xs = new Set<number>([start.x, end.x]);
   const ys = new Set<number>([start.y, end.y]);
+  const obsXs = new Set<number>(), obsYs = new Set<number>();
   let left = Math.min(start.x, end.x), right = Math.max(start.x, end.x);
   let top = Math.min(start.y, end.y), bottom = Math.max(start.y, end.y);
   for (const box of obstacles) {
     xs.add(box.x); xs.add(box.x + box.width);
     ys.add(box.y); ys.add(box.y + box.height);
+    obsXs.add(box.x); obsXs.add(box.x + box.width);
+    obsYs.add(box.y); obsYs.add(box.y + box.height);
     left = Math.min(left, box.x); right = Math.max(right, box.x + box.width);
     top = Math.min(top, box.y); bottom = Math.max(bottom, box.y + box.height);
   }
+  const addCorridors = (raw: Set<number>, target: Set<number>): void => {
+    const sorted = [...raw].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++) {
+      const span = sorted[i] - sorted[i - 1];
+      if (span >= 12) target.add(sorted[i - 1] + span / 2);
+      if (span >= 44) { target.add(sorted[i - 1] + span / 3); target.add(sorted[i - 1] + (span * 2) / 3); }
+    }
+  };
+  addCorridors(obsXs, xs);
+  addCorridors(obsYs, ys);
   for (const path of used) for (let index = 1; index < path.length; index++) {
     const a = path[index - 1], b = path[index];
-    if (Math.abs(a.x - b.x) < 0.01) { xs.add(a.x - 12); xs.add(a.x + 12); }
-    else { ys.add(a.y - 12); ys.add(a.y + 12); }
+    if (Math.abs(a.x - b.x) < 0.01) { xs.add(a.x - 16); xs.add(a.x + 16); }
+    else { ys.add(a.y - 16); ys.add(a.y + 16); }
   }
-  xs.add(left - 36); xs.add(right + 36); ys.add(top - 36); ys.add(bottom + 36);
-  const columns = [...xs].sort((a, b) => a - b);
-  const rows = [...ys].sort((a, b) => a - b);
+  xs.add(left - 24); xs.add(left - 44); xs.add(right + 24); xs.add(right + 44);
+  ys.add(top - 24); ys.add(top - 44); ys.add(bottom + 24); ys.add(bottom + 44);
+  const columns = compactCoords(xs, [start.x, end.x]);
+  const rows = compactCoords(ys, [start.y, end.y]);
   const columnsCount = columns.length;
   const vertexCount = columnsCount * rows.length;
   const valid = new Uint8Array(vertexCount);
@@ -556,23 +594,41 @@ function obstacleRouter(start: Point, end: Point, obstacles: Rect[], used: Point
         ? a.y > box.y + 0.01 && a.y < box.y + box.height - 0.01 && Math.max(a.x, b.x) > box.x + 0.01 && Math.min(a.x, b.x) < box.x + box.width - 0.01
         : a.x > box.x + 0.01 && a.x < box.x + box.width - 0.01 && Math.max(a.y, b.y) > box.y + 0.01 && Math.min(a.y, b.y) < box.y + box.height - 0.01);
       if (blocked) continue;
-      let overlap = 0, crossings = 0;
+      let overlap = 0, crossings = 0, nearParallel = 0;
       for (const path of used) for (let index = 1; index < path.length; index++) {
         const c = path[index - 1], d = path[index];
-        if (horizontal && c.y === d.y && Math.abs(a.y - c.y) < 0.1) overlap += Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
-        if (!horizontal && c.x === d.x && Math.abs(a.x - c.x) < 0.1) overlap += Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+        if (horizontal && c.y === d.y) {
+          const span = Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
+          if (span > 0) {
+            const dist = Math.abs(a.y - c.y);
+            if (dist < 0.1) overlap += span;
+            else if (dist < 16) nearParallel += span * (16 - dist) * 0.9 + 18;
+          }
+        } else if (!horizontal && c.x === d.x) {
+          const span = Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+          if (span > 0) {
+            const dist = Math.abs(a.x - c.x);
+            if (dist < 0.1) overlap += span;
+            else if (dist < 16) nearParallel += span * (16 - dist) * 0.9 + 18;
+          }
+        }
         if (horizontal !== (Math.abs(c.y - d.y) < 0.01)) {
           const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
           if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01
             && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
         }
       }
+      const segLen = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+      const wallHug = obstacles.some(box => horizontal
+        ? (Math.abs(a.y - box.y) < 3 || Math.abs(a.y - (box.y + box.height)) < 3) && Math.max(a.x, b.x) > box.x + 1 && Math.min(a.x, b.x) < box.x + box.width - 1
+        : (Math.abs(a.x - box.x) < 3 || Math.abs(a.x - (box.x + box.width)) < 3) && Math.max(a.y, b.y) > box.y + 1 && Math.min(a.y, b.y) < box.y + box.height - 1)
+        ? Math.min(44, segLen * 0.55 + 22) : 0;
       const direction = horizontal ? 1 : 2;
       const state = neighbor * 3 + direction;
       const startAligned = guards?.startSide ? horizontal === (guards.startSide === 'left' || guards.startSide === 'right') : false;
       const bias = guards?.startSide && guards.turnBias && vertex === startVertex
         && ((guards.turnBias === 'early' && startAligned) || (guards.turnBias === 'late' && !startAligned)) ? 0.5 : 0;
-      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + crossings * 80 + bias;
+      const cost = current.cost + segLen + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + nearParallel + crossings * 80 + wallHug + bias;
       if (cost >= costs[state]) continue;
       costs[state] = cost; previous[state] = current.state;
       push({ state, cost, score: cost + Math.abs(b.x - end.x) + Math.abs(b.y - end.y) });
@@ -829,8 +885,29 @@ function opposite(side: Side): Side {
 
 function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'LR', theme: Theme, type: DiagramSpec['type'], adjustments?: DiagramAdjustments): void {
   const byId = new Map(result.nodes.map(box => [box.ref.node.id, box]));
-  const clearance = Math.min(12, theme.gap / 4);
-  const obstacles: Rect[] = result.nodes.map(box => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
+  const baseClearance = Math.max(12, Math.min(18, Math.round(theme.gap * 0.32)));
+  const nodeClearance = new Map<NodeBox, number>();
+  const nodeObstacleIndex = new Map<NodeBox, number>();
+  for (const box of result.nodes) {
+    let c = baseClearance;
+    for (const other of result.nodes) {
+      if (other === box) continue;
+      if (box.y < other.y + other.height && box.y + box.height > other.y) {
+        const gx = Math.max(other.x - (box.x + box.width), box.x - (other.x + other.width));
+        if (gx > 0) c = Math.min(c, Math.max(4, Math.floor(gx / 2) - 2));
+      }
+      if (box.x < other.x + other.width && box.x + box.width > other.x) {
+        const gy = Math.max(other.y - (box.y + box.height), box.y - (other.y + other.height));
+        if (gy > 0) c = Math.min(c, Math.max(4, Math.floor(gy / 2) - 2));
+      }
+    }
+    nodeClearance.set(box, c);
+  }
+  const obstacles: Rect[] = result.nodes.map((box, index) => {
+    nodeObstacleIndex.set(box, index);
+    const c = nodeClearance.get(box)!;
+    return { x: box.x - c, y: box.y - c, width: box.width + c * 2, height: box.height + c * 2 };
+  });
   for (const box of result.nodes) if (box.caption) obstacles.push({ x: box.x + box.caption.x - 2, y: box.y + box.caption.y - 2, width: box.caption.width + 4, height: box.caption.height + 4 });
   for (const box of result.containers) {
     // Lane entry may cross the header's empty area, while still avoiding its title.
@@ -890,7 +967,15 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
             width: symbol.width * box.width / box.ref.renderWidth, height: symbol.height * box.height / box.ref.renderHeight } : box;
           const x = attach === 'left' ? bounds.x : attach === 'right' ? bounds.x + bounds.width : bounds.x + bounds.width * 0.5;
           const y = attach === 'top' ? bounds.y : attach === 'bottom' ? bounds.y + bounds.height : bounds.y + bounds.height * 0.5;
-          const distance = Math.max(clearance + 1, Math.min(28, theme.gap / 2));
+          const c = nodeClearance.get(box) ?? baseClearance;
+          let distance = Math.max(c + 2, Math.min(28, Math.round(theme.gap * 0.45)));
+          for (const other of result.nodes) {
+            if (other === box) continue;
+            if (attach === 'right' && other.x > box.x + box.width && y > other.y - c && y < other.y + other.height + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((other.x - (box.x + box.width)) / 2)));
+            else if (attach === 'left' && box.x > other.x + other.width && y > other.y - c && y < other.y + other.height + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((box.x - (other.x + other.width)) / 2)));
+            else if (attach === 'bottom' && other.y > box.y + box.height && x > other.x - c && x < other.x + other.width + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((other.y - (box.y + box.height)) / 2)));
+            else if (attach === 'top' && box.y > other.y + other.height && x > other.x - c && x < other.x + other.width + c) distance = Math.min(distance, Math.max(c + 1, Math.floor((box.y - (other.y + other.height)) / 2)));
+          }
           const stub = { x: attach === 'right' ? box.x + box.width + distance : attach === 'left' ? box.x - distance : x,
             y: attach === 'bottom' ? box.y + box.height + distance : attach === 'top' ? box.y - distance : y };
           return { port: { x, y }, stub };
@@ -898,8 +983,9 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
         // A stub may cross only its own endpoint's expanded obstacle.
         const clear = anchors.every((anchor, index) => {
           const box = index ? item.target : item.source;
-          return !obstacles.some(obstacle => {
-            if (Math.abs(obstacle.x - (box.x - clearance)) < 0.01 && Math.abs(obstacle.y - (box.y - clearance)) < 0.01) return false;
+          const ownIndex = nodeObstacleIndex.get(box);
+          return !obstacles.some((obstacle, obsIndex) => {
+            if (obsIndex === ownIndex) return false;
             return anchor.port.y === anchor.stub.y
               ? anchor.port.y > obstacle.y && anchor.port.y < obstacle.y + obstacle.height && Math.max(anchor.port.x, anchor.stub.x) > obstacle.x && Math.min(anchor.port.x, anchor.stub.x) < obstacle.x + obstacle.width
               : anchor.port.x > obstacle.x && anchor.port.x < obstacle.x + obstacle.width && Math.max(anchor.port.y, anchor.stub.y) > obstacle.y && Math.min(anchor.port.y, anchor.stub.y) < obstacle.y + obstacle.height;
@@ -1044,38 +1130,43 @@ function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
 }
 
 
+function markerSet(prefix: string, suffix: string, stroke: string, background: string): string {
+  return `<marker id="${prefix}-arrow${suffix}" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8 Z" fill="${stroke}"/></marker><marker id="${prefix}-open${suffix}" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L11 6 L1 10.8" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle${suffix}" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation${suffix}" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition${suffix}" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${stroke}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-arrow-start${suffix}" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1.2 L1 6 L11 10.8 Z" fill="${stroke}"/></marker>`
+    + `<marker id="${prefix}-open-start${suffix}" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1.2 L1 6 L11 10.8" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker>`
+    + `<marker id="${prefix}-triangle-start${suffix}" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-circle${suffix}" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-circle-start${suffix}" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-cross${suffix}" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker>`
+    + `<marker id="${prefix}-cross-start${suffix}" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker>`;
+}
+
 function markerDefinitions(prefix: string, theme: Theme): string {
-  const stroke = esc(theme.primary), background = esc(theme.background === 'transparent' ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker>`
-    + `<marker id="${prefix}-arrow-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11 Z" fill="${stroke}"/></marker>`
-    + `<marker id="${prefix}-open-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker>`
-    + `<marker id="${prefix}-triangle-start" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
-    + `<marker id="${prefix}-circle" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
-    + `<marker id="${prefix}-circle-start" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
-    + `<marker id="${prefix}-cross" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker>`
-    + `<marker id="${prefix}-cross-start" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker></defs>`;
+  const stroke = esc(theme.primary), secondary = esc(theme.secondary), background = esc(theme.background === 'transparent' ? theme.surface : theme.background);
+  return `<defs>${markerSet(prefix, '', stroke, background)}${secondary !== stroke ? markerSet(prefix, '-sec', secondary, background) : ''}</defs>`;
 }
 
 function renderContainer(box: ContainerBox, theme: Theme, direction: 'TB' | 'LR', region?: ReturnType<typeof regionPaint>): string {
   const { x, y, width: w, height: h, ref } = box;
   const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
   const headerOpacity = region ? '1' : '0.08';
+  const strokeW = numeric(Math.max(1.2, theme.lineWidth * 0.8));
   let shape = '';
   let labelX = x + 16, labelY = y + theme.fontSize + 10;
   if (ref.kind === 'lane') {
-    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (direction === 'TB') shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}"/>`;
-    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
+    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${strokeW}"/>`;
+    if (direction === 'TB') shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}" stroke-width="${strokeW}"/>`;
+    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}" stroke-width="${strokeW}"/>`;
   } else if (ref.kind === 'package') {
     const tabWidth = Math.min(w - 24, Math.max(80, measure(ref.label, theme.fontSize).width + 32));
     const tabHeight = ref.header;
-    shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tabWidth)} V${numeric(y + tabHeight)} H${numeric(x + w)} V${numeric(y + h)} Z" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/><path d="M${numeric(x)} ${numeric(y + tabHeight)} H${numeric(x + tabWidth)}" stroke="${border}"/>`;
+    shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tabWidth)} V${numeric(y + tabHeight)} H${numeric(x + w)} V${numeric(y + h)} Z" fill="${surface}" stroke="${border}" stroke-width="${strokeW}"/><path d="M${numeric(x)} ${numeric(y + tabHeight)} H${numeric(x + tabWidth)}" stroke="${border}" stroke-width="${strokeW}"/>`;
   } else if (ref.kind === 'node') {
-    shape = `<path d="M${numeric(x)} ${numeric(y + 10)} L${numeric(x + 12)} ${numeric(y)} H${numeric(x + w)} V${numeric(y + h - 10)} L${numeric(x + w - 12)} ${numeric(y + h)} H${numeric(x)} Z" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/><path d="M${numeric(x)} ${numeric(y + 10)} H${numeric(x + w - 12)} L${numeric(x + w)} ${numeric(y)} M${numeric(x + w - 12)} ${numeric(y + 10)} V${numeric(y + h)}" fill="none" stroke="${border}"/>`;
+    shape = `<path d="M${numeric(x)} ${numeric(y + 10)} L${numeric(x + 12)} ${numeric(y)} H${numeric(x + w)} V${numeric(y + h - 10)} L${numeric(x + w - 12)} ${numeric(y + h)} H${numeric(x)} Z" fill="${surface}" stroke="${border}" stroke-width="${strokeW}"/><path d="M${numeric(x)} ${numeric(y + 10)} H${numeric(x + w - 12)} L${numeric(x + w)} ${numeric(y)} M${numeric(x + w - 12)} ${numeric(y + 10)} V${numeric(y + h)}" fill="none" stroke="${border}" stroke-width="${strokeW}"/>`;
     shape += text(labelX, y + 26, '«node»', theme, { size: Math.max(10, theme.fontSize - 3), anchor: 'start', fill: theme.muted });
     labelY = y + 28 + theme.fontSize;
   } else {
-    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
+    shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${strokeW}" stroke-dasharray="7 5"/>`;
   }
   return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === 'lane' ? 'lanes' : 'groups'}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === 'lane' ? 'lane' : 'group'}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== 'lane' ? ` data-lane-id="${esc(ref.lane)}"` : ''}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: 'start', weight: 650, fill: region?.text })}</g>`;
 }
@@ -1679,12 +1770,51 @@ function preserveWaypoints(path: Point[], pins: Point[]): Point[] {
   return result;
 }
 
-/** Layout every graph family with bundled ELK; sequence and fishbone have dedicated renderers. */
-export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Promise<RenderedDiagram> {
-  return renderGraphWithSpacing(spec, suppliedTheme, 0);
+function hasCrowdedRoutes(result: LayoutResult, elementGap: number): boolean {
+  const minNodeDist = Math.min(13, Math.max(9, Math.round(elementGap * 0.24)));
+  const minParallelDist = 11;
+  const segments: { a: Point; b: Point; route: Route; horizontal: boolean }[] = [];
+  for (const route of result.routes) {
+    for (const path of route.paths) {
+      for (let i = 1; i < path.length; i++) {
+        const a = path[i - 1], b = path[i];
+        const length = Math.hypot(b.x - a.x, b.y - a.y);
+        if (length < 0.1) continue;
+        const horizontal = Math.abs(a.y - b.y) < 0.01;
+        segments.push({ a, b, route, horizontal });
+        for (const box of result.nodes) {
+          if (box.ref.node.id === route.ref.edge.from || box.ref.node.id === route.ref.edge.to) continue;
+          if (segmentRectDistance(a, b, box) < minNodeDist) return true;
+        }
+      }
+    }
+  }
+  for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
+    const first = segments[i], second = segments[j];
+    if (first.route === second.route || first.horizontal !== second.horizontal) continue;
+    if (first.horizontal) {
+      const dist = Math.abs(first.a.y - second.a.y);
+      if (dist <= 0.5 || dist >= minParallelDist) continue;
+      const overlap = Math.min(Math.max(first.a.x, first.b.x), Math.max(second.a.x, second.b.x))
+        - Math.max(Math.min(first.a.x, first.b.x), Math.min(second.a.x, second.b.x));
+      if (overlap > 18) return true;
+    } else {
+      const dist = Math.abs(first.a.x - second.a.x);
+      if (dist <= 0.5 || dist >= minParallelDist) continue;
+      const overlap = Math.min(Math.max(first.a.y, first.b.y), Math.max(second.a.y, second.b.y))
+        - Math.max(Math.min(first.a.y, first.b.y), Math.min(second.a.y, second.b.y));
+      if (overlap > 18) return true;
+    }
+  }
+  return false;
 }
 
-async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, labelPass: number): Promise<RenderedDiagram> {
+/** Layout every graph family with bundled ELK; sequence and fishbone have dedicated renderers. */
+export async function renderGraph(spec: DiagramSpec, suppliedTheme: Theme): Promise<RenderedDiagram> {
+  return renderGraphWithSpacing(spec, suppliedTheme, 0, 0);
+}
+
+async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, labelPass: number, crowdingPass = 0): Promise<RenderedDiagram> {
   const requestedSpec = spec;
   const automaticColumns = spec.layout?.maxPerColumn === undefined;
   spec = { ...spec, layout: resolveLayout(spec) };
@@ -1764,12 +1894,19 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   // First resolve exactly the spacing the unadjusted diagram uses. Otherwise adding its
   // first offset could skip a label-driven reflow and unexpectedly move every other node.
   routeResult();
+  const currentGap = spec.layout?.elementGap ?? 56;
+  if (spec.type !== 'usecase' && crowdingPass < 2 && currentGap < 110 && hasCrowdedRoutes(result, currentGap)) {
+    return renderGraphWithSpacing({ ...requestedSpec, layout: { ...requestedSpec.layout,
+      elementGap: Math.ceil(currentGap * 1.35),
+      regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.3),
+    } }, suppliedTheme, labelPass, crowdingPass + 1);
+  }
   const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
   if (!baselineLabels) {
     return renderGraphWithSpacing({ ...requestedSpec, layout: { ...requestedSpec.layout,
-      elementGap: Math.ceil((spec.layout?.elementGap ?? 48) * 1.5),
-      regionGap: Math.ceil((spec.layout?.regionGap ?? 72) * 1.5),
-    } }, suppliedTheme, labelPass + 1);
+      elementGap: Math.ceil((spec.layout?.elementGap ?? 56) * 1.45),
+      regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.45),
+    } }, suppliedTheme, labelPass + 1, crowdingPass);
   }
   let labels = baselineLabels;
   if (hasManualPositions) {
@@ -1798,11 +1935,17 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
     const width = Math.max(...points.map(p => p.x)) - x + 24, height = Math.max(...points.map(p => p.y)) - y + 24;
     return `<mask id="${prefix}-crossing-${index}" maskUnits="userSpaceOnUse" x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width)}" height="${numeric(height)}"><rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(width)}" height="${numeric(height)}" fill="white"/>${arcs.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="${numeric(theme.lineWidth + 3)}"/>`).join('')}</mask>`;
   }).join('');
+  const palette = paletteOf(theme);
+  const darkBackground = luminance(theme.background === 'transparent' ? theme.surface : theme.background) < 0.2;
+  const secondaryEdgeColor = theme.secondary !== theme.primary;
   let displayIndex = 0;
   let paths = '';
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
     const dashed = route.ref.edge.dashed || ['dependency', 'include', 'extend', 'realization'].includes(kind);
+    const useSecondary = Boolean(dashed && palette && secondaryEdgeColor);
+    const edgeStroke = useSecondary ? theme.secondary : theme.primary;
+    const markerSuffix = useSecondary ? '-sec' : '';
     const edge = route.ref.edge;
     const defaultEnd = kind === 'flow' ? 'arrow' : ['dependency', 'include', 'extend'].includes(kind) ? 'open' : ['inheritance', 'realization'].includes(kind) ? 'triangle' : '';
     const end = edge.arrow ? (edge.arrow === 'none' ? '' : edge.arrow) : defaultEnd;
@@ -1812,19 +1955,23 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : '';
-      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ''}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ''}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ''}/>`;
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(edgeStroke)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ''}${start && index === 0 ? ` marker-start="url(#${prefix}-${start}${markerSuffix})"` : ''}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end}${markerSuffix})"` : ''}/>`;
     }
     paths += '</g>';
   }
-  const palette = paletteOf(theme);
   const regionIds = [...(spec.groups ?? []).map(group => group.id), ...(spec.lanes ?? []).map(lane => lane.id)];
   const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map(box => renderContainer(box, theme, direction,
     palette && regionIds.includes(box.ref.originalId) ? regionPaint(theme, palette, regionIds.indexOf(box.ref.originalId)) : undefined)).join('');
   const paletteDefs = gradientDefs(nodes.flatMap(node => node.paint ? [node.paint] : []));
   const nodeShapes = result.nodes.map(box => renderNode(box, spec)).join('');
   const labelShapes = labels.map(label => {
+    const kind = edgeKind(label.ref.edge, spec.type);
+    const dashed = label.ref.edge.dashed || ['dependency', 'include', 'extend', 'realization'].includes(kind);
+    const labelColor = dashed && palette && secondaryEdgeColor
+      ? (darkBackground ? mix(theme.secondary, '#ffffff', 0.35) : mix(theme.secondary, '#0f172a', 0.24))
+      : theme.text;
     const leader = label.leader ? `<path class="uml-label-leader" d="M${numeric(label.anchor.x)} ${numeric(label.anchor.y)} L${numeric(Math.max(label.x, Math.min(label.x + label.width, label.anchor.x)))} ${numeric(Math.max(label.y, Math.min(label.y + label.height, label.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : '';
-    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label.ref.key)}/${label.role}" data-layout-x="${numeric(label.x)}" data-layout-y="${numeric(label.y)}" data-editor-key="edges/${spec.edges!.indexOf(label.ref.edge)}" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="3" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: theme.muted })}</g>`;
+    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label.ref.key)}/${label.role}" data-layout-x="${numeric(label.x)}" data-layout-y="${numeric(label.y)}" data-editor-key="edges/${spec.edges!.indexOf(label.ref.edge)}" data-edge-id="${esc(label.ref.edge.id ?? label.ref.id)}" data-from="${esc(label.ref.edge.from)}" data-to="${esc(label.ref.edge.to)}" data-label-role="${label.role}">${leader}<rect x="${numeric(label.x)}" y="${numeric(label.y)}" width="${numeric(label.width)}" height="${numeric(label.height)}" rx="4" fill="${esc(theme.background === 'transparent' ? theme.surface : theme.background)}"/>${text(label.x + label.width / 2, label.y + 5 + label.size, label.value, theme, { size: label.size, fill: labelColor, weight: 550 })}</g>`;
   }).join('');
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) { minX = Math.min(minX, box.x - theme.lineWidth); minY = Math.min(minY, box.y - theme.lineWidth); maxX = Math.max(maxX, box.x + box.width + theme.lineWidth); maxY = Math.max(maxY, box.y + box.height + theme.lineWidth); }

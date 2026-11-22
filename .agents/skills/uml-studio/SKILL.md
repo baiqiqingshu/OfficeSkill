@@ -35,7 +35,7 @@ node scripts/diagram.mjs --json '{"type":"flowchart","title":"需求评审","nod
 # 2. 对已有 HTML 或 JSON 直接增量修改并重导出（支持 --set 与 --patch）
 node scripts/diagram.mjs output.html --set theme=industrial --set title="更新标题" --out output.html --image output.png
 
-# 3. 速查 18 类图 / 18 套主题（含 6 套多色）/ 4 类最小结构（约 1KB，无需读完整 Schema）
+# 3. 速查 18 类图 / 19 套主题（含 7 套多色，默认 modern 现代多彩）/ 4 类最小结构（约 1KB，无需读完整 Schema）
 node scripts/diagram.mjs --presets
 node scripts/diagram.mjs --example sequence
 
@@ -70,7 +70,7 @@ node scripts/diagram.mjs saved.html --diagram 2 --image selected.png
 node scripts/diagram.mjs saved.html --all --out-dir images --format webp --scale 1
 ```
 
-默认海蓝主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。检查命令退出码和生成回执。SVG、PNG、JPEG、WebP 均可在 Node 中直接导出，无需浏览器。多图必须用 `--diagram` 选择从 1 开始的序号或图形 id，或用 `--all --out-dir` 批量输出。
+默认 `modern`（现代多彩）主题、均衡布局、隐藏图内标题；只有用户要求标题时才设置 `layout.showTitle:true`。检查命令退出码和生成回执。SVG、PNG、JPEG、WebP 均可在 Node 中直接导出，无需浏览器。多图必须用 `--diagram` 选择从 1 开始的序号或图形 id，或用 `--all --out-dir` 批量输出。
 
 ### 纯文本草稿模式
 
@@ -124,7 +124,7 @@ npm run demo:verify
 ## JSON 规则
 
 - 主结构见 schema。除通用元数据外，图节点、时序和鱼骨数据不可混用；未知字段会报错，不静默丢弃。
-- 默认 `theme:"ocean"`；还支持 `white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`，以及多色主题 `vivid`（缤纷彩色，实色）、`pastel`（马卡龙，浅色）、`business`（商务多彩，浅色）、`steel`（工业渐变）、`aurora`（极光渐变）、`neon`（暗夜霓虹，深色底）。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/industrial.json`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
+- 默认 `theme:"modern"`（现代多彩：纯白底、超浅高明度卡片填充 + 饱满彩色描边 + 深石板黑标题、主流程深蓝实线与返回/虚线翠绿箭头、暖琥珀圆角备注卡片）；还支持 `ocean,white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`，以及多色主题 `vivid`（缤纷彩色，实色）、`pastel`（马卡龙，浅色）、`business`（商务多彩，浅色）、`steel`（工业渐变）、`aurora`（极光渐变）、`neon`（暗夜霓虹，深色底）。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/industrial.json`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
 - 多色渲染：`style.palette`（颜色数组）、`style.paletteMode: mono|tint|solid|gradient`、`style.paletteBy: auto|group|kind|node`。`auto` 有分组/泳道时按区域着色，否则逐元素轮换；起止、分叉、汇合保持主色；分组/泳道/时序 box 按区域浅染；时序参与者、鱼骨分类同样轮换。任意单色主题可通过“调整样式 → 多色模式”叠加默认调色板。渐变使用 SVG 线性渐变，原生导出一致。
 - 默认字号 16、字重 500（节点标题约 700），比旧版更大更粗；仍可用 `style.fontSize/fontWeight` 调整。
 - 色值支持十六进制 `#RGB` / `#RRGGBB` 和 `transparent`。网页支持粘贴色值、系统拾色器与精选色板。PNG / WebP / SVG 可保留透明；JPEG 无透明通道，铺白底。字体使用本机字体；Node 导出可重复传入 `--font-file path.ttf`，不下载远程字体。
@@ -145,7 +145,7 @@ npm run demo:verify
 - 合并重复措辞、去掉空泛修饰，保留否定、阈值、时限、责任人及用户指定术语等会改变图意的信息。例如“系统对用户提交的订单信息进行完整性校验”可写成“校验订单完整性”。
 - 必要解释放在简短 `detail`、图的 `description` 或图外说明中，避免用长 `detail` 把节点再次撑成段落；复杂内容按视角拆图。用户要求逐字保留时遵循原文，不擅自删减节点、关系或业务条件，也不用缩小字号掩盖冗长。
 
-`layout.mode` 支持 `compact`、`balanced`（默认）、`spacious`、`grid`。紧凑默认元素 / 区域间距为 24 / 40；均衡为 48 / 72；网格默认每列 3 个节点。显式 `layout.elementGap/regionGap` 优先于 `style.gap`，后者优先于模式默认值。网页切换模式会清除间距覆盖，使预设立即生效。
+`layout.mode` 支持 `compact`、`balanced`（默认）、`spacious`、`grid`。紧凑默认元素 / 区域间距为 32 / 48；均衡为 56 / 84；宽松为 88 / 120；网格默认 36 / 56 且每列 3 个节点。显式 `layout.elementGap/regionGap` 优先于 `style.gap`，后者优先于模式默认值。网页切换模式会清除间距覆盖，使预设立即生效。走线路由内置通道中线寻路、贴边避让及并行线距惩罚，检测到线条贴近节点或并行线拥挤时会自动适度扩距回流。
 - 用例图按角色关联排列业务用例，将包含 / 扩展能力放入辅助列；比较行序与角色在边界两侧的位置，优先避免直线穿过无关元素，再减少交叉和线长。角色的同侧关联共用端口，椭圆端点按实际轮廓裁切；保留显式分组、嵌套边界及每列数量限制。
 - 其它节点图按连接关系布局：先分离回退边，再由 ELK 排列主流程；回退关系仍保留并从侧边绕回，不把返工步骤排到入口之前。布局优先让同一连接层级的节点共享行 / 列，保留已形成的中心线对齐；混合高度的横向主链不应改为顶边对齐后再用折线补偿。同一方向的多条关系复用源节点端口，再分配目标端口。间距配置不会切换到忽略连接关系的数组平铺。
 - 同级分组区域（含嵌套分组）横向排列。泳道按 `direction` 连续相接，共用分隔边界和流程长度，`regionGap` 不在泳道之间留缝。默认道内节点沿泳道主轴排列；从完整流程识别回退关系，再确定道内先后，避免跨泳道回路把返工步骤排到入口之前。显式网格折列和嵌套分组保留各自布局。跨区域 / 跨列直接相连节点优先同一行；横向泳道对应同一列。对齐不得导致节点重叠、破坏列内先后关系或挤出所属区域；无法同时满足时保留顺序与避让。
