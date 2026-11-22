@@ -6731,8 +6731,8 @@ const base = {
   secondary: "#138e94",
   border: "#b4ccd9",
   fontFamily: "Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif",
-  fontSize: 15,
-  fontWeight: 400,
+  fontSize: 16,
+  fontWeight: 500,
   fontStyle: "normal",
   textDecoration: "none",
   lineWidth: 1.6,
@@ -6753,7 +6753,92 @@ const themes = {
   rose: { ...base, background: "#fff4f5", surface: "#fffdfd", text: "#653c49", muted: "#987180", primary: "#b94868", secondary: "#b57a43", border: "#e8bdc9", radius: 10 },
   amber: { ...base, background: "#fff9eb", surface: "#fffef9", text: "#62451e", muted: "#927b56", primary: "#b87513", secondary: "#737f3c", border: "#e3c994", radius: 6 },
   slate: { ...base, background: "#f3f5f7", surface: "#ffffff", text: "#293544", muted: "#687687", primary: "#50647d", secondary: "#648a97", border: "#c4cdd7", radius: 4 },
-  mint: { ...base, background: "#eefbf6", surface: "#fbfffd", text: "#254e46", muted: "#60877b", primary: "#19866c", secondary: "#438fa6", border: "#b3ddcf", radius: 14 }
+  mint: { ...base, background: "#eefbf6", surface: "#fbfffd", text: "#254e46", muted: "#60877b", primary: "#19866c", secondary: "#438fa6", border: "#b3ddcf", radius: 14 },
+  vivid: {
+    ...base,
+    background: "#ffffff",
+    surface: "#ffffff",
+    text: "#1e293b",
+    muted: "#64748b",
+    primary: "#475569",
+    secondary: "#3b82f6",
+    border: "#cbd5e1",
+    radius: 10,
+    palette: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"],
+    paletteMode: "solid",
+    paletteBy: "auto"
+  },
+  pastel: {
+    ...base,
+    background: "#fbfaf7",
+    surface: "#ffffff",
+    text: "#2d3142",
+    muted: "#6b7083",
+    primary: "#5c6378",
+    secondary: "#5b8def",
+    border: "#d8dae3",
+    radius: 12,
+    palette: ["#5b8def", "#2fb5a3", "#f29e4c", "#e86a92", "#9b7bd8", "#52b788", "#e0b13c", "#4aa3c7"],
+    paletteMode: "tint",
+    paletteBy: "auto"
+  },
+  business: {
+    ...base,
+    background: "#ffffff",
+    surface: "#ffffff",
+    text: "#1b2a3a",
+    muted: "#5c6b7a",
+    primary: "#3d4b5c",
+    secondary: "#1d4e89",
+    border: "#c9d2dc",
+    radius: 4,
+    palette: ["#1d4e89", "#00a6a6", "#e3a62f", "#d1495b", "#4f772d", "#6c4f9c"],
+    paletteMode: "tint",
+    paletteBy: "auto"
+  },
+  steel: {
+    ...base,
+    background: "#f4f6f9",
+    surface: "#ffffff",
+    text: "#1f2a37",
+    muted: "#5b6676",
+    primary: "#4a5868",
+    secondary: "#2b6cb0",
+    border: "#a9b4c2",
+    radius: 4,
+    lineWidth: 1.5,
+    palette: ["#1f5fa8", "#2f7fb8", "#3b8f9e", "#5a6f8f", "#d9772b", "#6b7a8c"],
+    paletteMode: "gradient",
+    paletteBy: "auto"
+  },
+  aurora: {
+    ...base,
+    background: "#ffffff",
+    surface: "#ffffff",
+    text: "#1e1b4b",
+    muted: "#5b5b7a",
+    primary: "#4b5563",
+    secondary: "#6366f1",
+    border: "#d4d4e6",
+    radius: 12,
+    palette: ["#6366f1", "#0ea5e9", "#14b8a6", "#f97316", "#ec4899", "#a855f7"],
+    paletteMode: "gradient",
+    paletteBy: "auto"
+  },
+  neon: {
+    ...base,
+    background: "#111827",
+    surface: "#1f2937",
+    text: "#e5e7eb",
+    muted: "#9ca3af",
+    primary: "#9ca3af",
+    secondary: "#22d3ee",
+    border: "#374151",
+    radius: 8,
+    palette: ["#22d3ee", "#a3e635", "#f472b6", "#fbbf24", "#818cf8", "#34d399"],
+    paletteMode: "solid",
+    paletteBy: "auto"
+  }
 };
 const themeLabels = {
   ocean: "海洋蓝",
@@ -6767,7 +6852,13 @@ const themeLabels = {
   rose: "玫瑰",
   amber: "琥珀",
   slate: "岩灰",
-  mint: "薄荷"
+  mint: "薄荷",
+  vivid: "缤纷彩色",
+  pastel: "马卡龙",
+  business: "商务多彩",
+  steel: "工业渐变",
+  aurora: "极光渐变",
+  neon: "暗夜霓虹"
 };
 const fontPresets = [
   { label: "中文无衬线", value: base.fontFamily },
@@ -6858,8 +6949,12 @@ const style = object({
   radius: num(0, 32),
   nodeWidth: num(80, 600),
   nodeHeight: num(32, 300),
-  gap: num(24, 240)
+  gap: num(24, 240),
+  palette: { type: "array", items: color, minItems: 1, maxItems: 16, description: "多色调色板；元素颜色按 paletteBy 轮换。" },
+  paletteMode: { ...en("mono", "tint", "solid", "gradient"), description: "mono 单色；tint 浅色填充彩色描边；solid 实色填充；gradient 渐变填充。" },
+  paletteBy: { ...en("auto", "group", "kind", "node"), description: "auto：有分组/泳道按分组，否则按节点顺序。" }
 });
+const edgeArrow = en("none", "arrow", "open", "triangle", "circle", "cross");
 const coordinate = num(-1e6, 1e6);
 const point = object({ x: coordinate, y: coordinate }, ["x", "y"]);
 const adjustmentMap = (values) => ({
@@ -6883,7 +6978,8 @@ const layout = object({
   elementGap: num(8, 400),
   maxPerColumn: integer(0, 30),
   nodeMaxWidth: num(0, 1e5),
-  nodeMaxHeight: num(0, 1e5)
+  nodeMaxHeight: num(0, 1e5),
+  autonumber: { type: "boolean", default: true, description: "时序图消息编号；Mermaid 导入默认关闭。" }
 });
 const cause = object({ label, children: array({ $ref: "#/definitions/cause" }) }, ["label"]);
 const specSchema = {
@@ -6897,13 +6993,14 @@ const specSchema = {
     style,
     layout,
     direction: en("TB", "LR"),
-    nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note"), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
-    edges: array(object({ id, from: id, to: id, label: str, kind: en("flow", "association", "dependency", "include", "extend", "inheritance", "realization", "aggregation", "composition"), dashed: { type: "boolean" }, fromLabel: str, toLabel: str }, ["from", "to"])),
+    nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note", "terminal", "subroutine", "io", "hexagon", "circle", "trapezoid"), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
+    edges: array(object({ id, from: id, to: id, label: str, kind: en("flow", "association", "dependency", "include", "extend", "inheritance", "realization", "aggregation", "composition"), dashed: { type: "boolean" }, fromLabel: str, toLabel: str, arrow: edgeArrow, startArrow: edgeArrow, thick: { type: "boolean" } }, ["from", "to"])),
     groups: array(object({ id, label, parent: id, kind: en("boundary", "package", "node") }, ["id", "label"])),
     lanes: array(object({ id, label }, ["id", "label"])),
-    participants: array(object({ id, label, kind: en("actor", "participant", "database") }, ["id", "label"])),
-    messages: array(object({ from: id, to: id, label: str, kind: en("sync", "async", "return", "create", "destroy"), activate: { type: "boolean" }, deactivate: { type: "boolean" } }, ["from", "to", "label"])),
-    fragments: array(object({ kind: en("alt", "opt", "loop", "par"), label: str, from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 }, elseAt: { type: "integer", minimum: 0 }, elseLabel: str }, ["kind", "label", "from", "to"])),
+    participants: array(object({ id, label, kind: en("actor", "participant", "database", "boundary", "control", "entity", "collections", "queue") }, ["id", "label"])),
+    boxes: array(object({ label: str, participants: array(id, 1), color }, ["label", "participants"])),
+    messages: array(object({ from: id, to: id, label: str, kind: en("sync", "async", "return", "create", "destroy", "note", "divider"), activate: { type: "boolean" }, deactivate: { type: "boolean" }, arrow: en("filled", "open", "none", "cross"), dashed: { type: "boolean" }, bidirectional: { type: "boolean" }, position: en("left", "right", "over") }, ["from", "to", "label"])),
+    fragments: array(object({ kind: en("alt", "opt", "loop", "par", "critical", "break", "rect"), label: str, from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 }, elseAt: { type: "integer", minimum: 0 }, elseLabel: str, elses: array(object({ at: { type: "integer", minimum: 0 }, label: str }, ["at"])), color }, ["kind", "label", "from", "to"])),
     fishbone: object({ effect: label, headStyle: { ...en(...fishboneHeadStyles), default: "classic", description: "默认保留原版鱼头与比例；其余轮廓仅在显式选择时应用，不改变原因结构。" }, categories: array(object({ id, label, causes: array({ $ref: "#/definitions/cause" }, 1) }, ["id", "label", "causes"]), 1) }, ["effect", "categories"])
   }, ["version", "type", "title"]),
   allOf: [
@@ -6970,11 +7067,13 @@ function validateSpec(value) {
     for (const [i, m] of spec.messages.entries()) if (!participants.has(m.from) || !participants.has(m.to)) throw new Error(`第 ${i + 1} 条消息引用不存在的参与者`);
     for (const f of spec.fragments ?? []) {
       if (f.from > f.to || f.to >= spec.messages.length) throw new Error(`组合片段 ${f.label} 的消息范围无效`);
-      if (f.elseAt !== void 0 && (f.kind !== "alt" && f.kind !== "par" || f.elseAt <= f.from || f.elseAt > f.to)) throw new Error(`组合片段 ${f.label} 的 elseAt 无效`);
+      const branches = [...f.elseAt !== void 0 ? [f.elseAt] : [], ...(f.elses ?? []).map((item) => item.at)];
+      if (branches.length && (!["alt", "par", "critical"].includes(f.kind) || branches.some((at) => at <= f.from || at > f.to))) throw new Error(`组合片段 ${f.label} 的 elseAt 无效（含 elses 分支位置）`);
     }
+    for (const box of spec.boxes ?? []) for (const id2 of box.participants) if (!participants.has(id2)) throw new Error(`参与者分组 ${box.label} 引用不存在的参与者：${id2}`);
   }
   if (spec.fishbone) unique(spec.fishbone.categories, "鱼骨分类");
-  if (spec.type !== "sequence" && (spec.participants || spec.messages || spec.fragments)) throw new Error("只有 sequence 可以使用 participants/messages/fragments");
+  if (spec.type !== "sequence" && (spec.participants || spec.messages || spec.fragments || spec.boxes)) throw new Error("只有 sequence 可以使用 participants/messages/fragments/boxes");
   if (spec.type !== "fishbone" && spec.fishbone) throw new Error("只有 fishbone 可以使用 fishbone 数据");
   if (spec.type === "sequence" || spec.type === "fishbone") {
     if (spec.nodes || spec.edges || spec.groups || spec.lanes) throw new Error(`${spec.type} 不能包含图节点、连线或分组字段`);
@@ -98077,6 +98176,68 @@ function crossingPaths(paths, mode, lineWidth, obstacles = []) {
   }
   return { data: pieces.map((parts) => parts.join(" ")), masks };
 }
+const defaultPalette = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
+function parseHex(value) {
+  const match = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(value.trim());
+  if (!match) return;
+  const hex = match[1].length === 3 ? match[1].split("").map((c) => c + c).join("") : match[1];
+  return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+}
+function toHex([r, g, b]) {
+  return `#${[r, g, b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("")}`;
+}
+function mix(color2, other, amount) {
+  const a = parseHex(color2), b = parseHex(other);
+  if (!a || !b) return color2;
+  return toHex(a.map((v, i) => v + (b[i] - v) * amount));
+}
+function luminance(color2) {
+  const rgb = parseHex(color2);
+  if (!rgb) return 1;
+  const [r, g, b] = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrastText(fill, dark = "#1f2937") {
+  return luminance(fill) > 0.42 ? dark : "#ffffff";
+}
+function paletteOf(theme) {
+  const mode = theme.paletteMode ?? (theme.palette?.length ? "tint" : "mono");
+  if (mode === "mono") return;
+  const colors = (theme.palette?.length ? theme.palette : defaultPalette).filter((color2) => parseHex(color2));
+  if (!colors.length) return;
+  return { mode, by: theme.paletteBy ?? "auto", colors };
+}
+function paintFor(theme, palette, index) {
+  const slot = (index % palette.colors.length + palette.colors.length) % palette.colors.length;
+  const color2 = palette.colors[slot];
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
+  if (palette.mode === "tint") {
+    const fill = darkBackground ? mix(color2, "#000000", 0.62) : mix(color2, "#ffffff", 0.86);
+    const text22 = darkBackground ? mix(color2, "#ffffff", 0.78) : mix(color2, "#111827", 0.62);
+    return { fill, stroke: color2, text: text22, muted: mix(text22, fill, 0.3), accent: darkBackground ? mix(color2, "#ffffff", 0.3) : mix(color2, "#000000", 0.15) };
+  }
+  if (palette.mode === "solid") {
+    const text22 = contrastText(color2);
+    return { fill: color2, stroke: mix(color2, "#000000", 0.22), text: text22, muted: mix(text22, color2, 0.22), accent: text22 };
+  }
+  const from = mix(color2, "#ffffff", 0.38), to = mix(color2, "#000000", 0.12);
+  const text2 = contrastText(mix(from, to, 0.5));
+  return { fill: `url(#uml-palette-${slot})`, stroke: mix(color2, "#000000", 0.28), text: text2, muted: mix(text2, color2, 0.2), accent: text2, gradient: { id: `uml-palette-${slot}`, from, to } };
+}
+function gradientDefs(paints) {
+  const seen = /* @__PURE__ */ new Map();
+  for (const paint2 of paints) if (paint2.gradient) seen.set(paint2.gradient.id, paint2.gradient);
+  if (!seen.size) return "";
+  return `<defs>${[...seen.values()].map((g) => `<linearGradient id="${g.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g.from}"/><stop offset="1" stop-color="${g.to}"/></linearGradient>`).join("")}</defs>`;
+}
+function regionPaint(theme, palette, index) {
+  const color2 = palette.colors[(index % palette.colors.length + palette.colors.length) % palette.colors.length];
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
+  return darkBackground ? { fill: mix(color2, "#000000", 0.82), stroke: mix(color2, "#000000", 0.35), text: mix(color2, "#ffffff", 0.6), header: mix(color2, "#000000", 0.6) } : { fill: mix(color2, "#ffffff", 0.94), stroke: mix(color2, "#ffffff", 0.35), text: mix(color2, "#000000", 0.35), header: mix(color2, "#ffffff", 0.8) };
+}
 let graphNumber = 0;
 let layoutEngine;
 function numeric(value) {
@@ -98157,6 +98318,13 @@ function createNode(node, index, spec, base2) {
     physical: "server"
   };
   const kind = node.kind ?? defaults2[spec.type] ?? "action";
+  const palette = paletteOf(theme);
+  let paint2;
+  if (palette && !sourceNode.style?.surface && !uncoloured.has(kind)) {
+    paint2 = paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
+    if (kind === "actor") theme.primary = paint2.stroke;
+    else Object.assign(theme, { surface: paint2.fill, border: paint2.stroke, text: paint2.text, muted: paint2.muted, primary: paint2.accent, secondary: palette.mode === "tint" ? paint2.stroke : paint2.text });
+  }
   const size = theme.fontSize;
   const smaller = Math.max(10, size - 2);
   const label2 = measure$1(node.label, size);
@@ -98208,6 +98376,16 @@ function createNode(node, index, spec, base2) {
   } else if (kind === "note") {
     width += 12;
     height += 8;
+  } else if (kind === "terminal") {
+    width += Math.max(16, height / 2);
+  } else if (kind === "subroutine") {
+    width += 24;
+  } else if (kind === "io" || kind === "trapezoid") {
+    width += 32;
+  } else if (kind === "hexagon") {
+    width += 36;
+  } else if (kind === "circle") {
+    width = height = Math.max(theme.nodeHeight, contentWidth + 28, contentHeight + 28);
   }
   let symbol, internalCaption;
   if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ["start", "end", "fork", "join"].includes(kind)) {
@@ -98222,7 +98400,16 @@ function createNode(node, index, spec, base2) {
   }
   const renderWidth = Math.ceil(width / 4) * 4, renderHeight = Math.ceil(height / 4) * 4;
   const fit = Math.min(1, spec.layout?.nodeMaxWidth ? spec.layout.nodeMaxWidth / renderWidth : 1, spec.layout?.nodeMaxHeight ? spec.layout.nodeMaxHeight / renderHeight : 1);
-  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight };
+  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight, paint: paint2 };
+}
+const uncoloured = /* @__PURE__ */ new Set(["start", "end", "fork", "join"]);
+function paletteSlot(node, kind, spec, palette) {
+  const regions = [...(spec.groups ?? []).map((group) => group.id), ...(spec.lanes ?? []).map((lane) => lane.id)];
+  const region = node.group ?? node.lane;
+  if ((palette.by === "group" || palette.by === "auto") && region && regions.includes(region)) return regions.indexOf(region);
+  const fallback = kind;
+  if (palette.by === "kind" || palette.by === "group") return [...new Set((spec.nodes ?? []).map((item) => item.kind ?? fallback))].indexOf(node.kind ?? fallback);
+  return (spec.nodes ?? []).filter((item) => !uncoloured.has(item.kind ?? "")).indexOf(node);
 }
 function edgeKind(edge, type2) {
   return edge.kind ?? (type2 === "class" || type2 === "usecase" ? "association" : "flow");
@@ -99058,12 +99245,20 @@ function clipEndpoint(point2, neighbor, box) {
   const rx = box.width / 2, ry = box.height / 2;
   const horizontal = Math.abs(point2.y - neighbor.y) < 0.01;
   const kind = box.ref.kind;
-  if (kind === "usecase" || kind === "start" || kind === "end") {
+  if (kind === "usecase" || kind === "start" || kind === "end" || kind === "circle") {
     if (horizontal) point2.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.sqrt(Math.max(0, 1 - ((point2.y - cy) / ry) ** 2));
     else point2.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.sqrt(Math.max(0, 1 - ((point2.x - cx) / rx) ** 2));
   } else if (kind === "decision") {
     if (horizontal) point2.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.max(0, 1 - Math.abs(point2.y - cy) / ry);
     else point2.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.max(0, 1 - Math.abs(point2.x - cx) / rx);
+  } else if (kind === "terminal" && horizontal) {
+    point2.x = cx + (neighbor.x < cx ? -1 : 1) * (rx - ry + Math.sqrt(Math.max(0, ry * ry - (point2.y - cy) ** 2)));
+  } else if (kind === "hexagon" && horizontal) {
+    const full = Math.min(18, box.width / 4), inset = full * (1 - Math.abs(point2.y - cy) / ry);
+    point2.x = neighbor.x < cx ? box.x + full - inset : box.x + box.width - full + inset;
+  } else if ((kind === "io" || kind === "trapezoid") && horizontal) {
+    const t = (point2.y - box.y) / box.height, skew = Math.min(16, box.width / 5);
+    point2.x = neighbor.x < cx ? box.x + skew * (1 - t) : box.x + box.width - skew * (kind === "io" ? t : 1 - t);
   } else if (kind === "actor" && horizontal) {
     const localY = point2.y - box.y;
     let halfWidth = box.width / 2 - 12;
@@ -99094,17 +99289,18 @@ function clipEndpoint(point2, neighbor, box) {
 }
 function markerDefinitions(prefix, theme) {
   const stroke = esc(theme.primary), background = esc(theme.background === "transparent" ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
+  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker><marker id="${prefix}-arrow-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle-start" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle-start" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-cross" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker><marker id="${prefix}-cross-start" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker></defs>`;
 }
-function renderContainer(box, theme, direction) {
+function renderContainer(box, theme, direction, region) {
   const { x, y, width: w, height: h, ref: ref2 } = box;
-  const border = esc(theme.border), surface = esc(theme.surface), primary = esc(theme.primary);
+  const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
+  const headerOpacity = region ? "1" : "0.08";
   let shape = "";
   let labelX = x + 16, labelY = y + theme.fontSize + 10;
   if (ref2.kind === "lane") {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (direction === "TB") shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref2.header)}" fill="${primary}" fill-opacity="0.08"/><path d="M${numeric(x)} ${numeric(y + ref2.header)} H${numeric(x + w)}" stroke="${border}"/>`;
-    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref2.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="0.08"/><path d="M${numeric(x + ref2.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
+    if (direction === "TB") shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref2.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref2.header)} H${numeric(x + w)}" stroke="${border}"/>`;
+    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref2.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref2.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
   } else if (ref2.kind === "package") {
     const tabWidth = Math.min(w - 24, Math.max(80, measure$1(ref2.label, theme.fontSize).width + 32));
     const tabHeight = ref2.header;
@@ -99116,7 +99312,7 @@ function renderContainer(box, theme, direction) {
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref2.kind}" data-adjustment-key="${ref2.kind === "lane" ? "lanes" : "groups"}/${esc(ref2.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref2.kind === "lane" ? "lane" : "group"}-id="${esc(ref2.originalId)}"${ref2.lane && ref2.kind !== "lane" ? ` data-lane-id="${esc(ref2.lane)}"` : ""}><title>${esc(ref2.label)}</title>${shape}${text(labelX, labelY, ref2.label, theme, { anchor: "start", weight: 650 })}</g>`;
+  return `<g class="uml-container uml-${ref2.kind}" data-adjustment-key="${ref2.kind === "lane" ? "lanes" : "groups"}/${esc(ref2.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref2.kind === "lane" ? "lane" : "group"}-id="${esc(ref2.originalId)}"${ref2.lane && ref2.kind !== "lane" ? ` data-lane-id="${esc(ref2.lane)}"` : ""}><title>${esc(ref2.label)}</title>${shape}${text(labelX, labelY, ref2.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
 }
 function centeredContent(ref2, x, y, width, height) {
   const { node, theme, kind } = ref2;
@@ -99190,6 +99386,23 @@ function renderNode(box, spec, adjustmentMetadata = true) {
     const tab = Math.min(w - 28, Math.max(56, w * 0.4));
     shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tab)} V${numeric(y + 20)} H${numeric(x + w)} V${numeric(y + h)} Z" ${common}/><path d="M${numeric(x)} ${numeric(y + 20)} H${numeric(x + tab)}" stroke="${stroke}"/>`;
     content = centeredContent(ref2, x, y + 22, w, h - 22);
+  } else if (kind === "terminal") {
+    shape = `${rect} rx="${numeric(h / 2)}" ${common}/>`;
+    content = centeredContent(ref2, x, y, w, h);
+  } else if (kind === "circle") {
+    shape = `<ellipse cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" rx="${numeric(w / 2)}" ry="${numeric(h / 2)}" ${common}/>`;
+    content = centeredContent(ref2, x, y, w, h);
+  } else if (kind === "subroutine") {
+    shape = `${rect} rx="${numeric(Math.min(4, theme.radius))}" ${common}/><path d="M${numeric(x + 10)} ${numeric(y)} V${numeric(y + h)} M${numeric(x + w - 10)} ${numeric(y)} V${numeric(y + h)}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"/>`;
+    content = centeredContent(ref2, x + 10, y, w - 20, h);
+  } else if (kind === "hexagon") {
+    const inset = Math.min(18, w / 4);
+    shape = `<path d="M${numeric(x + inset)} ${numeric(y)} H${numeric(x + w - inset)} L${numeric(x + w)} ${numeric(y + h / 2)} L${numeric(x + w - inset)} ${numeric(y + h)} H${numeric(x + inset)} L${numeric(x)} ${numeric(y + h / 2)} Z" ${common}/>`;
+    content = centeredContent(ref2, x + inset, y, w - inset * 2, h);
+  } else if (kind === "io" || kind === "trapezoid") {
+    const skew = Math.min(16, w / 5);
+    shape = kind === "io" ? `<path d="M${numeric(x + skew)} ${numeric(y)} H${numeric(x + w)} L${numeric(x + w - skew)} ${numeric(y + h)} H${numeric(x)} Z" ${common}/>` : `<path d="M${numeric(x + skew)} ${numeric(y)} H${numeric(x + w - skew)} L${numeric(x + w)} ${numeric(y + h)} H${numeric(x)} Z" ${common}/>`;
+    content = centeredContent(ref2, x + skew, y, w - skew * 2, h);
   } else if (kind === "note") {
     shape = `<path d="M${numeric(x)} ${numeric(y)} H${numeric(x + w - 18)} L${numeric(x + w)} ${numeric(y + 18)} V${numeric(y + h)} H${numeric(x)} Z" ${common}/><path d="M${numeric(x + w - 18)} ${numeric(y)} V${numeric(y + 18)} H${numeric(x + w)}" fill="none" stroke="${stroke}"/>`;
     content = centeredContent(ref2, x + 6, y + 10, w - 18, h - 16);
@@ -99875,17 +100088,28 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
     const dashed = route.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
-    const end = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
-    const start = kind === "aggregation" || kind === "composition" ? kind : "";
+    const edge = route.ref.edge;
+    const defaultEnd = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
+    const end = edge.arrow ? edge.arrow === "none" ? "" : edge.arrow : defaultEnd;
+    const start = edge.startArrow ? edge.startArrow === "none" ? "" : `${edge.startArrow}-start` : kind === "aggregation" || kind === "composition" ? kind : "";
+    const strokeWidth = theme.lineWidth * (edge.thick ? 2 : 1);
     paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" → "))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : "";
-      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
     }
     paths += "</g>";
   }
-  const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(box, theme, direction)).join("");
+  const palette = paletteOf(theme);
+  const regionIds = [...(spec.groups ?? []).map((group) => group.id), ...(spec.lanes ?? []).map((lane) => lane.id)];
+  const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(
+    box,
+    theme,
+    direction,
+    palette && regionIds.includes(box.ref.originalId) ? regionPaint(theme, palette, regionIds.indexOf(box.ref.originalId)) : void 0
+  )).join("");
+  const paletteDefs = gradientDefs(nodes.flatMap((node) => node.paint ? [node.paint] : []));
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
   const labelShapes = labels.map((label2) => {
     const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
@@ -99918,7 +100142,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const heading2 = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: "start", weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: "start", fill: theme.muted }) : "") : "";
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading2}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}${paletteDefs}<defs>${maskDefinitions}</defs>${heading2}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }
 class SpecialPositions {
@@ -100009,7 +100233,12 @@ function renderSequence(spec, theme) {
   const participants = spec.participants ?? [];
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
+  const boxes = spec.boxes ?? [];
+  const palette = paletteOf(theme);
+  const autonumber = spec.layout?.autonumber !== false;
+  const isEvent = (m) => m.kind === "note" || m.kind === "divider";
   const size = theme.fontSize;
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
   const participantWidth = Math.max(
     128,
     theme.nodeWidth,
@@ -100026,20 +100255,27 @@ function renderSequence(spec, theme) {
     lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40
   );
   const header = heading(spec, theme, width, "UML / SEQUENCE · 时间向下");
-  const top = header.bottom;
+  const boxOf = /* @__PURE__ */ new Map();
+  boxes.forEach((box, index) => box.participants.forEach((id2) => boxOf.set(id2, index)));
+  const boxHeader = boxes.length ? size * 1.4 + 18 : 0;
+  const top = header.bottom + boxHeader;
+  const symbolic = /* @__PURE__ */ new Set(["actor", "boundary", "control", "entity"]);
   const boxHeight = Math.max(
     76,
     size * 4,
     ...participants.map(
-      (p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (p.kind === "actor" ? 76 : 28)
+      (p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (symbolic.has(p.kind ?? "") ? 76 : 28)
     )
   );
+  const paints = participants.map((p, i) => palette ? paintFor(theme, palette, boxes.length && palette.by !== "node" && boxOf.has(p.id) ? boxOf.get(p.id) : i) : void 0);
   const x = new Map(
     participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x])
   );
   const ys = [];
   const rowLines = [], labelTops = [];
-  const guardSize = Math.max(11, size - 1), guardLeading = guardSize * 1.4;
+  const events = [];
+  const guardSize = Math.max(12, size - 1), guardLeading = guardSize * 1.4;
+  const tagSize = Math.max(12, size - 3);
   const orderedFragments = [...fragments].sort(
     (a, b) => b.to - b.from - (a.to - a.from)
   );
@@ -100048,70 +100284,97 @@ function renderSequence(spec, theme) {
       (other) => other.from <= fragment.from && other.to >= fragment.to
     ).length;
     const left = 36 + nested * 12, right = width - 36 - nested * 12;
-    const guardLines = wrap(
-      `[${fragment.label}]`,
-      Math.max(48, right - left - 96),
-      guardSize
-    );
-    const elseLines = wrap(
-      `[${fragment.elseLabel ?? (fragment.kind === "par" ? "并行分支" : "else")}]`,
-      Math.max(48, right - left - 32),
-      guardSize
-    );
+    const highlight = fragment.kind === "rect";
+    const guardLines = highlight || !fragment.label ? [] : wrap(`[${fragment.label}]`, Math.max(48, right - left - 96), guardSize);
+    const branchList = [
+      ...fragment.elseAt !== void 0 ? [{ at: fragment.elseAt, label: fragment.elseLabel }] : [],
+      ...fragment.elses ?? []
+    ].sort((a, b) => a.at - b.at);
+    const fallback = fragment.kind === "par" ? "并行分支" : fragment.kind === "critical" ? "option" : "else";
+    const branches = branchList.map((branch) => {
+      const lines = wrap(`[${branch.label ?? fallback}]`, Math.max(48, right - left - 32), guardSize);
+      return { at: branch.at, lines, height: lines.length * guardLeading + 36, y: 0 };
+    });
     return {
       fragment,
       left,
       right,
       guardLines,
-      elseLines,
-      headerHeight: Math.max(44, guardLines.length * guardLeading + 20) + 12,
-      elseHeight: elseLines.length * guardLeading + 36,
+      branches,
+      headerHeight: highlight ? 14 : Math.max(44, guardLines.length * guardLeading + 20) + 12,
       top: 0,
-      bottom: 0,
-      divider: 0
+      bottom: 0
     };
   });
   const starts = /* @__PURE__ */ new Map(), alternatives = /* @__PURE__ */ new Map(), ends = /* @__PURE__ */ new Map();
-  const addEvent = (events, index, box) => {
-    const list = events.get(index);
-    if (list) list.push(box);
-    else events.set(index, [box]);
+  const addEvent = (map, index, item) => {
+    const list = map.get(index);
+    if (list) list.push(item);
+    else map.set(index, [item]);
   };
   for (const box of frames) {
     addEvent(starts, box.fragment.from, box);
     addEvent(ends, box.fragment.to, box);
-    if (box.fragment.elseAt !== void 0)
-      addEvent(alternatives, box.fragment.elseAt, box);
+    for (const branch of box.branches) addEvent(alternatives, branch.at, { box, branch });
   }
-  for (const boxes of ends.values()) boxes.reverse();
+  for (const list of ends.values()) list.reverse();
+  const noteSpan = (m) => {
+    const sx = x.get(m.from) ?? 70, tx = x.get(m.to) ?? sx;
+    const textWidth = Math.min(300, Math.max(...m.label.split("\n").map((value) => measure(value, size))) + 28);
+    if (m.position === "left") {
+      const w2 = Math.max(96, textWidth);
+      return { left: sx - 14 - w2, width: w2 };
+    }
+    if (m.position === "right") {
+      const w2 = Math.max(96, textWidth);
+      return { left: sx + 14, width: w2 };
+    }
+    const lo = Math.min(sx, tx), hi = Math.max(sx, tx);
+    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 110);
+    return { left: (lo + hi) / 2 - w / 2, width: w };
+  };
   let cursor = top + boxHeight + 40;
+  let number2 = 0;
   for (let i = 0; i < messages.length; i++) {
-    const elseBoxes = alternatives.get(i), startBoxes = starts.get(i);
-    if (elseBoxes)
-      for (const box of elseBoxes) {
-        box.divider = cursor;
-        cursor += box.elseHeight;
-      }
-    if (startBoxes)
-      for (const box of startBoxes) {
-        box.top = cursor;
-        cursor += box.headerHeight;
-      }
+    for (const { branch } of alternatives.get(i) ?? []) {
+      branch.y = cursor;
+      cursor += branch.height;
+    }
+    for (const box of starts.get(i) ?? []) {
+      box.top = cursor;
+      cursor += box.headerHeight;
+    }
     const msg = messages[i];
-    const label2 = `${i + 1}  ${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
-    const available = msg.from === msg.to ? labelWidth - 56 : Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 48;
-    const lines = wrap(
-      label2,
-      Math.max(48, Math.min(labelWidth, available)),
-      size
-    );
-    const labelHeight = lines.length * size * 1.4;
-    const before = msg.kind === "create" ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12;
-    const y = cursor + before;
-    ys.push(y);
-    rowLines.push(lines);
-    labelTops.push(y - labelHeight - 12);
-    cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === "create" ? Math.max(messageGap, boxHeight / 2 + 20) : messageGap);
+    if (msg.kind === "divider") {
+      const lines = msg.label ? wrap(msg.label, Math.max(120, width / 2), size) : [];
+      const height2 = Math.max(36, lines.length * size * 1.4 + 18);
+      events[i] = { left: 36, top: cursor, width: width - 72, height: height2, lines };
+      ys.push(cursor + height2 / 2);
+      rowLines.push(lines);
+      labelTops.push(cursor);
+      cursor += height2 + messageGap / 2;
+    } else if (msg.kind === "note") {
+      const span = noteSpan(msg);
+      const lines = wrap(msg.label, span.width - 20, size);
+      const height2 = lines.length * size * 1.4 + 18;
+      events[i] = { ...span, top: cursor + 4, height: height2, lines };
+      ys.push(cursor + 4);
+      rowLines.push(lines);
+      labelTops.push(cursor + 4);
+      cursor += height2 + 12 + messageGap / 2;
+    } else {
+      number2++;
+      const label2 = `${autonumber ? `${number2}  ` : ""}${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
+      const available = msg.from === msg.to ? labelWidth - 56 : Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 48;
+      const lines = label2.trim() ? wrap(label2, Math.max(48, Math.min(labelWidth, available)), size) : [];
+      const labelHeight = lines.length * size * 1.4;
+      const before = msg.kind === "create" ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12;
+      const y = cursor + before;
+      ys.push(y);
+      rowLines.push(lines);
+      labelTops.push(y - labelHeight - 12);
+      cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === "create" ? Math.max(messageGap, boxHeight / 2 + 20) : messageGap);
+    }
     const endBoxes = ends.get(i);
     if (endBoxes) {
       let boundary = cursor - 10;
@@ -100123,8 +100386,9 @@ function renderSequence(spec, theme) {
     }
   }
   const messagePositions = messages.map((message, index) => {
-    const sx = x.get(message.from), tx = x.get(message.to);
-    const position = positions.at(`messages/${index}`, message.from === message.to ? sx + 18 : (sx + tx) / 2, ys[index]);
+    const sx = x.get(message.from) ?? 70, tx = x.get(message.to) ?? sx;
+    const anchor = isEvent(message) ? events[index].left : message.from === message.to ? sx + 18 : (sx + tx) / 2;
+    const position = positions.at(`messages/${index}`, anchor, ys[index]);
     ys[index] = position.y;
     labelTops[index] = labelTops[index] + position.dy;
     return position;
@@ -100141,11 +100405,25 @@ function renderSequence(spec, theme) {
     const original = createAt.has(p.id) ? ys[createAt.get(p.id)] - boxHeight / 2 : top;
     return positions.at(`participants/${p.id}`, 0, original).y;
   };
-  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
+  const stroke = esc(theme.primary);
+  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${stroke}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="seq-filled-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 0 4 L 10 8 Z" fill="${stroke}"/></marker><marker id="seq-open-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 1 4 L 10 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker></defs>` + gradientDefs(paints.filter((paint2) => !!paint2));
+  const canvasFill = esc(theme.background === "transparent" ? theme.surface : theme.background);
+  boxes.forEach((box, index) => {
+    const members = box.participants.map((id2) => x.get(id2)).filter((value) => value !== void 0);
+    if (!members.length) return;
+    const left = Math.min(...members) - participantWidth / 2 - 14, right = Math.max(...members) + participantWidth / 2 + 14;
+    const region = palette ? regionPaint(theme, palette, index) : void 0;
+    const fill = box.color && box.color !== "transparent" ? box.color : region?.fill ?? mix(theme.secondary, theme.background === "transparent" ? "#ffffff" : theme.background, darkBackground ? 0.82 : 0.92);
+    const boxTop = top - boxHeader - 4;
+    positions.include(left, boxTop, right - left, bottom + 20 - boxTop);
+    body += `<g class="uml-seq-box" data-editor-key="boxes/${index}"><rect x="${left}" y="${boxTop}" width="${right - left}" height="${bottom + 20 - boxTop}" rx="${Math.min(10, theme.radius + 2)}" fill="${esc(box.color === "transparent" ? "none" : fill)}"${box.color && box.color !== "transparent" ? ' fill-opacity="0.35"' : ""} stroke="${esc(region?.stroke ?? theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    if (box.label) body += text((left + right) / 2, boxTop + 10 + size, box.label, theme, { anchor: "middle", weight: 700, fill: region?.text ?? (box.color && box.color !== "transparent" ? contrastText(mix(fill, "#ffffff", 0.65)) : theme.text) });
+    body += `</g>`;
+  });
   let fragmentAnnotations = "";
   const guard = (left, top2, lines) => {
     const width2 = Math.max(...lines.map((value) => measure(value, guardSize))) + 8;
-    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, {
+    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${canvasFill}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, {
       anchor: "start",
       size: guardSize,
       fill: theme.muted
@@ -100157,27 +100435,19 @@ function renderSequence(spec, theme) {
     const position = positions.at(key, left, frameTop);
     const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
     positions.include(position.x, position.y, right - left, frameBottom - frameTop);
-    body += `<g data-editor-key="fragments/${index}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<g data-editor-key="fragments/${index}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
-    fragmentAnnotations += text(
-      left + 10,
-      frameTop + 18,
-      fragment.kind,
-      theme,
-      { anchor: "start", size: 12, weight: 700 }
-    );
-    fragmentAnnotations += guard(left + 76, frameTop + 8, box.guardLines);
-    if (fragment.elseAt !== void 0) {
-      body += line(
-        left,
-        box.divider,
-        right,
-        box.divider,
-        theme.border,
-        theme.lineWidth,
-        true
-      );
-      fragmentAnnotations += guard(left + 12, box.divider + 10, box.elseLines);
+    if (fragment.kind === "rect") {
+      const fill = fragment.color && fragment.color !== "transparent" ? fragment.color : mix(theme.secondary, theme.background === "transparent" ? "#ffffff" : theme.background, darkBackground ? 0.78 : 0.88);
+      body += `<g data-editor-key="${key}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(6, theme.radius)}" fill="${esc(fill)}" fill-opacity="0.7"/></g>`;
+      continue;
+    }
+    body += `<g data-editor-key="${key}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    const tagWidth = Math.max(54, measure(fragment.kind, tagSize) + 20);
+    fragmentAnnotations += `<g data-editor-key="${key}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + tagWidth} L ${left + tagWidth + 10} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    fragmentAnnotations += text(left + 10, frameTop + 18, fragment.kind, theme, { anchor: "start", size: tagSize, weight: 700 });
+    if (box.guardLines.length) fragmentAnnotations += guard(left + tagWidth + 22, frameTop + 8, box.guardLines);
+    for (const branch of box.branches) {
+      body += line(left, branch.y, right, branch.y, theme.border, theme.lineWidth, true);
+      fragmentAnnotations += guard(left + 12, branch.y + 10, branch.lines);
     }
     body += `</g>`;
     fragmentAnnotations += `</g>`;
@@ -100188,27 +100458,22 @@ function renderSequence(spec, theme) {
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)] : bottom;
     positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
-    body += line(
-      cx,
-      start,
-      cx,
-      Math.max(start, end),
-      theme.border,
-      theme.lineWidth,
-      true
-    );
+    body += line(cx, start, cx, Math.max(start, end), theme.border, theme.lineWidth, true);
     body += `</g>`;
   }
   const stacks = /* @__PURE__ */ new Map();
   const activationShapes = [];
   const drawActivation = (id2, activation, end) => {
     const ax = x.get(id2) - 6 + activation.depth * 5;
+    const paint2 = paints[participants.findIndex((p) => p.id === id2)];
+    const fill = paint2 ? paint2.gradient ? mix(paint2.stroke, "#ffffff", 0.7) : palette?.mode === "tint" ? paint2.fill : mix(paint2.fill, "#ffffff", 0.55) : theme.surface;
     activationShapes.push(
-      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
+      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(fill)}" stroke="${esc(paint2?.stroke ?? theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
     );
   };
   const sourceOffsets = [], targetOffsets = [];
   messages.forEach((m, i) => {
+    if (isEvent(m)) return;
     const source = stacks.get(m.from) ?? [];
     sourceOffsets[i] = source.length ? 6 + (source.length - 1) * 5 : 0;
     const target = stacks.get(m.to) ?? [];
@@ -100232,65 +100497,109 @@ function renderSequence(spec, theme) {
   for (const [id2, stack] of stacks)
     while (stack.length) drawActivation(id2, stack.pop(), bottom);
   body += activationShapes.join("");
-  for (const p of participants) {
+  participants.forEach((p, index) => {
     const cx = x.get(p.id), py = headerY(p);
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
+    const paint2 = paints[index];
+    const fill = esc(paint2?.fill ?? theme.surface), edge = esc(paint2?.stroke ?? theme.primary);
+    const ink = paint2 && !symbolic.has(p.kind ?? "") ? paint2.text : theme.text;
+    const sw = theme.lineWidth;
+    body += `<g data-editor-key="participants/${index}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
-    if (p.kind === "actor") {
-      const cy = py + 13;
-      body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, {
-        anchor: "middle",
-        weight: 600
-      });
+    if (symbolic.has(p.kind ?? "")) {
+      if (p.kind === "actor") {
+        const cy = py + 13;
+        body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else {
+        const cy = py + 28;
+        if (p.kind === "boundary") body += `<path d="M ${cx - 20} ${cy - 13} V ${cy + 13} M ${cx - 20} ${cy} H ${cx - 9}" fill="none" stroke="${edge}" stroke-width="${sw}"/><circle cx="${cx + 4}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        else if (p.kind === "control") body += `<circle cx="${cx}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><path d="M ${cx + 5} ${cy - 18} L ${cx - 1} ${cy - 13} L ${cx + 5} ${cy - 8}" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+        else body += `<circle cx="${cx}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><path d="M ${cx - 14} ${cy + 17} H ${cx + 14}" stroke="${edge}" stroke-width="${sw}"/>`;
+      }
+      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, { anchor: "middle", weight: 600, fill: ink });
     } else {
+      const left = cx - participantWidth / 2, right = cx + participantWidth / 2;
       if (p.kind === "database") {
-        const left = cx - participantWidth / 2;
         const top2 = py + 8;
         const bottom2 = py + boxHeight - 8;
-        body += `<path d="M ${left} ${top2} A ${participantWidth / 2} 8 0 0 1 ${cx + participantWidth / 2} ${top2} V ${bottom2} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom2} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-        body += `<ellipse cx="${cx}" cy="${top2}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-        body += `<path d="M ${left} ${bottom2} A ${participantWidth / 2} 8 0 0 0 ${cx + participantWidth / 2} ${bottom2}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<path d="M ${left} ${top2} A ${participantWidth / 2} 8 0 0 1 ${right} ${top2} V ${bottom2} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom2} Z" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<ellipse cx="${cx}" cy="${top2}" rx="${participantWidth / 2}" ry="8" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<path d="M ${left} ${bottom2} A ${participantWidth / 2} 8 0 0 0 ${right} ${bottom2}" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else if (p.kind === "queue") {
+        const r = 10;
+        body += `<path d="M ${left + r} ${py} H ${right - r} A ${r} ${boxHeight / 2} 0 0 1 ${right - r} ${py + boxHeight} H ${left + r} A ${r} ${boxHeight / 2} 0 0 1 ${left + r} ${py} Z" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><ellipse cx="${right - r}" cy="${py + boxHeight / 2}" rx="${r}" ry="${boxHeight / 2}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else if (p.kind === "collections") {
+        body += `<rect x="${left + 6}" y="${py - 6}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<rect x="${left}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
       } else {
-        body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<rect x="${left}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
       }
       body += text(
         cx,
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
         labelLines.join("\n"),
         theme,
-        { anchor: "middle", weight: 600 }
+        { anchor: "middle", weight: 600, fill: ink }
       );
     }
     body += `</g>`;
-  }
+  });
   body += fragmentAnnotations;
+  const noteFill = darkBackground ? "#3d3a2a" : "#fff8db", noteInk = darkBackground ? "#f5ecc8" : "#4a3f1c", noteEdge = darkBackground ? "#857a4a" : "#e2c870";
   messages.forEach((m, i) => {
-    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, messagePositions[i].x, ys[i])}>`;
+    const position = messagePositions[i];
+    if (isEvent(m)) {
+      const event = events[i];
+      const attrs = `${positions.attrs(`messages/${i}`, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
+      positions.include(event.left + position.dx, event.top + position.dy, event.width, event.height);
+      if (m.kind === "note") {
+        const { left, top: top2, width: w, height: h } = event;
+        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><path d="M ${left} ${top2} H ${left + w - 12} L ${left + w} ${top2 + 12} V ${top2 + h} H ${left} Z" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/><path d="M ${left + w - 12} ${top2} V ${top2 + 12} H ${left + w}" fill="none" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/>`;
+        body += text(left + w / 2, top2 + 9 + size, event.lines.join("\n"), theme, { anchor: "middle", fill: noteInk });
+      } else {
+        const cy = event.top + event.height / 2;
+        body += `<g class="uml-seq-divider" data-editor-key="messages/${i}" ${attrs}>${line(event.left, cy - 2, event.left + event.width, cy - 2, theme.border, theme.lineWidth)}${line(event.left, cy + 2, event.left + event.width, cy + 2, theme.border, theme.lineWidth)}`;
+        if (event.lines.length) {
+          const lw = Math.max(...event.lines.map((value) => measure(value, size))) + 28, lh = event.lines.length * size * 1.4 + 10;
+          const cx = event.left + event.width / 2;
+          body += `<rect x="${cx - lw / 2}" y="${cy - lh / 2}" width="${lw}" height="${lh}" rx="${Math.min(6, theme.radius)}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+          body += text(cx, cy - lh / 2 + 5 + size, event.lines.join("\n"), theme, { anchor: "middle", weight: 700 });
+        }
+      }
+      body += `</g>`;
+      return;
+    }
+    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, position.x, ys[i])}>`;
     const sx = x.get(m.from), tx = x.get(m.to), y = ys[i];
     const self2 = m.from === m.to;
     const sign = tx >= sx ? 1 : -1;
     const start = sx + (self2 ? sourceOffsets[i] : sign * sourceOffsets[i]);
     const end = m.kind === "create" ? tx - sign * participantWidth / 2 : tx - sign * targetOffsets[i];
     const kind = m.kind ?? "sync";
-    const dashed = kind === "return" || kind === "create";
-    const open = kind === "async" || kind === "create";
-    const path = self2 ? `M ${start} ${y} H ${sx + Math.min(80, column / 3)} Q ${sx + Math.min(80, column / 3) + 8} ${y} ${sx + Math.min(80, column / 3) + 8} ${y + 8} V ${y + 22} Q ${sx + Math.min(80, column / 3) + 8} ${y + 30} ${sx + Math.min(80, column / 3)} ${y + 30} H ${sx + targetOffsets[i]}` : `M ${start} ${y} H ${end}`;
-    body += `<path d="${path}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""} marker-end="url(#${open ? "seq-open" : "seq-filled"})"/>`;
+    const dashed = m.dashed ?? (kind === "return" || kind === "create");
+    const head = m.arrow ?? (kind === "async" || kind === "create" ? "open" : "filled");
+    const loopX = sx + Math.min(80, column / 3);
+    const path = self2 ? `M ${start} ${y} H ${loopX} Q ${loopX + 8} ${y} ${loopX + 8} ${y + 8} V ${y + 22} Q ${loopX + 8} ${y + 30} ${loopX} ${y + 30} H ${sx + targetOffsets[i]}` : `M ${start} ${y} H ${end}`;
+    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head})"` : "";
+    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}-start)"` : "";
+    body += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
+    if (head === "cross") {
+      const ex = self2 ? sx + targetOffsets[i] : end, ey = self2 ? y + 30 : y;
+      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${stroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
+    }
     const labelLines = rowLines[i];
-    const lx = (self2 ? sx + 18 : (start + end) / 2) + messagePositions[i].dx;
-    const ly = labelTops[i] + size * 1.1;
-    const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
-    const labelLeft = self2 ? lx - 4 : lx - lw / 2;
-    const messageLeft = Math.min(start, end, labelLeft);
-    positions.include(messageLeft, labelTops[i], Math.max(start, end, labelLeft + lw, self2 ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
-    body += `<rect x="${self2 ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
-    body += text(lx, ly, labelLines.join("\n"), theme, {
-      anchor: self2 ? "start" : "middle"
-    });
+    if (labelLines.length) {
+      const lx = (self2 ? sx + 18 : (start + end) / 2) + position.dx;
+      const ly = labelTops[i] + size * 1.1;
+      const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
+      const labelLeft = self2 ? lx - 4 : lx - lw / 2;
+      const messageLeft = Math.min(start, end, labelLeft);
+      positions.include(messageLeft, labelTops[i], Math.max(start, end, labelLeft + lw, self2 ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
+      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${canvasFill}"/>`;
+      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self2 ? "start" : "middle" });
+    }
     if (kind === "destroy")
-      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${stroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
   body += text(
@@ -100298,7 +100607,7 @@ function renderSequence(spec, theme) {
     height - 18,
     "实心箭头 同步 / 返回　空心箭头 异步 / 创建　× 生命周期结束",
     theme,
-    { anchor: "start", size: 11, fill: theme.muted }
+    { anchor: "start", size: 12, fill: theme.muted }
   );
   return positions.finish(theme, width, height, body);
 }
@@ -100361,6 +100670,8 @@ function renderFishbone(spec, theme) {
   spec = { ...spec, layout: resolveLayout(spec) };
   const positions = new SpecialPositions(spec);
   const data = spec.fishbone;
+  const palette = paletteOf(theme);
+  const categoryPaints = [];
   const size = theme.fontSize;
   const leading = size * 1.4;
   const elementGap = spec.layout?.elementGap ?? 24;
@@ -100481,13 +100792,16 @@ function renderFishbone(spec, theme) {
       const attachX = left + colWidth - 20 + categoryPosition.dx;
       positions.include(categoryPosition.x, categoryPosition.y, categoryWidth, categoryHeight);
       positions.include(attachX - 8, Math.min(spineY, outerY), 16, Math.abs(outerY - spineY));
+      const categoryPaint = palette ? paintFor(theme, palette, item.index) : void 0;
+      if (categoryPaint) categoryPaints.push(categoryPaint);
+      const categoryStroke = categoryPaint?.stroke ?? theme.secondary;
       body += `<g data-editor-key="categories/${item.index}" ${positions.attrs(categoryKey, categoryPosition.x, categoryPosition.y)}>`;
       body += line(
         attachX,
         spineY,
         tipX,
         outerY,
-        theme.secondary,
+        categoryStroke,
         theme.lineWidth + 0.5
       );
       const rowPositions = item.rows.map((row) => positions.at(
@@ -100522,7 +100836,7 @@ function renderFishbone(spec, theme) {
           const parentY = rowPositions[row.parent].y + parentRow.lines.length * leading / 2 + 6;
           body += `<path d="M ${parentX + 8} ${parentY} V ${lineY} H ${labelX}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
         }
-        body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? theme.secondary : theme.muted)}"/>`;
+        body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? categoryStroke : theme.muted)}"/>`;
         body += text(
           labelX + 5,
           ry - (row.lines.length - 1) * leading / 2,
@@ -100537,13 +100851,13 @@ function renderFishbone(spec, theme) {
         );
         body += `</g>`;
       });
-      body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
+      body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(categoryPaint?.fill ?? theme.surface)}" stroke="${esc(categoryStroke)}" stroke-width="${theme.lineWidth}"/>`;
       body += text(
         tipX,
         categoryY + 12 + size + 1,
         categoryLines.join("\n"),
         theme,
-        { size: size + 1, anchor: "middle", weight: 700 }
+        { size: size + 1, anchor: "middle", weight: 700, fill: categoryPaint?.text }
       );
       body += `</g>`;
     }
@@ -100583,6 +100897,7 @@ function renderFishbone(spec, theme) {
     theme,
     { anchor: "start", size: 11, fill: theme.muted }
   );
+  body += gradientDefs(categoryPaints);
   return positions.finish(theme, width, height, body);
 }
 async function renderDiagram(input) {
@@ -100795,6 +101110,7 @@ const _hoisted_18 = {
   role: "status"
 };
 const _hoisted_19 = { class: "canvas-footer" };
+const svgNamespace = "http://www.w3.org/2000/svg";
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "DiagramCanvas",
   props: {
@@ -100984,6 +101300,165 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       selectedPoint.value = -1;
       refreshPositionHandles();
     }
+    function layoutBox(element) {
+      const rect = element.getBoundingClientRect();
+      if (!rect.width && !rect.height) return;
+      const a = layoutPoint(rect.left, rect.top), b = layoutPoint(rect.right, rect.bottom);
+      if (!a || !b) return;
+      return { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), right: Math.max(a.x, b.x), bottom: Math.max(a.y, b.y) };
+    }
+    function descendantGroups(id2) {
+      const groups = applied.value?.groups ?? [];
+      const result = /* @__PURE__ */ new Set([id2]);
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (const group of groups) if (group.parent && result.has(group.parent) && !result.has(group.id)) {
+          result.add(group.id);
+          grew = true;
+        }
+      }
+      return result;
+    }
+    function createPreview(element, key, clientX, clientY) {
+      const board = artboard.value;
+      const [prefix, id2] = [key.slice(0, key.indexOf("/")), key.slice(key.indexOf("/") + 1)];
+      const moving = /* @__PURE__ */ new Set([element]);
+      const nodeIds = /* @__PURE__ */ new Set();
+      if (prefix === "nodes") nodeIds.add(id2);
+      if (prefix === "groups" || prefix === "lanes") {
+        const groups = prefix === "groups" ? descendantGroups(id2) : /* @__PURE__ */ new Set();
+        board.querySelectorAll(".uml-node[data-node-id], .uml-container[data-group-id]").forEach((item) => {
+          const group = item.getAttribute("data-group-id"), lane = item.getAttribute("data-lane-id");
+          const inside = prefix === "lanes" ? lane === id2 : !!group && groups.has(group);
+          if (!inside) return;
+          const target = item.closest("[data-adjustment-key]") ?? item;
+          moving.add(target);
+          const node = item.getAttribute("data-node-id");
+          if (node) nodeIds.add(node);
+        });
+      }
+      const moved = [...moving].map((item) => ({ element: item, transform: item.getAttribute("transform"), factor: 1 }));
+      const edges = [];
+      if (nodeIds.size) {
+        board.querySelectorAll("[data-waypoint-key]").forEach((group) => {
+          const moveStart = nodeIds.has(group.getAttribute("data-from") ?? ""), moveEnd = nodeIds.has(group.getAttribute("data-to") ?? "");
+          if (!moveStart && !moveEnd) return;
+          if (moveStart && moveEnd) {
+            moved.push({ element: group, transform: group.getAttribute("transform"), factor: 1 });
+            return;
+          }
+          const originals = [...group.querySelectorAll("path:not(.canvas-edge-hit):not(.canvas-live-edge)")];
+          const first = originals[0], last = originals[originals.length - 1];
+          if (!first || !last) return;
+          const firstLength = first.getTotalLength(), lastLength = last.getTotalLength();
+          const start = first.getPointAtLength(0), startNext = first.getPointAtLength(Math.min(8, firstLength));
+          const end = last.getPointAtLength(lastLength), endPrevious = last.getPointAtLength(Math.max(0, lastLength - 8));
+          const preview = last.cloneNode(false);
+          preview.removeAttribute("mask");
+          preview.setAttribute("class", "canvas-live-edge");
+          const markerStart = first.getAttribute("marker-start");
+          if (markerStart) preview.setAttribute("marker-start", markerStart);
+          group.append(preview);
+          for (const path of originals) path.setAttribute("visibility", "hidden");
+          edges.push({
+            group,
+            originals,
+            preview,
+            start: { x: start.x, y: start.y },
+            end: { x: end.x, y: end.y },
+            startVertical: Math.abs(startNext.y - start.y) > Math.abs(startNext.x - start.x),
+            endVertical: Math.abs(end.y - endPrevious.y) > Math.abs(end.x - endPrevious.x),
+            moveStart,
+            moveEnd
+          });
+        });
+        board.querySelectorAll(".uml-edge-label[data-adjustment-key]").forEach((label2) => {
+          const a2 = nodeIds.has(label2.getAttribute("data-from") ?? ""), b2 = nodeIds.has(label2.getAttribute("data-to") ?? "");
+          if ((a2 || b2) && !moving.has(label2)) moved.push({ element: label2, transform: label2.getAttribute("transform"), factor: a2 && b2 ? 1 : 0.5 });
+        });
+      }
+      const box = layoutBox(element);
+      const candidates = [];
+      board.querySelectorAll(`[data-adjustment-key^="${prefix}/"]`).forEach((item) => {
+        if (moving.has(item) || item.closest("[data-position-handles]")) return;
+        const candidate = layoutBox(item);
+        if (candidate) candidates.push(candidate);
+      });
+      const all = box ? [box, ...candidates] : candidates;
+      const extent = all.length ? { left: Math.min(...all.map((b2) => b2.left)), top: Math.min(...all.map((b2) => b2.top)), right: Math.max(...all.map((b2) => b2.right)), bottom: Math.max(...all.map((b2) => b2.bottom)) } : void 0;
+      const a = layoutPoint(clientX, clientY), b = layoutPoint(clientX + 6, clientY);
+      return { moved, edges, box, candidates, extent, threshold: a && b ? Math.abs(b.x - a.x) : 6 };
+    }
+    function snapAxis(delta, own, targets, threshold) {
+      let best;
+      for (const value of own) for (const target of targets) {
+        const diff = target - (value + delta);
+        if (Math.abs(diff) <= threshold && (!best || Math.abs(diff) < Math.abs(best.diff))) best = { diff, at: target };
+      }
+      return best ? { delta: delta + best.diff, at: best.at } : { delta };
+    }
+    function orthogonal(start, end, startVertical, endVertical) {
+      const r = (value) => Math.round(value * 10) / 10;
+      if (startVertical && endVertical) {
+        const my = (start.y + end.y) / 2;
+        return `M${r(start.x)} ${r(start.y)} V${r(my)} H${r(end.x)} V${r(end.y)}`;
+      }
+      if (!startVertical && !endVertical) {
+        const mx = (start.x + end.x) / 2;
+        return `M${r(start.x)} ${r(start.y)} H${r(mx)} V${r(end.y)} H${r(end.x)}`;
+      }
+      return startVertical ? `M${r(start.x)} ${r(start.y)} V${r(end.y)} H${r(end.x)}` : `M${r(start.x)} ${r(start.y)} H${r(end.x)} V${r(end.y)}`;
+    }
+    function drawGuides(preview, x, y) {
+      preview.guides?.remove();
+      preview.guides = void 0;
+      const root = layoutRoot();
+      if (!root || !preview.extent || x === void 0 && y === void 0) return;
+      const group = document.createElementNS(svgNamespace, "g");
+      group.setAttribute("class", "canvas-snap-guides");
+      const add = (x1, y1, x2, y2) => {
+        const guide = document.createElementNS(svgNamespace, "line");
+        for (const [name, value] of Object.entries({ x1, y1, x2, y2 })) guide.setAttribute(name, String(value));
+        guide.setAttribute("vector-effect", "non-scaling-stroke");
+        group.append(guide);
+      };
+      const { left, top, right, bottom } = preview.extent;
+      if (x !== void 0) add(x, top - 24, x, bottom + 24);
+      if (y !== void 0) add(left - 24, y, right + 24, y);
+      root.append(group);
+      preview.guides = group;
+    }
+    function applyPreview(drag, dx, dy) {
+      const preview = drag.preview;
+      if (!preview) {
+        if (drag.element) drag.element.setAttribute("transform", `translate(${dx} ${dy}) ${drag.originalTransform ?? ""}`);
+        return;
+      }
+      for (const item of preview.moved) item.element.setAttribute("transform", `translate(${dx * item.factor} ${dy * item.factor}) ${item.transform ?? ""}`);
+      for (const edge of preview.edges) {
+        const start = edge.moveStart ? { x: edge.start.x + dx, y: edge.start.y + dy } : edge.start;
+        const end = edge.moveEnd ? { x: edge.end.x + dx, y: edge.end.y + dy } : edge.end;
+        edge.preview.setAttribute("d", orthogonal(start, end, edge.startVertical, edge.endVertical));
+      }
+    }
+    function restorePreview(drag) {
+      const preview = drag.preview;
+      preview?.guides?.remove();
+      if (preview) {
+        for (const item of preview.moved) {
+          if (item.transform === null) item.element.removeAttribute("transform");
+          else item.element.setAttribute("transform", item.transform);
+        }
+        for (const edge of preview.edges) {
+          edge.preview.remove();
+          for (const path of edge.originals) path.removeAttribute("visibility");
+        }
+      } else if (drag.element) {
+        if (drag.originalTransform === null || drag.originalTransform === void 0) drag.element.removeAttribute("transform");
+        else drag.element.setAttribute("transform", drag.originalTransform);
+      }
+    }
     function beginPositionDrag(event) {
       if (!props.positionEditing || pending.value || !(event.target instanceof Element)) return false;
       const handle = event.target.closest("[data-waypoint-index]");
@@ -100998,39 +101473,70 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: selectedEdge.value, pointIndex: index, points: selectedWaypoints.value.map((point2) => ({ ...point2 })), dx: 0, dy: 0 };
         refreshPositionHandles();
       } else if (element) {
-        positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: element.getAttribute("data-adjustment-key"), element, originalTransform: element.getAttribute("transform"), dx: 0, dy: 0 };
+        const key = element.getAttribute("data-adjustment-key");
+        positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key, element, originalTransform: element.getAttribute("transform"), dx: 0, dy: 0 };
       }
       dragging.value = true;
       event.preventDefault();
       return true;
     }
-    function movePositionDrag(event) {
-      if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
-      const point2 = layoutPoint(event.clientX, event.clientY);
-      if (!point2) return true;
-      const drag = positionDrag;
-      if (Math.hypot(event.clientX - drag.clientX, event.clientY - drag.clientY) > 4) drag.moved = true;
-      drag.dx = Math.round((point2.x - drag.origin.x) * 100) / 100;
-      drag.dy = Math.round((point2.y - drag.origin.y) * 100) / 100;
-      if (drag.element) drag.element.setAttribute("transform", `translate(${drag.dx} ${drag.dy}) ${drag.originalTransform ?? ""}`);
+    let dragFrame = 0;
+    let dragEvent;
+    function flushPositionDrag() {
+      dragFrame = 0;
+      const drag = positionDrag, latest = dragEvent;
+      if (!drag || !latest) return;
+      const point2 = layoutPoint(latest.clientX, latest.clientY);
+      if (!point2) return;
+      if (Math.hypot(latest.clientX - drag.clientX, latest.clientY - drag.clientY) > 4) drag.moved = true;
+      if (!drag.moved) return;
+      let dx = point2.x - drag.origin.x, dy = point2.y - drag.origin.y;
+      if (drag.element && !drag.preview) drag.preview = createPreview(drag.element, drag.key, drag.clientX, drag.clientY);
+      const preview = drag.preview;
+      let guideX, guideY;
+      if (preview?.box && !latest.altKey) {
+        const { box, candidates, threshold } = preview;
+        const xs = (b) => [b.left, (b.left + b.right) / 2, b.right], ys = (b) => [b.top, (b.top + b.bottom) / 2, b.bottom];
+        const sx = snapAxis(dx, xs(box), candidates.flatMap(xs), threshold), sy = snapAxis(dy, ys(box), candidates.flatMap(ys), threshold);
+        dx = sx.delta;
+        dy = sy.delta;
+        guideX = sx.at;
+        guideY = sy.at;
+      }
+      drag.dx = Math.round(dx * 100) / 100;
+      drag.dy = Math.round(dy * 100) / 100;
+      if (preview) drawGuides(preview, guideX, guideY);
+      applyPreview(drag, drag.dx, drag.dy);
       if (drag.pointIndex !== void 0 && drag.points) {
         const original = drag.points[drag.pointIndex];
         const circle = layoutRoot()?.querySelector(`[data-waypoint-index="${drag.pointIndex}"]`);
         circle?.setAttribute("cx", String(original.x + drag.dx));
         circle?.setAttribute("cy", String(original.y + drag.dy));
       }
+    }
+    function movePositionDrag(event) {
+      if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
+      dragEvent = { clientX: event.clientX, clientY: event.clientY, altKey: event.altKey };
+      if (!dragFrame) dragFrame = requestAnimationFrame(flushPositionDrag);
       return true;
     }
     function finishPositionDrag(event) {
       if (!positionDrag || event && event.pointerId !== positionDrag.pointerId) return false;
+      if (dragFrame) {
+        cancelAnimationFrame(dragFrame);
+        dragFrame = 0;
+      }
+      if (event?.type === "pointerup") {
+        dragEvent = { clientX: event.clientX, clientY: event.clientY, altKey: event.altKey };
+        flushPositionDrag();
+      }
+      dragEvent = void 0;
       const drag = positionDrag;
       const commit = event?.type === "pointerup" && drag.moved;
       positionDrag = void 0;
       dragging.value = false;
-      if (drag.element) {
-        if (drag.originalTransform === null || drag.originalTransform === void 0) drag.element.removeAttribute("transform");
-        else drag.element.setAttribute("transform", drag.originalTransform);
-      }
+      if (commit && drag.element) drag.preview?.guides?.remove();
+      else restorePreview(drag);
       if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
       if (commit) {
         if (drag.pointIndex !== void 0 && drag.points) {
@@ -101296,7 +101802,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           createElementVNode(
             "span",
             null,
-            toDisplayString(supportsWaypoints.value ? "拖动元素调整位置；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。" : "拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。"),
+            toDisplayString(supportsWaypoints.value ? "拖动元素调整位置，自动吸附对齐（按住 Alt 关闭），连线实时跟随；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。" : "拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。"),
             1
             /* TEXT */
           ),

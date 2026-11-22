@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname, resolve, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { diagramTypes, themes, normalizeDocument } from '../dist/core.mjs'
+import { diagramTypes, themes, normalizeDocument, mermaidToDocument, isMermaidSource } from '../dist/core.mjs'
 import { readDiagramFile, documentFromHtml, renderNativeImage } from '../dist/native.mjs'
 import { createHtml } from '../dist/export.mjs'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -16,6 +16,8 @@ node scripts/diagram.mjs saved.html --diagram 2 --image activity.png
 node scripts/diagram.mjs saved.html --all --out-dir images --format webp
 node scripts/diagram.mjs --presets
 node scripts/diagram.mjs --example flowchart
+node scripts/diagram.mjs local.mmd --out out.html --image out.png      # Mermaid / Markdown（含 mermaid 代码块）
+node scripts/diagram.mjs --mermaid 'sequenceDiagram\\n A->>B: hi' --out out.html
 
 --diagram 从 1 开始，或指定图形 id；多图图片导出必须明确选择或使用 --all。
 --scale 0.1..4（位图默认 2，SVG 默认 1） --quality 0..1 --theme ocean
@@ -30,8 +32,8 @@ function parse(args) {
     else if (arg === '-') {
       if (result.input) throw new Error('只能指定一个 JSON 或 HTML 输入文件')
       result.input = '-'
-    } else if (['--out', '--image', '--out-dir', '--format', '--scale', '--quality', '--theme', '--diagram', '--font-file', '--json', '--patch', '--set', '--example', '--save-json'].includes(arg)) {
-      if (!args[i + 1] || (args[i + 1].startsWith('--') && arg !== '--json' && arg !== '--patch')) throw new Error(`${arg} 缺少参数`)
+    } else if (['--out', '--image', '--out-dir', '--format', '--scale', '--quality', '--theme', '--diagram', '--font-file', '--json', '--patch', '--set', '--example', '--save-json', '--mermaid'].includes(arg)) {
+      if (!args[i + 1] || (args[i + 1].startsWith('--') && arg !== '--json' && arg !== '--patch' && arg !== '--mermaid')) throw new Error(`${arg} 缺少参数`)
       const value = args[++i]
       if (arg === '--font-file') result.fontFiles.push(resolve(value))
       else if (arg === '--set') result.sets.push(value)
@@ -245,11 +247,20 @@ async function main() {
 
   const autoTolerant = Boolean(args.tolerant || args.json || args.input === '-' || args.patch || args.sets.length)
   let rawDoc
-  if (args.json) {
+  const fromMermaid = (text) => {
+    const { document, warnings } = mermaidToDocument(text)
+    for (const warning of warnings) console.error(`Mermaid 警告：${warning}`)
+    return document
+  }
+  if (args.mermaid) {
+    rawDoc = fromMermaid(args.mermaid.replace(/\\n/g, '\n'))
+  } else if (args.input && args.input !== '-' && ['.mmd', '.mermaid', '.md', '.markdown'].includes(extname(args.input).toLowerCase())) {
+    rawDoc = fromMermaid(await readFile(resolve(args.input), 'utf8'))
+  } else if (args.json) {
     rawDoc = JSON.parse(args.json)
   } else if (args.input === '-') {
     const text = (await readStdin()).replace(/^\uFEFF/, '')
-    rawDoc = text.trimStart().startsWith('<') ? documentFromHtml(text) : JSON.parse(text)
+    rawDoc = text.trimStart().startsWith('<') ? documentFromHtml(text) : isMermaidSource(text) ? fromMermaid(text) : JSON.parse(text)
   } else if (args.input) {
     if (autoTolerant) {
       const text = (await readFile(resolve(args.input), 'utf8')).replace(/^\uFEFF/, '')

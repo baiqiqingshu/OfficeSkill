@@ -282,6 +282,10 @@
 }
 .canvas-edge-hit { pointer-events: stroke;
 }
+.canvas-snap-guides line { stroke: #e5487d; stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none;
+}
+.canvas-live-edge { pointer-events: none;
+}
 .canvas-waypoint { fill: #ffffff; stroke: var(--accent); stroke-width: 2; cursor: move;
 }
 .canvas-waypoint.is-selected, .canvas-waypoint:focus-visible { fill: var(--accent); stroke: #ffffff; outline: none;

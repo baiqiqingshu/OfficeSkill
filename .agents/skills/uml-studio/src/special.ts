@@ -3,11 +3,13 @@ import type {
   Theme,
   RenderedDiagram,
   Participant,
+  Message,
   FishboneCause,
   FishboneHeadStyle,
 } from "./types";
 import { esc, text, frame } from "./svg";
 import { resolveLayout } from "./themes";
+import { contrastText, gradientDefs, luminance, mix, paintFor, paletteOf, regionPaint } from "./palette";
 
 /** Positions stay in renderer coordinates; the outer frame only expands to keep edits visible. */
 class SpecialPositions {
@@ -118,7 +120,12 @@ export function renderSequence(
   const participants = spec.participants ?? [];
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
+  const boxes = spec.boxes ?? [];
+  const palette = paletteOf(theme);
+  const autonumber = spec.layout?.autonumber !== false;
+  const isEvent = (m: Message): boolean => m.kind === "note" || m.kind === "divider";
   const size = theme.fontSize;
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
   const participantWidth = Math.max(
     128,
     theme.nodeWidth,
@@ -136,24 +143,33 @@ export function renderSequence(
     lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40,
   );
   const header = heading(spec, theme, width, "UML / SEQUENCE · 时间向下");
-  const top = header.bottom;
+  const boxOf = new Map<string, number>();
+  boxes.forEach((box, index) => box.participants.forEach((id) => boxOf.set(id, index)));
+  const boxHeader = boxes.length ? size * 1.4 + 18 : 0;
+  const top = header.bottom + boxHeader;
+  const symbolic = new Set(["actor", "boundary", "control", "entity"]);
   const boxHeight = Math.max(
     76,
     size * 4,
     ...participants.map(
       (p) =>
         wrap(p.label, participantWidth - 20, size).length * size * 1.4 +
-        (p.kind === "actor" ? 76 : 28),
+        (symbolic.has(p.kind ?? "") ? 76 : 28),
     ),
   );
+  const paints = participants.map((p, i) =>
+    palette ? paintFor(theme, palette, boxes.length && palette.by !== "node" && boxOf.has(p.id) ? boxOf.get(p.id)! : i) : undefined);
   const x = new Map(
     participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x]),
   );
   const ys: number[] = [];
   const rowLines: string[][] = [],
     labelTops: number[] = [];
-  const guardSize = Math.max(11, size - 1),
+  type EventBox = { left: number; top: number; width: number; height: number; lines: string[] };
+  const events: (EventBox | undefined)[] = [];
+  const guardSize = Math.max(12, size - 1),
     guardLeading = guardSize * 1.4;
+  const tagSize = Math.max(12, size - 3);
   const orderedFragments = [...fragments].sort(
     (a, b) => b.to - b.from - (a.to - a.from),
   );
@@ -165,91 +181,109 @@ export function renderSequence(
       ).length;
     const left = 36 + nested * 12,
       right = width - 36 - nested * 12;
-    const guardLines = wrap(
-      `[${fragment.label}]`,
-      Math.max(48, right - left - 96),
-      guardSize,
-    );
-    const elseLines = wrap(
-      `[${fragment.elseLabel ?? (fragment.kind === "par" ? "并行分支" : "else")}]`,
-      Math.max(48, right - left - 32),
-      guardSize,
-    );
+    const highlight = fragment.kind === "rect";
+    const guardLines = highlight || !fragment.label
+      ? []
+      : wrap(`[${fragment.label}]`, Math.max(48, right - left - 96), guardSize);
+    const branchList = [
+      ...(fragment.elseAt !== undefined ? [{ at: fragment.elseAt, label: fragment.elseLabel }] : []),
+      ...(fragment.elses ?? []),
+    ].sort((a, b) => a.at - b.at);
+    const fallback = fragment.kind === "par" ? "并行分支" : fragment.kind === "critical" ? "option" : "else";
+    const branches = branchList.map((branch) => {
+      const lines = wrap(`[${branch.label ?? fallback}]`, Math.max(48, right - left - 32), guardSize);
+      return { at: branch.at, lines, height: lines.length * guardLeading + 36, y: 0 };
+    });
     return {
       fragment,
       left,
       right,
       guardLines,
-      elseLines,
-      headerHeight: Math.max(44, guardLines.length * guardLeading + 20) + 12,
-      elseHeight: elseLines.length * guardLeading + 36,
+      branches,
+      headerHeight: highlight ? 14 : Math.max(44, guardLines.length * guardLeading + 20) + 12,
       top: 0,
       bottom: 0,
-      divider: 0,
     };
   });
   type FragmentBox = (typeof frames)[number];
   const starts = new Map<number, FragmentBox[]>(),
-    alternatives = new Map<number, FragmentBox[]>(),
+    alternatives = new Map<number, { box: FragmentBox; branch: FragmentBox["branches"][number] }[]>(),
     ends = new Map<number, FragmentBox[]>();
-  const addEvent = (
-    events: Map<number, FragmentBox[]>,
-    index: number,
-    box: FragmentBox,
-  ): void => {
-    const list = events.get(index);
-    if (list) list.push(box);
-    else events.set(index, [box]);
+  const addEvent = <T,>(map: Map<number, T[]>, index: number, item: T): void => {
+    const list = map.get(index);
+    if (list) list.push(item);
+    else map.set(index, [item]);
   };
   for (const box of frames) {
     addEvent(starts, box.fragment.from, box);
     addEvent(ends, box.fragment.to, box);
-    if (box.fragment.elseAt !== undefined)
-      addEvent(alternatives, box.fragment.elseAt, box);
+    for (const branch of box.branches) addEvent(alternatives, branch.at, { box, branch });
   }
-  for (const boxes of ends.values()) boxes.reverse();
+  for (const list of ends.values()) list.reverse();
+  const noteSpan = (m: Message): { left: number; width: number } => {
+    const sx = x.get(m.from) ?? 70, tx = x.get(m.to) ?? sx;
+    const textWidth = Math.min(300, Math.max(...m.label.split("\n").map((value) => measure(value, size))) + 28);
+    if (m.position === "left") { const w = Math.max(96, textWidth); return { left: sx - 14 - w, width: w }; }
+    if (m.position === "right") { const w = Math.max(96, textWidth); return { left: sx + 14, width: w }; }
+    const lo = Math.min(sx, tx), hi = Math.max(sx, tx);
+    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 110);
+    return { left: (lo + hi) / 2 - w / 2, width: w };
+  };
   let cursor = top + boxHeight + 40;
+  let number = 0;
   for (let i = 0; i < messages.length; i++) {
-    const elseBoxes = alternatives.get(i),
-      startBoxes = starts.get(i);
-    if (elseBoxes)
-      for (const box of elseBoxes) {
-        box.divider = cursor;
-        cursor += box.elseHeight;
-      }
-    if (startBoxes)
-      for (const box of startBoxes) {
-        box.top = cursor;
-        cursor += box.headerHeight;
-      }
+    for (const { branch } of alternatives.get(i) ?? []) {
+      branch.y = cursor;
+      cursor += branch.height;
+    }
+    for (const box of starts.get(i) ?? []) {
+      box.top = cursor;
+      cursor += box.headerHeight;
+    }
     const msg = messages[i]!;
-    const label = `${i + 1}  ${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
-    const available =
-      msg.from === msg.to
-        ? labelWidth - 56
-        : Math.abs(x.get(msg.to)! - x.get(msg.from)!) -
-          (msg.kind === "create" ? participantWidth / 2 : 0) -
-          48;
-    const lines = wrap(
-      label,
-      Math.max(48, Math.min(labelWidth, available)),
-      size,
-    );
-    const labelHeight = lines.length * size * 1.4;
-    const before =
-      msg.kind === "create"
-        ? Math.max(labelHeight + 12, boxHeight / 2 + 16)
-        : labelHeight + 12;
-    const y = cursor + before;
-    ys.push(y);
-    rowLines.push(lines);
-    labelTops.push(y - labelHeight - 12);
-    cursor =
-      y +
-      (msg.from === msg.to ? 30 : 0) +
-      (msg.kind === "create"
-        ? Math.max(messageGap, boxHeight / 2 + 20)
-        : messageGap);
+    if (msg.kind === "divider") {
+      const lines = msg.label ? wrap(msg.label, Math.max(120, width / 2), size) : [];
+      const height = Math.max(36, lines.length * size * 1.4 + 18);
+      events[i] = { left: 36, top: cursor, width: width - 72, height, lines };
+      ys.push(cursor + height / 2);
+      rowLines.push(lines);
+      labelTops.push(cursor);
+      cursor += height + messageGap / 2;
+    } else if (msg.kind === "note") {
+      const span = noteSpan(msg);
+      const lines = wrap(msg.label, span.width - 20, size);
+      const height = lines.length * size * 1.4 + 18;
+      events[i] = { ...span, top: cursor + 4, height, lines };
+      ys.push(cursor + 4);
+      rowLines.push(lines);
+      labelTops.push(cursor + 4);
+      cursor += height + 12 + messageGap / 2;
+    } else {
+      number++;
+      const label = `${autonumber ? `${number}  ` : ""}${msg.label}${msg.kind === "create" ? " «create»" : msg.kind === "destroy" ? " «destroy»" : ""}`;
+      const available =
+        msg.from === msg.to
+          ? labelWidth - 56
+          : Math.abs(x.get(msg.to)! - x.get(msg.from)!) -
+            (msg.kind === "create" ? participantWidth / 2 : 0) -
+            48;
+      const lines = label.trim() ? wrap(label, Math.max(48, Math.min(labelWidth, available)), size) : [];
+      const labelHeight = lines.length * size * 1.4;
+      const before =
+        msg.kind === "create"
+          ? Math.max(labelHeight + 12, boxHeight / 2 + 16)
+          : labelHeight + 12;
+      const y = cursor + before;
+      ys.push(y);
+      rowLines.push(lines);
+      labelTops.push(y - labelHeight - 12);
+      cursor =
+        y +
+        (msg.from === msg.to ? 30 : 0) +
+        (msg.kind === "create"
+          ? Math.max(messageGap, boxHeight / 2 + 20)
+          : messageGap);
+    }
     const endBoxes = ends.get(i);
     if (endBoxes) {
       let boundary = cursor - 10;
@@ -261,8 +295,9 @@ export function renderSequence(
     }
   }
   const messagePositions = messages.map((message, index) => {
-    const sx = x.get(message.from)!, tx = x.get(message.to)!;
-    const position = positions.at(`messages/${index}`, message.from === message.to ? sx + 18 : (sx + tx) / 2, ys[index]!);
+    const sx = x.get(message.from) ?? 70, tx = x.get(message.to) ?? sx;
+    const anchor = isEvent(message) ? events[index]!.left : message.from === message.to ? sx + 18 : (sx + tx) / 2;
+    const position = positions.at(`messages/${index}`, anchor, ys[index]!);
     ys[index] = position.y;
     labelTops[index] = labelTops[index]! + position.dy;
     return position;
@@ -279,15 +314,31 @@ export function renderSequence(
     const original = createAt.has(p.id) ? ys[createAt.get(p.id)!]! - boxHeight / 2 : top;
     return positions.at(`participants/${p.id}`, 0, original).y;
   };
+  const stroke = esc(theme.primary);
   let body =
     header.svg +
-    `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
+    `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${stroke}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="seq-filled-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 0 4 L 10 8 Z" fill="${stroke}"/></marker><marker id="seq-open-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 1 4 L 10 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker></defs>`
+    + gradientDefs(paints.filter((paint): paint is NonNullable<typeof paint> => !!paint));
+  const canvasFill = esc(theme.background === "transparent" ? theme.surface : theme.background);
+  boxes.forEach((box, index) => {
+    const members = box.participants.map((id) => x.get(id)).filter((value): value is number => value !== undefined);
+    if (!members.length) return;
+    const left = Math.min(...members) - participantWidth / 2 - 14, right = Math.max(...members) + participantWidth / 2 + 14;
+    const region = palette ? regionPaint(theme, palette, index) : undefined;
+    const fill = box.color && box.color !== "transparent" ? box.color : region?.fill ?? mix(theme.secondary, theme.background === "transparent" ? "#ffffff" : theme.background, darkBackground ? 0.82 : 0.92);
+    const boxTop = top - boxHeader - 4;
+    positions.include(left, boxTop, right - left, bottom + 20 - boxTop);
+    body += `<g class="uml-seq-box" data-editor-key="boxes/${index}"><rect x="${left}" y="${boxTop}" width="${right - left}" height="${bottom + 20 - boxTop}" rx="${Math.min(10, theme.radius + 2)}" fill="${esc(box.color === "transparent" ? "none" : fill)}"${box.color && box.color !== "transparent" ? ' fill-opacity="0.35"' : ""} stroke="${esc(region?.stroke ?? theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    if (box.label) body += text((left + right) / 2, boxTop + 10 + size, box.label, theme, { anchor: "middle", weight: 700, fill: region?.text ?? (box.color && box.color !== "transparent" ? contrastText(mix(fill, "#ffffff", 0.65)) : theme.text) });
+    body += `</g>`;
+  });
   let fragmentAnnotations = "";
   const guard = (left: number, top: number, lines: string[]): string => {
     const width =
       Math.max(...lines.map((value) => measure(value, guardSize))) + 8;
     return (
-      `<rect x="${left - 4}" y="${top}" width="${width}" height="${lines.length * guardLeading}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>` +
+      `<rect x="${left - 4}" y="${top}" width="${width}" height="${lines.length * guardLeading}" fill="${canvasFill}"/>` +
       text(left, top + guardSize * 1.1, lines.join("\n"), theme, {
         anchor: "start",
         size: guardSize,
@@ -301,27 +352,19 @@ export function renderSequence(
     const position = positions.at(key, left, frameTop);
     const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
     positions.include(position.x, position.y, right - left, frameBottom - frameTop);
-    body += `<g data-editor-key="fragments/${index}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<g data-editor-key="fragments/${index}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
-    fragmentAnnotations += text(
-      left + 10,
-      frameTop + 18,
-      fragment.kind,
-      theme,
-      { anchor: "start", size: 12, weight: 700 },
-    );
-    fragmentAnnotations += guard(left + 76, frameTop + 8, box.guardLines);
-    if (fragment.elseAt !== undefined) {
-      body += line(
-        left,
-        box.divider,
-        right,
-        box.divider,
-        theme.border,
-        theme.lineWidth,
-        true,
-      );
-      fragmentAnnotations += guard(left + 12, box.divider + 10, box.elseLines);
+    if (fragment.kind === "rect") {
+      const fill = fragment.color && fragment.color !== "transparent" ? fragment.color : mix(theme.secondary, theme.background === "transparent" ? "#ffffff" : theme.background, darkBackground ? 0.78 : 0.88);
+      body += `<g data-editor-key="${key}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(6, theme.radius)}" fill="${esc(fill)}" fill-opacity="0.7"/></g>`;
+      continue;
+    }
+    body += `<g data-editor-key="${key}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    const tagWidth = Math.max(54, measure(fragment.kind, tagSize) + 20);
+    fragmentAnnotations += `<g data-editor-key="${key}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + tagWidth} L ${left + tagWidth + 10} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    fragmentAnnotations += text(left + 10, frameTop + 18, fragment.kind, theme, { anchor: "start", size: tagSize, weight: 700 });
+    if (box.guardLines.length) fragmentAnnotations += guard(left + tagWidth + 22, frameTop + 8, box.guardLines);
+    for (const branch of box.branches) {
+      body += line(left, branch.y, right, branch.y, theme.border, theme.lineWidth, true);
+      fragmentAnnotations += guard(left + 12, branch.y + 10, branch.lines);
     }
     body += `</g>`;
     fragmentAnnotations += `</g>`;
@@ -332,33 +375,24 @@ export function renderSequence(
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)!]! : bottom;
     positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
-    body += line(
-      cx,
-      start,
-      cx,
-      Math.max(start, end),
-      theme.border,
-      theme.lineWidth,
-      true,
-    );
+    body += line(cx, start, cx, Math.max(start, end), theme.border, theme.lineWidth, true);
     body += `</g>`;
   }
   type Activation = { start: number; depth: number };
   const stacks = new Map<string, Activation[]>();
   const activationShapes: string[] = [];
-  const drawActivation = (
-    id: string,
-    activation: Activation,
-    end: number,
-  ): void => {
+  const drawActivation = (id: string, activation: Activation, end: number): void => {
     const ax = x.get(id)! - 6 + activation.depth * 5;
+    const paint = paints[participants.findIndex((p) => p.id === id)];
+    const fill = paint ? (paint.gradient ? mix(paint.stroke, "#ffffff", 0.7) : palette?.mode === "tint" ? paint.fill : mix(paint.fill, "#ffffff", 0.55)) : theme.surface;
     activationShapes.push(
-      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`,
+      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(fill)}" stroke="${esc(paint?.stroke ?? theme.secondary)}" stroke-width="${theme.lineWidth}"/>`,
     );
   };
   const sourceOffsets: number[] = [],
     targetOffsets: number[] = [];
   messages.forEach((m, i) => {
+    if (isEvent(m)) return;
     const source = stacks.get(m.from) ?? [];
     sourceOffsets[i] = source.length ? 6 + (source.length - 1) * 5 : 0;
     const target = stacks.get(m.to) ?? [];
@@ -383,43 +417,80 @@ export function renderSequence(
   for (const [id, stack] of stacks)
     while (stack.length) drawActivation(id, stack.pop()!, bottom);
   body += activationShapes.join("");
-  for (const p of participants) {
+  participants.forEach((p, index) => {
     const cx = x.get(p.id)!,
       py = headerY(p);
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
+    const paint = paints[index];
+    const fill = esc(paint?.fill ?? theme.surface), edge = esc(paint?.stroke ?? theme.primary);
+    const ink = paint && !symbolic.has(p.kind ?? "") ? paint.text : theme.text;
+    const sw = theme.lineWidth;
+    body += `<g data-editor-key="participants/${index}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
-    if (p.kind === "actor") {
-      const cy = py + 13;
-      body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, {
-        anchor: "middle",
-        weight: 600,
-      });
+    if (symbolic.has(p.kind ?? "")) {
+      if (p.kind === "actor") {
+        const cy = py + 13;
+        body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else {
+        const cy = py + 28;
+        if (p.kind === "boundary") body += `<path d="M ${cx - 20} ${cy - 13} V ${cy + 13} M ${cx - 20} ${cy} H ${cx - 9}" fill="none" stroke="${edge}" stroke-width="${sw}"/><circle cx="${cx + 4}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        else if (p.kind === "control") body += `<circle cx="${cx}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><path d="M ${cx + 5} ${cy - 18} L ${cx - 1} ${cy - 13} L ${cx + 5} ${cy - 8}" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+        else body += `<circle cx="${cx}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><path d="M ${cx - 14} ${cy + 17} H ${cx + 14}" stroke="${edge}" stroke-width="${sw}"/>`;
+      }
+      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, { anchor: "middle", weight: 600, fill: ink });
     } else {
+      const left = cx - participantWidth / 2, right = cx + participantWidth / 2;
       if (p.kind === "database") {
-        const left = cx - participantWidth / 2;
         const top = py + 8;
         const bottom = py + boxHeight - 8;
-        body += `<path d="M ${left} ${top} A ${participantWidth / 2} 8 0 0 1 ${cx + participantWidth / 2} ${top} V ${bottom} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-        body += `<ellipse cx="${cx}" cy="${top}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-        body += `<path d="M ${left} ${bottom} A ${participantWidth / 2} 8 0 0 0 ${cx + participantWidth / 2} ${bottom}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<path d="M ${left} ${top} A ${participantWidth / 2} 8 0 0 1 ${right} ${top} V ${bottom} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom} Z" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<ellipse cx="${cx}" cy="${top}" rx="${participantWidth / 2}" ry="8" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<path d="M ${left} ${bottom} A ${participantWidth / 2} 8 0 0 0 ${right} ${bottom}" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else if (p.kind === "queue") {
+        const r = 10;
+        body += `<path d="M ${left + r} ${py} H ${right - r} A ${r} ${boxHeight / 2} 0 0 1 ${right - r} ${py + boxHeight} H ${left + r} A ${r} ${boxHeight / 2} 0 0 1 ${left + r} ${py} Z" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><ellipse cx="${right - r}" cy="${py + boxHeight / 2}" rx="${r}" ry="${boxHeight / 2}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else if (p.kind === "collections") {
+        body += `<rect x="${left + 6}" y="${py - 6}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<rect x="${left}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
       } else {
-        body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<rect x="${left}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
       }
       body += text(
         cx,
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
         labelLines.join("\n"),
         theme,
-        { anchor: "middle", weight: 600 },
+        { anchor: "middle", weight: 600, fill: ink },
       );
     }
     body += `</g>`;
-  }
+  });
   body += fragmentAnnotations;
+  const noteFill = darkBackground ? "#3d3a2a" : "#fff8db", noteInk = darkBackground ? "#f5ecc8" : "#4a3f1c", noteEdge = darkBackground ? "#857a4a" : "#e2c870";
   messages.forEach((m, i) => {
-    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, messagePositions[i]!.x, ys[i]!)}>`;
+    const position = messagePositions[i]!;
+    if (isEvent(m)) {
+      const event = events[i]!;
+      const attrs = `${positions.attrs(`messages/${i}`, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
+      positions.include(event.left + position.dx, event.top + position.dy, event.width, event.height);
+      if (m.kind === "note") {
+        const { left, top, width: w, height: h } = event;
+        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><path d="M ${left} ${top} H ${left + w - 12} L ${left + w} ${top + 12} V ${top + h} H ${left} Z" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/><path d="M ${left + w - 12} ${top} V ${top + 12} H ${left + w}" fill="none" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/>`;
+        body += text(left + w / 2, top + 9 + size, event.lines.join("\n"), theme, { anchor: "middle", fill: noteInk });
+      } else {
+        const cy = event.top + event.height / 2;
+        body += `<g class="uml-seq-divider" data-editor-key="messages/${i}" ${attrs}>${line(event.left, cy - 2, event.left + event.width, cy - 2, theme.border, theme.lineWidth)}${line(event.left, cy + 2, event.left + event.width, cy + 2, theme.border, theme.lineWidth)}`;
+        if (event.lines.length) {
+          const lw = Math.max(...event.lines.map((value) => measure(value, size))) + 28, lh = event.lines.length * size * 1.4 + 10;
+          const cx = event.left + event.width / 2;
+          body += `<rect x="${cx - lw / 2}" y="${cy - lh / 2}" width="${lw}" height="${lh}" rx="${Math.min(6, theme.radius)}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+          body += text(cx, cy - lh / 2 + 5 + size, event.lines.join("\n"), theme, { anchor: "middle", weight: 700 });
+        }
+      }
+      body += `</g>`;
+      return;
+    }
+    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, position.x, ys[i]!)}>`;
     const sx = x.get(m.from)!,
       tx = x.get(m.to)!,
       y = ys[i]!;
@@ -431,25 +502,32 @@ export function renderSequence(
         ? tx - (sign * participantWidth) / 2
         : tx - sign * targetOffsets[i]!;
     const kind = m.kind ?? "sync";
-    const dashed = kind === "return" || kind === "create";
-    const open = kind === "async" || kind === "create";
+    const dashed = m.dashed ?? (kind === "return" || kind === "create");
+    const head = m.arrow ?? (kind === "async" || kind === "create" ? "open" : "filled");
+    const loopX = sx + Math.min(80, column / 3);
     const path = self
-      ? `M ${start} ${y} H ${sx + Math.min(80, column / 3)} Q ${sx + Math.min(80, column / 3) + 8} ${y} ${sx + Math.min(80, column / 3) + 8} ${y + 8} V ${y + 22} Q ${sx + Math.min(80, column / 3) + 8} ${y + 30} ${sx + Math.min(80, column / 3)} ${y + 30} H ${sx + targetOffsets[i]!}`
+      ? `M ${start} ${y} H ${loopX} Q ${loopX + 8} ${y} ${loopX + 8} ${y + 8} V ${y + 22} Q ${loopX + 8} ${y + 30} ${loopX} ${y + 30} H ${sx + targetOffsets[i]!}`
       : `M ${start} ${y} H ${end}`;
-    body += `<path d="${path}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""} marker-end="url(#${open ? "seq-open" : "seq-filled"})"/>`;
+    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head})"` : "";
+    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}-start)"` : "";
+    body += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
+    if (head === "cross") {
+      const ex = self ? sx + targetOffsets[i]! : end, ey = self ? y + 30 : y;
+      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${stroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
+    }
     const labelLines = rowLines[i]!;
-    const lx = (self ? sx + 18 : (start + end) / 2) + messagePositions[i]!.dx;
-    const ly = labelTops[i]! + size * 1.1;
-    const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
-    const labelLeft = self ? lx - 4 : lx - lw / 2;
-    const messageLeft = Math.min(start, end, labelLeft);
-    positions.include(messageLeft, labelTops[i]!, Math.max(start, end, labelLeft + lw, self ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
-    body += `<rect x="${self ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
-    body += text(lx, ly, labelLines.join("\n"), theme, {
-      anchor: self ? "start" : "middle",
-    });
+    if (labelLines.length) {
+      const lx = (self ? sx + 18 : (start + end) / 2) + position.dx;
+      const ly = labelTops[i]! + size * 1.1;
+      const lw = Math.max(...labelLines.map((l) => measure(l, size))) + 12;
+      const labelLeft = self ? lx - 4 : lx - lw / 2;
+      const messageLeft = Math.min(start, end, labelLeft);
+      positions.include(messageLeft, labelTops[i]!, Math.max(start, end, labelLeft + lw, self ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
+      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${canvasFill}"/>`;
+      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self ? "start" : "middle" });
+    }
     if (kind === "destroy")
-      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${stroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
   body += text(
@@ -457,7 +535,7 @@ export function renderSequence(
     height - 18,
     "实心箭头 同步 / 返回　空心箭头 异步 / 创建　× 生命周期结束",
     theme,
-    { anchor: "start", size: 11, fill: theme.muted },
+    { anchor: "start", size: 12, fill: theme.muted },
   );
   return positions.finish(theme, width, height, body);
 }
@@ -535,6 +613,8 @@ export function renderFishbone(
   spec = { ...spec, layout: resolveLayout(spec) };
   const positions = new SpecialPositions(spec);
   const data = spec.fishbone!;
+  const palette = paletteOf(theme);
+  const categoryPaints: ReturnType<typeof paintFor>[] = [];
   const size = theme.fontSize;
   const leading = size * 1.4;
   const elementGap = spec.layout?.elementGap ?? 24;
@@ -681,13 +761,16 @@ export function renderFishbone(
       const attachX = left + colWidth - 20 + categoryPosition.dx;
       positions.include(categoryPosition.x, categoryPosition.y, categoryWidth, categoryHeight);
       positions.include(attachX - 8, Math.min(spineY, outerY), 16, Math.abs(outerY - spineY));
+      const categoryPaint = palette ? paintFor(theme, palette, item.index) : undefined;
+      if (categoryPaint) categoryPaints.push(categoryPaint);
+      const categoryStroke = categoryPaint?.stroke ?? theme.secondary;
       body += `<g data-editor-key="categories/${item.index}" ${positions.attrs(categoryKey, categoryPosition.x, categoryPosition.y)}>`;
       body += line(
         attachX,
         spineY,
         tipX,
         outerY,
-        theme.secondary,
+        categoryStroke,
         theme.lineWidth + 0.5,
       );
       const rowPositions = item.rows.map(row => positions.at(`fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf('/causes/') + 1)}`,
@@ -721,7 +804,7 @@ export function renderFishbone(
             rowPositions[row.parent]!.y + (parentRow.lines.length * leading) / 2 + 6;
           body += `<path d="M ${parentX + 8} ${parentY} V ${lineY} H ${labelX}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
         }
-        body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? theme.secondary : theme.muted)}"/>`;
+        body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? categoryStroke : theme.muted)}"/>`;
         body += text(
           labelX + 5,
           ry - ((row.lines.length - 1) * leading) / 2,
@@ -736,13 +819,13 @@ export function renderFishbone(
         );
         body += `</g>`;
       });
-      body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
+      body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(categoryPaint?.fill ?? theme.surface)}" stroke="${esc(categoryStroke)}" stroke-width="${theme.lineWidth}"/>`;
       body += text(
         tipX,
         categoryY + 12 + size + 1,
         categoryLines.join("\n"),
         theme,
-        { size: size + 1, anchor: "middle", weight: 700 },
+        { size: size + 1, anchor: "middle", weight: 700, fill: categoryPaint?.text },
       );
       body += `</g>`;
     }
@@ -777,5 +860,6 @@ export function renderFishbone(
     theme,
     { anchor: "start", size: 11, fill: theme.muted },
   );
+  body += gradientDefs(categoryPaints);
   return positions.finish(theme, width, height, body);
 }

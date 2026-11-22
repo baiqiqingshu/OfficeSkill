@@ -117,17 +117,25 @@ export import DiagramType = __Core.DiagramType;
 
 export import ThemeName = __Core.ThemeName;
 
+export import PaletteMode = __Core.PaletteMode;
+
+export import PaletteBy = __Core.PaletteBy;
+
 export import Theme = __Core.Theme;
 
 export import DiagramNode = __Core.DiagramNode;
 
 export import DiagramEdge = __Core.DiagramEdge;
 
+export import EdgeArrow = __Core.EdgeArrow;
+
 export import DiagramGroup = __Core.DiagramGroup;
 
 export import DiagramLane = __Core.DiagramLane;
 
 export import Participant = __Core.Participant;
+
+export import ParticipantBox = __Core.ParticipantBox;
 
 export import Message = __Core.Message;
 

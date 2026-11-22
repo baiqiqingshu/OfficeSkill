@@ -37,7 +37,7 @@ https://support.huaweicloud.com/usermanual-codeartsmodeling/modeling_ug_0003_2.h
 
 ### 主题参数
 
-新增 `ThemeName` 成员 `industrial` 和中文名称“工业汇报”，共 12 套主题。参数如下，其余尺寸、字号和中文无衬线字体继承现有基础主题。
+新增 `ThemeName` 成员 `industrial` 和中文名称“工业汇报”，当时共 12 套主题（后续新增 6 套多色主题，现为 18 套）。参数如下，其余尺寸、字号和中文无衬线字体继承现有基础主题。
 
 | 参数 | 值 | 用途 |
 | --- | --- | --- |

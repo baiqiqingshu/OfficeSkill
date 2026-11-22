@@ -98025,8 +98025,8 @@ var base = {
   secondary: "#138e94",
   border: "#b4ccd9",
   fontFamily: "Microsoft YaHei, PingFang SC, Noto Sans CJK SC, Arial, sans-serif",
-  fontSize: 15,
-  fontWeight: 400,
+  fontSize: 16,
+  fontWeight: 500,
   fontStyle: "normal",
   textDecoration: "none",
   lineWidth: 1.6,
@@ -98047,7 +98047,92 @@ var themes = {
   rose: { ...base, background: "#fff4f5", surface: "#fffdfd", text: "#653c49", muted: "#987180", primary: "#b94868", secondary: "#b57a43", border: "#e8bdc9", radius: 10 },
   amber: { ...base, background: "#fff9eb", surface: "#fffef9", text: "#62451e", muted: "#927b56", primary: "#b87513", secondary: "#737f3c", border: "#e3c994", radius: 6 },
   slate: { ...base, background: "#f3f5f7", surface: "#ffffff", text: "#293544", muted: "#687687", primary: "#50647d", secondary: "#648a97", border: "#c4cdd7", radius: 4 },
-  mint: { ...base, background: "#eefbf6", surface: "#fbfffd", text: "#254e46", muted: "#60877b", primary: "#19866c", secondary: "#438fa6", border: "#b3ddcf", radius: 14 }
+  mint: { ...base, background: "#eefbf6", surface: "#fbfffd", text: "#254e46", muted: "#60877b", primary: "#19866c", secondary: "#438fa6", border: "#b3ddcf", radius: 14 },
+  vivid: {
+    ...base,
+    background: "#ffffff",
+    surface: "#ffffff",
+    text: "#1e293b",
+    muted: "#64748b",
+    primary: "#475569",
+    secondary: "#3b82f6",
+    border: "#cbd5e1",
+    radius: 10,
+    palette: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"],
+    paletteMode: "solid",
+    paletteBy: "auto"
+  },
+  pastel: {
+    ...base,
+    background: "#fbfaf7",
+    surface: "#ffffff",
+    text: "#2d3142",
+    muted: "#6b7083",
+    primary: "#5c6378",
+    secondary: "#5b8def",
+    border: "#d8dae3",
+    radius: 12,
+    palette: ["#5b8def", "#2fb5a3", "#f29e4c", "#e86a92", "#9b7bd8", "#52b788", "#e0b13c", "#4aa3c7"],
+    paletteMode: "tint",
+    paletteBy: "auto"
+  },
+  business: {
+    ...base,
+    background: "#ffffff",
+    surface: "#ffffff",
+    text: "#1b2a3a",
+    muted: "#5c6b7a",
+    primary: "#3d4b5c",
+    secondary: "#1d4e89",
+    border: "#c9d2dc",
+    radius: 4,
+    palette: ["#1d4e89", "#00a6a6", "#e3a62f", "#d1495b", "#4f772d", "#6c4f9c"],
+    paletteMode: "tint",
+    paletteBy: "auto"
+  },
+  steel: {
+    ...base,
+    background: "#f4f6f9",
+    surface: "#ffffff",
+    text: "#1f2a37",
+    muted: "#5b6676",
+    primary: "#4a5868",
+    secondary: "#2b6cb0",
+    border: "#a9b4c2",
+    radius: 4,
+    lineWidth: 1.5,
+    palette: ["#1f5fa8", "#2f7fb8", "#3b8f9e", "#5a6f8f", "#d9772b", "#6b7a8c"],
+    paletteMode: "gradient",
+    paletteBy: "auto"
+  },
+  aurora: {
+    ...base,
+    background: "#ffffff",
+    surface: "#ffffff",
+    text: "#1e1b4b",
+    muted: "#5b5b7a",
+    primary: "#4b5563",
+    secondary: "#6366f1",
+    border: "#d4d4e6",
+    radius: 12,
+    palette: ["#6366f1", "#0ea5e9", "#14b8a6", "#f97316", "#ec4899", "#a855f7"],
+    paletteMode: "gradient",
+    paletteBy: "auto"
+  },
+  neon: {
+    ...base,
+    background: "#111827",
+    surface: "#1f2937",
+    text: "#e5e7eb",
+    muted: "#9ca3af",
+    primary: "#9ca3af",
+    secondary: "#22d3ee",
+    border: "#374151",
+    radius: 8,
+    palette: ["#22d3ee", "#a3e635", "#f472b6", "#fbbf24", "#818cf8", "#34d399"],
+    paletteMode: "solid",
+    paletteBy: "auto"
+  }
 };
 var themeLabels = {
   ocean: "\u6D77\u6D0B\u84DD",
@@ -98061,7 +98146,13 @@ var themeLabels = {
   rose: "\u73AB\u7470",
   amber: "\u7425\u73C0",
   slate: "\u5CA9\u7070",
-  mint: "\u8584\u8377"
+  mint: "\u8584\u8377",
+  vivid: "\u7F24\u7EB7\u5F69\u8272",
+  pastel: "\u9A6C\u5361\u9F99",
+  business: "\u5546\u52A1\u591A\u5F69",
+  steel: "\u5DE5\u4E1A\u6E10\u53D8",
+  aurora: "\u6781\u5149\u6E10\u53D8",
+  neon: "\u6697\u591C\u9713\u8679"
 };
 var fontPresets = [
   { label: "\u4E2D\u6587\u65E0\u886C\u7EBF", value: base.fontFamily },
@@ -98105,6 +98196,18 @@ var colorPresets = [
   ["\u6D45\u84DD", "#b4ccd9"],
   ["\u6D45\u7D2B", "#d1c3e5"]
 ].map(([label2, value]) => ({ label: label2, value }));
+var paletteModes = [
+  { label: "\u5355\u8272", value: "mono" },
+  { label: "\u6D45\u8272\u591A\u5F69", value: "tint" },
+  { label: "\u5B9E\u8272\u591A\u5F69", value: "solid" },
+  { label: "\u6E10\u53D8\u591A\u5F69", value: "gradient" }
+];
+var paletteTargets = [
+  { label: "\u81EA\u52A8", value: "auto" },
+  { label: "\u6309\u5206\u7EC4 / \u6CF3\u9053", value: "group" },
+  { label: "\u6309\u5143\u7D20\u7C7B\u578B", value: "kind" },
+  { label: "\u9010\u4E2A\u5143\u7D20", value: "node" }
+];
 function resolveTheme(spec) {
   return { ...themes[spec.theme ?? "ocean"], ...spec.style };
 }
@@ -98154,8 +98257,12 @@ var style = object({
   radius: num(0, 32),
   nodeWidth: num(80, 600),
   nodeHeight: num(32, 300),
-  gap: num(24, 240)
+  gap: num(24, 240),
+  palette: { type: "array", items: color, minItems: 1, maxItems: 16, description: "\u591A\u8272\u8C03\u8272\u677F\uFF1B\u5143\u7D20\u989C\u8272\u6309 paletteBy \u8F6E\u6362\u3002" },
+  paletteMode: { ...en("mono", "tint", "solid", "gradient"), description: "mono \u5355\u8272\uFF1Btint \u6D45\u8272\u586B\u5145\u5F69\u8272\u63CF\u8FB9\uFF1Bsolid \u5B9E\u8272\u586B\u5145\uFF1Bgradient \u6E10\u53D8\u586B\u5145\u3002" },
+  paletteBy: { ...en("auto", "group", "kind", "node"), description: "auto\uFF1A\u6709\u5206\u7EC4/\u6CF3\u9053\u6309\u5206\u7EC4\uFF0C\u5426\u5219\u6309\u8282\u70B9\u987A\u5E8F\u3002" }
 });
+var edgeArrow = en("none", "arrow", "open", "triangle", "circle", "cross");
 var coordinate = num(-1e6, 1e6);
 var point = object({ x: coordinate, y: coordinate }, ["x", "y"]);
 var adjustmentMap = (values) => ({
@@ -98179,7 +98286,8 @@ var layout = object({
   elementGap: num(8, 400),
   maxPerColumn: integer(0, 30),
   nodeMaxWidth: num(0, 1e5),
-  nodeMaxHeight: num(0, 1e5)
+  nodeMaxHeight: num(0, 1e5),
+  autonumber: { type: "boolean", default: true, description: "\u65F6\u5E8F\u56FE\u6D88\u606F\u7F16\u53F7\uFF1BMermaid \u5BFC\u5165\u9ED8\u8BA4\u5173\u95ED\u3002" }
 });
 var cause = object({ label, children: array({ $ref: "#/definitions/cause" }) }, ["label"]);
 var specSchema = {
@@ -98193,13 +98301,14 @@ var specSchema = {
     style,
     layout,
     direction: en("TB", "LR"),
-    nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note"), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
-    edges: array(object({ id, from: id, to: id, label: str, kind: en("flow", "association", "dependency", "include", "extend", "inheritance", "realization", "aggregation", "composition"), dashed: { type: "boolean" }, fromLabel: str, toLabel: str }, ["from", "to"])),
+    nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note", "terminal", "subroutine", "io", "hexagon", "circle", "trapezoid"), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
+    edges: array(object({ id, from: id, to: id, label: str, kind: en("flow", "association", "dependency", "include", "extend", "inheritance", "realization", "aggregation", "composition"), dashed: { type: "boolean" }, fromLabel: str, toLabel: str, arrow: edgeArrow, startArrow: edgeArrow, thick: { type: "boolean" } }, ["from", "to"])),
     groups: array(object({ id, label, parent: id, kind: en("boundary", "package", "node") }, ["id", "label"])),
     lanes: array(object({ id, label }, ["id", "label"])),
-    participants: array(object({ id, label, kind: en("actor", "participant", "database") }, ["id", "label"])),
-    messages: array(object({ from: id, to: id, label: str, kind: en("sync", "async", "return", "create", "destroy"), activate: { type: "boolean" }, deactivate: { type: "boolean" } }, ["from", "to", "label"])),
-    fragments: array(object({ kind: en("alt", "opt", "loop", "par"), label: str, from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 }, elseAt: { type: "integer", minimum: 0 }, elseLabel: str }, ["kind", "label", "from", "to"])),
+    participants: array(object({ id, label, kind: en("actor", "participant", "database", "boundary", "control", "entity", "collections", "queue") }, ["id", "label"])),
+    boxes: array(object({ label: str, participants: array(id, 1), color }, ["label", "participants"])),
+    messages: array(object({ from: id, to: id, label: str, kind: en("sync", "async", "return", "create", "destroy", "note", "divider"), activate: { type: "boolean" }, deactivate: { type: "boolean" }, arrow: en("filled", "open", "none", "cross"), dashed: { type: "boolean" }, bidirectional: { type: "boolean" }, position: en("left", "right", "over") }, ["from", "to", "label"])),
+    fragments: array(object({ kind: en("alt", "opt", "loop", "par", "critical", "break", "rect"), label: str, from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 }, elseAt: { type: "integer", minimum: 0 }, elseLabel: str, elses: array(object({ at: { type: "integer", minimum: 0 }, label: str }, ["at"])), color }, ["kind", "label", "from", "to"])),
     fishbone: object({ effect: label, headStyle: { ...en(...fishboneHeadStyles), default: "classic", description: "\u9ED8\u8BA4\u4FDD\u7559\u539F\u7248\u9C7C\u5934\u4E0E\u6BD4\u4F8B\uFF1B\u5176\u4F59\u8F6E\u5ED3\u4EC5\u5728\u663E\u5F0F\u9009\u62E9\u65F6\u5E94\u7528\uFF0C\u4E0D\u6539\u53D8\u539F\u56E0\u7ED3\u6784\u3002" }, categories: array(object({ id, label, causes: array({ $ref: "#/definitions/cause" }, 1) }, ["id", "label", "causes"]), 1) }, ["effect", "categories"])
   }, ["version", "type", "title"]),
   allOf: [
@@ -98268,11 +98377,13 @@ function validateSpec(value) {
     for (const [i, m] of spec.messages.entries()) if (!participants.has(m.from) || !participants.has(m.to)) throw new Error(`\u7B2C ${i + 1} \u6761\u6D88\u606F\u5F15\u7528\u4E0D\u5B58\u5728\u7684\u53C2\u4E0E\u8005`);
     for (const f of spec.fragments ?? []) {
       if (f.from > f.to || f.to >= spec.messages.length) throw new Error(`\u7EC4\u5408\u7247\u6BB5 ${f.label} \u7684\u6D88\u606F\u8303\u56F4\u65E0\u6548`);
-      if (f.elseAt !== void 0 && (f.kind !== "alt" && f.kind !== "par" || f.elseAt <= f.from || f.elseAt > f.to)) throw new Error(`\u7EC4\u5408\u7247\u6BB5 ${f.label} \u7684 elseAt \u65E0\u6548`);
+      const branches = [...f.elseAt !== void 0 ? [f.elseAt] : [], ...(f.elses ?? []).map((item) => item.at)];
+      if (branches.length && (!["alt", "par", "critical"].includes(f.kind) || branches.some((at) => at <= f.from || at > f.to))) throw new Error(`\u7EC4\u5408\u7247\u6BB5 ${f.label} \u7684 elseAt \u65E0\u6548\uFF08\u542B elses \u5206\u652F\u4F4D\u7F6E\uFF09`);
     }
+    for (const box of spec.boxes ?? []) for (const id2 of box.participants) if (!participants.has(id2)) throw new Error(`\u53C2\u4E0E\u8005\u5206\u7EC4 ${box.label} \u5F15\u7528\u4E0D\u5B58\u5728\u7684\u53C2\u4E0E\u8005\uFF1A${id2}`);
   }
   if (spec.fishbone) unique(spec.fishbone.categories, "\u9C7C\u9AA8\u5206\u7C7B");
-  if (spec.type !== "sequence" && (spec.participants || spec.messages || spec.fragments)) throw new Error("\u53EA\u6709 sequence \u53EF\u4EE5\u4F7F\u7528 participants/messages/fragments");
+  if (spec.type !== "sequence" && (spec.participants || spec.messages || spec.fragments || spec.boxes)) throw new Error("\u53EA\u6709 sequence \u53EF\u4EE5\u4F7F\u7528 participants/messages/fragments/boxes");
   if (spec.type !== "fishbone" && spec.fishbone) throw new Error("\u53EA\u6709 fishbone \u53EF\u4EE5\u4F7F\u7528 fishbone \u6570\u636E");
   if (spec.type === "sequence" || spec.type === "fishbone") {
     if (spec.nodes || spec.edges || spec.groups || spec.lanes) throw new Error(`${spec.type} \u4E0D\u80FD\u5305\u542B\u56FE\u8282\u70B9\u3001\u8FDE\u7EBF\u6216\u5206\u7EC4\u5B57\u6BB5`);
@@ -98393,6 +98504,70 @@ function crossingPaths(paths, mode, lineWidth, obstacles = []) {
   return { data: pieces.map((parts) => parts.join(" ")), masks };
 }
 
+// src/palette.ts
+var defaultPalette = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
+function parseHex(value) {
+  const match = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(value.trim());
+  if (!match) return;
+  const hex = match[1].length === 3 ? match[1].split("").map((c) => c + c).join("") : match[1];
+  return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+}
+function toHex([r, g, b]) {
+  return `#${[r, g, b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("")}`;
+}
+function mix(color2, other, amount) {
+  const a = parseHex(color2), b = parseHex(other);
+  if (!a || !b) return color2;
+  return toHex(a.map((v, i) => v + (b[i] - v) * amount));
+}
+function luminance(color2) {
+  const rgb = parseHex(color2);
+  if (!rgb) return 1;
+  const [r, g, b] = rgb.map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrastText(fill, dark = "#1f2937") {
+  return luminance(fill) > 0.42 ? dark : "#ffffff";
+}
+function paletteOf(theme) {
+  const mode = theme.paletteMode ?? (theme.palette?.length ? "tint" : "mono");
+  if (mode === "mono") return;
+  const colors = (theme.palette?.length ? theme.palette : defaultPalette).filter((color2) => parseHex(color2));
+  if (!colors.length) return;
+  return { mode, by: theme.paletteBy ?? "auto", colors };
+}
+function paintFor(theme, palette, index) {
+  const slot = (index % palette.colors.length + palette.colors.length) % palette.colors.length;
+  const color2 = palette.colors[slot];
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
+  if (palette.mode === "tint") {
+    const fill = darkBackground ? mix(color2, "#000000", 0.62) : mix(color2, "#ffffff", 0.86);
+    const text3 = darkBackground ? mix(color2, "#ffffff", 0.78) : mix(color2, "#111827", 0.62);
+    return { fill, stroke: color2, text: text3, muted: mix(text3, fill, 0.3), accent: darkBackground ? mix(color2, "#ffffff", 0.3) : mix(color2, "#000000", 0.15) };
+  }
+  if (palette.mode === "solid") {
+    const text3 = contrastText(color2);
+    return { fill: color2, stroke: mix(color2, "#000000", 0.22), text: text3, muted: mix(text3, color2, 0.22), accent: text3 };
+  }
+  const from = mix(color2, "#ffffff", 0.38), to = mix(color2, "#000000", 0.12);
+  const text2 = contrastText(mix(from, to, 0.5));
+  return { fill: `url(#uml-palette-${slot})`, stroke: mix(color2, "#000000", 0.28), text: text2, muted: mix(text2, color2, 0.2), accent: text2, gradient: { id: `uml-palette-${slot}`, from, to } };
+}
+function gradientDefs(paints) {
+  const seen = /* @__PURE__ */ new Map();
+  for (const paint3 of paints) if (paint3.gradient) seen.set(paint3.gradient.id, paint3.gradient);
+  if (!seen.size) return "";
+  return `<defs>${[...seen.values()].map((g) => `<linearGradient id="${g.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${g.from}"/><stop offset="1" stop-color="${g.to}"/></linearGradient>`).join("")}</defs>`;
+}
+function regionPaint(theme, palette, index) {
+  const color2 = palette.colors[(index % palette.colors.length + palette.colors.length) % palette.colors.length];
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
+  return darkBackground ? { fill: mix(color2, "#000000", 0.82), stroke: mix(color2, "#000000", 0.35), text: mix(color2, "#ffffff", 0.6), header: mix(color2, "#000000", 0.6) } : { fill: mix(color2, "#ffffff", 0.94), stroke: mix(color2, "#ffffff", 0.35), text: mix(color2, "#000000", 0.35), header: mix(color2, "#ffffff", 0.8) };
+}
+
 // src/graph.ts
 var graphNumber = 0;
 var layoutEngine;
@@ -98474,6 +98649,13 @@ function createNode(node, index, spec, base2) {
     physical: "server"
   };
   const kind = node.kind ?? defaults[spec.type] ?? "action";
+  const palette = paletteOf(theme);
+  let paint3;
+  if (palette && !sourceNode.style?.surface && !uncoloured.has(kind)) {
+    paint3 = paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
+    if (kind === "actor") theme.primary = paint3.stroke;
+    else Object.assign(theme, { surface: paint3.fill, border: paint3.stroke, text: paint3.text, muted: paint3.muted, primary: paint3.accent, secondary: palette.mode === "tint" ? paint3.stroke : paint3.text });
+  }
   const size = theme.fontSize;
   const smaller = Math.max(10, size - 2);
   const label2 = measure(node.label, size);
@@ -98525,6 +98707,16 @@ function createNode(node, index, spec, base2) {
   } else if (kind === "note") {
     width += 12;
     height += 8;
+  } else if (kind === "terminal") {
+    width += Math.max(16, height / 2);
+  } else if (kind === "subroutine") {
+    width += 24;
+  } else if (kind === "io" || kind === "trapezoid") {
+    width += 32;
+  } else if (kind === "hexagon") {
+    width += 36;
+  } else if (kind === "circle") {
+    width = height = Math.max(theme.nodeHeight, contentWidth + 28, contentHeight + 28);
   }
   let symbol, internalCaption;
   if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ["start", "end", "fork", "join"].includes(kind)) {
@@ -98539,7 +98731,16 @@ function createNode(node, index, spec, base2) {
   }
   const renderWidth = Math.ceil(width / 4) * 4, renderHeight = Math.ceil(height / 4) * 4;
   const fit = Math.min(1, spec.layout?.nodeMaxWidth ? spec.layout.nodeMaxWidth / renderWidth : 1, spec.layout?.nodeMaxHeight ? spec.layout.nodeMaxHeight / renderHeight : 1);
-  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight };
+  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight, paint: paint3 };
+}
+var uncoloured = /* @__PURE__ */ new Set(["start", "end", "fork", "join"]);
+function paletteSlot(node, kind, spec, palette) {
+  const regions = [...(spec.groups ?? []).map((group) => group.id), ...(spec.lanes ?? []).map((lane) => lane.id)];
+  const region = node.group ?? node.lane;
+  if ((palette.by === "group" || palette.by === "auto") && region && regions.includes(region)) return regions.indexOf(region);
+  const fallback = kind;
+  if (palette.by === "kind" || palette.by === "group") return [...new Set((spec.nodes ?? []).map((item) => item.kind ?? fallback))].indexOf(node.kind ?? fallback);
+  return (spec.nodes ?? []).filter((item) => !uncoloured.has(item.kind ?? "")).indexOf(node);
 }
 function edgeKind(edge, type) {
   return edge.kind ?? (type === "class" || type === "usecase" ? "association" : "flow");
@@ -98562,10 +98763,10 @@ ${label2}` : tag;
   }
   return { id: id2, key: edge.id ?? `edge-${index}`, edge, labels };
 }
-function layoutOptions(direction, padding, spec) {
+function layoutOptions(direction2, padding, spec) {
   return {
     "elk.algorithm": "layered",
-    "elk.direction": direction === "LR" ? "RIGHT" : "DOWN",
+    "elk.direction": direction2 === "LR" ? "RIGHT" : "DOWN",
     "elk.edgeRouting": "ORTHOGONAL",
     "elk.hierarchyHandling": "INCLUDE_CHILDREN",
     "elk.padding": padding,
@@ -98589,7 +98790,7 @@ function layoutOptions(direction, padding, spec) {
   };
 }
 function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, additionalGroups) {
-  const direction = spec.direction ?? "TB";
+  const direction2 = spec.direction ?? "TB";
   const groupById = new Map(groups.map((group) => [group.id, group]));
   const included = /* @__PURE__ */ new Set();
   const memberships = [...refs.map((ref) => ref.node.group), ...additionalGroups ?? []];
@@ -98602,12 +98803,12 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
   }
   if (!lane) for (const group of groups) included.add(group.id);
   const root = { id: rootId, children: [], edges: [] };
-  const header = lane ? direction === "TB" ? measure(lane.label, theme.fontSize).height + 24 : measure(lane.label, theme.fontSize).width + 32 : 0;
-  const padding = lane ? direction === "TB" ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]` : "[top=24,left=24,bottom=24,right=24]";
-  root.layoutOptions = layoutOptions(direction, padding, spec);
+  const header = lane ? direction2 === "TB" ? measure(lane.label, theme.fontSize).height + 24 : measure(lane.label, theme.fontSize).width + 32 : 0;
+  const padding = lane ? direction2 === "TB" ? `[top=${header + 24},left=24,bottom=28,right=24]` : `[top=24,left=${header + 24},bottom=24,right=28]` : "[top=24,left=24,bottom=24,right=24]";
+  root.layoutOptions = layoutOptions(direction2, padding, spec);
   if (lane) {
-    root.width = direction === "TB" ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
-    root.height = direction === "TB" ? 180 + header : Math.max(180, measure(lane.label, theme.fontSize).height + 28);
+    root.width = direction2 === "TB" ? Math.max(240, measure(lane.label, theme.fontSize).width + 36) : 260 + header;
+    root.height = direction2 === "TB" ? 180 + header : Math.max(180, measure(lane.label, theme.fontSize).height + 28);
     root.layoutOptions["elk.nodeSize.constraints"] = "[MINIMUM_SIZE]";
     root.layoutOptions["elk.nodeSize.minimum"] = `(${root.width},${root.height})`;
     containers.set(rootId, { id: rootId, label: lane.label, originalId: lane.id, kind: "lane", header, lane: lane.id });
@@ -98620,7 +98821,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
     const groupHeader = labelSize.height + (group.kind === "node" ? 40 : 22);
     const width = Math.max(180, labelSize.width + 48);
     const height = groupHeader + 64;
-    const options = layoutOptions(direction, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`, spec);
+    const options = layoutOptions(direction2, `[top=${groupHeader + 20},left=24,bottom=24,right=24]`, spec);
     options["elk.nodeSize.constraints"] = "[MINIMUM_SIZE]";
     options["elk.nodeSize.minimum"] = `(${width},${height})`;
     groupNodes.set(group.id, { id: id2, width, height, layoutOptions: options, children: [] });
@@ -98640,7 +98841,7 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
       const caption = [ref.node.stereotype ? `\xAB${ref.node.stereotype}\xBB` : "", ref.node.label, ref.node.detail].filter(Boolean).join("\n");
       const size = Math.max(10, ref.theme.fontSize - 2);
       const metrics = measure(caption, size);
-      const placement = direction === "TB" ? "[H_RIGHT,V_CENTER,OUTSIDE]" : "[H_CENTER,V_BOTTOM,OUTSIDE]";
+      const placement = direction2 === "TB" ? "[H_RIGHT,V_CENTER,OUTSIDE]" : "[H_CENTER,V_BOTTOM,OUTSIDE]";
       child.layoutOptions = { "elk.layered.nodePlacement.favorStraightEdges": "true", "elk.spacing.labelNode": "10", "elk.nodeLabels.placement": placement };
       const width = metrics.width + 4, height = metrics.height + 4;
       child.labels = [{
@@ -98648,8 +98849,8 @@ function buildGraph(rootId, refs, groups, edges, spec, theme, containers, lane, 
         text: caption,
         width,
         height,
-        x: direction === "LR" ? (ref.width - width) / 2 : ref.width + 10,
-        y: direction === "LR" ? ref.height + 10 : (ref.height - height) / 2
+        x: direction2 === "LR" ? (ref.width - width) / 2 : ref.width + 10,
+        y: direction2 === "LR" ? ref.height + 10 : (ref.height - height) / 2
       }];
     }
     const parent = ref.node.group ? groupNodes.get(ref.node.group) : void 0;
@@ -98928,11 +99129,11 @@ function obstacleRouter(start, end, obstacles, used, guards) {
           if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
         }
       }
-      const direction = horizontal ? 1 : 2;
-      const state = neighbor * 3 + direction;
+      const direction2 = horizontal ? 1 : 2;
+      const state = neighbor * 3 + direction2;
       const startAligned = guards?.startSide ? horizontal === (guards.startSide === "left" || guards.startSide === "right") : false;
       const bias = guards?.startSide && guards.turnBias && vertex === startVertex && (guards.turnBias === "early" && startAligned || guards.turnBias === "late" && !startAligned) ? 0.5 : 0;
-      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + crossings * 80 + bias;
+      const cost = current.cost + Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + (current.state % 3 && current.state % 3 !== direction2 ? 28 : 0) + overlap * 8 + crossings * 80 + bias;
       if (cost >= costs[state]) continue;
       costs[state] = cost;
       previous[state] = current.state;
@@ -99204,7 +99405,7 @@ function uncoveredOverlap(lo, hi, allowed) {
 function opposite(side) {
   return side === "right" ? "left" : side === "left" ? "right" : side === "bottom" ? "top" : "bottom";
 }
-function routeEdges(edges, result, direction, theme, type, adjustments2) {
+function routeEdges(edges, result, direction2, theme, type, adjustments2) {
   const byId = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
   const clearance = Math.min(12, theme.gap / 4);
   const obstacles = result.nodes.map((box) => ({ x: box.x - clearance, y: box.y - clearance, width: box.width + clearance * 2, height: box.height + clearance * 2 }));
@@ -99222,16 +99423,16 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
     const targetX = target.x + target.width / 2, targetY = target.y + target.height / 2;
     const gapX = target.x >= source.x + source.width ? target.x - (source.x + source.width) : source.x >= target.x + target.width ? -(source.x - (target.x + target.width)) : 0;
     const gapY = target.y >= source.y + source.height ? target.y - (source.y + source.height) : source.y >= target.y + target.height ? -(source.y - (target.y + target.height)) : 0;
-    const forward = direction === "TB" ? targetY > sourceY : targetX > sourceX;
-    const forwardFlow = source !== target && (direction === "TB" ? gapY > 0 : gapX > 0);
+    const forward = direction2 === "TB" ? targetY > sourceY : targetX > sourceX;
+    const forwardFlow = source !== target && (direction2 === "TB" ? gapY > 0 : gapX > 0);
     let side;
     if (source === target) side = "right";
-    else if (forward && target.ref.kind === "end") side = direction === "TB" ? "bottom" : "right";
+    else if (forward && target.ref.kind === "end") side = direction2 === "TB" ? "bottom" : "right";
     else if (gapX === 0 && gapY !== 0) side = gapY > 0 ? "bottom" : "top";
     else if (gapY === 0 && gapX !== 0) side = gapX > 0 ? "right" : "left";
-    else if (gapX !== 0 && gapY !== 0) side = forwardFlow ? direction === "TB" ? "bottom" : "right" : Math.abs(gapX) > Math.abs(gapY) ? gapX > 0 ? "right" : "left" : gapY > 0 ? "bottom" : "top";
+    else if (gapX !== 0 && gapY !== 0) side = forwardFlow ? direction2 === "TB" ? "bottom" : "right" : Math.abs(gapX) > Math.abs(gapY) ? gapX > 0 ? "right" : "left" : gapY > 0 ? "bottom" : "top";
     else side = Math.abs(targetX - sourceX) > Math.abs(targetY - sourceY) ? sourceX < targetX ? "right" : "left" : sourceY < targetY ? "bottom" : "top";
-    const targetSide = source === target ? "top" : target.ref.kind === "end" ? direction === "TB" ? "top" : "left" : opposite(side);
+    const targetSide = source === target ? "top" : target.ref.kind === "end" ? direction2 === "TB" ? "top" : "left" : opposite(side);
     return { ref, source, target, side, targetSide, forwardFlow };
   });
   const used = result.routes.flatMap((route) => route.paths);
@@ -99375,12 +99576,20 @@ function clipEndpoint(point2, neighbor, box) {
   const rx = box.width / 2, ry = box.height / 2;
   const horizontal = Math.abs(point2.y - neighbor.y) < 0.01;
   const kind = box.ref.kind;
-  if (kind === "usecase" || kind === "start" || kind === "end") {
+  if (kind === "usecase" || kind === "start" || kind === "end" || kind === "circle") {
     if (horizontal) point2.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.sqrt(Math.max(0, 1 - ((point2.y - cy) / ry) ** 2));
     else point2.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.sqrt(Math.max(0, 1 - ((point2.x - cx) / rx) ** 2));
   } else if (kind === "decision") {
     if (horizontal) point2.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.max(0, 1 - Math.abs(point2.y - cy) / ry);
     else point2.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.max(0, 1 - Math.abs(point2.x - cx) / rx);
+  } else if (kind === "terminal" && horizontal) {
+    point2.x = cx + (neighbor.x < cx ? -1 : 1) * (rx - ry + Math.sqrt(Math.max(0, ry * ry - (point2.y - cy) ** 2)));
+  } else if (kind === "hexagon" && horizontal) {
+    const full = Math.min(18, box.width / 4), inset = full * (1 - Math.abs(point2.y - cy) / ry);
+    point2.x = neighbor.x < cx ? box.x + full - inset : box.x + box.width - full + inset;
+  } else if ((kind === "io" || kind === "trapezoid") && horizontal) {
+    const t = (point2.y - box.y) / box.height, skew = Math.min(16, box.width / 5);
+    point2.x = neighbor.x < cx ? box.x + skew * (1 - t) : box.x + box.width - skew * (kind === "io" ? t : 1 - t);
   } else if (kind === "actor" && horizontal) {
     const localY = point2.y - box.y;
     let halfWidth = box.width / 2 - 12;
@@ -99411,17 +99620,18 @@ function clipEndpoint(point2, neighbor, box) {
 }
 function markerDefinitions(prefix, theme) {
   const stroke = esc(theme.primary), background = esc(theme.background === "transparent" ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
+  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker><marker id="${prefix}-arrow-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle-start" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-circle-start" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-cross" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker><marker id="${prefix}-cross-start" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker></defs>`;
 }
-function renderContainer(box, theme, direction) {
+function renderContainer(box, theme, direction2, region) {
   const { x, y, width: w, height: h, ref } = box;
-  const border = esc(theme.border), surface = esc(theme.surface), primary = esc(theme.primary);
+  const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
+  const headerOpacity = region ? "1" : "0.08";
   let shape = "";
   let labelX = x + 16, labelY = y + theme.fontSize + 10;
   if (ref.kind === "lane") {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (direction === "TB") shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="0.08"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}"/>`;
-    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="0.08"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
+    if (direction2 === "TB") shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}"/>`;
+    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
   } else if (ref.kind === "package") {
     const tabWidth = Math.min(w - 24, Math.max(80, measure(ref.label, theme.fontSize).width + 32));
     const tabHeight = ref.header;
@@ -99433,7 +99643,7 @@ function renderContainer(box, theme, direction) {
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === "lane" ? "lanes" : "groups"}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650 })}</g>`;
+  return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === "lane" ? "lanes" : "groups"}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
 }
 function centeredContent(ref, x, y, width, height) {
   const { node, theme, kind } = ref;
@@ -99507,6 +99717,23 @@ function renderNode(box, spec, adjustmentMetadata = true) {
     const tab = Math.min(w - 28, Math.max(56, w * 0.4));
     shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tab)} V${numeric(y + 20)} H${numeric(x + w)} V${numeric(y + h)} Z" ${common}/><path d="M${numeric(x)} ${numeric(y + 20)} H${numeric(x + tab)}" stroke="${stroke}"/>`;
     content = centeredContent(ref, x, y + 22, w, h - 22);
+  } else if (kind === "terminal") {
+    shape = `${rect} rx="${numeric(h / 2)}" ${common}/>`;
+    content = centeredContent(ref, x, y, w, h);
+  } else if (kind === "circle") {
+    shape = `<ellipse cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" rx="${numeric(w / 2)}" ry="${numeric(h / 2)}" ${common}/>`;
+    content = centeredContent(ref, x, y, w, h);
+  } else if (kind === "subroutine") {
+    shape = `${rect} rx="${numeric(Math.min(4, theme.radius))}" ${common}/><path d="M${numeric(x + 10)} ${numeric(y)} V${numeric(y + h)} M${numeric(x + w - 10)} ${numeric(y)} V${numeric(y + h)}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"/>`;
+    content = centeredContent(ref, x + 10, y, w - 20, h);
+  } else if (kind === "hexagon") {
+    const inset = Math.min(18, w / 4);
+    shape = `<path d="M${numeric(x + inset)} ${numeric(y)} H${numeric(x + w - inset)} L${numeric(x + w)} ${numeric(y + h / 2)} L${numeric(x + w - inset)} ${numeric(y + h)} H${numeric(x + inset)} L${numeric(x)} ${numeric(y + h / 2)} Z" ${common}/>`;
+    content = centeredContent(ref, x + inset, y, w - inset * 2, h);
+  } else if (kind === "io" || kind === "trapezoid") {
+    const skew = Math.min(16, w / 5);
+    shape = kind === "io" ? `<path d="M${numeric(x + skew)} ${numeric(y)} H${numeric(x + w)} L${numeric(x + w - skew)} ${numeric(y + h)} H${numeric(x)} Z" ${common}/>` : `<path d="M${numeric(x + skew)} ${numeric(y)} H${numeric(x + w - skew)} L${numeric(x + w)} ${numeric(y + h)} H${numeric(x)} Z" ${common}/>`;
+    content = centeredContent(ref, x + skew, y, w - skew * 2, h);
   } else if (kind === "note") {
     shape = `<path d="M${numeric(x)} ${numeric(y)} H${numeric(x + w - 18)} L${numeric(x + w)} ${numeric(y + 18)} V${numeric(y + h)} H${numeric(x)} Z" ${common}/><path d="M${numeric(x + w - 18)} ${numeric(y)} V${numeric(y + 18)} H${numeric(x + w)}" fill="none" stroke="${stroke}"/>`;
     content = centeredContent(ref, x + 6, y + 10, w - 18, h - 16);
@@ -99572,10 +99799,10 @@ function labelIntersectsNode(label2, node) {
   if (["usecase", "start", "end"].includes(node.ref.kind)) return dx * dx + dy * dy < 1;
   return true;
 }
-function placeLabels(routes, nodes, containers, direction, finalPass = false) {
+function placeLabels(routes, nodes, containers, direction2, finalPass = false) {
   const occupied = [];
   for (const box of nodes) if (box.caption) occupied.push({ x: box.x + box.caption.x, y: box.y + box.caption.y, width: box.caption.width, height: box.caption.height });
-  for (const box of containers) occupied.push(box.ref.kind === "lane" && direction === "LR" ? { x: box.x, y: box.y, width: box.ref.header, height: box.height } : { x: box.x, y: box.y, width: box.width, height: box.ref.header });
+  for (const box of containers) occupied.push(box.ref.kind === "lane" && direction2 === "LR" ? { x: box.x, y: box.y, width: box.ref.header, height: box.height } : { x: box.x, y: box.y, width: box.width, height: box.ref.header });
   const allSegments = [];
   for (const route of routes) {
     let offset = 0;
@@ -99787,8 +100014,8 @@ function alignLaneFlow(result, edges, spec, theme) {
   }
   return true;
 }
-function equalizeLaneExtents(result, direction) {
-  const size = direction === "LR" ? "width" : "height", axis = direction === "LR" ? "x" : "y";
+function equalizeLaneExtents(result, direction2) {
+  const size = direction2 === "LR" ? "width" : "height", axis = direction2 === "LR" ? "x" : "y";
   const lanes = result.containers.filter((box) => box.ref.kind === "lane");
   const end = Math.max(
     0,
@@ -99945,10 +100172,10 @@ function alignConnectedNodes(result, edges, columns, spec) {
     }
   }
 }
-function placeFlowTerminals(result, edges, direction, gap) {
+function placeFlowTerminals(result, edges, direction2, gap) {
   const starts = result.nodes.filter((box) => box.ref.kind === "start"), ends = result.nodes.filter((box) => box.ref.kind === "end");
   if (!starts.length && !ends.length) return;
-  const horizontal = direction === "LR", axis = horizontal ? "x" : "y", cross2 = horizontal ? "y" : "x";
+  const horizontal = direction2 === "LR", axis = horizontal ? "x" : "y", cross2 = horizontal ? "y" : "x";
   const size = horizontal ? "width" : "height", crossSize = horizontal ? "height" : "width";
   const body = result.nodes.filter((box) => !["start", "end"].includes(box.ref.kind));
   const bounds = [...body.map(occupiedNode), ...result.containers];
@@ -99981,7 +100208,7 @@ function adjustmentDelta(box, adjustment) {
   if (!adjustment) return { x: 0, y: 0 };
   return "dx" in adjustment ? { x: adjustment.dx, y: adjustment.dy } : { x: adjustment.x - box.x, y: adjustment.y - box.y };
 }
-function applyManualElements(result, spec, direction) {
+function applyManualElements(result, spec, direction2) {
   const adjustments2 = spec.layout?.adjustments?.elements;
   if (!adjustments2 || !Object.keys(adjustments2).length) return;
   const parents = new Map((spec.groups ?? []).map((group) => [group.id, group.parent]));
@@ -100026,8 +100253,8 @@ function applyManualElements(result, spec, direction) {
     const members = result.nodes.filter((node) => !["start", "end"].includes(node.ref.kind) && nodeWithin(node, container)).map(occupiedNode);
     members.push(...result.containers.filter((child) => containerWithin(child, container)));
     if (!members.length) continue;
-    const headerX = container.ref.kind === "lane" && direction === "LR" ? container.ref.header : 0;
-    const headerY = container.ref.kind === "lane" && direction === "LR" ? 0 : container.ref.header;
+    const headerX = container.ref.kind === "lane" && direction2 === "LR" ? container.ref.header : 0;
+    const headerY = container.ref.kind === "lane" && direction2 === "LR" ? 0 : container.ref.header;
     const right = Math.max(container.x + container.width, ...members.map((box) => box.x + box.width + 24));
     const bottom = Math.max(container.y + container.height, ...members.map((box) => box.y + box.height + 24));
     container.x = Math.min(container.x, ...members.map((box) => box.x - 24 - headerX));
@@ -100059,7 +100286,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const automaticColumns = spec.layout?.maxPerColumn === void 0;
   spec = { ...spec, layout: resolveLayout(spec) };
   const theme = cleanTheme(suppliedTheme);
-  const direction = spec.direction ?? (spec.type === "usecase" ? "LR" : "TB");
+  const direction2 = spec.direction ?? (spec.type === "usecase" ? "LR" : "TB");
   const nodes = (spec.nodes ?? []).map((node, index) => createNode(node, index, spec, theme));
   const edges = (spec.edges ?? []).map((edge, index) => createEdge(edge, index, theme, spec.type));
   const refs = new Map(nodes.map((node) => [node.id, node]));
@@ -100107,28 +100334,28 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
       output.height = Math.max(minimumHeight, output.height ?? 0);
       layouts.push(collectLayout(output, refs, containers));
     }
-    const crossSize = Math.max(180, ...layouts.map((layout2) => direction === "TB" ? layout2.height : layout2.width));
+    const crossSize = Math.max(180, ...layouts.map((layout2) => direction2 === "TB" ? layout2.height : layout2.width));
     let offset = 0;
     result = { nodes: [], containers: [], routes: [], width: 0, height: 0 };
     for (const layout2 of layouts) {
-      const dx = direction === "TB" ? offset : 0, dy = direction === "LR" ? offset : 0;
+      const dx = direction2 === "TB" ? offset : 0, dy = direction2 === "LR" ? offset : 0;
       for (const box of layout2.nodes) result.nodes.push({ ...box, x: box.x + dx, y: box.y + dy });
-      for (const box of layout2.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === "lane" && direction === "LR" ? crossSize : box.width, height: box.ref.kind === "lane" && direction === "TB" ? crossSize : box.height });
-      offset += direction === "TB" ? layout2.width : layout2.height;
+      for (const box of layout2.containers) result.containers.push({ ...box, x: box.x + dx, y: box.y + dy, width: box.ref.kind === "lane" && direction2 === "LR" ? crossSize : box.width, height: box.ref.kind === "lane" && direction2 === "TB" ? crossSize : box.height });
+      offset += direction2 === "TB" ? layout2.width : layout2.height;
     }
-    result.width = direction === "TB" ? offset : crossSize;
-    result.height = direction === "TB" ? crossSize : offset;
+    result.width = direction2 === "TB" ? offset : crossSize;
+    result.height = direction2 === "TB" ? crossSize : offset;
   } else {
     const input = buildGraph("root", nodes, spec.groups ?? [], edges, spec, theme, containers);
     const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
     result = collectLayout(output, refs, containers);
   }
   if (spec.type !== "usecase" && !alignLaneFlow(result, edges, spec, theme)) alignConnectedNodes(result, edges, columns, spec);
-  if (spec.lanes?.length) equalizeLaneExtents(result, direction);
-  placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
+  if (spec.lanes?.length) equalizeLaneExtents(result, direction2);
+  placeFlowTerminals(result, edges, direction2, spec.layout?.elementGap ?? 24);
   const routeResult = (adjustments2) => {
     result.routes = [];
-    routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type, adjustments2);
+    routeEdges(edges, result, direction2, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type, adjustments2);
     const nodeById = new Map(result.nodes.map((box) => [box.ref.node.id, box]));
     for (const route of result.routes) {
       const first = route.paths[0], last = route.paths[route.paths.length - 1];
@@ -100143,7 +100370,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const manual = spec.layout?.adjustments;
   const hasManualPositions = !!(Object.keys(manual?.elements ?? {}).length || Object.keys(manual?.edges ?? {}).length);
   routeResult();
-  const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
+  const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction2, labelPass >= 4);
   if (!baselineLabels) {
     return renderGraphWithSpacing({ ...requestedSpec, layout: {
       ...requestedSpec.layout,
@@ -100153,9 +100380,9 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   }
   let labels = baselineLabels;
   if (hasManualPositions) {
-    applyManualElements(result, spec, direction);
+    applyManualElements(result, spec, direction2);
     routeResult(manual);
-    labels = placeLabels(result.routes, result.nodes, result.containers, direction, true);
+    labels = placeLabels(result.routes, result.nodes, result.containers, direction2, true);
   }
   result.width = Math.max(0, ...result.nodes.map((box) => {
     const occupied = occupiedNode(box);
@@ -100192,17 +100419,28 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
     const dashed = route.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
-    const end = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
-    const start = kind === "aggregation" || kind === "composition" ? kind : "";
+    const edge = route.ref.edge;
+    const defaultEnd = kind === "flow" ? "arrow" : ["dependency", "include", "extend"].includes(kind) ? "open" : ["inheritance", "realization"].includes(kind) ? "triangle" : "";
+    const end = edge.arrow ? edge.arrow === "none" ? "" : edge.arrow : defaultEnd;
+    const start = edge.startArrow ? edge.startArrow === "none" ? "" : `${edge.startArrow}-start` : kind === "aggregation" || kind === "composition" ? kind : "";
+    const strokeWidth = theme.lineWidth * (edge.thick ? 2 : 1);
     paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(" \u2192 "))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : "";
-      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ""}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ""}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ""}/>`;
     }
     paths += "</g>";
   }
-  const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(box, theme, direction)).join("");
+  const palette = paletteOf(theme);
+  const regionIds = [...(spec.groups ?? []).map((group) => group.id), ...(spec.lanes ?? []).map((lane) => lane.id)];
+  const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map((box) => renderContainer(
+    box,
+    theme,
+    direction2,
+    palette && regionIds.includes(box.ref.originalId) ? regionPaint(theme, palette, regionIds.indexOf(box.ref.originalId)) : void 0
+  )).join("");
+  const paletteDefs = gradientDefs(nodes.flatMap((node) => node.paint ? [node.paint] : []));
   const nodeShapes = result.nodes.map((box) => renderNode(box, spec)).join("");
   const labelShapes = labels.map((label2) => {
     const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
@@ -100235,7 +100473,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass) {
   const heading2 = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: "start", weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: "start", fill: theme.muted }) : "") : "";
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading2}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}${paletteDefs}<defs>${maskDefinitions}</defs>${heading2}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }
 
@@ -100327,7 +100565,12 @@ function renderSequence(spec, theme) {
   const participants = spec.participants ?? [];
   const messages = spec.messages ?? [];
   const fragments = spec.fragments ?? [];
+  const boxes = spec.boxes ?? [];
+  const palette = paletteOf(theme);
+  const autonumber = spec.layout?.autonumber !== false;
+  const isEvent = (m) => m.kind === "note" || m.kind === "divider";
   const size = theme.fontSize;
+  const darkBackground = luminance(theme.background === "transparent" ? theme.surface : theme.background) < 0.2;
   const participantWidth = Math.max(
     128,
     theme.nodeWidth,
@@ -100344,20 +100587,27 @@ function renderSequence(spec, theme) {
     lastCenter + Math.max(participantWidth / 2, labelWidth - 38) + 40
   );
   const header = heading(spec, theme, width, "UML / SEQUENCE \xB7 \u65F6\u95F4\u5411\u4E0B");
-  const top = header.bottom;
+  const boxOf = /* @__PURE__ */ new Map();
+  boxes.forEach((box, index) => box.participants.forEach((id2) => boxOf.set(id2, index)));
+  const boxHeader = boxes.length ? size * 1.4 + 18 : 0;
+  const top = header.bottom + boxHeader;
+  const symbolic = /* @__PURE__ */ new Set(["actor", "boundary", "control", "entity"]);
   const boxHeight = Math.max(
     76,
     size * 4,
     ...participants.map(
-      (p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (p.kind === "actor" ? 76 : 28)
+      (p) => wrap(p.label, participantWidth - 20, size).length * size * 1.4 + (symbolic.has(p.kind ?? "") ? 76 : 28)
     )
   );
+  const paints = participants.map((p, i) => palette ? paintFor(theme, palette, boxes.length && palette.by !== "node" && boxOf.has(p.id) ? boxOf.get(p.id) : i) : void 0);
   const x = new Map(
     participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x])
   );
   const ys = [];
   const rowLines = [], labelTops = [];
-  const guardSize = Math.max(11, size - 1), guardLeading = guardSize * 1.4;
+  const events = [];
+  const guardSize = Math.max(12, size - 1), guardLeading = guardSize * 1.4;
+  const tagSize = Math.max(12, size - 3);
   const orderedFragments = [...fragments].sort(
     (a, b) => b.to - b.from - (a.to - a.from)
   );
@@ -100366,70 +100616,97 @@ function renderSequence(spec, theme) {
       (other) => other.from <= fragment.from && other.to >= fragment.to
     ).length;
     const left = 36 + nested * 12, right = width - 36 - nested * 12;
-    const guardLines = wrap(
-      `[${fragment.label}]`,
-      Math.max(48, right - left - 96),
-      guardSize
-    );
-    const elseLines = wrap(
-      `[${fragment.elseLabel ?? (fragment.kind === "par" ? "\u5E76\u884C\u5206\u652F" : "else")}]`,
-      Math.max(48, right - left - 32),
-      guardSize
-    );
+    const highlight = fragment.kind === "rect";
+    const guardLines = highlight || !fragment.label ? [] : wrap(`[${fragment.label}]`, Math.max(48, right - left - 96), guardSize);
+    const branchList = [
+      ...fragment.elseAt !== void 0 ? [{ at: fragment.elseAt, label: fragment.elseLabel }] : [],
+      ...fragment.elses ?? []
+    ].sort((a, b) => a.at - b.at);
+    const fallback = fragment.kind === "par" ? "\u5E76\u884C\u5206\u652F" : fragment.kind === "critical" ? "option" : "else";
+    const branches = branchList.map((branch) => {
+      const lines = wrap(`[${branch.label ?? fallback}]`, Math.max(48, right - left - 32), guardSize);
+      return { at: branch.at, lines, height: lines.length * guardLeading + 36, y: 0 };
+    });
     return {
       fragment,
       left,
       right,
       guardLines,
-      elseLines,
-      headerHeight: Math.max(44, guardLines.length * guardLeading + 20) + 12,
-      elseHeight: elseLines.length * guardLeading + 36,
+      branches,
+      headerHeight: highlight ? 14 : Math.max(44, guardLines.length * guardLeading + 20) + 12,
       top: 0,
-      bottom: 0,
-      divider: 0
+      bottom: 0
     };
   });
   const starts = /* @__PURE__ */ new Map(), alternatives = /* @__PURE__ */ new Map(), ends = /* @__PURE__ */ new Map();
-  const addEvent = (events, index, box) => {
-    const list = events.get(index);
-    if (list) list.push(box);
-    else events.set(index, [box]);
+  const addEvent = (map, index, item) => {
+    const list = map.get(index);
+    if (list) list.push(item);
+    else map.set(index, [item]);
   };
   for (const box of frames) {
     addEvent(starts, box.fragment.from, box);
     addEvent(ends, box.fragment.to, box);
-    if (box.fragment.elseAt !== void 0)
-      addEvent(alternatives, box.fragment.elseAt, box);
+    for (const branch of box.branches) addEvent(alternatives, branch.at, { box, branch });
   }
-  for (const boxes of ends.values()) boxes.reverse();
+  for (const list of ends.values()) list.reverse();
+  const noteSpan = (m) => {
+    const sx = x.get(m.from) ?? 70, tx = x.get(m.to) ?? sx;
+    const textWidth = Math.min(300, Math.max(...m.label.split("\n").map((value) => measure2(value, size))) + 28);
+    if (m.position === "left") {
+      const w2 = Math.max(96, textWidth);
+      return { left: sx - 14 - w2, width: w2 };
+    }
+    if (m.position === "right") {
+      const w2 = Math.max(96, textWidth);
+      return { left: sx + 14, width: w2 };
+    }
+    const lo = Math.min(sx, tx), hi = Math.max(sx, tx);
+    const w = Math.max(hi - lo + participantWidth * 0.7, textWidth, 110);
+    return { left: (lo + hi) / 2 - w / 2, width: w };
+  };
   let cursor = top + boxHeight + 40;
+  let number2 = 0;
   for (let i = 0; i < messages.length; i++) {
-    const elseBoxes = alternatives.get(i), startBoxes = starts.get(i);
-    if (elseBoxes)
-      for (const box of elseBoxes) {
-        box.divider = cursor;
-        cursor += box.elseHeight;
-      }
-    if (startBoxes)
-      for (const box of startBoxes) {
-        box.top = cursor;
-        cursor += box.headerHeight;
-      }
+    for (const { branch } of alternatives.get(i) ?? []) {
+      branch.y = cursor;
+      cursor += branch.height;
+    }
+    for (const box of starts.get(i) ?? []) {
+      box.top = cursor;
+      cursor += box.headerHeight;
+    }
     const msg = messages[i];
-    const label2 = `${i + 1}  ${msg.label}${msg.kind === "create" ? " \xABcreate\xBB" : msg.kind === "destroy" ? " \xABdestroy\xBB" : ""}`;
-    const available = msg.from === msg.to ? labelWidth - 56 : Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 48;
-    const lines = wrap(
-      label2,
-      Math.max(48, Math.min(labelWidth, available)),
-      size
-    );
-    const labelHeight = lines.length * size * 1.4;
-    const before = msg.kind === "create" ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12;
-    const y = cursor + before;
-    ys.push(y);
-    rowLines.push(lines);
-    labelTops.push(y - labelHeight - 12);
-    cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === "create" ? Math.max(messageGap, boxHeight / 2 + 20) : messageGap);
+    if (msg.kind === "divider") {
+      const lines = msg.label ? wrap(msg.label, Math.max(120, width / 2), size) : [];
+      const height2 = Math.max(36, lines.length * size * 1.4 + 18);
+      events[i] = { left: 36, top: cursor, width: width - 72, height: height2, lines };
+      ys.push(cursor + height2 / 2);
+      rowLines.push(lines);
+      labelTops.push(cursor);
+      cursor += height2 + messageGap / 2;
+    } else if (msg.kind === "note") {
+      const span = noteSpan(msg);
+      const lines = wrap(msg.label, span.width - 20, size);
+      const height2 = lines.length * size * 1.4 + 18;
+      events[i] = { ...span, top: cursor + 4, height: height2, lines };
+      ys.push(cursor + 4);
+      rowLines.push(lines);
+      labelTops.push(cursor + 4);
+      cursor += height2 + 12 + messageGap / 2;
+    } else {
+      number2++;
+      const label2 = `${autonumber ? `${number2}  ` : ""}${msg.label}${msg.kind === "create" ? " \xABcreate\xBB" : msg.kind === "destroy" ? " \xABdestroy\xBB" : ""}`;
+      const available = msg.from === msg.to ? labelWidth - 56 : Math.abs(x.get(msg.to) - x.get(msg.from)) - (msg.kind === "create" ? participantWidth / 2 : 0) - 48;
+      const lines = label2.trim() ? wrap(label2, Math.max(48, Math.min(labelWidth, available)), size) : [];
+      const labelHeight = lines.length * size * 1.4;
+      const before = msg.kind === "create" ? Math.max(labelHeight + 12, boxHeight / 2 + 16) : labelHeight + 12;
+      const y = cursor + before;
+      ys.push(y);
+      rowLines.push(lines);
+      labelTops.push(y - labelHeight - 12);
+      cursor = y + (msg.from === msg.to ? 30 : 0) + (msg.kind === "create" ? Math.max(messageGap, boxHeight / 2 + 20) : messageGap);
+    }
     const endBoxes = ends.get(i);
     if (endBoxes) {
       let boundary = cursor - 10;
@@ -100441,8 +100718,9 @@ function renderSequence(spec, theme) {
     }
   }
   const messagePositions = messages.map((message, index) => {
-    const sx = x.get(message.from), tx = x.get(message.to);
-    const position = positions.at(`messages/${index}`, message.from === message.to ? sx + 18 : (sx + tx) / 2, ys[index]);
+    const sx = x.get(message.from) ?? 70, tx = x.get(message.to) ?? sx;
+    const anchor = isEvent(message) ? events[index].left : message.from === message.to ? sx + 18 : (sx + tx) / 2;
+    const position = positions.at(`messages/${index}`, anchor, ys[index]);
     ys[index] = position.y;
     labelTops[index] = labelTops[index] + position.dy;
     return position;
@@ -100459,11 +100737,25 @@ function renderSequence(spec, theme) {
     const original = createAt.has(p.id) ? ys[createAt.get(p.id)] - boxHeight / 2 : top;
     return positions.at(`participants/${p.id}`, 0, original).y;
   };
-  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${esc(theme.primary)}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${esc(theme.primary)}" stroke-width="1.5"/></marker></defs>`;
+  const stroke = esc(theme.primary);
+  let body = header.svg + `<defs><marker id="seq-filled" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 10 4 L 0 8 Z" fill="${stroke}"/></marker><marker id="seq-open" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M 0 0 L 9 4 L 0 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="seq-filled-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 0 4 L 10 8 Z" fill="${stroke}"/></marker><marker id="seq-open-start" viewBox="0 0 10 8" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto"><path d="M 10 0 L 1 4 L 10 8" fill="none" stroke="${stroke}" stroke-width="1.5"/></marker></defs>` + gradientDefs(paints.filter((paint3) => !!paint3));
+  const canvasFill = esc(theme.background === "transparent" ? theme.surface : theme.background);
+  boxes.forEach((box, index) => {
+    const members = box.participants.map((id2) => x.get(id2)).filter((value) => value !== void 0);
+    if (!members.length) return;
+    const left = Math.min(...members) - participantWidth / 2 - 14, right = Math.max(...members) + participantWidth / 2 + 14;
+    const region = palette ? regionPaint(theme, palette, index) : void 0;
+    const fill = box.color && box.color !== "transparent" ? box.color : region?.fill ?? mix(theme.secondary, theme.background === "transparent" ? "#ffffff" : theme.background, darkBackground ? 0.82 : 0.92);
+    const boxTop = top - boxHeader - 4;
+    positions.include(left, boxTop, right - left, bottom + 20 - boxTop);
+    body += `<g class="uml-seq-box" data-editor-key="boxes/${index}"><rect x="${left}" y="${boxTop}" width="${right - left}" height="${bottom + 20 - boxTop}" rx="${Math.min(10, theme.radius + 2)}" fill="${esc(box.color === "transparent" ? "none" : fill)}"${box.color && box.color !== "transparent" ? ' fill-opacity="0.35"' : ""} stroke="${esc(region?.stroke ?? theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    if (box.label) body += text((left + right) / 2, boxTop + 10 + size, box.label, theme, { anchor: "middle", weight: 700, fill: region?.text ?? (box.color && box.color !== "transparent" ? contrastText(mix(fill, "#ffffff", 0.65)) : theme.text) });
+    body += `</g>`;
+  });
   let fragmentAnnotations = "";
   const guard = (left, top2, lines) => {
     const width2 = Math.max(...lines.map((value) => measure2(value, guardSize))) + 8;
-    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, {
+    return `<rect x="${left - 4}" y="${top2}" width="${width2}" height="${lines.length * guardLeading}" fill="${canvasFill}"/>` + text(left, top2 + guardSize * 1.1, lines.join("\n"), theme, {
       anchor: "start",
       size: guardSize,
       fill: theme.muted
@@ -100475,27 +100767,19 @@ function renderSequence(spec, theme) {
     const position = positions.at(key, left, frameTop);
     const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
     positions.include(position.x, position.y, right - left, frameBottom - frameTop);
-    body += `<g data-editor-key="fragments/${index}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
-    fragmentAnnotations += `<g data-editor-key="fragments/${index}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + 54} L ${left + 64} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
-    fragmentAnnotations += text(
-      left + 10,
-      frameTop + 18,
-      fragment.kind,
-      theme,
-      { anchor: "start", size: 12, weight: 700 }
-    );
-    fragmentAnnotations += guard(left + 76, frameTop + 8, box.guardLines);
-    if (fragment.elseAt !== void 0) {
-      body += line(
-        left,
-        box.divider,
-        right,
-        box.divider,
-        theme.border,
-        theme.lineWidth,
-        true
-      );
-      fragmentAnnotations += guard(left + 12, box.divider + 10, box.elseLines);
+    if (fragment.kind === "rect") {
+      const fill = fragment.color && fragment.color !== "transparent" ? fragment.color : mix(theme.secondary, theme.background === "transparent" ? "#ffffff" : theme.background, darkBackground ? 0.78 : 0.88);
+      body += `<g data-editor-key="${key}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(6, theme.radius)}" fill="${esc(fill)}" fill-opacity="0.7"/></g>`;
+      continue;
+    }
+    body += `<g data-editor-key="${key}" ${attrs}><rect x="${left}" y="${frameTop}" width="${right - left}" height="${frameBottom - frameTop}" rx="${Math.min(4, theme.radius)}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+    const tagWidth = Math.max(54, measure2(fragment.kind, tagSize) + 20);
+    fragmentAnnotations += `<g data-editor-key="${key}" ${attrs}><path d="M ${left} ${frameTop + 26} H ${left + tagWidth} L ${left + tagWidth + 10} ${frameTop + 16} V ${frameTop} H ${left}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}"/>`;
+    fragmentAnnotations += text(left + 10, frameTop + 18, fragment.kind, theme, { anchor: "start", size: tagSize, weight: 700 });
+    if (box.guardLines.length) fragmentAnnotations += guard(left + tagWidth + 22, frameTop + 8, box.guardLines);
+    for (const branch of box.branches) {
+      body += line(left, branch.y, right, branch.y, theme.border, theme.lineWidth, true);
+      fragmentAnnotations += guard(left + 12, branch.y + 10, branch.lines);
     }
     body += `</g>`;
     fragmentAnnotations += `</g>`;
@@ -100506,27 +100790,22 @@ function renderSequence(spec, theme) {
     const start = headerY(p) + boxHeight;
     const end = destroyAt.has(p.id) ? ys[destroyAt.get(p.id)] : bottom;
     positions.include(cx - participantWidth / 2, headerY(p), participantWidth, Math.max(boxHeight, end - headerY(p)));
-    body += line(
-      cx,
-      start,
-      cx,
-      Math.max(start, end),
-      theme.border,
-      theme.lineWidth,
-      true
-    );
+    body += line(cx, start, cx, Math.max(start, end), theme.border, theme.lineWidth, true);
     body += `</g>`;
   }
   const stacks = /* @__PURE__ */ new Map();
   const activationShapes = [];
   const drawActivation = (id2, activation, end) => {
     const ax = x.get(id2) - 6 + activation.depth * 5;
+    const paint3 = paints[participants.findIndex((p) => p.id === id2)];
+    const fill = paint3 ? paint3.gradient ? mix(paint3.stroke, "#ffffff", 0.7) : palette?.mode === "tint" ? paint3.fill : mix(paint3.fill, "#ffffff", 0.55) : theme.surface;
     activationShapes.push(
-      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
+      `<rect x="${ax}" y="${activation.start}" width="12" height="${Math.max(16, end - activation.start)}" fill="${esc(fill)}" stroke="${esc(paint3?.stroke ?? theme.secondary)}" stroke-width="${theme.lineWidth}"/>`
     );
   };
   const sourceOffsets = [], targetOffsets = [];
   messages.forEach((m, i) => {
+    if (isEvent(m)) return;
     const source = stacks.get(m.from) ?? [];
     sourceOffsets[i] = source.length ? 6 + (source.length - 1) * 5 : 0;
     const target = stacks.get(m.to) ?? [];
@@ -100550,65 +100829,109 @@ function renderSequence(spec, theme) {
   for (const [id2, stack] of stacks)
     while (stack.length) drawActivation(id2, stack.pop(), bottom);
   body += activationShapes.join("");
-  for (const p of participants) {
+  participants.forEach((p, index) => {
     const cx = x.get(p.id), py = headerY(p);
-    body += `<g data-editor-key="participants/${participants.indexOf(p)}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
+    const paint3 = paints[index];
+    const fill = esc(paint3?.fill ?? theme.surface), edge = esc(paint3?.stroke ?? theme.primary);
+    const ink = paint3 && !symbolic.has(p.kind ?? "") ? paint3.text : theme.text;
+    const sw = theme.lineWidth;
+    body += `<g data-editor-key="participants/${index}" ${positions.attrs(`participants/${p.id}`, cx, py)}>`;
     const labelLines = wrap(p.label, participantWidth - 20, size);
-    if (p.kind === "actor") {
-      const cy = py + 13;
-      body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, {
-        anchor: "middle",
-        weight: 600
-      });
+    if (symbolic.has(p.kind ?? "")) {
+      if (p.kind === "actor") {
+        const cy = py + 13;
+        body += `<circle cx="${cx}" cy="${cy}" r="9" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<path d="M ${cx} ${cy + 9} v 18 m -16 -11 h 32 M ${cx} ${cy + 27} l -13 15 M ${cx} ${cy + 27} l 13 15" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else {
+        const cy = py + 28;
+        if (p.kind === "boundary") body += `<path d="M ${cx - 20} ${cy - 13} V ${cy + 13} M ${cx - 20} ${cy} H ${cx - 9}" fill="none" stroke="${edge}" stroke-width="${sw}"/><circle cx="${cx + 4}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        else if (p.kind === "control") body += `<circle cx="${cx}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><path d="M ${cx + 5} ${cy - 18} L ${cx - 1} ${cy - 13} L ${cx + 5} ${cy - 8}" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+        else body += `<circle cx="${cx}" cy="${cy}" r="13" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><path d="M ${cx - 14} ${cy + 17} H ${cx + 14}" stroke="${edge}" stroke-width="${sw}"/>`;
+      }
+      body += text(cx, py + 64 + size, labelLines.join("\n"), theme, { anchor: "middle", weight: 600, fill: ink });
     } else {
+      const left = cx - participantWidth / 2, right = cx + participantWidth / 2;
       if (p.kind === "database") {
-        const left = cx - participantWidth / 2;
         const top2 = py + 8;
         const bottom2 = py + boxHeight - 8;
-        body += `<path d="M ${left} ${top2} A ${participantWidth / 2} 8 0 0 1 ${cx + participantWidth / 2} ${top2} V ${bottom2} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom2} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-        body += `<ellipse cx="${cx}" cy="${top2}" rx="${participantWidth / 2}" ry="8" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
-        body += `<path d="M ${left} ${bottom2} A ${participantWidth / 2} 8 0 0 0 ${cx + participantWidth / 2} ${bottom2}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<path d="M ${left} ${top2} A ${participantWidth / 2} 8 0 0 1 ${right} ${top2} V ${bottom2} A ${participantWidth / 2} 8 0 0 1 ${left} ${bottom2} Z" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<ellipse cx="${cx}" cy="${top2}" rx="${participantWidth / 2}" ry="8" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<path d="M ${left} ${bottom2} A ${participantWidth / 2} 8 0 0 0 ${right} ${bottom2}" fill="none" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else if (p.kind === "queue") {
+        const r = 10;
+        body += `<path d="M ${left + r} ${py} H ${right - r} A ${r} ${boxHeight / 2} 0 0 1 ${right - r} ${py + boxHeight} H ${left + r} A ${r} ${boxHeight / 2} 0 0 1 ${left + r} ${py} Z" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/><ellipse cx="${right - r}" cy="${py + boxHeight / 2}" rx="${r}" ry="${boxHeight / 2}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+      } else if (p.kind === "collections") {
+        body += `<rect x="${left + 6}" y="${py - 6}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
+        body += `<rect x="${left}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
       } else {
-        body += `<rect x="${cx - participantWidth / 2}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${esc(theme.surface)}" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"/>`;
+        body += `<rect x="${left}" y="${py}" width="${participantWidth}" height="${boxHeight}" rx="${theme.radius}" fill="${fill}" stroke="${edge}" stroke-width="${sw}"/>`;
       }
       body += text(
         cx,
         py + boxHeight / 2 + size / 3 - (labelLines.length - 1) * size * 0.7,
         labelLines.join("\n"),
         theme,
-        { anchor: "middle", weight: 600 }
+        { anchor: "middle", weight: 600, fill: ink }
       );
     }
     body += `</g>`;
-  }
+  });
   body += fragmentAnnotations;
+  const noteFill = darkBackground ? "#3d3a2a" : "#fff8db", noteInk = darkBackground ? "#f5ecc8" : "#4a3f1c", noteEdge = darkBackground ? "#857a4a" : "#e2c870";
   messages.forEach((m, i) => {
-    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, messagePositions[i].x, ys[i])}>`;
+    const position = messagePositions[i];
+    if (isEvent(m)) {
+      const event = events[i];
+      const attrs = `${positions.attrs(`messages/${i}`, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
+      positions.include(event.left + position.dx, event.top + position.dy, event.width, event.height);
+      if (m.kind === "note") {
+        const { left, top: top2, width: w, height: h } = event;
+        body += `<g class="uml-seq-note" data-editor-key="messages/${i}" ${attrs}><path d="M ${left} ${top2} H ${left + w - 12} L ${left + w} ${top2 + 12} V ${top2 + h} H ${left} Z" fill="${noteFill}" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/><path d="M ${left + w - 12} ${top2} V ${top2 + 12} H ${left + w}" fill="none" stroke="${noteEdge}" stroke-width="${theme.lineWidth}"/>`;
+        body += text(left + w / 2, top2 + 9 + size, event.lines.join("\n"), theme, { anchor: "middle", fill: noteInk });
+      } else {
+        const cy = event.top + event.height / 2;
+        body += `<g class="uml-seq-divider" data-editor-key="messages/${i}" ${attrs}>${line(event.left, cy - 2, event.left + event.width, cy - 2, theme.border, theme.lineWidth)}${line(event.left, cy + 2, event.left + event.width, cy + 2, theme.border, theme.lineWidth)}`;
+        if (event.lines.length) {
+          const lw = Math.max(...event.lines.map((value) => measure2(value, size))) + 28, lh = event.lines.length * size * 1.4 + 10;
+          const cx = event.left + event.width / 2;
+          body += `<rect x="${cx - lw / 2}" y="${cy - lh / 2}" width="${lw}" height="${lh}" rx="${Math.min(6, theme.radius)}" fill="${esc(theme.surface)}" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
+          body += text(cx, cy - lh / 2 + 5 + size, event.lines.join("\n"), theme, { anchor: "middle", weight: 700 });
+        }
+      }
+      body += `</g>`;
+      return;
+    }
+    body += `<g data-editor-key="messages/${i}" ${positions.attrs(`messages/${i}`, position.x, ys[i])}>`;
     const sx = x.get(m.from), tx = x.get(m.to), y = ys[i];
     const self2 = m.from === m.to;
     const sign = tx >= sx ? 1 : -1;
     const start = sx + (self2 ? sourceOffsets[i] : sign * sourceOffsets[i]);
     const end = m.kind === "create" ? tx - sign * participantWidth / 2 : tx - sign * targetOffsets[i];
     const kind = m.kind ?? "sync";
-    const dashed = kind === "return" || kind === "create";
-    const open = kind === "async" || kind === "create";
-    const path = self2 ? `M ${start} ${y} H ${sx + Math.min(80, column / 3)} Q ${sx + Math.min(80, column / 3) + 8} ${y} ${sx + Math.min(80, column / 3) + 8} ${y + 8} V ${y + 22} Q ${sx + Math.min(80, column / 3) + 8} ${y + 30} ${sx + Math.min(80, column / 3)} ${y + 30} H ${sx + targetOffsets[i]}` : `M ${start} ${y} H ${end}`;
-    body += `<path d="${path}" fill="none" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""} marker-end="url(#${open ? "seq-open" : "seq-filled"})"/>`;
+    const dashed = m.dashed ?? (kind === "return" || kind === "create");
+    const head = m.arrow ?? (kind === "async" || kind === "create" ? "open" : "filled");
+    const loopX = sx + Math.min(80, column / 3);
+    const path = self2 ? `M ${start} ${y} H ${loopX} Q ${loopX + 8} ${y} ${loopX + 8} ${y + 8} V ${y + 22} Q ${loopX + 8} ${y + 30} ${loopX} ${y + 30} H ${sx + targetOffsets[i]}` : `M ${start} ${y} H ${end}`;
+    const markerEnd = head === "filled" || head === "open" ? ` marker-end="url(#seq-${head})"` : "";
+    const markerStart = m.bidirectional && (head === "filled" || head === "open") ? ` marker-start="url(#seq-${head}-start)"` : "";
+    body += `<path d="${path}" fill="none" stroke="${stroke}" stroke-width="${theme.lineWidth}"${dashed ? ' stroke-dasharray="6 4"' : ""}${markerEnd}${markerStart}/>`;
+    if (head === "cross") {
+      const ex = self2 ? sx + targetOffsets[i] : end, ey = self2 ? y + 30 : y;
+      body += `<path d="M ${ex - 6} ${ey - 6} l 12 12 M ${ex - 6} ${ey + 6} l 12 -12" stroke="${stroke}" stroke-width="${theme.lineWidth + 0.6}"/>`;
+    }
     const labelLines = rowLines[i];
-    const lx = (self2 ? sx + 18 : (start + end) / 2) + messagePositions[i].dx;
-    const ly = labelTops[i] + size * 1.1;
-    const lw = Math.max(...labelLines.map((l) => measure2(l, size))) + 12;
-    const labelLeft = self2 ? lx - 4 : lx - lw / 2;
-    const messageLeft = Math.min(start, end, labelLeft);
-    positions.include(messageLeft, labelTops[i], Math.max(start, end, labelLeft + lw, self2 ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
-    body += `<rect x="${self2 ? lx - 4 : lx - lw / 2}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>`;
-    body += text(lx, ly, labelLines.join("\n"), theme, {
-      anchor: self2 ? "start" : "middle"
-    });
+    if (labelLines.length) {
+      const lx = (self2 ? sx + 18 : (start + end) / 2) + position.dx;
+      const ly = labelTops[i] + size * 1.1;
+      const lw = Math.max(...labelLines.map((l) => measure2(l, size))) + 12;
+      const labelLeft = self2 ? lx - 4 : lx - lw / 2;
+      const messageLeft = Math.min(start, end, labelLeft);
+      positions.include(messageLeft, labelTops[i], Math.max(start, end, labelLeft + lw, self2 ? sx + 100 : end) - messageLeft + 16, labelLines.length * size * 1.4 + 50);
+      body += `<rect x="${labelLeft}" y="${labelTops[i]}" width="${lw}" height="${labelLines.length * size * 1.4}" fill="${canvasFill}"/>`;
+      body += text(lx, ly, labelLines.join("\n"), theme, { anchor: self2 ? "start" : "middle" });
+    }
     if (kind === "destroy")
-      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${esc(theme.primary)}" stroke-width="${theme.lineWidth + 1}"/>`;
+      body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${stroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
   body += text(
@@ -100616,7 +100939,7 @@ function renderSequence(spec, theme) {
     height - 18,
     "\u5B9E\u5FC3\u7BAD\u5934 \u540C\u6B65 / \u8FD4\u56DE\u3000\u7A7A\u5FC3\u7BAD\u5934 \u5F02\u6B65 / \u521B\u5EFA\u3000\xD7 \u751F\u547D\u5468\u671F\u7ED3\u675F",
     theme,
-    { anchor: "start", size: 11, fill: theme.muted }
+    { anchor: "start", size: 12, fill: theme.muted }
   );
   return positions.finish(theme, width, height, body);
 }
@@ -100679,6 +101002,8 @@ function renderFishbone(spec, theme) {
   spec = { ...spec, layout: resolveLayout(spec) };
   const positions = new SpecialPositions(spec);
   const data = spec.fishbone;
+  const palette = paletteOf(theme);
+  const categoryPaints = [];
   const size = theme.fontSize;
   const leading = size * 1.4;
   const elementGap = spec.layout?.elementGap ?? 24;
@@ -100776,9 +101101,9 @@ function renderFishbone(spec, theme) {
       (c) => Math.floor(c.index / 2) === ci
     )) {
       const upper = item.index % 2 === 0;
-      const direction = upper ? -1 : 1;
+      const direction2 = upper ? -1 : 1;
       const span = upper ? topSpan : bottomSpan;
-      const baseOuterY = spineY + direction * span;
+      const baseOuterY = spineY + direction2 * span;
       const categoryWidth = Math.min(
         colWidth - 36,
         Math.max(130, measure2(item.category.label, size + 1) + 34)
@@ -100799,13 +101124,16 @@ function renderFishbone(spec, theme) {
       const attachX = left + colWidth - 20 + categoryPosition.dx;
       positions.include(categoryPosition.x, categoryPosition.y, categoryWidth, categoryHeight);
       positions.include(attachX - 8, Math.min(spineY, outerY), 16, Math.abs(outerY - spineY));
+      const categoryPaint = palette ? paintFor(theme, palette, item.index) : void 0;
+      if (categoryPaint) categoryPaints.push(categoryPaint);
+      const categoryStroke = categoryPaint?.stroke ?? theme.secondary;
       body += `<g data-editor-key="categories/${item.index}" ${positions.attrs(categoryKey, categoryPosition.x, categoryPosition.y)}>`;
       body += line(
         attachX,
         spineY,
         tipX,
         outerY,
-        theme.secondary,
+        categoryStroke,
         theme.lineWidth + 0.5
       );
       const rowPositions = item.rows.map((row) => positions.at(
@@ -100840,7 +101168,7 @@ function renderFishbone(spec, theme) {
           const parentY = rowPositions[row.parent].y + parentRow.lines.length * leading / 2 + 6;
           body += `<path d="M ${parentX + 8} ${parentY} V ${lineY} H ${labelX}" fill="none" stroke="${esc(theme.border)}" stroke-width="${theme.lineWidth}"/>`;
         }
-        body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? theme.secondary : theme.muted)}"/>`;
+        body += `<circle cx="${labelX}" cy="${lineY}" r="${row.depth === 0 ? 3 : 2}" fill="${esc(row.depth === 0 ? categoryStroke : theme.muted)}"/>`;
         body += text(
           labelX + 5,
           ry - (row.lines.length - 1) * leading / 2,
@@ -100855,13 +101183,13 @@ function renderFishbone(spec, theme) {
         );
         body += `</g>`;
       });
-      body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth}"/>`;
+      body += `<rect x="${tipX - categoryWidth / 2}" y="${categoryY}" width="${categoryWidth}" height="${categoryHeight}" rx="${Math.min(theme.radius, 6)}" fill="${esc(categoryPaint?.fill ?? theme.surface)}" stroke="${esc(categoryStroke)}" stroke-width="${theme.lineWidth}"/>`;
       body += text(
         tipX,
         categoryY + 12 + size + 1,
         categoryLines.join("\n"),
         theme,
-        { size: size + 1, anchor: "middle", weight: 700 }
+        { size: size + 1, anchor: "middle", weight: 700, fill: categoryPaint?.text }
       );
       body += `</g>`;
     }
@@ -100901,6 +101229,7 @@ function renderFishbone(spec, theme) {
     theme,
     { anchor: "start", size: 11, fill: theme.muted }
   );
+  body += gradientDefs(categoryPaints);
   return positions.finish(theme, width, height, body);
 }
 
@@ -100945,15 +101274,999 @@ function normalizeDocument(input) {
   const spec = validateSpec(input);
   return { version: 1, title: spec.title, diagrams: [spec] };
 }
+
+// src/mermaid.ts
+var headers = /^(flowchart|graph|sequenceDiagram|stateDiagram(?:-v2)?|classDiagram(?:-v2)?)\b/;
+var unsupportedHeaders = /^(erDiagram|gantt|pie|journey|gitGraph|mindmap|timeline|quadrantChart|requirementDiagram|C4\w*|sankey(?:-beta)?|xychart(?:-beta)?|block(?:-beta)?|packet(?:-beta)?|kanban|architecture(?:-beta)?|radar(?:-beta)?|treemap(?:-beta)?)\b/;
+function isMermaidSource(text2) {
+  const body = stripFrontMatter(text2.replace(/^\uFEFF/, "")).body;
+  if (/```\s*mermaid/i.test(body)) return true;
+  const first = body.split(/\r?\n/).map((line2) => line2.trim()).find((line2) => line2 && !line2.startsWith("%%"));
+  return !!first && (headers.test(first) || unsupportedHeaders.test(first));
+}
+function stripFrontMatter(text2) {
+  const match = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*\r?\n/.exec(text2);
+  if (!match) return { body: text2 };
+  const title = /^\s*title\s*:\s*(.+)$/m.exec(match[1])?.[1]?.trim().replace(/^["']|["']$/g, "");
+  return { body: text2.slice(match[0].length), title };
+}
+function extractMermaidBlocks(text2) {
+  const blocks = [...text2.matchAll(/```\s*mermaid[^\n]*\n([\s\S]*?)```/gi)].map((match) => match[1]);
+  return blocks.length ? blocks : [text2];
+}
+function mermaidToDocument(source, title) {
+  const warnings = [];
+  const diagrams = [];
+  const blocks = extractMermaidBlocks(source.replace(/^\uFEFF/, ""));
+  blocks.forEach((block, index) => {
+    try {
+      diagrams.push(mermaidToSpec(block, warnings, blocks.length > 1 ? `${index + 1}` : ""));
+    } catch (reason) {
+      warnings.push(`\u7B2C ${index + 1} \u4E2A Mermaid \u56FE\u672A\u5BFC\u5165\uFF1A${reason instanceof Error ? reason.message : String(reason)}`);
+    }
+  });
+  if (!diagrams.length) throw new Error(warnings.join("\uFF1B") || "\u6CA1\u6709\u53EF\u5BFC\u5165\u7684 Mermaid \u56FE");
+  const ids = /* @__PURE__ */ new Set();
+  diagrams.forEach((spec, index) => {
+    let id2 = spec.id ?? `mermaid-${index + 1}`;
+    while (ids.has(id2)) id2 += "-x";
+    ids.add(id2);
+    spec.id = id2;
+  });
+  return { document: { version: 1, title: title ?? (diagrams.length === 1 ? diagrams[0].title : "Mermaid \u5BFC\u5165"), diagrams }, warnings };
+}
+function mermaidToSpec(block, warnings = [], suffix = "") {
+  const front = stripFrontMatter(block);
+  const lines = front.body.replace(/\r\n?/g, "\n").split("\n");
+  let start = 0;
+  while (start < lines.length && (!lines[start].trim() || lines[start].trim().startsWith("%%"))) start++;
+  const header = lines[start]?.trim() ?? "";
+  const body = lines.slice(start + 1);
+  const kind = headers.exec(header)?.[1];
+  if (!kind) {
+    const other = unsupportedHeaders.exec(header)?.[1];
+    throw new Error(other ? `\u6682\u4E0D\u652F\u6301 Mermaid ${other}` : `\u65E0\u6CD5\u8BC6\u522B\u7684 Mermaid \u56FE\u5934\uFF1A${header.slice(0, 40)}`);
+  }
+  const fallbackTitle = (name) => front.title ?? `${name}${suffix ? ` ${suffix}` : ""}`;
+  let spec;
+  if (kind === "flowchart" || kind === "graph") spec = parseFlowchart(header, body, warnings, fallbackTitle("\u6D41\u7A0B\u56FE"));
+  else if (kind === "sequenceDiagram") spec = parseSequence(body, warnings, fallbackTitle("\u65F6\u5E8F\u56FE"));
+  else if (kind.startsWith("stateDiagram")) spec = parseState(body, warnings, fallbackTitle("\u72B6\u6001\u56FE"));
+  else spec = parseClass(body, warnings, fallbackTitle("\u7C7B\u56FE"));
+  return spec;
+}
+var namedColors = {
+  white: "#ffffff",
+  black: "#000000",
+  red: "#ff0000",
+  green: "#008000",
+  blue: "#0000ff",
+  yellow: "#ffff00",
+  orange: "#ffa500",
+  purple: "#800080",
+  pink: "#ffc0cb",
+  gray: "#808080",
+  grey: "#808080",
+  aqua: "#00ffff",
+  cyan: "#00ffff",
+  teal: "#008080",
+  navy: "#000080",
+  lime: "#00ff00",
+  lightblue: "#add8e6",
+  lightgreen: "#90ee90",
+  lightyellow: "#ffffe0",
+  lightgrey: "#d3d3d3",
+  lightgray: "#d3d3d3",
+  lightpink: "#ffb6c1",
+  lavender: "#e6e6fa",
+  beige: "#f5f5dc",
+  wheat: "#f5deb3",
+  khaki: "#f0e68c",
+  gold: "#ffd700",
+  salmon: "#fa8072",
+  coral: "#ff7f50",
+  tomato: "#ff6347",
+  violet: "#ee82ee",
+  plum: "#dda0dd",
+  orchid: "#da70d6",
+  silver: "#c0c0c0",
+  ivory: "#fffff0",
+  azure: "#f0ffff",
+  honeydew: "#f0fff0",
+  mintcream: "#f5fffa",
+  aliceblue: "#f0f8ff",
+  whitesmoke: "#f5f5f5",
+  gainsboro: "#dcdcdc",
+  skyblue: "#87ceeb",
+  steelblue: "#4682b4",
+  royalblue: "#4169e1",
+  tan: "#d2b48c",
+  olive: "#808000",
+  maroon: "#800000",
+  magenta: "#ff00ff",
+  indigo: "#4b0082"
+};
+function cssColor(value) {
+  if (!value) return;
+  const raw = value.trim().toLowerCase();
+  if (raw === "transparent" || raw === "none") return "transparent";
+  if (namedColors[raw]) return namedColors[raw];
+  let match = /^#([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/.exec(raw);
+  if (match) {
+    let hex = match[1];
+    if (hex.length <= 4) hex = hex.split("").map((c) => c + c).join("");
+    if (hex.length === 8) {
+      const alpha = parseInt(hex.slice(6), 16) / 255;
+      return blend([0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)), alpha);
+    }
+    return `#${hex}`;
+  }
+  match = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+%?))?\s*\)$/.exec(raw);
+  if (match) {
+    const alphaText = match[4];
+    const alpha = alphaText === void 0 ? 1 : alphaText.endsWith("%") ? parseFloat(alphaText) / 100 : parseFloat(alphaText);
+    return blend([match[1], match[2], match[3]].map(Number), alpha);
+  }
+  return;
+}
+function blend(rgb, alpha) {
+  return `#${rgb.map((v) => Math.round(255 + (Math.min(255, v) - 255) * Math.max(0, Math.min(1, alpha))).toString(16).padStart(2, "0")).join("")}`;
+}
+function cleanLabel(value) {
+  return value.trim().replace(/^"([\s\S]*)"$/, "$1").replace(/^`([\s\S]*)`$/, "$1").replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[a-z][^>]*>/gi, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/(?:^|\s)fa:fa-[\w-]+/g, "").replace(/#quot;/g, '"').replace(/#(\d+);/g, (_m, code) => String.fromCharCode(Number(code))).replace(/\\n/g, "\n").trim();
+}
+function stripComment(line2) {
+  const index = line2.indexOf("%%");
+  return (index >= 0 ? line2.slice(0, index) : line2).trim();
+}
+var Ids = class {
+  map = /* @__PURE__ */ new Map();
+  used = /* @__PURE__ */ new Set();
+  get(raw) {
+    const existing = this.map.get(raw);
+    if (existing) return existing;
+    let id2 = /^[A-Za-z0-9_\-:.]+$/.test(raw) ? raw : raw.replace(/[^A-Za-z0-9_\-:.]/g, "") || `n${this.map.size + 1}`;
+    while (this.used.has(id2)) id2 = `${id2}_${this.map.size + 1}`;
+    this.used.add(id2);
+    this.map.set(raw, id2);
+    return id2;
+  }
+  has(raw) {
+    return this.map.has(raw);
+  }
+};
+function styleFrom(declaration) {
+  const style2 = {};
+  for (const part of declaration.split(/[,;]/)) {
+    const [key, ...rest] = part.split(":");
+    const value = rest.join(":").trim();
+    const name = key?.trim().toLowerCase();
+    if (name === "fill") {
+      const c = cssColor(value);
+      if (c) style2.surface = c;
+    } else if (name === "stroke") {
+      const c = cssColor(value);
+      if (c && c !== "transparent") style2.border = c;
+    } else if (name === "color") {
+      const c = cssColor(value);
+      if (c && c !== "transparent") style2.text = c;
+    } else if (name === "font-weight") {
+      const n2 = value === "bold" ? 700 : Number(value);
+      if (n2 >= 100 && n2 <= 900) style2.fontWeight = Math.round(n2 / 100) * 100;
+    }
+  }
+  return style2;
+}
+function direction(value) {
+  if (!value) return;
+  const v = value.toUpperCase();
+  return v === "LR" || v === "RL" ? "LR" : v === "TB" || v === "TD" || v === "BT" ? "TB" : void 0;
+}
+var shapes = [
+  { open: "(((", close: ")))", kind: "circle" },
+  { open: "((", close: "))", kind: "circle" },
+  { open: "([", close: "])", kind: "terminal" },
+  { open: "[[", close: "]]", kind: "subroutine" },
+  { open: "[(", close: ")]", kind: "database" },
+  { open: "{{", close: "}}", kind: "hexagon" },
+  { open: "[/", close: "/]", kind: "io" },
+  { open: "[\\", close: "\\]", kind: "io" },
+  { open: "[/", close: "\\]", kind: "trapezoid" },
+  { open: "[\\", close: "/]", kind: "trapezoid" },
+  { open: "{", close: "}", kind: "decision" },
+  { open: "(", close: ")", kind: "action" },
+  { open: "[", close: "]", kind: "action" },
+  { open: ">", close: "]", kind: "note" }
+];
+var shapeNames = {
+  rect: "action",
+  rectangle: "action",
+  proc: "action",
+  process: "action",
+  rounded: "action",
+  event: "action",
+  "notch-rect": "note",
+  card: "note",
+  stadium: "terminal",
+  pill: "terminal",
+  terminal: "terminal",
+  subroutine: "subroutine",
+  subproc: "subroutine",
+  "framed-rectangle": "subroutine",
+  cyl: "database",
+  cylinder: "database",
+  database: "database",
+  db: "database",
+  "h-cyl": "queue",
+  das: "queue",
+  "horizontal-cylinder": "queue",
+  circle: "circle",
+  circ: "circle",
+  "dbl-circ": "circle",
+  "double-circle": "circle",
+  "sm-circ": "start",
+  start: "start",
+  "f-circ": "join",
+  stop: "end",
+  "fr-circ": "end",
+  diam: "decision",
+  diamond: "decision",
+  decision: "decision",
+  question: "decision",
+  hex: "hexagon",
+  hexagon: "hexagon",
+  prepare: "hexagon",
+  "lean-r": "io",
+  "lean-l": "io",
+  "in-out": "io",
+  "out-in": "io",
+  "trap-b": "trapezoid",
+  "trap-t": "trapezoid",
+  priority: "trapezoid",
+  "manual-file": "trapezoid",
+  doc: "note",
+  document: "note",
+  docs: "note",
+  "lin-doc": "note",
+  comment: "note",
+  "brace": "note",
+  "brace-r": "note",
+  braces: "note",
+  fork: "fork",
+  join: "fork",
+  "manual-input": "io",
+  "sl-rect": "io",
+  "div-rect": "subroutine",
+  "lin-rect": "subroutine",
+  "st-rect": "subroutine"
+};
+function parseFlowchart(header, lines, warnings, title) {
+  const state = { nodes: /* @__PURE__ */ new Map(), order: [], edges: [], groups: [], ids: new Ids(), classes: /* @__PURE__ */ new Map(), pendingClasses: [] };
+  const stack = [];
+  const dir = direction(/^\S+\s+(\w+)/.exec(header)?.[1]);
+  let titleLine;
+  const statements = lines.flatMap((line2) => splitStatements(stripComment(line2)));
+  for (const statement of statements) {
+    if (!statement) continue;
+    let match;
+    if (match = /^subgraph\s+(.+)$/.exec(statement)) {
+      const rest = match[1].trim();
+      const bracket = /^([^\s[]+)\s*\[(.*)\]$/.exec(rest);
+      const rawId = bracket ? bracket[1] : /^"/.test(rest) ? rest : rest.split(/\s+/)[0];
+      const label2 = cleanLabel(bracket ? bracket[2] : rest);
+      const id2 = state.ids.get(`group:${rawId}`);
+      state.groups.push({ id: id2, label: label2 || rawId, ...stack.length ? { parent: stack[stack.length - 1] } : {} });
+      stack.push(id2);
+      groupAliases.set(rawId, id2);
+      continue;
+    }
+    if (statement === "end") {
+      stack.pop();
+      continue;
+    }
+    if (/^direction\s+\w+$/.test(statement)) continue;
+    if (match = /^classDef\s+(\S+)\s+(.+)$/.exec(statement)) {
+      const style2 = styleFrom(match[2]);
+      for (const name of match[1].split(",")) state.classes.set(name.trim(), style2);
+      continue;
+    }
+    if (match = /^class\s+(\S+)\s+(\S+)$/.exec(statement)) {
+      for (const id2 of match[1].split(",")) state.pendingClasses.push([id2.trim(), match[2]]);
+      continue;
+    }
+    if (match = /^style\s+(\S+)\s+(.+)$/.exec(statement)) {
+      const node = state.nodes.get(match[1]);
+      if (node) node.style = { ...node.style, ...styleFrom(match[2]) };
+      continue;
+    }
+    if (match = /^(?:title|accTitle)\s*:?\s*(.+)$/.exec(statement)) {
+      titleLine = cleanLabel(match[1]);
+      continue;
+    }
+    if (/^(?:linkStyle|click|accDescr|interpolate)\b/.test(statement)) continue;
+    if (!parseFlowStatement(statement, state, stack[stack.length - 1])) warnings.push(`\u6D41\u7A0B\u56FE\u672A\u8BC6\u522B\uFF1A${statement.slice(0, 60)}`);
+  }
+  for (const [raw, name] of state.pendingClasses) {
+    const node = state.nodes.get(raw);
+    const style2 = state.classes.get(name);
+    if (node && style2) node.style = { ...style2, ...node.style };
+  }
+  const groupsWithMembers = /* @__PURE__ */ new Set();
+  for (const node of state.nodes.values()) {
+    let id2 = node.group;
+    while (id2 && !groupsWithMembers.has(id2)) {
+      groupsWithMembers.add(id2);
+      id2 = state.groups.find((group) => group.id === id2)?.parent;
+    }
+  }
+  const firstMember = (groupId) => [...state.nodes.values()].find((node) => node.group === groupId)?.id;
+  const nodeIds = new Set([...state.nodes.values()].map((node) => node.id));
+  const edges = state.edges.flatMap((edge) => {
+    const from = nodeIds.has(edge.from) ? edge.from : firstMember(edge.from);
+    const to = nodeIds.has(edge.to) ? edge.to : firstMember(edge.to);
+    return from && to ? [{ ...edge, from, to }] : [];
+  });
+  groupAliases.clear();
+  return {
+    version: 1,
+    type: "flowchart",
+    title: titleLine ?? title,
+    ...dir ? { direction: dir } : {},
+    nodes: state.order.map((raw) => state.nodes.get(raw)),
+    edges,
+    ...state.groups.length ? { groups: state.groups.filter((group) => groupsWithMembers.has(group.id)) } : {}
+  };
+}
+var groupAliases = /* @__PURE__ */ new Map();
+function splitStatements(line2) {
+  const result = [];
+  let current = "", quote = false, depth = 0;
+  for (const char of line2) {
+    if (char === '"') quote = !quote;
+    if (!quote) {
+      if ("[({".includes(char)) depth++;
+      else if (")]}".includes(char)) depth = Math.max(0, depth - 1);
+    }
+    if (char === ";" && !quote && depth === 0) {
+      result.push(current.trim());
+      current = "";
+    } else current += char;
+  }
+  result.push(current.trim());
+  return result.filter(Boolean);
+}
+var idPattern = /^[\p{L}\p{N}_](?:[\p{L}\p{N}_]|[-.:](?=[\p{L}\p{N}_]))*/u;
+function readNodeRef(text2, state, group) {
+  const ids = [];
+  let rest = text2.trimStart();
+  for (; ; ) {
+    const ref = readSingleNode(rest, state, group);
+    if (!ref) return ids.length ? { ids, rest } : void 0;
+    ids.push(ref.id);
+    rest = ref.rest.trimStart();
+    if (rest.startsWith("&")) {
+      rest = rest.slice(1).trimStart();
+      continue;
+    }
+    return { ids, rest };
+  }
+}
+function readSingleNode(text2, state, group) {
+  const match = idPattern.exec(text2);
+  if (!match) return;
+  const raw = match[0];
+  let rest = text2.slice(raw.length);
+  let label2, kind;
+  if (rest.startsWith("@{")) {
+    const close = rest.indexOf("}");
+    if (close > 0) {
+      const body = rest.slice(2, close);
+      const shape = /shape\s*:\s*"?([\w-]+)"?/.exec(body)?.[1];
+      const labelMatch = /label\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(body) ?? /label\s*:\s*([^,]+)/.exec(body);
+      kind = shape ? shapeNames[shape.toLowerCase()] ?? "action" : void 0;
+      if (labelMatch) label2 = cleanLabel(labelMatch[1]);
+      rest = rest.slice(close + 1);
+    }
+  } else {
+    for (const shape of shapes) {
+      if (!rest.startsWith(shape.open)) continue;
+      const inner = rest.slice(shape.open.length);
+      let end;
+      if (inner.trimStart().startsWith('"')) {
+        const startQuote = inner.indexOf('"');
+        const endQuote = inner.indexOf('"', startQuote + 1);
+        end = endQuote < 0 ? -1 : inner.indexOf(shape.close, endQuote);
+      } else end = inner.indexOf(shape.close);
+      if (end < 0) continue;
+      label2 = cleanLabel(inner.slice(0, end));
+      kind = shape.kind;
+      rest = inner.slice(end + shape.close.length);
+      break;
+    }
+  }
+  let className;
+  const classMatch = /^:::([\w-]+)/.exec(rest);
+  if (classMatch) {
+    className = classMatch[1];
+    rest = rest.slice(classMatch[0].length);
+  }
+  const alias = groupAliases.get(raw);
+  if (alias && label2 === void 0 && !state.nodes.has(raw)) return { id: alias, rest };
+  let node = state.nodes.get(raw);
+  if (!node) {
+    node = { id: state.ids.get(raw), label: label2 || raw, ...group ? { group } : {} };
+    state.nodes.set(raw, node);
+    state.order.push(raw);
+  } else {
+    if (label2 !== void 0) node.label = label2 || raw;
+    if (group && !node.group) node.group = group;
+  }
+  if (kind && kind !== "action") node.kind = kind;
+  else if (kind === "action") delete node.kind;
+  if (className) state.pendingClasses.push([raw, className]);
+  return { id: node.id, rest };
+}
+var textLink = /^(<|o|x)?(--|==|-\.)\s*([^>|]*?[^\s>-])\s*(-{2,}|={2,}|\.+-)(>|o|x)?(?=\s|$|[\p{L}\p{N}_"])/u;
+var plainLink = /^(<|o|x)?(-{2,}|={2,}|-\.+-|~{3,})(>|o(?=[\s"]|$)|x(?=[\s"]|$))?/;
+function parseFlowStatement(statement, state, group) {
+  let left = readNodeRef(statement, state, group);
+  if (!left) return false;
+  let rest = left.rest;
+  let parsed = true;
+  while (rest) {
+    let match = textLink.exec(rest);
+    let label2, startHead, line2, endHead;
+    if (match) {
+      startHead = match[1];
+      line2 = match[2];
+      label2 = cleanLabel(match[3]);
+      endHead = match[5];
+    } else {
+      match = plainLink.exec(rest);
+      if (!match) {
+        parsed = false;
+        break;
+      }
+      startHead = match[1];
+      line2 = match[2];
+      endHead = match[3];
+    }
+    rest = rest.slice(match[0].length).trimStart();
+    const pipe = /^\|([^|]*)\|/.exec(rest);
+    if (pipe) {
+      label2 = cleanLabel(pipe[1]);
+      rest = rest.slice(pipe[0].length).trimStart();
+    }
+    const right = readNodeRef(rest, state, group);
+    if (!right) {
+      parsed = false;
+      break;
+    }
+    if (!line2.startsWith("~")) {
+      const arrow = (head) => head === ">" || head === "<" ? void 0 : head === "o" ? "circle" : head === "x" ? "cross" : "none";
+      for (const from of left.ids) for (const to of right.ids) {
+        const edge = { from, to };
+        if (label2) edge.label = label2;
+        if (line2.includes(".")) edge.dashed = true;
+        if (line2.startsWith("=")) edge.thick = true;
+        const end = arrow(endHead);
+        if (end) edge.arrow = end;
+        if (startHead) edge.startArrow = startHead === "<" ? "arrow" : arrow(startHead);
+        state.edges.push(edge);
+      }
+    }
+    left = right;
+    rest = right.rest;
+  }
+  return parsed;
+}
+var seqArrow = /^(.+?)\s*(<<-->>|<<->>|-->>|->>|--x|-x|--\)|-\)|-->|->)\s*([+-]?)\s*(.+?)\s*(?::(.*))?$/;
+function parseSequence(lines, warnings, title) {
+  const ids = new Ids();
+  const participants = [];
+  const known = /* @__PURE__ */ new Map();
+  const messages = [];
+  const fragments = [];
+  const boxes = [];
+  const open = [];
+  let currentBox;
+  let autonumber = false;
+  let titleLine;
+  const pendingCreate = /* @__PURE__ */ new Set(), pendingDestroy = /* @__PURE__ */ new Set();
+  const participant = (raw, label2, kind) => {
+    const name = raw.trim();
+    let item = known.get(name);
+    if (!item) {
+      item = { id: ids.get(name), label: label2 ?? name, ...kind && kind !== "participant" ? { kind } : {} };
+      known.set(name, item);
+      participants.push(item);
+      if (currentBox) currentBox.participants.push(item.id);
+    } else {
+      if (label2) item.label = label2;
+      if (kind && kind !== "participant") item.kind = kind;
+    }
+    return item;
+  };
+  const anchor = () => participants[0]?.id ?? participant("\u7CFB\u7EDF").id;
+  for (const original of lines) {
+    const statement = stripComment(original);
+    if (!statement) continue;
+    let match;
+    if (match = /^(?:title|accTitle)\s*:?\s*(.+)$/.exec(statement)) {
+      titleLine = cleanLabel(match[1]);
+      continue;
+    }
+    if (/^autonumber\b/.test(statement)) {
+      autonumber = !/\boff\b/.test(statement);
+      continue;
+    }
+    if (match = /^(create\s+)?(participant|actor|boundary|control|entity|database|collections|queue)\s+(.+?)(?:\s+as\s+(.+))?$/.exec(statement)) {
+      let raw = match[3].trim();
+      let kind = match[2];
+      const config = /^(.+?)@\{(.*)\}$/.exec(raw);
+      if (config) {
+        raw = config[1].trim();
+        const type = /type\s*:\s*"?(\w+)"?/.exec(config[2])?.[1];
+        if (type) kind = type;
+      }
+      const item = participant(raw, match[4] ? cleanLabel(match[4]) : void 0, kind);
+      if (match[1]) pendingCreate.add(item.id);
+      continue;
+    }
+    if (match = /^destroy\s+(.+)$/.exec(statement)) {
+      pendingDestroy.add(participant(match[1]).id);
+      continue;
+    }
+    if (match = /^box(?:\s+(.*))?$/.exec(statement)) {
+      const rest = (match[1] ?? "").trim();
+      const colorMatch = /^(rgba?\([^)]*\)|#[\da-fA-F]{3,8}|[a-zA-Z]+)(?:\s+(.*))?$/.exec(rest);
+      let color2, label2 = rest;
+      if (colorMatch && cssColor(colorMatch[1]) !== void 0) {
+        color2 = cssColor(colorMatch[1]);
+        label2 = colorMatch[2] ?? "";
+      }
+      currentBox = { label: cleanLabel(label2), participants: [], ...color2 ? { color: color2 } : {} };
+      boxes.push(currentBox);
+      continue;
+    }
+    if (match = /^(loop|alt|opt|par|critical|break|rect)\b\s*(.*)$/.exec(statement)) {
+      const kind = match[1];
+      const label2 = cleanLabel(match[2] ?? "");
+      const fragment = { kind, label: kind === "rect" ? "" : label2, from: messages.length, to: messages.length };
+      if (kind === "rect") {
+        const color2 = cssColor(label2);
+        if (color2) fragment.color = color2;
+      }
+      open.push({ fragment, start: messages.length, branches: [] });
+      continue;
+    }
+    if (match = /^(else|and|option)\b\s*(.*)$/.exec(statement)) {
+      const top = open[open.length - 1];
+      if (top) top.branches.push({ at: messages.length, ...match[2] ? { label: cleanLabel(match[2]) } : {} });
+      continue;
+    }
+    if (statement === "end") {
+      if (currentBox && !open.length) {
+        currentBox = void 0;
+        continue;
+      }
+      const top = open.pop();
+      if (!top) {
+        currentBox = void 0;
+        continue;
+      }
+      if (messages.length === top.start) messages.push({ from: anchor(), to: anchor(), label: "", kind: "divider" });
+      top.fragment.to = messages.length - 1;
+      const branches = top.branches.filter((branch) => branch.at > top.start && branch.at <= top.fragment.to);
+      if (branches.length) {
+        if (["alt", "par", "critical"].includes(top.fragment.kind)) {
+          top.fragment.elseAt = branches[0].at;
+          if (branches[0].label) top.fragment.elseLabel = branches[0].label;
+          if (branches.length > 1) top.fragment.elses = branches.slice(1);
+        }
+      }
+      fragments.push(top.fragment);
+      continue;
+    }
+    if (match = /^note\s+(left of|right of|over)\s+([^:]+):(.*)$/i.exec(statement)) {
+      const targets = match[2].split(",").map((value) => participant(value).id);
+      const position = match[1].toLowerCase().startsWith("left") ? "left" : match[1].toLowerCase().startsWith("right") ? "right" : "over";
+      messages.push({ from: targets[0], to: targets[targets.length - 1], label: cleanLabel(match[3]), kind: "note", position });
+      continue;
+    }
+    if (match = /^(activate|deactivate)\s+(.+)$/.exec(statement)) {
+      const id2 = participant(match[2]).id;
+      const last = [...messages].reverse().find((message) => message.kind !== "note" && message.kind !== "divider");
+      if (last && match[1] === "activate" && last.to === id2) last.activate = true;
+      else if (last && match[1] === "deactivate" && (last.kind === "return" ? last.from : last.to) === id2) last.deactivate = true;
+      continue;
+    }
+    if (match = seqArrow.exec(statement)) {
+      const from = participant(match[1]).id, to = participant(match[4]).id;
+      const arrow = match[2], sign = match[3];
+      const message = { from, to, label: cleanLabel(match[5] ?? "") };
+      const dotted = arrow.includes("--");
+      if (arrow.includes(">>")) message.kind = dotted ? "return" : "sync";
+      else if (arrow.endsWith(")")) {
+        message.kind = "async";
+        if (dotted) message.dashed = true;
+      } else if (arrow.endsWith("x")) {
+        message.kind = dotted ? "return" : "sync";
+        message.arrow = "cross";
+      } else {
+        message.kind = dotted ? "return" : "sync";
+        message.arrow = "none";
+      }
+      if (arrow.startsWith("<<")) message.bidirectional = true;
+      if (pendingCreate.has(to)) {
+        message.kind = "create";
+        pendingCreate.delete(to);
+      }
+      if (pendingDestroy.has(to)) {
+        message.kind = "destroy";
+        pendingDestroy.delete(to);
+      } else if (pendingDestroy.has(from)) pendingDestroy.delete(from);
+      if (sign === "+") message.activate = true;
+      if (sign === "-") message.deactivate = true;
+      if (message.kind === "sync" && !message.arrow && !message.bidirectional) delete message.kind;
+      messages.push(message);
+      continue;
+    }
+    if (match = /^(?:links?|properties|details)\s+/.exec(statement)) continue;
+    warnings.push(`\u65F6\u5E8F\u56FE\u672A\u8BC6\u522B\uFF1A${statement.slice(0, 60)}`);
+  }
+  while (open.length) {
+    const top = open.pop();
+    if (messages.length > top.start) {
+      top.fragment.to = messages.length - 1;
+      fragments.push(top.fragment);
+    }
+    warnings.push(`\u65F6\u5E8F\u7247\u6BB5 ${top.fragment.kind} \u7F3A\u5C11 end\uFF0C\u5DF2\u81EA\u52A8\u95ED\u5408`);
+  }
+  if (!participants.length) participant("\u7CFB\u7EDF");
+  if (!messages.length) messages.push({ from: participants[0].id, to: participants[0].id, label: "\uFF08\u7A7A\uFF09", kind: "note", position: "over" });
+  return {
+    version: 1,
+    type: "sequence",
+    title: titleLine ?? title,
+    layout: { autonumber },
+    participants,
+    messages,
+    ...fragments.length ? { fragments: fragments.sort((a, b) => a.from - b.from || b.to - a.to) } : {},
+    ...boxes.filter((box) => box.participants.length).length ? { boxes: boxes.filter((box) => box.participants.length) } : {}
+  };
+}
+function parseState(lines, warnings, title) {
+  const ids = new Ids();
+  const nodes = /* @__PURE__ */ new Map();
+  const order = [];
+  const edges = [];
+  const groups = [];
+  const stack = [];
+  const classes = /* @__PURE__ */ new Map();
+  const pendingClasses = [];
+  let dir;
+  let noteCount = 0;
+  const entries = /* @__PURE__ */ new Map(), exits = /* @__PURE__ */ new Map();
+  let noteBuffer;
+  const scope = () => stack[stack.length - 1];
+  const node = (raw, init) => {
+    const name = raw.trim();
+    const composite = compositeAlias.get(name);
+    if (composite && !init) return { id: composite, label: name };
+    let item = nodes.get(name);
+    if (!item) {
+      item = { id: ids.get(name), label: name, ...scope() ? { group: scope() } : {}, ...init };
+      nodes.set(name, item);
+      order.push(name);
+    } else if (init) Object.assign(item, init);
+    return item;
+  };
+  const terminal = (role) => node(`__${role}${scope() ? `_${scope()}` : ""}`, { label: role === "start" ? "\u5F00\u59CB" : "\u7ED3\u675F", kind: role });
+  const addNote = (target, position, text2) => {
+    const item = node(`__note_${++noteCount}`, { label: text2, kind: "note" });
+    const host = node(target);
+    edges.push(position === "left" ? { from: item.id, to: host.id, kind: "association", dashed: true, arrow: "none" } : { from: host.id, to: item.id, kind: "association", dashed: true, arrow: "none" });
+  };
+  for (const original of lines) {
+    const statement = stripComment(original);
+    if (noteBuffer) {
+      if (/^end\s*note$/i.test(statement)) {
+        addNote(noteBuffer.target, noteBuffer.position, noteBuffer.lines.join("\n"));
+        noteBuffer = void 0;
+      } else noteBuffer.lines.push(original.trim());
+      continue;
+    }
+    if (!statement) continue;
+    let match;
+    if (match = /^direction\s+(\w+)$/.exec(statement)) {
+      if (!stack.length) dir = direction(match[1]);
+      continue;
+    }
+    if (match = /^classDef\s+(\S+)\s+(.+)$/.exec(statement)) {
+      classes.set(match[1], styleFrom(match[2]));
+      continue;
+    }
+    if (match = /^class\s+(\S+)\s+(\S+)$/.exec(statement)) {
+      for (const id2 of match[1].split(",")) pendingClasses.push([id2.trim(), match[2]]);
+      continue;
+    }
+    if (match = /^note\s+(left|right)\s+of\s+(\S+)\s*:\s*(.+)$/i.exec(statement)) {
+      addNote(match[2], match[1].toLowerCase(), cleanLabel(match[3]));
+      continue;
+    }
+    if (match = /^note\s+(left|right)\s+of\s+(\S+)\s*$/i.exec(statement)) {
+      noteBuffer = { target: match[2], position: match[1].toLowerCase(), lines: [] };
+      continue;
+    }
+    if (match = /^state\s+"([^"]+)"\s+as\s+(\S+?)\s*(\{)?$/.exec(statement)) {
+      const item = node(match[2], { label: cleanLabel(match[1]) });
+      if (match[3]) openComposite(match[2], item.label);
+      continue;
+    }
+    if (match = /^state\s+(\S+?)\s*<<(choice|fork|join)>>$/.exec(statement)) {
+      node(match[1], { kind: match[2] === "choice" ? "decision" : match[2], label: match[1] });
+      continue;
+    }
+    if (match = /^state\s+(\S+?)\s*(\{)?$/.exec(statement)) {
+      if (match[2]) openComposite(match[1], match[1]);
+      else node(match[1]);
+      continue;
+    }
+    if (statement === "}") {
+      stack.pop();
+      continue;
+    }
+    if (statement === "--") continue;
+    if (match = /^(\S+)\s*-->\s*(\S+?)\s*(?::\s*(.*))?$/.exec(statement)) {
+      if (scope() && (match[1] === "[*]" || match[2] === "[*]")) {
+        if (match[1] === "[*]" && match[2] !== "[*]") entries.set(scope(), node(stripClass(match[2], pendingClasses)).id);
+        if (match[2] === "[*]" && match[1] !== "[*]") exits.set(scope(), node(stripClass(match[1], pendingClasses)).id);
+        continue;
+      }
+      const from = match[1] === "[*]" ? terminal("start") : node(stripClass(match[1], pendingClasses));
+      const to = match[2] === "[*]" ? terminal("end") : node(stripClass(match[2], pendingClasses));
+      edges.push({ from: from.id, to: to.id, ...match[3] ? { label: cleanLabel(match[3]) } : {} });
+      continue;
+    }
+    if (match = /^([^\s:]+)\s*:\s*(.+)$/.exec(statement)) {
+      const existing = nodes.get(match[1]);
+      const text2 = cleanLabel(match[2]);
+      if (!existing || existing.label === match[1]) node(match[1], { label: text2 });
+      else existing.detail = existing.detail ? `${existing.detail}
+${text2}` : text2;
+      continue;
+    }
+    if (/^(?:scale|hide|accTitle|accDescr|title)\b/.test(statement)) continue;
+    if (/^[\p{L}\p{N}_]+$/u.test(statement)) {
+      node(statement);
+      continue;
+    }
+    warnings.push(`\u72B6\u6001\u56FE\u672A\u8BC6\u522B\uFF1A${statement.slice(0, 60)}`);
+  }
+  function openComposite(raw, label2) {
+    const existing = nodes.get(raw);
+    if (existing) {
+      nodes.delete(raw);
+      order.splice(order.indexOf(raw), 1);
+    }
+    const id2 = ids.get(`group:${raw}`);
+    groups.push({ id: id2, label: label2, ...scope() ? { parent: scope() } : {} });
+    compositeAlias.set(raw, id2);
+    stack.push(id2);
+  }
+  for (const [raw, name] of pendingClasses) {
+    const item = nodes.get(raw);
+    const style2 = classes.get(name);
+    if (item && style2) item.style = { ...style2, ...item.style };
+  }
+  const nodeIds = new Set([...nodes.values()].map((item) => item.id));
+  const members = (groupId) => [...nodes.values()].filter((item) => item.group === groupId);
+  const entry = (groupId) => entries.get(groupId) ?? members(groupId)[0]?.id;
+  const exit = (groupId) => exits.get(groupId) ?? members(groupId).at(-1)?.id;
+  const groupOf = (id2) => groups.some((group) => group.id === id2) ? id2 : compositeAlias.get(id2) ?? id2;
+  const resolved = edges.flatMap((edge) => {
+    const from = nodeIds.has(edge.from) ? edge.from : exit(groupOf(edge.from));
+    const to = nodeIds.has(edge.to) ? edge.to : entry(groupOf(edge.to));
+    return from && to ? [{ ...edge, from, to }] : [];
+  });
+  compositeAlias.clear();
+  if (!order.length) node("\u72B6\u6001");
+  const used = /* @__PURE__ */ new Set();
+  for (const item of nodes.values()) {
+    let id2 = item.group;
+    while (id2 && !used.has(id2)) {
+      used.add(id2);
+      id2 = groups.find((group) => group.id === id2)?.parent;
+    }
+  }
+  return {
+    version: 1,
+    type: "state",
+    title,
+    ...dir ? { direction: dir } : {},
+    nodes: order.map((raw) => nodes.get(raw)),
+    edges: resolved,
+    ...groups.some((group) => used.has(group.id)) ? { groups: groups.filter((group) => used.has(group.id)) } : {}
+  };
+}
+var compositeAlias = /* @__PURE__ */ new Map();
+function stripClass(raw, pending) {
+  const match = /^(.+?):::([\w-]+)$/.exec(raw);
+  if (!match) return raw;
+  pending.push([match[1], match[2]]);
+  return match[1];
+}
+var relation = /^(\S+?)\s*(?:"([^"]*)")?\s*(<\|--|<\|\.\.|\*--|o--|<--|<\.\.|--\|>|\.\.\|>|--\*|--o|-->|\.\.>|--|\.\.)\s*(?:"([^"]*)")?\s*(\S+?)\s*(?::\s*(.*))?$/;
+function parseClass(lines, warnings, title) {
+  const ids = new Ids();
+  const nodes = /* @__PURE__ */ new Map();
+  const order = [];
+  const edges = [];
+  const groups = [];
+  let namespace;
+  let body;
+  let dir;
+  let notes = 0;
+  const generic = (value) => value.replace(/~([^~]+)~/g, "<$1>");
+  const node = (raw) => {
+    const name = raw.trim().replace(/~[^~]+~$/, "");
+    let item = nodes.get(name);
+    if (!item) {
+      item = { id: ids.get(name), label: generic(raw.trim()), ...namespace ? { group: namespace } : {} };
+      nodes.set(name, item);
+      order.push(name);
+    }
+    return item;
+  };
+  const member = (item, text2) => {
+    const value = text2.trim();
+    if (!value) return;
+    const annotation = /^<<(.+)>>$/.exec(value);
+    if (annotation) {
+      applyAnnotation(item, annotation[1]);
+      return;
+    }
+    const clean = generic(value).replace(/\$$|\*$/, "");
+    if (/\(.*\)/.test(value)) (item.operations ??= []).push(clean);
+    else (item.attributes ??= []).push(clean);
+  };
+  for (const original of lines) {
+    const statement = stripComment(original);
+    if (!statement) continue;
+    let match;
+    if (body) {
+      if (statement === "}") {
+        body = void 0;
+        continue;
+      }
+      member(body, statement);
+      continue;
+    }
+    if (match = /^direction\s+(\w+)$/.exec(statement)) {
+      dir = direction(match[1]);
+      continue;
+    }
+    if (match = /^namespace\s+(\S+)\s*\{$/.exec(statement)) {
+      namespace = ids.get(`ns:${match[1]}`);
+      groups.push({ id: namespace, label: match[1], kind: "package" });
+      continue;
+    }
+    if (statement === "}" && namespace) {
+      namespace = void 0;
+      continue;
+    }
+    if (match = /^class\s+([^\s{[]+)(?:\["([^"]*)"\])?\s*(?::::([\w-]+))?\s*(\{)?\s*(\})?$/.exec(statement)) {
+      const item = node(match[1]);
+      if (match[2]) item.label = cleanLabel(match[2]);
+      if (match[4] && !match[5]) body = item;
+      continue;
+    }
+    if (match = /^<<(.+)>>\s+(\S+)$/.exec(statement)) {
+      applyAnnotation(node(match[2]), match[1]);
+      continue;
+    }
+    if (match = /^note\s+for\s+(\S+)\s+"([^"]*)"$/.exec(statement)) {
+      const note = node(`__note_${++notes}`);
+      Object.assign(note, { label: cleanLabel(match[2]), kind: "note" });
+      edges.push({ from: note.id, to: node(match[1]).id, kind: "association", dashed: true, arrow: "none" });
+      continue;
+    }
+    if (match = /^note\s+"([^"]*)"$/.exec(statement)) {
+      Object.assign(node(`__note_${++notes}`), { label: cleanLabel(match[1]), kind: "note" });
+      continue;
+    }
+    if (match = relation.exec(statement)) {
+      const [, a, ca, op, cb, b, label2] = match;
+      const left = node(a), right = node(b);
+      let edge;
+      const swap = (kind, extra = {}) => ({ from: right.id, to: left.id, kind, ...cb ? { fromLabel: cb } : {}, ...ca ? { toLabel: ca } : {}, ...extra });
+      const keep = (kind, extra = {}) => ({ from: left.id, to: right.id, kind, ...ca ? { fromLabel: ca } : {}, ...cb ? { toLabel: cb } : {}, ...extra });
+      switch (op) {
+        case "<|--":
+          edge = swap("inheritance");
+          break;
+        case "<|..":
+          edge = swap("realization");
+          break;
+        case "--|>":
+          edge = keep("inheritance");
+          break;
+        case "..|>":
+          edge = keep("realization");
+          break;
+        case "*--":
+          edge = keep("composition");
+          break;
+        case "--*":
+          edge = swap("composition");
+          break;
+        case "o--":
+          edge = keep("aggregation");
+          break;
+        case "--o":
+          edge = swap("aggregation");
+          break;
+        case "-->":
+          edge = keep("association", { arrow: "open" });
+          break;
+        case "<--":
+          edge = swap("association", { arrow: "open" });
+          break;
+        case "..>":
+          edge = keep("dependency");
+          break;
+        case "<..":
+          edge = swap("dependency");
+          break;
+        case "..":
+          edge = keep("association", { dashed: true });
+          break;
+        default:
+          edge = keep("association");
+      }
+      if (label2) edge.label = cleanLabel(label2);
+      edges.push(edge);
+      continue;
+    }
+    if (match = /^([^\s:]+)\s*:\s*(.+)$/.exec(statement)) {
+      member(node(match[1]), match[2]);
+      continue;
+    }
+    if (/^(?:classDef|style|cssClass|click|link|callback|accTitle|accDescr|title)\b/.test(statement)) continue;
+    warnings.push(`\u7C7B\u56FE\u672A\u8BC6\u522B\uFF1A${statement.slice(0, 60)}`);
+  }
+  if (!order.length) node("\u7C7B");
+  return {
+    version: 1,
+    type: "class",
+    title,
+    ...dir ? { direction: dir } : {},
+    nodes: order.map((raw) => nodes.get(raw)),
+    edges,
+    ...groups.length ? { groups: groups.filter((group) => [...nodes.values()].some((item) => item.group === group.id)) } : {}
+  };
+}
+function applyAnnotation(item, annotation) {
+  const value = annotation.trim();
+  if (value.toLowerCase() === "interface") item.kind = "interface";
+  else item.stereotype = value;
+}
 export {
   colorPresets,
   diagramSchema,
   diagramTypes,
   documentSchema,
+  extractMermaidBlocks,
   fishboneHeadStyles,
   fontPresets,
+  isMermaidSource,
   layoutModes,
+  mermaidToDocument,
+  mermaidToSpec,
   normalizeDocument,
+  paletteModes,
+  paletteTargets,
   renderDiagram,
   resolveLayout,
   resolveTheme,

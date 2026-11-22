@@ -14,11 +14,25 @@ import ColorInput from "./ColorInput.vue";
 import VSelect from "./VSelect.vue";
 import { createHtml, downloadBlob } from "./export";
 import type { StudioRuntime } from "./export";
-import { canSaveLocalHtml, chooseLocalHtmlTarget, writeLocalHtml } from "./filesystem-save";
-import type { LocalHtmlTarget } from "./filesystem-save";
+import {
+  canChooseDirectory,
+  canSaveLocalHtml,
+  chooseDefaultDirectory,
+  chooseLocalHtmlTarget,
+  loadHandle,
+  pageDirectory,
+  pageFileName,
+  pageHandleKey,
+  storeHandle,
+  writeLocalHtml,
+} from "./filesystem-save";
+import type { LocalDirectory, LocalHtmlTarget } from "./filesystem-save";
+import { isMermaidSource, mermaidToDocument } from "./mermaid";
 import {
   fontPresets,
   layoutModes,
+  paletteModes,
+  paletteTargets,
   resolveLayout,
   resolveTheme,
   themeLabels,
@@ -257,6 +271,24 @@ const savingHtml = ref(false);
 const localSaveSupported = canSaveLocalHtml();
 const localTargetName = ref("");
 let localTarget: LocalHtmlTarget | undefined;
+let lastLocalTarget: LocalHtmlTarget | undefined;
+let defaultDirectory: LocalDirectory | undefined;
+const defaultDirectoryName = ref("");
+const directoryPickerSupported = canChooseDirectory();
+const currentPageDirectory = pageDirectory();
+const mermaidSource = ref("");
+void (async () => {
+  if (!localSaveSupported) return;
+  const [page, last, directory] = await Promise.all([
+    loadHandle<LocalHtmlTarget>(pageHandleKey()),
+    loadHandle<LocalHtmlTarget>("last-file"),
+    loadHandle<LocalDirectory>("default-directory"),
+  ]);
+  if (page && !localTarget) { localTarget = page; localTargetName.value = page.name; }
+  lastLocalTarget = last;
+  defaultDirectory = directory;
+  defaultDirectoryName.value = directory?.name ?? "";
+})();
 const adjustmentCount = computed(() => Object.keys(applied.value.layout?.adjustments?.elements ?? {}).length + Object.keys(applied.value.layout?.adjustments?.edges ?? {}).length);
 const adjustmentsJson = computed(() => json(applied.value.layout?.adjustments ?? { elements: {}, edges: {} }));
 const stylePanel = ref<HTMLDetailsElement>();
@@ -556,9 +588,9 @@ async function applyDraft(): Promise<void> {
         )
       )
         return;
-      committed = await replaceDocument(JSON.parse(source), source);
+      committed = await replaceDocument(parseSource(source, scope), source);
     } else
-      committed = await applySpec(validateSpec(JSON.parse(source)), source);
+      committed = await applySpec(validateSpec(parseSource(source, scope)), source);
     if (committed)
       showNotice(
         scope === "document" ? "整个文档已应用" : "当前图表 JSON 已应用",
@@ -856,10 +888,17 @@ async function saveToLocal(selectNew = false): Promise<void> {
   savingHtml.value = true;
   try {
     // Start the picker in the original user gesture, before draft rendering.
-    const targetPromise = chooseLocalHtmlTarget(filename("html", true), selectNew ? undefined : localTarget);
+    const targetPromise = chooseLocalHtmlTarget(
+      pageFileName() ?? filename("html", true),
+      selectNew ? undefined : localTarget,
+      defaultDirectory ?? lastLocalTarget,
+    );
     const target = await targetPromise;
     localTarget = target;
+    lastLocalTarget = target;
     localTargetName.value = target.name;
+    void storeHandle(pageHandleKey(), target);
+    void storeHandle("last-file", target);
     const { html, snapshot } = await htmlSnapshot();
     await writeLocalHtml(target, html);
     savedSnapshot.value = snapshot;
@@ -867,6 +906,52 @@ async function saveToLocal(selectNew = false): Promise<void> {
     showNotice(`已同步到本地文件 ${target.name}`);
   } finally {
     savingHtml.value = false;
+  }
+}
+function setDefaultDirectory(): void {
+  void chooseDefaultDirectory(defaultDirectory ?? lastLocalTarget)
+    .then(async (directory) => {
+      defaultDirectory = directory;
+      defaultDirectoryName.value = directory.name;
+      await storeHandle("default-directory", directory);
+      showNotice(`默认保存目录已设为 ${directory.name}，下次选择文件时从该目录打开`);
+    })
+    .catch((reason) => {
+      if (reason instanceof DOMException && reason.name === "AbortError") return;
+      reportError(reason);
+    });
+}
+function clearDefaultDirectory(): void {
+  defaultDirectory = undefined;
+  defaultDirectoryName.value = "";
+  void storeHandle("default-directory", undefined);
+  showNotice("已清除默认保存目录");
+}
+async function importMermaid(text: string, source = "Mermaid"): Promise<void> {
+  const { document, warnings } = mermaidToDocument(text);
+  for (const spec of document.diagrams) await appendDiagram(spec);
+  showNotice(
+    `已从 ${source} 新增 ${document.diagrams.length} 张图表${warnings.length ? `；${warnings.length} 条语句未识别：${warnings.slice(0, 2).join("；")}` : ""}`,
+  );
+}
+function addMermaid(): void {
+  const text = mermaidSource.value;
+  if (!text.trim()) return;
+  void importMermaid(text)
+    .then(() => { mermaidSource.value = ""; })
+    .catch(reportError);
+}
+/** JSON first; Mermaid text pasted into the source editor is converted in place. */
+function parseSource(source: string, scope: "diagram" | "document"): unknown {
+  try {
+    return JSON.parse(source);
+  } catch (reason) {
+    if (!isMermaidSource(source)) throw reason;
+    const { document, warnings } = mermaidToDocument(source);
+    if (warnings.length) showNotice(`Mermaid 已转换；${warnings.length} 条语句未识别：${warnings.slice(0, 2).join("；")}`);
+    if (scope === "document") return document;
+    const current = applied.value;
+    return { ...document.diagrams[0]!, id: current.id, ...(current.theme ? { theme: current.theme } : {}) };
   }
 }
 function saveLocalHtml(selectNew = false): void {
@@ -954,6 +1039,10 @@ async function importFile(event: Event): Promise<void> {
       originalCollection !== collection.value
     )
       return;
+    if (!source.trimStart().startsWith("<") && isMermaidSource(source)) {
+      await importMermaid(source, file.name);
+      return;
+    }
     const text = source.trimStart().startsWith("<")
       ? new DOMParser()
           .parseFromString(source, "text/html")
@@ -1149,8 +1238,8 @@ defineExpose({
         ref="importInput"
         class="visually-hidden"
         type="file"
-        accept=".json,.html,.htm,application/json,text/html"
-        aria-label="导入单图或多图 JSON / HTML"
+        accept=".json,.html,.htm,.mmd,.mermaid,.md,.markdown,application/json,text/html,text/markdown"
+        aria-label="导入单图或多图 JSON / HTML，或 Mermaid / Markdown"
         @change="importFile"
       />
     </header>
@@ -1397,8 +1486,12 @@ defineExpose({
               {{ labels[type] }}
             </button>
           </div></details>
+          <details class="quick-presets-disclosure mermaid-import"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>粘贴 Mermaid 新增</summary><div class="mermaid-import-body">
+            <textarea v-model="mermaidSource" class="mermaid-import-input" rows="6" spellcheck="false" placeholder="flowchart / sequenceDiagram / stateDiagram / classDiagram，或含多个 mermaid 代码块的 Markdown"></textarea>
+            <button class="button button-accent" type="button" :disabled="loading || !mermaidSource.trim()" @click="addMermaid">转换并新增</button>
+          </div></details>
           <p class="export-tip">
-            允许同类多图。每张图独立保存主题、布局和数据。
+            允许同类多图。每张图独立保存主题、布局和数据。“导入”也支持 .mmd / .md 文件。
           </p>
         </div>
 
@@ -1547,7 +1640,12 @@ defineExpose({
             <summary>更多导出<svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></summary>
             <div class="more-export-content">
               <button v-if="localSaveSupported && localTargetName" class="button button-outline" type="button" :disabled="savingHtml || loading" @click="saveLocalHtml(true)">另选本地 HTML 文件</button>
-              <p v-if="localTargetName" class="export-tip">本次页面会话同步至 {{ localTargetName }}。重新打开 HTML 后需重新授权。</p>
+              <p v-if="localTargetName" class="export-tip">同步至 {{ localTargetName }}；浏览器会记住此文件，重新打开同一 HTML 后点击即可授权并继续同步。</p>
+              <div v-if="localSaveSupported && directoryPickerSupported" class="default-directory-row">
+                <button class="button button-outline" type="button" :disabled="savingHtml" @click="setDefaultDirectory">{{ defaultDirectoryName ? `默认目录：${defaultDirectoryName}` : "设置默认保存目录" }}</button>
+                <button v-if="defaultDirectoryName" class="text-button" type="button" @click="clearDefaultDirectory">清除</button>
+              </div>
+              <p v-if="localSaveSupported && currentPageDirectory" class="export-tip">当前 HTML 位于 <code>{{ currentPageDirectory }}</code>；保存对话框默认使用该文件名。浏览器不允许脚本直接指定任意路径，首次在对话框中选到此目录（或设为默认目录）后即会记住。</p>
               <button class="button button-outline" type="button" @click="downloadDocumentJson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>下载整个文档 JSON</button>
               <p class="export-tip">图片导出当前图；HTML 与文档 JSON 包含全部图表。PNG / WebP 支持透明，JPEG 铺白底。</p>
             </div>
@@ -1653,12 +1751,37 @@ defineExpose({
                           background: themes[name].background,
                           borderColor: themes[name].border,
                         }"
-                        ><i :style="{ background: themes[name].primary }"></i
-                        ><i
-                          :style="{ background: themes[name].secondary }"
-                        ></i></span
+                        ><template v-if="themes[name].palette"
+                          ><i
+                            v-for="color in themes[name].palette!.slice(0, 4)"
+                            :key="color"
+                            class="palette-swatch"
+                            :class="themes[name].paletteMode"
+                            :style="{ background: color }"
+                          ></i></template
+                        ><template v-else
+                          ><i :style="{ background: themes[name].primary }"></i
+                          ><i
+                            :style="{ background: themes[name].secondary }"
+                          ></i></template
+                      ></span
                       ><span>{{ themeLabels[name] }}</span>
                     </button>
+                  </div>
+                  <div class="palette-controls">
+                    <label class="field-label" for="palette-mode">多色模式<span class="select-wrap"><VSelect
+                      id="palette-mode"
+                      class="select-input"
+                      :value="currentTheme.paletteMode ?? (currentTheme.palette?.length ? 'tint' : 'mono')"
+                      @change="updateStyle('paletteMode', ($event.target as HTMLSelectElement).value)"
+                    ><option v-for="mode in paletteModes" :key="mode.value" :value="mode.value">{{ mode.label }}</option></VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label>
+                    <label class="field-label" for="palette-by">着色依据<span class="select-wrap"><VSelect
+                      id="palette-by"
+                      class="select-input"
+                      :disabled="(currentTheme.paletteMode ?? (currentTheme.palette?.length ? 'tint' : 'mono')) === 'mono'"
+                      :value="currentTheme.paletteBy ?? 'auto'"
+                      @change="updateStyle('paletteBy', ($event.target as HTMLSelectElement).value)"
+                    ><option v-for="target in paletteTargets" :key="target.value" :value="target.value">{{ target.label }}</option></VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label>
                   </div>
                   <details class="advanced-styles"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>自定义配色</summary><div class="advanced-inner">
                   <div class="style-subheading">
@@ -2404,12 +2527,14 @@ defineExpose({
   background: var(--danger-soft);
 }
 .uml-editor-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  padding: 12px 0 2px;
-  border-top: 1px solid var(--uml-edit-line);
+  display: grid;
+  gap: 8px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--uml-edit-line);
   background: var(--paper);
+}
+.uml-editor-actions > .uml-editor-heading {
+  justify-content: flex-end;
 }
 .uml-form-editor button.uml-editor-apply {
   padding-inline: 20px;
@@ -2824,6 +2949,15 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .theme-preview { width: 100%; height: 32px; display: flex; gap: 5px; align-items: center; justify-content: center; border: 1px solid; border-radius: var(--r-xs); transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease); }
 .theme-preview i { display: block; width: 10px; height: 12px; border-radius: 2px; }
 .theme-preview i + i { height: 9px; }
+.theme-preview i.palette-swatch { width: 9px; height: 12px; }
+.theme-preview i.palette-swatch.tint { opacity: .55; outline: 1.5px solid currentColor; }
+.theme-preview i.palette-swatch.gradient { background-image: linear-gradient(180deg, rgb(255 255 255 / .45), rgb(0 0 0 / .12)) !important; }
+.palette-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.palette-controls .field-label { display: grid; gap: 6px; }
+.mermaid-import-body { display: grid; gap: 8px; padding-top: 8px; }
+.mermaid-import-input { width: 100%; min-height: 110px; resize: vertical; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm, 9px); font: 12px/1.5 "Cascadia Code", Consolas, monospace; background: var(--paper); color: var(--ink); }
+.mermaid-import-input:focus { outline: 2px solid var(--accent); box-shadow: 0 0 0 4px var(--ring); }
+.default-directory-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .theme-option.selected .theme-preview { outline: 2px solid var(--accent); outline-offset: 2px; }
 .theme-option.selected { color: var(--accent); font-weight: 600; }
 .style-subheading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--muted); font-size: 12px; }

@@ -101,6 +101,12 @@ const nodeKinds = [
   "queue",
   "state",
   "note",
+  "terminal",
+  "subroutine",
+  "io",
+  "hexagon",
+  "circle",
+  "trapezoid",
 ] as const;
 const edgeKinds = [
   "flow",
@@ -166,6 +172,17 @@ const kindLabels: Record<string, string> = {
   destroy: "销毁",
   boundary: "边界",
   node: "部署节点",
+  terminal: "起止胶囊",
+  subroutine: "子流程",
+  io: "输入输出",
+  hexagon: "准备 / 六边形",
+  circle: "圆形",
+  trapezoid: "梯形 / 手工操作",
+  note_message: "备注",
+  divider: "分割线",
+  control: "控制",
+  entity: "实体",
+  collections: "集合",
 };
 function hasChanges(): boolean {
   return JSON.stringify(draft.value) !== appliedSource.value;
@@ -426,7 +443,8 @@ function addFragment(): void {
 }
 function fragmentKind(fragment: Fragment, value: string): void {
   fragment.kind = value as Fragment["kind"];
-  if (value !== "alt" && value !== "par") {
+  if (value !== "alt" && value !== "par" && value !== "critical") {
+    delete fragment.elses;
     delete fragment.elseAt;
     delete fragment.elseLabel;
   }
@@ -491,6 +509,16 @@ function updateCause(
       固定，避免破坏引用。其他可选数据会完整保留。
     </p>
     <div class="uml-editor-tools">
+      <div class="uml-editor-actions">
+        <p v-if="error" class="uml-editor-error" role="alert">{{ error }}</p>
+        <div class="uml-editor-heading">
+          <button type="button" :disabled="!hasChanges()" @click="resetDraft">
+            重置表单</button
+          ><button type="button" class="uml-editor-apply" @click="apply">
+            应用表单
+          </button>
+        </div>
+      </div>
       <label>检索元素<span class="uml-editor-search"><svg class="diagram-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg><input v-model="query" type="search" placeholder="名称、ID、详情或其他内容" /></span></label>
       <div class="uml-editor-heading">
         <button type="button" @click="setExpanded(true)">全部展开</button>
@@ -960,7 +988,7 @@ function updateCause(
               >
                 <option value="">默认</option>
                 <option
-                  v-for="kind in ['participant', 'actor', 'database']"
+                  v-for="kind in ['participant', 'actor', 'database', 'boundary', 'control', 'entity', 'collections', 'queue']"
                   :key="kind"
                   :value="kind"
                 >
@@ -1031,11 +1059,13 @@ function updateCause(
                     'return',
                     'create',
                     'destroy',
+                    'note',
+                    'divider',
                   ]"
                   :key="kind"
                   :value="kind"
                 >
-                  {{ kindLabels[kind] }} · {{ kind }}
+                  {{ kind === 'note' ? kindLabels.note_message : kindLabels[kind] }} · {{ kind }}
                 </option>
               </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
@@ -1089,6 +1119,9 @@ function updateCause(
                 <option value="opt">opt · 可选</option>
                 <option value="loop">loop · 循环</option>
                 <option value="par">par · 并行</option>
+                <option value="critical">critical · 关键区域</option>
+                <option value="break">break · 中断</option>
+                <option value="rect">rect · 背景高亮</option>
               </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
             >
             <label
@@ -1117,7 +1150,7 @@ function updateCause(
                 </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
               >
             </div>
-            <template v-if="fragment.kind === 'alt' || fragment.kind === 'par'"
+            <template v-if="fragment.kind === 'alt' || fragment.kind === 'par' || fragment.kind === 'critical'"
               ><label
                 >第二分支起始消息<span class="select-wrap"><VSelect
                   :value="fragment.elseAt ?? ''"
@@ -1231,15 +1264,5 @@ function updateCause(
         </details>
       </section>
     </template>
-    <footer class="uml-editor-actions">
-      <p v-if="error" class="uml-editor-error" role="alert">{{ error }}</p>
-      <div class="uml-editor-heading">
-        <button type="button" :disabled="!hasChanges()" @click="resetDraft">
-          重置表单</button
-        ><button type="button" class="uml-editor-apply" @click="apply">
-          应用表单
-        </button>
-      </div>
-    </footer>
   </div>
 </template>

@@ -55,7 +55,13 @@
         "rose",
         "amber",
         "slate",
-        "mint"
+        "mint",
+        "vivid",
+        "pastel",
+        "business",
+        "steel",
+        "aurora",
+        "neon"
       ]
     },
     "style": {
@@ -142,6 +148,36 @@
           "type": "number",
           "minimum": 24,
           "maximum": 240
+        },
+        "palette": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
+          },
+          "minItems": 1,
+          "maxItems": 16,
+          "description": "多色调色板；元素颜色按 paletteBy 轮换。"
+        },
+        "paletteMode": {
+          "type": "string",
+          "enum": [
+            "mono",
+            "tint",
+            "solid",
+            "gradient"
+          ],
+          "description": "mono 单色；tint 浅色填充彩色描边；solid 实色填充；gradient 渐变填充。"
+        },
+        "paletteBy": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "group",
+            "kind",
+            "node"
+          ],
+          "description": "auto：有分组/泳道按分组，否则按节点顺序。"
         }
       },
       "required": [],
@@ -312,6 +348,11 @@
           "type": "number",
           "minimum": 0,
           "maximum": 100000
+        },
+        "autonumber": {
+          "type": "boolean",
+          "default": true,
+          "description": "时序图消息编号；Mermaid 导入默认关闭。"
         }
       },
       "required": [],
@@ -357,7 +398,13 @@
               "server",
               "queue",
               "state",
-              "note"
+              "note",
+              "terminal",
+              "subroutine",
+              "io",
+              "hexagon",
+              "circle",
+              "trapezoid"
             ]
           },
           "detail": {
@@ -472,6 +519,36 @@
                 "type": "number",
                 "minimum": 24,
                 "maximum": 240
+              },
+              "palette": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
+                },
+                "minItems": 1,
+                "maxItems": 16,
+                "description": "多色调色板；元素颜色按 paletteBy 轮换。"
+              },
+              "paletteMode": {
+                "type": "string",
+                "enum": [
+                  "mono",
+                  "tint",
+                  "solid",
+                  "gradient"
+                ],
+                "description": "mono 单色；tint 浅色填充彩色描边；solid 实色填充；gradient 渐变填充。"
+              },
+              "paletteBy": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "group",
+                  "kind",
+                  "node"
+                ],
+                "description": "auto：有分组/泳道按分组，否则按节点顺序。"
               }
             },
             "required": [],
@@ -531,6 +608,31 @@
           },
           "toLabel": {
             "type": "string"
+          },
+          "arrow": {
+            "type": "string",
+            "enum": [
+              "none",
+              "arrow",
+              "open",
+              "triangle",
+              "circle",
+              "cross"
+            ]
+          },
+          "startArrow": {
+            "type": "string",
+            "enum": [
+              "none",
+              "arrow",
+              "open",
+              "triangle",
+              "circle",
+              "cross"
+            ]
+          },
+          "thick": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -619,13 +721,48 @@
             "enum": [
               "actor",
               "participant",
-              "database"
+              "database",
+              "boundary",
+              "control",
+              "entity",
+              "collections",
+              "queue"
             ]
           }
         },
         "required": [
           "id",
           "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "boxes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_\\-:.]+$"
+            },
+            "minItems": 1
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
+          }
+        },
+        "required": [
+          "label",
+          "participants"
         ],
         "additionalProperties": false
       },
@@ -656,7 +793,9 @@
               "async",
               "return",
               "create",
-              "destroy"
+              "destroy",
+              "note",
+              "divider"
             ]
           },
           "activate": {
@@ -664,6 +803,29 @@
           },
           "deactivate": {
             "type": "boolean"
+          },
+          "arrow": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "open",
+              "none",
+              "cross"
+            ]
+          },
+          "dashed": {
+            "type": "boolean"
+          },
+          "bidirectional": {
+            "type": "boolean"
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right",
+              "over"
+            ]
           }
         },
         "required": [
@@ -686,7 +848,10 @@
               "alt",
               "opt",
               "loop",
-              "par"
+              "par",
+              "critical",
+              "break",
+              "rect"
             ]
           },
           "label": {
@@ -706,6 +871,30 @@
           },
           "elseLabel": {
             "type": "string"
+          },
+          "elses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^(transparent|#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?)$"
           }
         },
         "required": [

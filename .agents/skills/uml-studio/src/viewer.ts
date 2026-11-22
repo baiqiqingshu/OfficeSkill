@@ -22,9 +22,11 @@ declare global {
   interface Window { UmlStudio: UmlStudioHandle }
 }
 
+// Top-level examples win; scenario files fill the remaining types (e.g. the 4+1 views).
+const scenarioFiles = import.meta.glob<DiagramSpec>('../examples/scenarios/*.json', { eager: true, import: 'default' });
 const files = import.meta.glob<DiagramSpec>('../examples/*.json', { eager: true, import: 'default' });
 const examples: Record<string, DiagramSpec> = {};
-for (const [path, example] of Object.entries(files)) {
+for (const [path, example] of [...Object.entries(scenarioFiles), ...Object.entries(files)]) {
   const name = path.split('/').pop()?.replace(/\.json$/, '');
   if (name) examples[name] = example;
 }

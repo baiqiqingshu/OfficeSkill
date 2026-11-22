@@ -39,11 +39,13 @@ export function validateSpec(value: unknown): DiagramSpec {
     for (const [i,m] of spec.messages!.entries()) if (!participants.has(m.from) || !participants.has(m.to)) throw new Error(`第 ${i + 1} 条消息引用不存在的参与者`)
     for (const f of spec.fragments ?? []) {
       if (f.from > f.to || f.to >= spec.messages!.length) throw new Error(`组合片段 ${f.label} 的消息范围无效`)
-      if (f.elseAt !== undefined && ((f.kind !== 'alt' && f.kind !== 'par') || f.elseAt <= f.from || f.elseAt > f.to)) throw new Error(`组合片段 ${f.label} 的 elseAt 无效`)
+      const branches = [...(f.elseAt !== undefined ? [f.elseAt] : []), ...(f.elses ?? []).map(item => item.at)]
+      if (branches.length && (!['alt', 'par', 'critical'].includes(f.kind) || branches.some(at => at <= f.from || at > f.to))) throw new Error(`组合片段 ${f.label} 的 elseAt 无效（含 elses 分支位置）`)
     }
+    for (const box of spec.boxes ?? []) for (const id of box.participants) if (!participants.has(id)) throw new Error(`参与者分组 ${box.label} 引用不存在的参与者：${id}`)
   }
   if (spec.fishbone) unique(spec.fishbone.categories, '鱼骨分类')
-  if (spec.type !== 'sequence' && (spec.participants || spec.messages || spec.fragments)) throw new Error('只有 sequence 可以使用 participants/messages/fragments')
+  if (spec.type !== 'sequence' && (spec.participants || spec.messages || spec.fragments || spec.boxes)) throw new Error('只有 sequence 可以使用 participants/messages/fragments/boxes')
   if (spec.type !== 'fishbone' && spec.fishbone) throw new Error('只有 fishbone 可以使用 fishbone 数据')
   if (spec.type === 'sequence' || spec.type === 'fishbone') {
     if (spec.nodes || spec.edges || spec.groups || spec.lanes) throw new Error(`${spec.type} 不能包含图节点、连线或分组字段`)

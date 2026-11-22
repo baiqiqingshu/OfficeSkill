@@ -4,6 +4,8 @@ import type { DiagramAdjustments, DiagramEdge, DiagramGroup, DiagramNode, Diagra
 import { esc, frame, text } from './svg';
 import { resolveLayout } from './themes';
 import { crossingPaths } from './crossings';
+import { gradientDefs, paintFor, paletteOf, regionPaint } from './palette';
+import type { ElementPaint, PaletteMember } from './palette';
 
 type Kind = NonNullable<DiagramNode['kind']>;
 type Side = 'left' | 'right' | 'top' | 'bottom';
@@ -26,6 +28,7 @@ interface NodeRef {
   operations: string;
   attributeHeight: number;
   operationHeight: number;
+  paint?: ElementPaint;
 }
 interface NodeBox extends Rect { ref: NodeRef; caption?: LabelBox }
 interface ContainerRef {
@@ -110,6 +113,13 @@ function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: T
     development: 'component', physical: 'server',
   };
   const kind = node.kind ?? defaults[spec.type] ?? 'action';
+  const palette = paletteOf(theme);
+  let paint: ElementPaint | undefined;
+  if (palette && !sourceNode.style?.surface && !uncoloured.has(kind)) {
+    paint = paintFor(theme, palette, paletteSlot(sourceNode, kind, spec, palette));
+    if (kind === 'actor') theme.primary = paint.stroke;
+    else Object.assign(theme, { surface: paint.fill, border: paint.stroke, text: paint.text, muted: paint.muted, primary: paint.accent, secondary: palette.mode === 'tint' ? paint.stroke : paint.text });
+  }
   const size = theme.fontSize;
   const smaller = Math.max(10, size - 2);
   const label = measure(node.label, size);
@@ -161,6 +171,16 @@ function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: T
   } else if (kind === 'note') {
     width += 12;
     height += 8;
+  } else if (kind === 'terminal') {
+    width += Math.max(16, height / 2);
+  } else if (kind === 'subroutine') {
+    width += 24;
+  } else if (kind === 'io' || kind === 'trapezoid') {
+    width += 32;
+  } else if (kind === 'hexagon') {
+    width += 36;
+  } else if (kind === 'circle') {
+    width = height = Math.max(theme.nodeHeight, contentWidth + 28, contentHeight + 28);
   }
   let symbol: Rect | undefined, internalCaption: LabelBox | undefined;
   if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ['start', 'end', 'fork', 'join'].includes(kind)) {
@@ -175,7 +195,18 @@ function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: T
   }
   const renderWidth = Math.ceil(width / 4) * 4, renderHeight = Math.ceil(height / 4) * 4;
   const fit = Math.min(1, spec.layout?.nodeMaxWidth ? spec.layout.nodeMaxWidth / renderWidth : 1, spec.layout?.nodeMaxHeight ? spec.layout.nodeMaxHeight / renderHeight : 1);
-  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight };
+  return { id: `n${index}`, node, sourceNode, kind, theme, width: renderWidth * fit, height: renderHeight * fit, renderWidth, renderHeight, symbol, internalCaption, header, attributes, operations, attributeHeight, operationHeight, paint };
+}
+
+const uncoloured = new Set<string>(['start', 'end', 'fork', 'join']);
+/** Palette slot: regions share a colour; otherwise kinds or individual elements cycle. */
+function paletteSlot(node: DiagramNode, kind: Kind, spec: DiagramSpec, palette: PaletteMember): number {
+  const regions = [...(spec.groups ?? []).map(group => group.id), ...(spec.lanes ?? []).map(lane => lane.id)];
+  const region = node.group ?? node.lane;
+  if ((palette.by === 'group' || palette.by === 'auto') && region && regions.includes(region)) return regions.indexOf(region);
+  const fallback = kind;
+  if (palette.by === 'kind' || palette.by === 'group') return [...new Set((spec.nodes ?? []).map(item => item.kind ?? fallback))].indexOf(node.kind ?? fallback);
+  return (spec.nodes ?? []).filter(item => !uncoloured.has(item.kind ?? '')).indexOf(node);
 }
 
 function edgeKind(edge: DiagramEdge, type: DiagramSpec['type']): NonNullable<DiagramEdge['kind']> {
@@ -969,12 +1000,20 @@ function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
   const rx = box.width / 2, ry = box.height / 2;
   const horizontal = Math.abs(point.y - neighbor.y) < 0.01;
   const kind = box.ref.kind;
-  if (kind === 'usecase' || kind === 'start' || kind === 'end') {
+  if (kind === 'usecase' || kind === 'start' || kind === 'end' || kind === 'circle') {
     if (horizontal) point.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.sqrt(Math.max(0, 1 - ((point.y - cy) / ry) ** 2));
     else point.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.sqrt(Math.max(0, 1 - ((point.x - cx) / rx) ** 2));
   } else if (kind === 'decision') {
     if (horizontal) point.x = cx + (neighbor.x < cx ? -1 : 1) * rx * Math.max(0, 1 - Math.abs(point.y - cy) / ry);
     else point.y = cy + (neighbor.y < cy ? -1 : 1) * ry * Math.max(0, 1 - Math.abs(point.x - cx) / rx);
+  } else if (kind === 'terminal' && horizontal) {
+    point.x = cx + (neighbor.x < cx ? -1 : 1) * (rx - ry + Math.sqrt(Math.max(0, ry * ry - (point.y - cy) ** 2)));
+  } else if (kind === 'hexagon' && horizontal) {
+    const full = Math.min(18, box.width / 4), inset = full * (1 - Math.abs(point.y - cy) / ry);
+    point.x = neighbor.x < cx ? box.x + full - inset : box.x + box.width - full + inset;
+  } else if ((kind === 'io' || kind === 'trapezoid') && horizontal) {
+    const t = (point.y - box.y) / box.height, skew = Math.min(16, box.width / 5);
+    point.x = neighbor.x < cx ? box.x + skew * (1 - t) : box.x + box.width - skew * (kind === 'io' ? t : 1 - t);
   } else if (kind === 'actor' && horizontal) {
     const localY = point.y - box.y;
     let halfWidth = box.width / 2 - 12;
@@ -1007,18 +1046,26 @@ function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
 
 function markerDefinitions(prefix: string, theme: Theme): string {
   const stroke = esc(theme.primary), background = esc(theme.background === 'transparent' ? theme.surface : theme.background), solid = esc(theme.primary);
-  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker></defs>`;
+  return `<defs><marker id="${prefix}-arrow" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="${stroke}"/></marker><marker id="${prefix}-open" viewBox="-1 -1 14 14" refX="11" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker><marker id="${prefix}-triangle" viewBox="-2 -2 18 16" refX="13" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 0 L13 6 L1 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-aggregation" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker><marker id="${prefix}-composition" viewBox="-2 -2 24 16" refX="0" refY="6" markerWidth="24" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 6 L10 0 L20 6 L10 12 Z" fill="${solid}" stroke="${solid}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-arrow-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11 Z" fill="${stroke}"/></marker>`
+    + `<marker id="${prefix}-open-start" viewBox="-1 -1 14 14" refX="1" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M11 1 L1 6 L11 11" fill="none" stroke="${stroke}" stroke-width="1.6"/></marker>`
+    + `<marker id="${prefix}-triangle-start" viewBox="-2 -2 18 16" refX="1" refY="6" markerWidth="18" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M13 0 L1 6 L13 12 Z" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-circle" viewBox="0 0 12 12" refX="10.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-circle-start" viewBox="0 0 12 12" refX="1.5" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="4.5" fill="${background}" stroke="${stroke}" stroke-width="1.5"/></marker>`
+    + `<marker id="${prefix}-cross" viewBox="0 0 12 12" refX="8" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker>`
+    + `<marker id="${prefix}-cross-start" viewBox="0 0 12 12" refX="4" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M2 2 L10 10 M10 2 L2 10" stroke="${stroke}" stroke-width="1.8" stroke-linecap="round"/></marker></defs>`;
 }
 
-function renderContainer(box: ContainerBox, theme: Theme, direction: 'TB' | 'LR'): string {
+function renderContainer(box: ContainerBox, theme: Theme, direction: 'TB' | 'LR', region?: ReturnType<typeof regionPaint>): string {
   const { x, y, width: w, height: h, ref } = box;
-  const border = esc(theme.border), surface = esc(theme.surface), primary = esc(theme.primary);
+  const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
+  const headerOpacity = region ? '1' : '0.08';
   let shape = '';
   let labelX = x + 16, labelY = y + theme.fontSize + 10;
   if (ref.kind === 'lane') {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}"/>`;
-    if (direction === 'TB') shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="0.08"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}"/>`;
-    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="0.08"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
+    if (direction === 'TB') shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(ref.header)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x)} ${numeric(y + ref.header)} H${numeric(x + w)}" stroke="${border}"/>`;
+    else shape += `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(ref.header)}" height="${numeric(h)}" fill="${primary}" fill-opacity="${headerOpacity}"/><path d="M${numeric(x + ref.header)} ${numeric(y)} V${numeric(y + h)}" stroke="${border}"/>`;
   } else if (ref.kind === 'package') {
     const tabWidth = Math.min(w - 24, Math.max(80, measure(ref.label, theme.fontSize).width + 32));
     const tabHeight = ref.header;
@@ -1030,7 +1077,7 @@ function renderContainer(box: ContainerBox, theme: Theme, direction: 'TB' | 'LR'
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${numeric(theme.lineWidth)}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === 'lane' ? 'lanes' : 'groups'}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === 'lane' ? 'lane' : 'group'}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== 'lane' ? ` data-lane-id="${esc(ref.lane)}"` : ''}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: 'start', weight: 650 })}</g>`;
+  return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === 'lane' ? 'lanes' : 'groups'}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === 'lane' ? 'lane' : 'group'}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== 'lane' ? ` data-lane-id="${esc(ref.lane)}"` : ''}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: 'start', weight: 650, fill: region?.text })}</g>`;
 }
 
 function centeredContent(ref: NodeRef, x: number, y: number, width: number, height: number): string {
@@ -1106,6 +1153,25 @@ function renderNode(box: NodeBox, spec: DiagramSpec, adjustmentMetadata = true):
     const tab = Math.min(w - 28, Math.max(56, w * 0.4));
     shape = `<path d="M${numeric(x)} ${numeric(y + h)} V${numeric(y)} H${numeric(x + tab)} V${numeric(y + 20)} H${numeric(x + w)} V${numeric(y + h)} Z" ${common}/><path d="M${numeric(x)} ${numeric(y + 20)} H${numeric(x + tab)}" stroke="${stroke}"/>`;
     content = centeredContent(ref, x, y + 22, w, h - 22);
+  } else if (kind === 'terminal') {
+    shape = `${rect} rx="${numeric(h / 2)}" ${common}/>`;
+    content = centeredContent(ref, x, y, w, h);
+  } else if (kind === 'circle') {
+    shape = `<ellipse cx="${numeric(x + w / 2)}" cy="${numeric(y + h / 2)}" rx="${numeric(w / 2)}" ry="${numeric(h / 2)}" ${common}/>`;
+    content = centeredContent(ref, x, y, w, h);
+  } else if (kind === 'subroutine') {
+    shape = `${rect} rx="${numeric(Math.min(4, theme.radius))}" ${common}/><path d="M${numeric(x + 10)} ${numeric(y)} V${numeric(y + h)} M${numeric(x + w - 10)} ${numeric(y)} V${numeric(y + h)}" stroke="${stroke}" stroke-width="${numeric(theme.lineWidth)}"/>`;
+    content = centeredContent(ref, x + 10, y, w - 20, h);
+  } else if (kind === 'hexagon') {
+    const inset = Math.min(18, w / 4);
+    shape = `<path d="M${numeric(x + inset)} ${numeric(y)} H${numeric(x + w - inset)} L${numeric(x + w)} ${numeric(y + h / 2)} L${numeric(x + w - inset)} ${numeric(y + h)} H${numeric(x + inset)} L${numeric(x)} ${numeric(y + h / 2)} Z" ${common}/>`;
+    content = centeredContent(ref, x + inset, y, w - inset * 2, h);
+  } else if (kind === 'io' || kind === 'trapezoid') {
+    const skew = Math.min(16, w / 5);
+    shape = kind === 'io'
+      ? `<path d="M${numeric(x + skew)} ${numeric(y)} H${numeric(x + w)} L${numeric(x + w - skew)} ${numeric(y + h)} H${numeric(x)} Z" ${common}/>`
+      : `<path d="M${numeric(x + skew)} ${numeric(y)} H${numeric(x + w - skew)} L${numeric(x + w)} ${numeric(y + h)} H${numeric(x)} Z" ${common}/>`;
+    content = centeredContent(ref, x + skew, y, w - skew * 2, h);
   } else if (kind === 'note') {
     shape = `<path d="M${numeric(x)} ${numeric(y)} H${numeric(x + w - 18)} L${numeric(x + w)} ${numeric(y + 18)} V${numeric(y + h)} H${numeric(x)} Z" ${common}/><path d="M${numeric(x + w - 18)} ${numeric(y)} V${numeric(y + 18)} H${numeric(x + w)}" fill="none" stroke="${stroke}"/>`;
     content = centeredContent(ref, x + 6, y + 10, w - 18, h - 16);
@@ -1737,17 +1803,24 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   for (const route of result.routes) {
     const kind = edgeKind(route.ref.edge, spec.type);
     const dashed = route.ref.edge.dashed || ['dependency', 'include', 'extend', 'realization'].includes(kind);
-    const end = kind === 'flow' ? 'arrow' : ['dependency', 'include', 'extend'].includes(kind) ? 'open' : ['inheritance', 'realization'].includes(kind) ? 'triangle' : '';
-    const start = kind === 'aggregation' || kind === 'composition' ? kind : '';
+    const edge = route.ref.edge;
+    const defaultEnd = kind === 'flow' ? 'arrow' : ['dependency', 'include', 'extend'].includes(kind) ? 'open' : ['inheritance', 'realization'].includes(kind) ? 'triangle' : '';
+    const end = edge.arrow ? (edge.arrow === 'none' ? '' : edge.arrow) : defaultEnd;
+    const start = edge.startArrow ? (edge.startArrow === 'none' ? '' : `${edge.startArrow}-start`) : kind === 'aggregation' || kind === 'composition' ? kind : '';
+    const strokeWidth = theme.lineWidth * (edge.thick ? 2 : 1);
     paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges!.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : '';
-      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(theme.lineWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ''}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ''}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ''}/>`;
+      paths += `<path d="${data}"${mask} fill="none" stroke="${esc(theme.primary)}" stroke-width="${numeric(strokeWidth)}" stroke-linecap="round" stroke-linejoin="round"${dashed ? ' stroke-dasharray="7 5"' : ''}${start && index === 0 ? ` marker-start="url(#${prefix}-${start})"` : ''}${end && index === route.paths.length - 1 ? ` marker-end="url(#${prefix}-${end})"` : ''}/>`;
     }
     paths += '</g>';
   }
-  const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map(box => renderContainer(box, theme, direction)).join('');
+  const palette = paletteOf(theme);
+  const regionIds = [...(spec.groups ?? []).map(group => group.id), ...(spec.lanes ?? []).map(lane => lane.id)];
+  const groupShapes = result.containers.sort((a, b) => a.depth - b.depth).map(box => renderContainer(box, theme, direction,
+    palette && regionIds.includes(box.ref.originalId) ? regionPaint(theme, palette, regionIds.indexOf(box.ref.originalId)) : undefined)).join('');
+  const paletteDefs = gradientDefs(nodes.flatMap(node => node.paint ? [node.paint] : []));
   const nodeShapes = result.nodes.map(box => renderNode(box, spec)).join('');
   const labelShapes = labels.map(label => {
     const leader = label.leader ? `<path class="uml-label-leader" d="M${numeric(label.anchor.x)} ${numeric(label.anchor.y)} L${numeric(Math.max(label.x, Math.min(label.x + label.width, label.anchor.x)))} ${numeric(Math.max(label.y, Math.min(label.y + label.height, label.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : '';
@@ -1768,6 +1841,6 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   const heading = showTitle ? text(32, 42, spec.title, theme, { size: 24, anchor: 'start', weight: 650 }) + (spec.description ? text(32, titleBottom + 24, spec.description, theme, { size: 13, anchor: 'start', fill: theme.muted }) : '') : '';
   const width = Math.max(1, maxX - minX + 64, titleMetrics.width + 64, (descriptionMetrics?.width ?? 0) + 64);
   const height = Math.max(1, maxY - minY + contentY + 24);
-  const body = `${markerDefinitions(prefix, theme)}<defs>${maskDefinitions}</defs>${heading}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
+  const body = `${markerDefinitions(prefix, theme)}${paletteDefs}<defs>${maskDefinitions}</defs>${heading}<g data-layout-root="" transform="translate(${numeric(32 - minX)} ${numeric(contentY - minY)})">${groupShapes}${paths}${labelShapes}${nodeShapes}</g>`;
   return frame(spec, theme, width, height, body);
 }

@@ -1,9 +1,9 @@
 ---
 name: uml-studio
-description: 根据结构化 JSON 绘制 UML 活动图、时序图、泳道图、流程图、用例图、类图、状态图、组件图、包图，以及系统架构、功能模块、部署、4+1 视图和鱼骨图。输出可离线编辑的 HTML 或 SVG、PNG、JPEG、WebP 图片；用户要求草稿时先提供可直接修改的 ASCII / Unicode 纯文本图。
+description: 根据结构化 JSON 绘制 UML 活动图、时序图、泳道图、流程图、用例图、类图、状态图、组件图、包图，以及系统架构、功能模块、部署、4+1 视图和鱼骨图。输出可离线编辑的 HTML 或 SVG、PNG、JPEG、WebP 图片；可直接导入已有 Mermaid（flowchart、sequence、state、class），支持多色与渐变风格；用户要求草稿时先提供可直接修改的 ASCII / Unicode 纯文本图。
 license: MIT
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # UML Studio
@@ -35,10 +35,23 @@ node scripts/diagram.mjs --json '{"type":"flowchart","title":"需求评审","nod
 # 2. 对已有 HTML 或 JSON 直接增量修改并重导出（支持 --set 与 --patch）
 node scripts/diagram.mjs output.html --set theme=industrial --set title="更新标题" --out output.html --image output.png
 
-# 3. 速查 18 类图 / 12 套主题 / 4 类最小结构（约 1KB，无需读完整 Schema）
+# 3. 速查 18 类图 / 18 套主题（含 6 套多色）/ 4 类最小结构（约 1KB，无需读完整 Schema）
 node scripts/diagram.mjs --presets
 node scripts/diagram.mjs --example sequence
+
+# 4. 已有 Mermaid 直接迁移：.mmd / .mermaid / .md（可含多个 mermaid 代码块）或 --mermaid 源码
+node scripts/diagram.mjs local.mmd --out output.html --image output.png
+node scripts/diagram.mjs --mermaid 'sequenceDiagram\n A->>B: hi' --save-json out.json --validate
 ```
+
+### Mermaid 迁移
+
+支持 `flowchart/graph`、`sequenceDiagram`、`stateDiagram(-v2)`、`classDiagram`，其余 Mermaid 图头会明确报“暂不支持”。未识别的单条语句只给警告，不中断导入。用户已有 Mermaid 时优先直接转换，不要手工重写 JSON。
+
+- 流程图：全部常见节点形状（`[]` `()` `([])` `[[]]` `[()]` `(())` `{}` `{{}}` `[/ /]` `[\ \]` `[/ \]` `>]` 及 `@{shape:…}`）、链接（`-->` `---` `-.->` `==>` `--o` `--x` `<-->` `~~~`、`-- 文字 -->`、`-->|文字|`、`A & B --> C`、链式）、`subgraph`（嵌套分组）、`classDef/class/style/:::`、`TB/TD/BT/LR/RL`。
+- 时序图：`participant/actor/boundary/control/entity/database/collections/queue`、`as` 别名、`box`、`create/destroy`、全部箭头（含 `-x` `-)` `<<->>`）、`+/-` 与 `activate/deactivate`、`Note left of/right of/over`、`loop/alt/else/opt/par/and/critical/option/break/rect`、`autonumber`、`title`。
+- 状态图：`[*]`、`state "x" as a`、`a : 描述`、复合状态（转为分组，内部 `[*]` 作为入口/出口）、`<<choice/fork/join>>`、`note`、`direction`。类图：类成员、泛型、注解、全部关系与基数、`namespace`、`note for`。
+- 网页：“导入”可选 `.mmd/.md`（追加为新图）；侧栏“粘贴 Mermaid 新增”；JSON 源码框直接粘贴 Mermaid 后“应用”会自动转换。示例见 `examples/mermaid/samples.md`。
 
 四类数据家族最小结构（其余常用命令如 `--diagram 2`、`--all --out-dir`、`--format svg|png|jpeg|webp`、`--scale 2`、`--theme ocean` 均支持）：
 1. **节点连线图**（`activity|flowchart|usecase|class|state|component|package|architecture|module|deployment|logical|development|process|physical|scenario`）：`{"type":"flowchart","title":"标题","nodes":[{"id":"a","label":"步骤","kind":"action"}],"edges":[{"from":"a","to":"b","label":"条件"}],"groups":[{"id":"g1","label":"分组"}]}`
@@ -111,14 +124,17 @@ npm run demo:verify
 ## JSON 规则
 
 - 主结构见 schema。除通用元数据外，图节点、时序和鱼骨数据不可混用；未知字段会报错，不静默丢弃。
-- 默认 `theme:"ocean"`；还支持 `white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/industrial.json`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
+- 默认 `theme:"ocean"`；还支持 `white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`，以及多色主题 `vivid`（缤纷彩色，实色）、`pastel`（马卡龙，浅色）、`business`（商务多彩，浅色）、`steel`（工业渐变）、`aurora`（极光渐变）、`neon`（暗夜霓虹，深色底）。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/industrial.json`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
+- 多色渲染：`style.palette`（颜色数组）、`style.paletteMode: mono|tint|solid|gradient`、`style.paletteBy: auto|group|kind|node`。`auto` 有分组/泳道时按区域着色，否则逐元素轮换；起止、分叉、汇合保持主色；分组/泳道/时序 box 按区域浅染；时序参与者、鱼骨分类同样轮换。任意单色主题可通过“调整样式 → 多色模式”叠加默认调色板。渐变使用 SVG 线性渐变，原生导出一致。
+- 默认字号 16、字重 500（节点标题约 700），比旧版更大更粗；仍可用 `style.fontSize/fontWeight` 调整。
 - 色值支持十六进制 `#RGB` / `#RRGGBB` 和 `transparent`。网页支持粘贴色值、系统拾色器与精选色板。PNG / WebP / SVG 可保留透明；JPEG 无透明通道，铺白底。字体使用本机字体；Node 导出可重复传入 `--font-file path.ttf`，不下载远程字体。
 - `direction: "TB" | "LR"` 控制图布局；用例图默认 `LR`，其它节点图默认 `TB`。开始 / 结束节点使用独立的顶部 / 底部留白带；单开始、单结束的符号中心固定同轴，不通过横移结束节点挤占其它节点。显式 `LR` 时对应左 / 右及同一水平轴。起止带位于区域容器外，节点的 `group/lane` 数据仍保留。普通节点关系按正交折线路由，用例图关系按 UML 常见的直线路由，交叉处再按 `layout.edgeCrossing` 绘制。时序顺序由 `messages` 顺序决定，鱼骨分类按数组顺序排列。
 - `layout.edgeCrossing: "bridge" | "plain"` 控制当前节点图的连线交叉表示。默认 `bridge` 在穿越处画拱桥形跳线（小半圆弧），表示不相连；`plain` 保留直接交叉，正交线形成无圆点的十字，也表示不相连，不改变用例图斜线方向。共用端点、共线重合不添加跳线；密集交叉合并相邻拱桥，端点或折角附近空间不足、两侧均被节点/文字阻挡时保留原线。设置不改变拓扑，时序图生命线和鱼骨分支不使用此选项。网页“连线”表单和“布局与尺寸”均可设置，保存 HTML / JSON 与图片导出保留该选择。真实连通必须显式建节点并让连线引用它；不可将几何交叉自动解释为连接，或给所有交叉加实心圆点。
+- 节点 `kind` 另有 Mermaid 兼容形状 `terminal`（胶囊）、`subroutine`、`io`（平行四边形）、`hexagon`、`circle`、`trapezoid`；连线 `arrow` / `startArrow: none|arrow|open|triangle|circle|cross` 覆盖端点，`thick:true` 加粗。
 - 泳道图：`lanes` 声明职责，所有节点必须设置 `lane`。分组使用 `groups` 和节点 `group`；`parent` 允许嵌套，禁止循环包含。
 - 类节点可有 `attributes`、`operations`；用 `kind` 选择 UML 图元。依赖、包含、扩展、继承、实现、聚合、组合用连线 `kind`，不要只改标签冒充 UML 关系。
-- 时序消息支持 `sync`、`async`、`return`、`create`、`destroy`。`activate` 打开接收方激活条；`return` 的 `deactivate` 关闭发送方激活，其他消息关闭接收方激活。销毁关闭目标的全部激活，未关闭的激活绘至图底；`database` 参与者使用标准圆柱体图元。
-- `fragments` 支持 `alt`、`opt`、`loop`、`par`，使用从 0 开始、首尾包含的消息索引；`alt` / `par` 的 `elseAt` 是第二分支首条消息索引，`elseLabel` 描述该分支。长消息和条件文字自动换行并扩展时间轴间距。
+- 时序消息支持 `sync`、`async`、`return`、`create`、`destroy`，另有占一行时间轴、不编号的 `note`（`from`/`to` 为覆盖范围，`position: left|right|over`）和 `divider`（分割线，`label` 为分节标题）。`arrow: filled|open|none|cross`、`dashed`、`bidirectional` 可覆盖线型。参与者另支持 `boundary/control/entity/collections/queue`；顶层 `boxes:[{label,participants,color?}]` 为参与者分组框；`layout.autonumber:false` 关闭消息编号（默认开启）。`activate` 打开接收方激活条；`return` 的 `deactivate` 关闭发送方激活，其他消息关闭接收方激活。销毁关闭目标的全部激活，未关闭的激活绘至图底；`database` 参与者使用标准圆柱体图元。
+- `fragments` 支持 `alt`、`opt`、`loop`、`par`、`critical`、`break`、`rect`（`color` 背景高亮），使用从 0 开始、首尾包含的消息索引（备注、分割线也占索引）；`alt` / `par` / `critical` 的 `elseAt` 是第二分支首条消息索引，`elseLabel` 描述该分支，更多分支用 `elses:[{at,label}]`。长消息和条件文字自动换行并扩展时间轴间距。
 - 鱼骨 `causes` 可有递归 `children`，保留原因层级。默认 `fishbone.headStyle:"classic"` 保留原版鱼头、文字比例和鱼骨样式；未设置时也使用原版。可显式选择 `fish`、`slim`、`shark`、`roundfish`、`carp`、`sunfish`、`triangle`、`rounded`、`label` 九种附加轮廓，不改变原因、层级及连接。网页鱼骨表单可选择，保存 HTML / JSON 和 SVG / PNG / JPEG / WebP 导出保留该值。
 
 ### 布局与文字
@@ -188,7 +204,7 @@ npm run demo:verify
 
 - `#diagram-data` application/json 数据块保存单图或完整多图文档。多图用 `diagrams` 数组，不能以 `type` 为字典键，否则会丢失同类图。
 - 全部 Vue / 布局 JS、CSS、数据内联，无 CDN 与远程字体，断网后仍可打开；保存按钮会先应用有效的编辑草稿，无效或冲突草稿会停止保存并提示。
-- 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。默认优先显示画布，点击“编辑图表”打开编辑器；点击“调整样式”展开主题、配色及进阶参数。“调整位置”开启元素拖动和途经点编辑，空白处拖动仍平移画布；调整参数写入结构化模型，可查看或清空。导出图片、复制图片及格式 / 倍率集中在画布上方，文档 JSON 位于“更多导出”。顶部“保存 HTML”先应用有效草稿，再下载完整文档；“保存到本地”在支持的浏览器中授权选择文件，本次会话可继续同步。窄屏图表列表为可关闭抽屉、编辑器整行显示。
+- 页面支持表单 / 源码切换、增删图形、复制当前图、独立主题、滚轮定点缩放及拖拽平移。默认优先显示画布，点击“编辑图表”打开编辑器；点击“调整样式”展开主题、配色及进阶参数。“调整位置”开启元素拖动和途经点编辑：拖动时与同类元素的边/中线自动吸附并显示参考线（按住 Alt 关闭），相连连线实时以正交折线跟随，松手保持预览直到新布局完成，不回弹；空白处拖动仍平移画布；调整参数写入结构化模型，可查看或清空。导出图片、复制图片及格式 / 倍率集中在画布上方，文档 JSON 位于“更多导出”。顶部“保存 HTML”先应用有效草稿，再下载完整文档；“授权本地保存”在支持的浏览器中选择文件并写入：页面为 `file://` 时建议文件名取当前 HTML 文件名；浏览器在 IndexedDB 记住“页面地址 → 文件句柄”，重开同一 HTML 后点击即可授权继续同步；“更多导出”可设置默认保存目录，对话框从该目录（或上次文件所在目录）打开。浏览器不允许脚本指定任意路径，页面会提示当前 HTML 所在目录。表单的“重置表单 / 应用表单”位于表单顶部。窄屏图表列表为可关闭抽屉、编辑器整行显示。
 - 表单支持全部展开 / 全部折叠、按内容检索（仅显示命中元素及必要上级）和清空检索。表单编辑器打开时，点击预览中的元素会展开并滚动定位相应表单，突出显示目标；检索隐藏目标时会清空检索。拖动画布不会触发定位。此功能不更改图表数据或布局。旧 HTML 需用更新后的运行时重新生成才能获得这些功能。
 - 下载按钮下的“复制图片（PNG）”写入图片剪贴板，不下载、不复制 URL。需要支持 ClipboardItem 的安全页面环境与权限；不支持或权限被拒绝时明确报错。
 - `window.UmlStudio` 提供 `ready,getDocument,setDocument,selectDiagram,getSpec,setSpec,getSvg,exportImage,saveHtml,saveHtmlAsync,saveToLocal`。选择序号从 0 开始；`getSpec/setSpec/getSvg/exportImage` 只操作当前图。同步 `saveHtml()` 要求先应用全部草稿；异步 `saveHtmlAsync()` 先应用有效草稿，再返回完整多图 HTML。`saveToLocal(selectNew = false)` 授权写入本地文件，须从用户点击手势调用。等待 `ready` 与异步编辑 / 导出方法。

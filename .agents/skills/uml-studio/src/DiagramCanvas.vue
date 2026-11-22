@@ -33,7 +33,7 @@ const selectedPoint = ref(-1);
 const selectedWaypoints = computed(() => applied.value?.layout?.adjustments?.edges?.[selectedEdge.value]?.waypoints ?? []);
 const supportsWaypoints = computed(() => props.spec.type !== 'sequence' && props.spec.type !== 'fishbone');
 type PositionPoint = { x: number; y: number };
-let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number } | undefined;
+let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number; preview?: DragPreview } | undefined;
 let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean } | undefined;
 let request = 0;
 let zoomRequest = 0;
@@ -175,6 +175,151 @@ function selectWaypointEdge(key: string): void {
   selectedPoint.value = -1;
   refreshPositionHandles();
 }
+type Box = { left: number; top: number; right: number; bottom: number };
+type Moved = { element: SVGGraphicsElement; transform: string | null; factor: number };
+type LiveEdge = { group: SVGGraphicsElement; originals: SVGPathElement[]; preview: SVGPathElement; start: PositionPoint; end: PositionPoint; startVertical: boolean; endVertical: boolean; moveStart: boolean; moveEnd: boolean };
+interface DragPreview { moved: Moved[]; edges: LiveEdge[]; box?: Box; candidates: Box[]; extent?: Box; threshold: number; guides?: SVGGElement }
+const svgNamespace = 'http://www.w3.org/2000/svg';
+function layoutBox(element: Element): Box | undefined {
+  const rect = element.getBoundingClientRect();
+  if (!rect.width && !rect.height) return;
+  const a = layoutPoint(rect.left, rect.top), b = layoutPoint(rect.right, rect.bottom);
+  if (!a || !b) return;
+  return { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), right: Math.max(a.x, b.x), bottom: Math.max(a.y, b.y) };
+}
+function descendantGroups(id: string): Set<string> {
+  const groups = applied.value?.groups ?? [];
+  const result = new Set([id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const group of groups) if (group.parent && result.has(group.parent) && !result.has(group.id)) { result.add(group.id); grew = true; }
+  }
+  return result;
+}
+/** Elements that visibly move with the dragged one, plus connected edges re-drawn live. */
+function createPreview(element: SVGGraphicsElement, key: string, clientX: number, clientY: number): DragPreview {
+  const board = artboard.value!;
+  const [prefix, id] = [key.slice(0, key.indexOf('/')), key.slice(key.indexOf('/') + 1)];
+  const moving = new Set<SVGGraphicsElement>([element]);
+  const nodeIds = new Set<string>();
+  if (prefix === 'nodes') nodeIds.add(id);
+  if (prefix === 'groups' || prefix === 'lanes') {
+    const groups = prefix === 'groups' ? descendantGroups(id) : new Set<string>();
+    board.querySelectorAll<SVGGraphicsElement>('.uml-node[data-node-id], .uml-container[data-group-id]').forEach(item => {
+      const group = item.getAttribute('data-group-id'), lane = item.getAttribute('data-lane-id');
+      const inside = prefix === 'lanes' ? lane === id : !!group && groups.has(group);
+      if (!inside) return;
+      const target = item.closest<SVGGraphicsElement>('[data-adjustment-key]') ?? item;
+      moving.add(target);
+      const node = item.getAttribute('data-node-id');
+      if (node) nodeIds.add(node);
+    });
+  }
+  const moved: Moved[] = [...moving].map(item => ({ element: item, transform: item.getAttribute('transform'), factor: 1 }));
+  const edges: LiveEdge[] = [];
+  if (nodeIds.size) {
+    board.querySelectorAll<SVGGraphicsElement>('[data-waypoint-key]').forEach(group => {
+      const moveStart = nodeIds.has(group.getAttribute('data-from') ?? ''), moveEnd = nodeIds.has(group.getAttribute('data-to') ?? '');
+      if (!moveStart && !moveEnd) return;
+      if (moveStart && moveEnd) { moved.push({ element: group, transform: group.getAttribute('transform'), factor: 1 }); return; }
+      const originals = [...group.querySelectorAll<SVGPathElement>('path:not(.canvas-edge-hit):not(.canvas-live-edge)')];
+      const first = originals[0], last = originals[originals.length - 1];
+      if (!first || !last) return;
+      const firstLength = first.getTotalLength(), lastLength = last.getTotalLength();
+      const start = first.getPointAtLength(0), startNext = first.getPointAtLength(Math.min(8, firstLength));
+      const end = last.getPointAtLength(lastLength), endPrevious = last.getPointAtLength(Math.max(0, lastLength - 8));
+      const preview = last.cloneNode(false) as SVGPathElement;
+      preview.removeAttribute('mask');
+      preview.setAttribute('class', 'canvas-live-edge');
+      const markerStart = first.getAttribute('marker-start');
+      if (markerStart) preview.setAttribute('marker-start', markerStart);
+      group.append(preview);
+      for (const path of originals) path.setAttribute('visibility', 'hidden');
+      edges.push({ group, originals, preview, start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y },
+        startVertical: Math.abs(startNext.y - start.y) > Math.abs(startNext.x - start.x),
+        endVertical: Math.abs(end.y - endPrevious.y) > Math.abs(end.x - endPrevious.x), moveStart, moveEnd });
+    });
+    board.querySelectorAll<SVGGraphicsElement>('.uml-edge-label[data-adjustment-key]').forEach(label => {
+      const a = nodeIds.has(label.getAttribute('data-from') ?? ''), b = nodeIds.has(label.getAttribute('data-to') ?? '');
+      if ((a || b) && !moving.has(label)) moved.push({ element: label, transform: label.getAttribute('transform'), factor: a && b ? 1 : 0.5 });
+    });
+  }
+  const box = layoutBox(element);
+  const candidates: Box[] = [];
+  board.querySelectorAll<SVGGraphicsElement>(`[data-adjustment-key^="${prefix}/"]`).forEach(item => {
+    if (moving.has(item) || item.closest('[data-position-handles]')) return;
+    const candidate = layoutBox(item);
+    if (candidate) candidates.push(candidate);
+  });
+  const all = box ? [box, ...candidates] : candidates;
+  const extent = all.length ? { left: Math.min(...all.map(b => b.left)), top: Math.min(...all.map(b => b.top)), right: Math.max(...all.map(b => b.right)), bottom: Math.max(...all.map(b => b.bottom)) } : undefined;
+  const a = layoutPoint(clientX, clientY), b = layoutPoint(clientX + 6, clientY);
+  return { moved, edges, box, candidates, extent, threshold: a && b ? Math.abs(b.x - a.x) : 6 };
+}
+function snapAxis(delta: number, own: number[], targets: number[], threshold: number): { delta: number; at?: number } {
+  let best: { diff: number; at: number } | undefined;
+  for (const value of own) for (const target of targets) {
+    const diff = target - (value + delta);
+    if (Math.abs(diff) <= threshold && (!best || Math.abs(diff) < Math.abs(best.diff))) best = { diff, at: target };
+  }
+  return best ? { delta: delta + best.diff, at: best.at } : { delta };
+}
+function orthogonal(start: PositionPoint, end: PositionPoint, startVertical: boolean, endVertical: boolean): string {
+  const r = (value: number) => Math.round(value * 10) / 10;
+  if (startVertical && endVertical) { const my = (start.y + end.y) / 2; return `M${r(start.x)} ${r(start.y)} V${r(my)} H${r(end.x)} V${r(end.y)}`; }
+  if (!startVertical && !endVertical) { const mx = (start.x + end.x) / 2; return `M${r(start.x)} ${r(start.y)} H${r(mx)} V${r(end.y)} H${r(end.x)}`; }
+  return startVertical ? `M${r(start.x)} ${r(start.y)} V${r(end.y)} H${r(end.x)}` : `M${r(start.x)} ${r(start.y)} H${r(end.x)} V${r(end.y)}`;
+}
+function drawGuides(preview: DragPreview, x?: number, y?: number): void {
+  preview.guides?.remove();
+  preview.guides = undefined;
+  const root = layoutRoot();
+  if (!root || !preview.extent || (x === undefined && y === undefined)) return;
+  const group = document.createElementNS(svgNamespace, 'g');
+  group.setAttribute('class', 'canvas-snap-guides');
+  const add = (x1: number, y1: number, x2: number, y2: number) => {
+    const guide = document.createElementNS(svgNamespace, 'line');
+    for (const [name, value] of Object.entries({ x1, y1, x2, y2 })) guide.setAttribute(name, String(value));
+    guide.setAttribute('vector-effect', 'non-scaling-stroke');
+    group.append(guide);
+  };
+  const { left, top, right, bottom } = preview.extent;
+  if (x !== undefined) add(x, top - 24, x, bottom + 24);
+  if (y !== undefined) add(left - 24, y, right + 24, y);
+  root.append(group);
+  preview.guides = group;
+}
+function applyPreview(drag: NonNullable<typeof positionDrag>, dx: number, dy: number): void {
+  const preview = drag.preview;
+  if (!preview) {
+    if (drag.element) drag.element.setAttribute('transform', `translate(${dx} ${dy}) ${drag.originalTransform ?? ''}`);
+    return;
+  }
+  for (const item of preview.moved) item.element.setAttribute('transform', `translate(${dx * item.factor} ${dy * item.factor}) ${item.transform ?? ''}`);
+  for (const edge of preview.edges) {
+    const start = edge.moveStart ? { x: edge.start.x + dx, y: edge.start.y + dy } : edge.start;
+    const end = edge.moveEnd ? { x: edge.end.x + dx, y: edge.end.y + dy } : edge.end;
+    edge.preview.setAttribute('d', orthogonal(start, end, edge.startVertical, edge.endVertical));
+  }
+}
+function restorePreview(drag: NonNullable<typeof positionDrag>): void {
+  const preview = drag.preview;
+  preview?.guides?.remove();
+  if (preview) {
+    for (const item of preview.moved) {
+      if (item.transform === null) item.element.removeAttribute('transform');
+      else item.element.setAttribute('transform', item.transform);
+    }
+    for (const edge of preview.edges) {
+      edge.preview.remove();
+      for (const path of edge.originals) path.removeAttribute('visibility');
+    }
+  } else if (drag.element) {
+    if (drag.originalTransform === null || drag.originalTransform === undefined) drag.element.removeAttribute('transform');
+    else drag.element.setAttribute('transform', drag.originalTransform);
+  }
+}
 function beginPositionDrag(event: PointerEvent): boolean {
   if (!props.positionEditing || pending.value || !(event.target instanceof Element)) return false;
   const handle = event.target.closest<SVGCircleElement>('[data-waypoint-index]');
@@ -189,39 +334,62 @@ function beginPositionDrag(event: PointerEvent): boolean {
     positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: selectedEdge.value, pointIndex: index, points: selectedWaypoints.value.map(point => ({ ...point })), dx: 0, dy: 0 };
     refreshPositionHandles();
   } else if (element) {
-    positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key: element.getAttribute('data-adjustment-key')!, element, originalTransform: element.getAttribute('transform'), dx: 0, dy: 0 };
+    const key = element.getAttribute('data-adjustment-key')!;
+    positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key, element, originalTransform: element.getAttribute('transform'), dx: 0, dy: 0 };
   }
   dragging.value = true;
   event.preventDefault();
   return true;
 }
-function movePositionDrag(event: PointerEvent): boolean {
-  if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
-  const point = layoutPoint(event.clientX, event.clientY);
-  if (!point) return true;
-  const drag = positionDrag;
-  if (Math.hypot(event.clientX - drag.clientX, event.clientY - drag.clientY) > 4) drag.moved = true;
-  drag.dx = Math.round((point.x - drag.origin.x) * 100) / 100;
-  drag.dy = Math.round((point.y - drag.origin.y) * 100) / 100;
-  if (drag.element) drag.element.setAttribute('transform', `translate(${drag.dx} ${drag.dy}) ${drag.originalTransform ?? ''}`);
+let dragFrame = 0;
+let dragEvent: { clientX: number; clientY: number; altKey: boolean } | undefined;
+function flushPositionDrag(): void {
+  dragFrame = 0;
+  const drag = positionDrag, latest = dragEvent;
+  if (!drag || !latest) return;
+  const point = layoutPoint(latest.clientX, latest.clientY);
+  if (!point) return;
+  if (Math.hypot(latest.clientX - drag.clientX, latest.clientY - drag.clientY) > 4) drag.moved = true;
+  if (!drag.moved) return;
+  let dx = point.x - drag.origin.x, dy = point.y - drag.origin.y;
+  if (drag.element && !drag.preview) drag.preview = createPreview(drag.element, drag.key, drag.clientX, drag.clientY);
+  const preview = drag.preview;
+  let guideX: number | undefined, guideY: number | undefined;
+  if (preview?.box && !latest.altKey) {
+    const { box, candidates, threshold } = preview;
+    const xs = (b: Box) => [b.left, (b.left + b.right) / 2, b.right], ys = (b: Box) => [b.top, (b.top + b.bottom) / 2, b.bottom];
+    const sx = snapAxis(dx, xs(box), candidates.flatMap(xs), threshold), sy = snapAxis(dy, ys(box), candidates.flatMap(ys), threshold);
+    dx = sx.delta; dy = sy.delta; guideX = sx.at; guideY = sy.at;
+  }
+  drag.dx = Math.round(dx * 100) / 100;
+  drag.dy = Math.round(dy * 100) / 100;
+  if (preview) drawGuides(preview, guideX, guideY);
+  applyPreview(drag, drag.dx, drag.dy);
   if (drag.pointIndex !== undefined && drag.points) {
     const original = drag.points[drag.pointIndex]!;
     const circle = layoutRoot()?.querySelector(`[data-waypoint-index="${drag.pointIndex}"]`);
     circle?.setAttribute('cx', String(original.x + drag.dx));
     circle?.setAttribute('cy', String(original.y + drag.dy));
   }
+}
+function movePositionDrag(event: PointerEvent): boolean {
+  if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
+  dragEvent = { clientX: event.clientX, clientY: event.clientY, altKey: event.altKey };
+  if (!dragFrame) dragFrame = requestAnimationFrame(flushPositionDrag);
   return true;
 }
 function finishPositionDrag(event?: PointerEvent): boolean {
   if (!positionDrag || (event && event.pointerId !== positionDrag.pointerId)) return false;
+  if (dragFrame) { cancelAnimationFrame(dragFrame); dragFrame = 0; }
+  if (event?.type === 'pointerup') { dragEvent = { clientX: event.clientX, clientY: event.clientY, altKey: event.altKey }; flushPositionDrag(); }
+  dragEvent = undefined;
   const drag = positionDrag;
   const commit = event?.type === 'pointerup' && drag.moved;
   positionDrag = undefined;
   dragging.value = false;
-  if (drag.element) {
-    if (drag.originalTransform === null || drag.originalTransform === undefined) drag.element.removeAttribute('transform');
-    else drag.element.setAttribute('transform', drag.originalTransform);
-  }
+  // A committed move keeps its preview until the new layout replaces the SVG, avoiding a snap-back.
+  if (commit && drag.element) drag.preview?.guides?.remove();
+  else restorePreview(drag);
   if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
   if (commit) {
     if (drag.pointIndex !== undefined && drag.points) {
@@ -378,7 +546,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
       </div>
     </div>
     <div v-if="positionEditing" class="canvas-position-tools" role="status">
-      <span>{{ supportsWaypoints ? '拖动元素调整位置；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。' : '拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。' }}</span>
+      <span>{{ supportsWaypoints ? '拖动元素调整位置，自动吸附对齐（按住 Alt 关闭），连线实时跟随；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。' : '拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。' }}</span>
       <div v-if="selectedEdge" class="canvas-waypoint-actions">
         <span>{{ selectedWaypoints.length }} 个途经点</span>
         <button type="button" :disabled="selectedPoint < 0 || pending" @click="removeWaypoint">删除选中点</button>
@@ -673,6 +841,8 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
 .canvas-stage.is-position-editing [data-selected-waypoint-edge] > path:not(.canvas-edge-hit) { stroke: var(--accent); }
 .canvas-stage.is-position-editing [data-adjustment-key]:hover { outline: 1px dashed var(--accent); outline-offset: 3px; }
 .canvas-edge-hit { pointer-events: stroke; }
+.canvas-snap-guides line { stroke: #e5487d; stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
+.canvas-live-edge { pointer-events: none; }
 .canvas-waypoint { fill: #ffffff; stroke: var(--accent); stroke-width: 2; cursor: move; }
 .canvas-waypoint.is-selected, .canvas-waypoint:focus-visible { fill: var(--accent); stroke: #ffffff; outline: none; }
 .canvas-stage.is-position-editing .canvas-artboard { overflow: visible; }
