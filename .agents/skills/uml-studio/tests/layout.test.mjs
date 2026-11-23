@@ -3,6 +3,8 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { renderDiagram, resolveLayout, validateSpec } from '../dist/core.mjs'
 
+const scenario = async id => JSON.parse(await readFile(new URL('../examples/scenarios.json', import.meta.url), 'utf8')).diagrams.find(d => d.id === id)
+
 function geometry(svg) {
   const nodes = new Map(), containers = new Map(), routes = []
   for (const [, tag, body] of svg.matchAll(/<g\b([^>]*class="uml-(?:node|container|edge)\b[^>]*)>([\s\S]*?)<\/g>/g)) {
@@ -127,7 +129,7 @@ test('swimlane cross-links share rows and remain visible in grid mode', async ()
 })
 
 test('lanes touch and share their full flow extent in either direction and every layout mode', async () => {
-  const source = JSON.parse(await readFile(new URL('../examples/scenarios/swimlane.json', import.meta.url), 'utf8'))
+  const source = await scenario('expense-swimlane')
   for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious', 'grid']) {
     const spec = { ...source, direction, layout: { mode, regionGap: 180, edgeCrossing: 'plain' } }
     const graph = geometry((await renderDiagram(spec)).svg)
@@ -144,7 +146,7 @@ test('lanes touch and share their full flow extent in either direction and every
 })
 
 test('swimlane fragments follow one lane axis and global flow order through feedback', async () => {
-  const source = JSON.parse(await readFile(new URL('../examples/scenarios/swimlane.json', import.meta.url), 'utf8'))
+  const source = await scenario('expense-swimlane')
   for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious']) {
     const spec = { ...source, direction, layout: { mode, edgeCrossing: 'plain' } }
     const graph = geometry((await renderDiagram(spec)).svg)
@@ -192,7 +194,7 @@ test('balanced is the default and same-side fan-out reuses one source port', asy
 })
 
 test('mixed-height LR chains retain straight connections through branching and feedback', async () => {
-  const source = JSON.parse(await readFile(new URL('../examples/scenarios/process.json', import.meta.url), 'utf8'))
+  const source = await scenario('commerce-process')
   for (const mode of ['compact', 'balanced', 'spacious', 'grid']) {
     const spec = { ...source, layout: { mode, maxPerColumn: 0, edgeCrossing: 'plain' } }
     const graph = geometry((await renderDiagram(spec)).svg)

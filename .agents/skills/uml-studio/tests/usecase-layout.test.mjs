@@ -5,9 +5,9 @@ import { renderDiagram } from '../dist/core.mjs'
 import { inspectDiagram } from '../scripts/demo-checks.mjs'
 
 const load = path => readFile(new URL(path, import.meta.url), 'utf8').then(JSON.parse)
-const bookstore = await load('../examples/usecase.json')
+const bookstore = (await load('../examples/templates.json')).diagrams.find(d => d.type === 'usecase')
 const login = (await load('./fixtures/login.json')).usecase
-const commerce = await load('../examples/scenarios/usecase.json')
+const commerce = (await load('../examples/scenarios.json')).diagrams.find(d => d.id === 'commerce-usecases')
 
 function geometry(svg) {
   const cases = new Map(), actors = new Map(), regions = new Map(), routes = []

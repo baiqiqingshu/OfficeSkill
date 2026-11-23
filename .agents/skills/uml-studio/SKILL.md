@@ -14,13 +14,13 @@ metadata:
 
 | 用户内容 | `type` | 数据字段 | 示例 |
 |---|---|---|---|
-| 活动、流程、跨角色流程 | `activity` / `flowchart` / `swimlane` | `nodes`, `edges`，泳道另用 `lanes` | `examples/activity.json` 等 |
-| 参与者之间的消息 | `sequence` | `participants`, `messages`, 可选 `fragments` | `examples/sequence.json` |
-| 角色、业务能力、系统边界 | `usecase` | `nodes`, `edges`, `groups` | `examples/usecase.json` |
-| 类、状态、组件、包 | `class` / `state` / `component` / `package` | `nodes`, `edges`, 可选 `groups` | 同名示例 |
-| 系统架构、功能模块、部署 | `architecture` / `module` / `deployment` | `nodes`, `edges`, 可选嵌套 `groups` | 同名示例 |
-| 4+1：逻辑、开发、进程、物理、场景 | `logical` / `development` / `process` / `physical` / `scenario` | `nodes`, `edges`, 可选 `groups` | `examples/scenarios/` 同名文件 |
-| 原因分析、鱼骨图 | `fishbone` | `fishbone.effect`, `fishbone.categories` | `examples/fishbone.json` |
+| 活动、流程、跨角色流程 | `activity` / `flowchart` / `swimlane` | `nodes`, `edges`，泳道另用 `lanes` | `examples/templates.json` |
+| 参与者之间的消息 | `sequence` | `participants`, `messages`, 可选 `fragments` | `examples/templates.json` |
+| 角色、业务能力、系统边界 | `usecase` | `nodes`, `edges`, `groups` | `examples/templates.json` |
+| 类、状态、组件、包 | `class` / `state` / `component` / `package` | `nodes`, `edges`, 可选 `groups` | `examples/templates.json` |
+| 系统架构、功能模块、部署 | `architecture` / `module` / `deployment` | `nodes`, `edges`, 可选嵌套 `groups` | `examples/templates.json` |
+| 4+1：逻辑、开发、进程、物理、场景 | `logical` / `development` / `process` / `physical` / `scenario` | `nodes`, `edges`, 可选 `groups` | `examples/scenarios.json` 同名类型 |
+| 原因分析、鱼骨图 | `fishbone` | `fishbone.effect`, `fishbone.categories` | `examples/templates.json` |
 
 4+1 是架构视角，不是五种新的 UML 记法。选择视角后，以有明确语义的类、组件、包、部署节点或业务场景表达；不要把同一张架构图改标题充当五个视图。
 
@@ -119,12 +119,12 @@ npm run demo:verify
 
 完整构建将公开类型声明归并为 `dist/core.d.ts`、`dist/index.d.ts`、`dist/native.d.ts`，三个包入口及 API 保持不变。逐文件声明中间产物与 Vite 缓存在仓库 `temp/uml-studio-types/`、`temp/uml-studio-vite/`；独立安装时使用系统临时目录，不写回技能目录。组件样式保留在 Vue 文件的全局 style 中。构建将 LICENSE 中的 Fishbone Studio MIT 附录与依赖许可一起写入 THIRD_PARTY_NOTICES.txt、运行时和离线 HTML，维护时须保留。
 
-复杂输入参考 `examples/scenarios/<type>.json`，入门集合保留在 `examples/documents/quickstart.json`。场景索引、布局对照与验证方法见 [references/demo-coverage.md](references/demo-coverage.md)。修改场景源文件后运行 `npm run demo:refresh` 或完整构建来更新设计册。
+复杂输入参考 `examples/scenarios.json`（按 `type` / `id` 检索 20 个场景），入门集合保留在 `examples/templates.json` 与 `examples/documents/quickstart.json`。场景索引、布局对照与验证方法见 [references/demo-coverage.md](references/demo-coverage.md)。修改场景源文件后运行 `npm run demo:refresh` 或完整构建来更新设计册。
 
 ## JSON 规则
 
 - 主结构见 schema。除通用元数据外，图节点、时序和鱼骨数据不可混用；未知字段会报错，不静默丢弃。
-- 默认 `theme:"modern"`（现代多彩：纯白底、超浅高明度卡片填充 + 饱满彩色描边 + 深石板黑标题、主流程深蓝实线与返回/虚线翠绿箭头、暖琥珀圆角备注卡片）；还支持 `ocean,white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`，以及多色主题 `vivid`（缤纷彩色，实色）、`pastel`（马卡龙，浅色）、`business`（商务多彩，浅色）、`steel`（工业渐变）、`aurora`（极光渐变）、`neon`（暗夜霓虹，深色底）。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/industrial.json`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
+- 默认 `theme:"modern"`（现代多彩：纯白底、超浅高明度卡片填充 + 饱满彩色描边 + 深石板黑标题、主流程深蓝实线与返回/虚线翠绿箭头、暖琥珀圆角备注卡片）；还支持 `ocean,white,paper,forest,blueprint,midnight,lavender,rose,amber,slate,mint,industrial`，以及多色主题 `vivid`（缤纷彩色，实色）、`pastel`（马卡龙，浅色）、`business`（商务多彩，浅色）、`steel`（工业渐变）、`aurora`（极光渐变）、`neon`（暗夜霓虹，深色底）。`white` 为“纯白”预设，图表背景和节点表面均为 `#ffffff`，使用深色文字与蓝色线条，适合文档插图。`industrial` 为“工业汇报”预设，参考华为云 UML 示例采用白底、浅杏色图元（`#fff4e8`）、灰色关系线与边框、深灰正文、2px 小圆角和 1.3px 线宽；通过纯色参数表达，适合工业技术汇报和方案评审。示例见 `examples/templates.json` 中的 `industrial-equipment-model`，网页“调整样式”中可直接选择，也可为任意图指定 `theme:"industrial"` 或 CLI `--theme industrial`。`style` 覆盖主题，节点可覆盖各自样式；网页切换主题会清除全局自定义覆盖。
 - 多色渲染：`style.palette`（颜色数组）、`style.paletteMode: mono|tint|solid|gradient`、`style.paletteBy: auto|group|kind|node`。`auto` 有分组/泳道时按区域着色，否则逐元素轮换；起止、分叉、汇合保持主色；分组/泳道/时序 box 按区域浅染；时序参与者、鱼骨分类同样轮换。任意单色主题可通过“调整样式 → 多色模式”叠加默认调色板。渐变使用 SVG 线性渐变，原生导出一致。
 - 默认字号 16、字重 500（节点标题约 700），比旧版更大更粗；仍可用 `style.fontSize/fontWeight` 调整。
 - 色值支持十六进制 `#RGB` / `#RRGGBB` 和 `transparent`。网页支持粘贴色值、系统拾色器与精选色板。PNG / WebP / SVG 可保留透明；JPEG 无透明通道，铺白底。字体使用本机字体；Node 导出可重复传入 `--font-file path.ttf`，不下载远程字体。

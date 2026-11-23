@@ -231,11 +231,16 @@ function presetsInfo() {
   }
 }
 
-async function loadExample(type) {
-  for (const p of [resolve(root, 'examples', `${type}.json`), resolve(root, 'examples/scenarios', `${type}.json`), resolve(root, 'examples/documents', `${type}.json`)]) {
-    if (existsSync(p)) return JSON.parse(await readFile(p, 'utf8'))
+const exampleAliases = { industrial: 'industrial-equipment-model', 'activity-parallel': 'release-parallel', 'component-folding': 'unbalanced-regions' }
+async function loadExample(name) {
+  for (const [stem, p] of [['templates', resolve(root, 'examples/templates.json')], ['scenarios', resolve(root, 'examples/scenarios.json')], ['quickstart', resolve(root, 'examples/documents/quickstart.json')], ['gallery', resolve(root, 'examples/documents/gallery.json')]]) {
+    if (!existsSync(p)) continue
+    const doc = JSON.parse(await readFile(p, 'utf8'))
+    if (stem === name) return doc
+    const spec = doc.diagrams?.find(d => d.id === (exampleAliases[name] ?? name)) ?? doc.diagrams?.find(d => d.type === name)
+    if (spec) return spec
   }
-  throw new Error(`未找到示例：${type}`)
+  throw new Error(`未找到示例：${name}`)
 }
 
 async function main() {

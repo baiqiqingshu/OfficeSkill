@@ -81,7 +81,7 @@ test('cardinality labels stay near their respective ends', async () => {
 })
 
 test('payment lifecycle annotations reflow instead of drifting above the diagram', async () => {
-  const spec = JSON.parse(await readFile(new URL('../examples/scenarios/state.json', import.meta.url), 'utf8'))
+  const spec = JSON.parse(await readFile(new URL('../examples/scenarios.json', import.meta.url), 'utf8')).diagrams.find(d => d.id === 'payment-lifecycle')
   for (const direction of ['TB', 'LR']) for (const mode of ['compact', 'balanced', 'spacious']) for (const reverse of [false, true]) {
     const input = { ...spec, direction, layout: { mode }, edges: reverse ? [...spec.edges].reverse() : spec.edges }
     const original = JSON.stringify(input)

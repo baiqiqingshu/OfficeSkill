@@ -203,8 +203,9 @@ test('opposite relationships avoid using the same node side in opposing directio
 })
 
 test('activity, swimlane, state and flowchart examples keep all diamond endpoints on vertices', async () => {
+  const scenarios = JSON.parse(await readFile(new URL('../examples/scenarios.json', import.meta.url), 'utf8')).diagrams
   for (const name of ['activity', 'swimlane', 'state', 'flowchart']) {
-    const spec = JSON.parse(await readFile(new URL(`../examples/scenarios/${name}.json`, import.meta.url), 'utf8'))
+    const spec = scenarios.find(d => d.type === name)
     const { nodes, routes } = geometry((await renderDiagram({ ...spec, layout: { ...spec.layout, edgeCrossing: 'plain' } })).svg)
     const decisions = new Set(spec.nodes.filter(node => node.kind === 'decision').map(node => node.id))
     for (const route of routes.values()) for (const [id, point] of [[route.from, route.points[0]], [route.to, route.points.at(-1)]]) {

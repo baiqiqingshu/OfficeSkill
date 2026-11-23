@@ -1,6 +1,8 @@
 import { createApp } from 'vue';
 import Studio from './Studio.vue';
 import gallery from '../examples/documents/gallery.json';
+import scenariosDoc from '../examples/scenarios.json';
+import templatesDoc from '../examples/templates.json';
 import { readStudioRuntime } from './export';
 import type { StudioRuntime } from './export';
 import type { DiagramDocument, DiagramInput, DiagramSpec, ExportOptions } from './types';
@@ -22,13 +24,10 @@ declare global {
   interface Window { UmlStudio: UmlStudioHandle }
 }
 
-// Top-level examples win; scenario files fill the remaining types (e.g. the 4+1 views).
-const scenarioFiles = import.meta.glob<DiagramSpec>('../examples/scenarios/*.json', { eager: true, import: 'default' });
-const files = import.meta.glob<DiagramSpec>('../examples/*.json', { eager: true, import: 'default' });
+// Templates win; scenarios fill the remaining types (e.g. the 4+1 views).
 const examples: Record<string, DiagramSpec> = {};
-for (const [path, example] of [...Object.entries(scenarioFiles), ...Object.entries(files)]) {
-  const name = path.split('/').pop()?.replace(/\.json$/, '');
-  if (name) examples[name] = example;
+for (const doc of [templatesDoc, scenariosDoc] as { diagrams: DiagramSpec[] }[]) {
+  for (const spec of doc.diagrams) examples[spec.type] ??= spec;
 }
 let initialSpec: unknown = gallery;
 let startupError = '';

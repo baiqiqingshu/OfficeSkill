@@ -2,36 +2,36 @@
 
 离线入口是 `demo-dist/index.html`，开发入口是 `npm run dev`。两者都载入 `examples/documents/gallery.json` 的完整 27 图集合。
 
-`examples/<type>.json` 保留 13 类 UML / 系统设计的简明入门模板；4+1 视图（logical / development / process / physical / scenario）不设入门模板，直接参考 `examples/scenarios/` 同名文件。复杂场景的源数据在 `examples/scenarios/`；`scripts/gallery.mjs` 按固定顺序组合 20 个场景、3 个布局对照、`examples/industrial.json` 的工业汇报示例与 `examples/documents/quickstart.json` 的原有 3 张图。修改源文件后运行 `npm run demo:refresh`，不要手改生成的 `gallery.json`。`npm run build` 也会先刷新设计册，再打包运行资源和离线 HTML。
+`examples/templates.json` 以多图文档保留 13 类 UML / 系统设计的简明入门模板和 `industrial-equipment-model` 工业汇报示例；4+1 视图（logical / development / process / physical / scenario）不设入门模板，直接参考 `examples/scenarios.json` 同名类型。复杂场景的源数据在 `examples/scenarios.json`；`scripts/gallery.mjs` 按固定顺序组合 20 个场景、3 个布局对照、工业汇报示例与 `examples/documents/quickstart.json` 的原有 3 张图。修改源文件后运行 `npm run demo:refresh`，不要手改生成的 `gallery.json`。`npm run build` 也会先刷新设计册，再打包运行资源和离线 HTML。
 
 ## 场景索引
 
-| 源文件 | 场景 | 主要观察点 |
+| 图 id（`scenarios.json`） | 场景 | 主要观察点 |
 |---|---|---|
-| `activity.json` | 登录认证 | 4 个判断、重复是/否、共用干线、回退与失败汇入 |
-| `activity-parallel.json` | 发布流水线 | 三路并行、fork/join、灰度失败回滚 |
-| `sequence.json` | 订单支付 | 6 个参与者、2 个数据库、19 条消息、4 类片段、嵌套激活、自调用、创建与销毁 |
-| `swimlane.json` | 费用报销 | 4 个泳道、反复交接、退回补件、支付重试 |
-| `flowchart.json` | 数据导入 | LR、多次返工、长文本、XML 特殊字符、显式折列 |
-| `usecase.json` | 交易平台 | 4 个角色、系统边界、直线关系、include/extend、角色泛化 |
-| `class.json` | 订单领域 | 属性/方法分区、长签名、两端基数、继承/实现/聚合/组合 |
-| `state.json` | 支付单 | 内部动作、自转换、超时、失败重试、多个终态 |
-| `component.json` | 结算服务 | 嵌套同级区域、跨边界依赖、接口及适配器 |
-| `component-folding.json` | 文档处理 | 12 步主流程与短旁路、自动折列、无连线提示节点 |
-| `package.json` | Monorepo | 嵌套包、共享核心、多入口依赖 |
-| `architecture.json` | 系统架构 | 网关扇出、独立存储、事件汇入与订阅、深色主题 |
-| `module.json` | 功能分解 | 多层分解、三个分支、共享能力的交叉依赖 |
-| `deployment.json` | 生产部署 | 双实例、主备复制、缓存/队列、协议端口标注 |
-| `logical.json` | 4+1 逻辑 | 聚合所有权、领域端口、业务约束注释 |
-| `development.json` | 4+1 开发 | 代码所有权、契约包、适配器与契约测试依赖 |
-| `process.json` | 4+1 进程 | Outbox、并发消费者、幂等自环、死信与重放 |
-| `physical.json` | 4+1 物理 | 两个可用区、三层包含、制品、跨区复制 |
-| `scenario.json` | 4+1 场景 | 业务成功路径、支付失败释放库存、重新下单 |
-| `fishbone.json` | 支付延迟根因 | 6 个分类、数量不均、三层原因、长文字 |
+| `login-branches` | 登录认证 | 4 个判断、重复是/否、共用干线、回退与失败汇入 |
+| `release-parallel` | 发布流水线 | 三路并行、fork/join、灰度失败回滚 |
+| `checkout-sequence` | 订单支付 | 6 个参与者、2 个数据库、19 条消息、4 类片段、嵌套激活、自调用、创建与销毁 |
+| `expense-swimlane` | 费用报销 | 4 个泳道、反复交接、退回补件、支付重试 |
+| `import-pipeline` | 数据导入 | LR、多次返工、长文本、XML 特殊字符、显式折列 |
+| `commerce-usecases` | 交易平台 | 4 个角色、系统边界、直线关系、include/extend、角色泛化 |
+| `order-domain` | 订单领域 | 属性/方法分区、长签名、两端基数、继承/实现/聚合/组合 |
+| `payment-lifecycle` | 支付单 | 内部动作、自转换、超时、失败重试、多个终态 |
+| `checkout-components` | 结算服务 | 嵌套同级区域、跨边界依赖、接口及适配器 |
+| `unbalanced-regions` | 文档处理 | 12 步主流程与短旁路、自动折列、无连线提示节点 |
+| `monorepo-packages` | Monorepo | 嵌套包、共享核心、多入口依赖 |
+| `commerce-architecture` | 系统架构 | 网关扇出、独立存储、事件汇入与订阅、深色主题 |
+| `fulfillment-modules` | 功能分解 | 多层分解、三个分支、共享能力的交叉依赖 |
+| `production-deployment` | 生产部署 | 双实例、主备复制、缓存/队列、协议端口标注 |
+| `commerce-logical` | 4+1 逻辑 | 聚合所有权、领域端口、业务约束注释 |
+| `commerce-development` | 4+1 开发 | 代码所有权、契约包、适配器与契约测试依赖 |
+| `commerce-process` | 4+1 进程 | Outbox、并发消费者、幂等自环、死信与重放 |
+| `commerce-physical` | 4+1 物理 | 两个可用区、三层包含、制品、跨区复制 |
+| `commerce-scenario` | 4+1 场景 | 业务成功路径、支付失败释放库存、重新下单 |
+| `incident-causes` | 支付延迟根因 | 6 个分类、数量不均、三层原因、长文字 |
 
 另外 3 张对照图分别验证：登录图 `compact + LR`；嵌套组件 `grid + maxPerColumn:2`；数据导入 `spacious + 20px + transparent + showTitle + 尺寸上限`。它们与原图独立保存，适合比较模式和验证保存后重新打开。
 
-工业汇报示例 `examples/industrial.json` 以“工业设备监测 · 领域模型”展示 `industrial` 主题：白底、浅杏色图元、灰色线条与小圆角。5 个类/接口保留属性与方法分区，包含继承、组合、依赖、实现四种 UML 关系及两端基数；无节点样式覆盖，适合直接查看和复用主题效果。
+工业汇报示例 `examples/templates.json` 的 `industrial-equipment-model` 以“工业设备监测 · 领域模型”展示 `industrial` 主题：白底、浅杏色图元、灰色线条与小圆角。5 个类/接口保留属性与方法分区，包含继承、组合、依赖、实现四种 UML 关系及两端基数；无节点样式覆盖，适合直接查看和复用主题效果。
 
 ## 自动验证
 
