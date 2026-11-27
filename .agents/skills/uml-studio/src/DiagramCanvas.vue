@@ -48,7 +48,15 @@ const supportsWaypoints = computed(() => props.spec.type !== 'sequence' && props
 type PositionPoint = { x: number; y: number };
 let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number; preview?: DragPreview } | undefined;
 let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean; marquee?: Marquee } | undefined;
-interface Marquee { active: boolean; armed: boolean; timer: number; startX: number; startY: number; x: number; y: number }
+interface Marquee { active: boolean; rightButton: boolean; startX: number; startY: number; x: number; y: number }
+// Retain the completed right-drag flag until its contextmenu (which may follow pointerup).
+let suppressContextMenu = false;
+function canvasContextMenu(event: MouseEvent): void {
+  if (!suppressContextMenu || event.button !== 2) return;
+  event.preventDefault();
+  event.stopPropagation();
+  suppressContextMenu = false;
+}
 let request = 0;
 let zoomRequest = 0;
 let observer: ResizeObserver | undefined;
@@ -201,18 +209,25 @@ function clearWaypointEdge(): void {
 function refreshSelectionOverlay(): void {
   const root = layoutRoot();
   if (!root) return;
-  root.querySelector('[data-selection-overlay]')?.remove();
   const namespace = 'http://www.w3.org/2000/svg';
-  const overlay = document.createElementNS(namespace, 'g');
+  const overlay = root.querySelector<SVGGElement>('[data-selection-overlay]') ?? document.createElementNS(namespace, 'g');
   overlay.setAttribute('data-selection-overlay', '');
   overlay.setAttribute('pointer-events', 'none');
+  const existing = new Map([...overlay.querySelectorAll<SVGRectElement>('rect')].map(rect => [rect.getAttribute('data-selection-key')!, rect]));
+  const retained = new Set<string>();
+  const inverse = root.getScreenCTM()?.inverse();
+  if (!inverse) return;
   const draw = (keys: string[] | undefined, cls: string) => {
     for (const key of keys ?? []) {
       const element = artboard.value?.querySelector<SVGGraphicsElement>(`[data-editor-key="${key.replace(/"/g, '')}"]`);
       if (!element || element.closest('[data-selection-overlay]')) continue;
-      const box = layoutBox(element);
+      const box = layoutBox(element, inverse);
       if (!box) continue;
-      const rect = document.createElementNS(namespace, 'rect');
+      const identity = `${cls}:${key}`;
+      if (retained.has(identity)) continue;
+      retained.add(identity);
+      const rect = existing.get(identity) ?? document.createElementNS(namespace, 'rect');
+      rect.setAttribute('data-selection-key', identity);
       rect.setAttribute('x', String(box.left - 4));
       rect.setAttribute('y', String(box.top - 4));
       rect.setAttribute('width', String(box.right - box.left + 8));
@@ -224,7 +239,9 @@ function refreshSelectionOverlay(): void {
   };
   draw(props.marqueeKeys, 'canvas-marquee-pick');
   draw(props.selectedKeys, 'canvas-selection-rect');
+  for (const [identity, rect] of existing) if (!retained.has(identity)) rect.remove();
   if (overlay.childElementCount) root.append(overlay);
+  else overlay.remove();
 }
 function clearConnectSource(): void {
   connectSource.value = '';
@@ -240,11 +257,12 @@ type Moved = { element: SVGGraphicsElement; transform: string | null; factor: nu
 type LiveEdge = { group: SVGGraphicsElement; originals: SVGPathElement[]; preview: SVGPathElement; start: PositionPoint; end: PositionPoint; startVertical: boolean; endVertical: boolean; moveStart: boolean; moveEnd: boolean };
 interface DragPreview { moved: Moved[]; edges: LiveEdge[]; box?: Box; candidates: Box[]; extent?: Box; threshold: number; guides?: SVGGElement }
 const svgNamespace = 'http://www.w3.org/2000/svg';
-function layoutBox(element: Element): Box | undefined {
+function layoutBox(element: Element, inverse = layoutRoot()?.getScreenCTM()?.inverse()): Box | undefined {
+  if (!inverse) return;
   const rect = element.getBoundingClientRect();
   if (!rect.width && !rect.height) return;
-  const a = layoutPoint(rect.left, rect.top), b = layoutPoint(rect.right, rect.bottom);
-  if (!a || !b) return;
+  const a = new DOMPoint(rect.left, rect.top).matrixTransform(inverse);
+  const b = new DOMPoint(rect.right, rect.bottom).matrixTransform(inverse);
   return { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), right: Math.max(a.x, b.x), bottom: Math.max(a.y, b.y) };
 }
 function descendantGroups(id: string): Set<string> {
@@ -530,13 +548,11 @@ function drawMarquee(marquee: Marquee): void {
   marqueeBox.value = { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y) };
 }
 function armMarquee(marquee: Marquee): void {
-  marquee.armed = false;
   marquee.active = true;
-  if (pan && stage.value) { stage.value.scrollLeft = pan.left; stage.value.scrollTop = pan.top; }
+  if (marquee.rightButton) suppressContextMenu = true;
   drawMarquee(marquee);
 }
 function finishMarquee(marquee: Marquee): void {
-  window.clearTimeout(marquee.timer);
   if (!marquee.active) { marqueeBox.value = undefined; return; }
   marqueeBox.value = undefined;
   const left = Math.min(marquee.startX, marquee.x), right = Math.max(marquee.startX, marquee.x);
@@ -567,11 +583,21 @@ function pickConnectNode(element: Element): void {
 }
 function startPan(event: PointerEvent): void {
   const viewport = stage.value;
-  if (!viewport || !diagram.value || pan || positionDrag || !event.isPrimary || event.button !== 0) return;
+  suppressContextMenu = false;
+  if (!viewport || !diagram.value || pan || positionDrag || !event.isPrimary || (event.button !== 0 && event.button !== 2)) return;
   if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
   const rect = viewport.getBoundingClientRect();
   // Leave the native scrollbars draggable rather than capturing their pointer.
   if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
+  const blank = !(event.target instanceof Element && event.target.closest('[data-editor-key], [data-adjustment-key], [data-waypoint-key], [data-position-handles], .canvas-edge-hit'));
+  const rightButton = event.button === 2;
+  if (rightButton) {
+    if (!blank || !selectMode.value || pending.value) return;
+    // Do not capture or cancel a simple right click: the parent owns its menu.
+    pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : undefined, moved: false,
+      marquee: { active: false, rightButton: true, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY } };
+    return;
+  }
   if (beginPositionDrag(event)) return;
   if (editingEnabled.value && event.target instanceof Element) {
     const edge = event.target.closest('[data-waypoint-key]');
@@ -588,13 +614,9 @@ function startPan(event: PointerEvent): void {
   }
   viewport.setPointerCapture(event.pointerId);
   pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : undefined, moved: false };
-  // Blank press in select mode may become a marquee: Shift+drag immediately, or after a >350ms long-press.
-  const blank = !(event.target instanceof Element && event.target.closest('[data-editor-key], [data-adjustment-key], [data-waypoint-key], [data-position-handles], .canvas-edge-hit'));
-  if (blank && selectMode.value && !pending.value) {
-    const marquee: Marquee = { active: false, armed: true, timer: 0, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY };
-    if (event.shiftKey) armMarquee(marquee);
-    else marquee.timer = window.setTimeout(() => { if (pan?.marquee === marquee && marquee.armed) armMarquee(marquee); }, 350);
-    pan.marquee = marquee;
+  // Shift+left drag remains available alongside right-button marquee selection.
+  if (blank && selectMode.value && !pending.value && event.shiftKey) {
+    pan.marquee = { active: false, rightButton: false, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY };
   }
   dragging.value = true;
   event.preventDefault();
@@ -603,16 +625,20 @@ function movePan(event: PointerEvent): void {
   if (movePositionDrag(event)) return;
   if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
   const marquee = pan.marquee;
-  if (marquee) { marquee.x = event.clientX; marquee.y = event.clientY; }
-  if (marquee?.active) {
-    pan.moved = true;
-    drawMarquee(marquee);
+  if (marquee) {
+    marquee.x = event.clientX; marquee.y = event.clientY;
+    if (!marquee.active && Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) {
+      armMarquee(marquee);
+      stage.value.setPointerCapture(event.pointerId);
+    }
+    if (marquee.active) {
+      pan.moved = true;
+      drawMarquee(marquee);
+      event.preventDefault();
+    }
     return;
   }
-  if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) {
-    pan.moved = true;
-    if (marquee?.armed) { marquee.armed = false; window.clearTimeout(marquee.timer); pan.marquee = undefined; }
-  }
+  if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
   stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
   stage.value.scrollTop = pan.top - (event.clientY - pan.y);
 }
@@ -629,8 +655,9 @@ function endPan(event?: PointerEvent): void {
   if (marquee) {
     marquee.x = event?.clientX ?? marquee.x;
     marquee.y = event?.clientY ?? marquee.y;
-    finishMarquee(marquee);
-    if (marquee.active) return;
+    if (event?.type === 'pointerup') finishMarquee(marquee);
+    else { marqueeBox.value = undefined; suppressContextMenu = false; }
+    if (marquee.active || marquee.rightButton) return;
   }
   if (event?.type !== 'pointerup' || moved || pending.value) return;
   if (connectMode.value) {
@@ -661,12 +688,17 @@ onMounted(() => {
   observer = new ResizeObserver(measureStage);
   observer.observe(stage.value);
   stage.value.addEventListener('wheel', wheelZoom, { passive: false });
+  // An un-dragged right press is intentionally not captured; still clean up outside the stage.
+  window.addEventListener('pointerup', endPan);
+  window.addEventListener('pointercancel', endPan);
 });
 onBeforeUnmount(() => {
   request++; zoomRequest++;
   endPan();
   observer?.disconnect();
   stage.value?.removeEventListener('wheel', wheelZoom);
+  window.removeEventListener('pointerup', endPan);
+  window.removeEventListener('pointercancel', endPan);
 });
 defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
 </script>
@@ -697,7 +729,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
         <button type="button" :disabled="!selectedWaypoints.length || pending" @click="clearWaypoints">清空此连线途经点</button>
       </div>
     </div>
-    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': selectMode, 'is-position-editing': editingEnabled, 'is-connect-mode': connectMode }" tabindex="0" :aria-label="connectMode ? '连线模式，依次点击两个节点创建连线' : '选择画布，单击选中元素，拖动调整位置，空白处长按或 Shift 拖动框选，双击连线添加途经点，滚轮缩放'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @keydown="positionKeydown">
+    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': selectMode, 'is-position-editing': editingEnabled, 'is-connect-mode': connectMode }" tabindex="0" :aria-label="connectMode ? '连线模式，依次点击两个节点创建连线' : '选择画布，单击选中元素，拖动调整位置，空白处右键拖动或 Shift+左键拖动框选，双击连线添加途经点，滚轮缩放'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @contextmenu="canvasContextMenu" @keydown="positionKeydown">
       <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${diagram.width * zoomValue}px`, height: `${diagram.height * zoomValue}px` }">
         <div class="canvas-svg" :style="{ width: `${diagram.width}px`, height: `${diagram.height}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>
@@ -705,7 +737,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
       <div v-if="marqueeBox" class="canvas-marquee" :style="{ left: `${marqueeBox.left}px`, top: `${marqueeBox.top}px`, width: `${marqueeBox.width}px`, height: `${marqueeBox.height}px` }"></div>
     </div>
     <div v-if="failure && diagram" class="canvas-error" role="status">未替换当前图表：{{ failure }}</div>
-    <div class="canvas-footer"><span>{{ connectMode ? '依次点击两个节点创建连线 · 滚轮缩放' : '单击选中 · 拖动调整 · 空白长按/Shift 拖动框选 · 滚轮缩放' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
+    <div class="canvas-footer"><span>{{ connectMode ? '依次点击两个节点创建连线 · 滚轮缩放' : '单击选中 · 拖动调整 · 右键拖动框选（或 Shift+左键） · 滚轮缩放' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
   </section>
 </template>
 
@@ -930,7 +962,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
   touch-action: none;
-  cursor: grab;
+  cursor: default;
   user-select: none;
   overscroll-behavior: contain;
 }
@@ -957,7 +989,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   display: block;
 }
 .canvas-stage.is-dragging {
-  cursor: grabbing;
+  cursor: move;
 }
 .canvas-position-tools {
   display: flex;
@@ -981,8 +1013,8 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   font-size: 12px;
 }
 .canvas-waypoint-actions button:hover:not(:disabled) { background: var(--accent-soft); }
-.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move; }
-.canvas-stage.is-position-editing [data-waypoint-key] { cursor: crosshair; }
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: pointer; }
+.canvas-stage.is-position-editing [data-waypoint-key] { cursor: pointer; }
 .canvas-stage.is-position-editing [data-selected-waypoint-edge] > path:not(.canvas-edge-hit) { stroke: var(--accent); }
 .canvas-stage.is-position-editing [data-adjustment-key]:hover { outline: 1px dashed var(--accent); outline-offset: 3px; }
 .canvas-edge-hit { pointer-events: stroke; }
@@ -1007,7 +1039,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   outline-offset: 2px;
   box-shadow: var(--shadow-sm), 0 0 0 4px var(--ring);
 }
-.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move; }
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: pointer; }
 .canvas-stage.is-connect-mode { cursor: crosshair; }
 .canvas-stage.is-connect-mode .uml-node { cursor: crosshair; }
 .canvas-stage.is-connect-mode .uml-node[data-connect-source] { outline: 3px solid var(--accent); outline-offset: 3px; }

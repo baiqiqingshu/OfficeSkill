@@ -44,7 +44,7 @@ const specSchema = {
   ...object({
     version: { const: 1 }, id, type: { type: 'string', enum: diagramTypes }, title: label, description: str,
     theme: en(...Object.keys(themes)), style, layout, direction: en('TB', 'LR'),
-    nodes: array(object({ id, label, kind: en('action', 'decision', 'start', 'end', 'fork', 'join', 'actor', 'usecase', 'class', 'interface', 'component', 'package', 'database', 'server', 'queue', 'state', 'note', 'terminal', 'subroutine', 'io', 'hexagon', 'circle', 'trapezoid'), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ['id', 'label'])),
+    nodes: array(object({ id, label, kind: en('action', 'decision', 'start', 'end', 'fork', 'join', 'actor', 'usecase', 'class', 'interface', 'component', 'package', 'database', 'server', 'queue', 'state', 'note', 'image', 'terminal', 'subroutine', 'io', 'hexagon', 'circle', 'trapezoid'), src: { type: 'string', pattern: '^data:image/', maxLength: 7_340_032, description: "kind 'image' 的图片内容，仅接受 data:image/ URL（约 5MB 上限）。", }, width: num(8, 10000), height: num(8, 10000), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ['id', 'label'])),
     edges: array(object({ id, from: id, to: id, label: str, kind: en('flow', 'association', 'dependency', 'include', 'extend', 'inheritance', 'realization', 'aggregation', 'composition'), dashed: { type: 'boolean' }, fromLabel: str, toLabel: str, arrow: edgeArrow, startArrow: edgeArrow, thick: { type: 'boolean' } }, ['from', 'to'])),
     groups: array(object({ id, label, parent: id, kind: en('boundary', 'package', 'node') }, ['id', 'label'])),
     lanes: array(object({ id, label }, ['id', 'label'])),

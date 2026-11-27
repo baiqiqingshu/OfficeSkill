@@ -445,6 +445,7 @@
                   "queue",
                   "state",
                   "note",
+                  "image",
                   "terminal",
                   "subroutine",
                   "io",
@@ -452,6 +453,22 @@
                   "circle",
                   "trapezoid"
                 ]
+              },
+              "src": {
+                "type": "string",
+                "pattern": "^data:image/",
+                "maxLength": 7340032,
+                "description": "kind 'image' 的图片内容，仅接受 data:image/ URL（约 5MB 上限）。"
+              },
+              "width": {
+                "type": "number",
+                "minimum": 8,
+                "maximum": 10000
+              },
+              "height": {
+                "type": "number",
+                "minimum": 8,
+                "maximum": 10000
               },
               "detail": {
                 "type": "string"

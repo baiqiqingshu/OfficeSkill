@@ -227,6 +227,7 @@ async function toggleEditor(): Promise<void> {
 }
 const editorMode = ref<"form" | "source">("form");
 const sidebarOpen = ref(false);
+const sidebarTab = ref<"theme" | "diagrams">("theme");
 const loading = ref(true);
 const exporting = ref(false);
 const copyingImage = ref(false);
@@ -530,6 +531,19 @@ async function updateSpec(change: (spec: DiagramSpec) => void): Promise<void> {
     reportError(reason);
   }
 }
+/* 检查器文本输入防抖：连续输入合并为一次校验 + 排版。 */
+const queuedSpecChanges: ((spec: DiagramSpec) => void)[] = [];
+let updateSpecTimer: ReturnType<typeof setTimeout> | undefined;
+function updateSpecDebounced(change: (spec: DiagramSpec) => void): void {
+  queuedSpecChanges.push(change);
+  clearTimeout(updateSpecTimer);
+  updateSpecTimer = setTimeout(() => {
+    const batch = queuedSpecChanges.splice(0);
+    void updateSpec((spec) => {
+      for (const run of batch) run(spec);
+    });
+  }, 300);
+}
 function selectTheme(name: ThemeName): void {
   void updateSpec((spec) => {
     spec.theme = name;
@@ -577,12 +591,15 @@ function clearAdjustments(): void {
 }
 /* ---------- 画布选择与编辑（契约：select-element / selection-change / request-delete / connect-nodes） ---------- */
 function onSelectElement(key: string): void {
-  selectedKeys.value = [key];
-  formEditor.value?.focusElement(key).catch(() => {});
+  // 空 key 是点中空白：清空选择，避免留下 [''] 脏状态。
+  selectedKeys.value = key ? [key] : [];
+  if (key) formEditor.value?.focusElement(key).catch(() => {});
 }
 function onSelectionChange(keys: string[]): void {
-  selectedKeys.value = keys;
   marqueeKeys.value = keys;
+  // 单击选中后画布会补发 selectionChange([]) 清理框选态，不能把单选冲掉；
+  // 只有框选真正圈到元素时才改写 selectedKeys。
+  if (keys.length) selectedKeys.value = keys;
 }
 function uniqueElementId(spec: DiagramSpec, prefix: string): string {
   const used = new Set(
@@ -817,6 +834,153 @@ function onAddElement(payload: AddElementPayload): void {
       });
     }
   }).then(() => showNotice("已添加元素"));
+}
+/* ---------- 外部粘贴：图片 / UML JSON / Mermaid / 纯文本 ---------- */
+const MAX_IMAGE_DATA_URL = 7_340_032; // 约 5MB 图片二进制
+function isEditablePasteTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    !!target.closest(
+      'input, textarea, select, [contenteditable="true"], [contenteditable=""]',
+    )
+  );
+}
+function readBlobAsDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("读取剪贴板图片失败。"));
+    reader.readAsDataURL(blob);
+  });
+}
+function probeImage(src: string): Promise<{ width: number; height: number } | undefined> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () =>
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+    image.onerror = () => resolve(undefined);
+    image.src = src;
+  });
+}
+function makeImageNode(spec: DiagramSpec | undefined, src: string, size?: { width: number; height: number }): DiagramNode {
+  let width = size?.width ?? 240;
+  let height = size?.height ?? 160;
+  const max = 480;
+  if (width > max) {
+    height = Math.max(8, Math.round((height * max) / width));
+    width = max;
+  }
+  return {
+    id: spec ? uniqueElementId(spec, "image") : "image_1",
+    label: "图片",
+    kind: "image",
+    src,
+    width,
+    height,
+  };
+}
+async function pasteImage(src: string): Promise<void> {
+  if (!src.startsWith("data:image/"))
+    throw new Error("剪贴板中的图片不是可内嵌的 data:image/ 数据。");
+  if (src.length > MAX_IMAGE_DATA_URL)
+    throw new Error("粘贴的图片超过约 5MB 上限，请先在图片工具中压缩后再粘贴。");
+  const size = await probeImage(src);
+  if (applied.value.nodes) {
+    await updateSpec((spec) => {
+      spec.nodes!.push(makeImageNode(spec, src, size));
+    });
+    showNotice("已把剪贴板图片添加为图片节点");
+  } else {
+    await appendDiagram({
+      version: 1,
+      type: "flowchart",
+      title: "粘贴的图片",
+      nodes: [makeImageNode(undefined, src, size)],
+      edges: [],
+    });
+    showNotice("当前图不支持节点，已新建流程图存放剪贴板图片");
+  }
+}
+/** 从 text/html 剪贴板内容提取可内嵌图片：优先 <img data:…>，其次整段 <svg>。 */
+function imageFromHtml(html: string): string | undefined {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const img = doc.querySelector("img");
+  const src = img?.getAttribute("src") ?? "";
+  if (src.startsWith("data:image/")) return src;
+  const svg = doc.querySelector("svg");
+  if (!svg) return undefined;
+  if (!svg.hasAttribute("xmlns"))
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
+}
+async function pasteText(raw: string): Promise<void> {
+  const text = raw.trim();
+  if (!text) return;
+  if (text.startsWith("{") || text.startsWith("[")) {
+    let candidate: DiagramDocument;
+    try {
+      candidate = validateDocument(normalizeDocument(JSON.parse(text)));
+    } catch (reason) {
+      reportError(
+        new Error(
+          `剪贴板里的 JSON 不是有效的 UML 图表：${reason instanceof Error ? reason.message : reason}`,
+        ),
+      );
+      return;
+    }
+    for (const spec of candidate.diagrams)
+      await appendDiagram(structuredClone(spec));
+    showNotice(`已把剪贴板 JSON 导入为 ${candidate.diagrams.length} 张图表`);
+    return;
+  }
+  if (isMermaidSource(text)) {
+    await importMermaid(text, "剪贴板");
+    return;
+  }
+  const label = text.replace(/\s+/g, " ").trim();
+  const truncated = label.length > 60 ? `${label.slice(0, 60)}…` : label;
+  if (applied.value.nodes) {
+    await updateSpec((spec) => {
+      spec.nodes!.push({
+        id: uniqueElementId(spec, "note"),
+        label: truncated,
+        kind: "note",
+        detail: text,
+      });
+    });
+    showNotice("已把剪贴板文本添加为注释节点");
+  } else {
+    await appendDiagram({
+      version: 1,
+      type: "flowchart",
+      title: truncated || "粘贴的文本",
+      nodes: [
+        { id: "note_1", label: truncated || "文本", kind: "note", detail: text },
+      ],
+      edges: [],
+    });
+    showNotice("当前图不支持节点，已新建流程图存放剪贴板文本");
+  }
+}
+async function onPaste(event: ClipboardEvent): Promise<void> {
+  if (isEditablePasteTarget(event.target)) return;
+  const data = event.clipboardData;
+  if (!data) return;
+  const imageItem = [...data.items].find(
+    (item) => item.kind === "file" && /^image\//i.test(item.type),
+  );
+  const file = imageItem?.getAsFile();
+  const htmlImage = file ? undefined : imageFromHtml(data.getData("text/html") ?? "");
+  const text = file || htmlImage ? "" : data.getData("text/plain");
+  if (!file && !htmlImage && !text.trim()) return;
+  event.preventDefault();
+  try {
+    if (file) await pasteImage(await readBlobAsDataUrl(file));
+    else if (htmlImage) await pasteImage(htmlImage);
+    else await pasteText(text);
+  } catch (reason) {
+    reportError(reason);
+  }
 }
 /* ---------- 溢出菜单 / 画布右键菜单 ---------- */
 function newDiagramEntries(): MenuEntry[] {
@@ -1280,6 +1444,7 @@ function beforeUnload(event: BeforeUnloadEvent): void {
 }
 onMounted(async () => {
   window.addEventListener("beforeunload", beforeUnload);
+  window.addEventListener("paste", onPaste);
   try {
     if (!canvas.value) throw new Error("图表组件挂载失败。");
     await canvas.value.ready;
@@ -1300,7 +1465,9 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   revision++;
   clearTimeout(noticeTimer);
+  clearTimeout(updateSpecTimer);
   window.removeEventListener("beforeunload", beforeUnload);
+  window.removeEventListener("paste", onPaste);
 });
 defineExpose({
   ready,
@@ -1364,7 +1531,10 @@ defineExpose({
           class="button button-quiet mobile-menu-button"
           type="button"
           :aria-expanded="sidebarOpen"
-          @click="sidebarOpen = !sidebarOpen"
+          @click="
+            sidebarOpen = !sidebarOpen;
+            if (sidebarOpen) sidebarTab = 'diagrams';
+          "
         >
           <svg
             viewBox="0 0 24 24"
@@ -1460,7 +1630,24 @@ defineExpose({
         aria-label="文档与图表列表"
       >
         <button class="button button-quiet mobile-menu-button sidebar-close" type="button" @click="sidebarOpen = false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6l12 12" /></svg>关闭图表列表</button>
-        <div class="sidebar-section">
+        <div class="sidebar-tabs" role="tablist" aria-label="侧栏面板">
+          <button
+            type="button"
+            role="tab"
+            :aria-selected="sidebarTab === 'theme'"
+            @click="sidebarTab = 'theme'"
+          >
+            主题</button
+          ><button
+            type="button"
+            role="tab"
+            :aria-selected="sidebarTab === 'diagrams'"
+            @click="sidebarTab = 'diagrams'"
+          >
+            图表<span class="tab-count">{{ collection.diagrams.length }}</span>
+          </button>
+        </div>
+        <div v-show="sidebarTab === 'diagrams'" class="sidebar-section">
           <div class="section-heading">
             <h2>文档中的图表</h2>
             <span class="section-meta"
@@ -1678,7 +1865,7 @@ defineExpose({
           </div></details>
         </div>
 
-        <div class="sidebar-section sidebar-theme">
+        <div v-show="sidebarTab === 'theme'" class="sidebar-section sidebar-theme">
           <div class="section-heading">
             <h2>主题</h2>
             <button
@@ -1730,19 +1917,6 @@ defineExpose({
       </aside>
 
       <main class="studio-main">
-        <div class="workspace-meta">
-          <strong class="workspace-title">{{ applied.title }}</strong>
-          <span class="type-badge"
-            >{{ activeIndex + 1 }} / {{ collection.diagrams.length }} ·
-            {{ labels[applied.type] }}</span
-          ><span>{{ itemCount }}</span
-          ><span class="meta-dot">·</span
-          ><span
-            >{{ themeLabels[applied.theme ?? "modern"] }}主题{{
-              applied.style ? " / 自定义" : ""
-            }}</span
-          >
-        </div>
         <div v-if="error" class="error-banner" role="alert">
           <svg
             class="error-icon"
@@ -1782,6 +1956,13 @@ defineExpose({
           </button>
         </div>
         <div class="canvas-region" @contextmenu="openCanvasMenu">
+          <div class="canvas-title-chip">
+            <strong :title="applied.title">{{ applied.title }}</strong>
+            <span class="type-badge"
+              >{{ activeIndex + 1 }} / {{ collection.diagrams.length }} ·
+              {{ labels[applied.type] }}</span
+            ><span class="chip-meta">{{ itemCount }}</span>
+          </div>
           <DiagramCanvas
             ref="canvas"
             :spec="initialSpec"
@@ -1939,6 +2120,7 @@ defineExpose({
           :selected-keys="selectedKeys"
           :loading="loading"
           :on-update="updateSpec"
+          :on-update-debounced="updateSpecDebounced"
           @full-edit="toggleEditor"
           @delete="onRequestDelete"
         />
@@ -2928,7 +3110,7 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .editor-hint { margin: 0; padding: 8px 16px 14px; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .workspace-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 16px; color: var(--muted); font-size: 12px; line-height: 1.7; }
 .runtime-warning { color: var(--warning); }
-.error-banner { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; padding: 14px 16px; background: var(--danger-soft); border: 1px solid var(--danger-line); border-radius: var(--r-md); color: var(--danger); }
+.error-banner { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); z-index: 90; display: flex; align-items: flex-start; gap: 12px; width: min(680px, calc(100vw - 32px)); margin: 0; padding: 14px 16px; background: var(--danger-soft); border: 1px solid var(--danger-line); border-radius: var(--r-md); box-shadow: var(--shadow-lg); color: var(--danger); }
 .error-icon { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--danger); }
 .error-banner strong { font-size: 14px; }
 .error-banner p { margin: 6px 0 0; font-size: 13px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -2936,19 +3118,21 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .icon-button { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--danger); }
 .icon-button:hover { background: rgb(191 66 52 / .10); }
 .icon-button svg { width: 15px; height: 15px; }
-.studio-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 100; max-width: calc(100vw - 32px); padding: 11px 18px; background: var(--ink); color: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-lg); font-size: 13px; line-height: 1.6; }
+.studio-toast { position: fixed; left: 50%; top: 16px; transform: translateX(-50%); z-index: 100; max-width: calc(100vw - 32px); padding: 11px 18px; background: var(--ink); color: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-lg); font-size: 13px; line-height: 1.6; }
 .toast-enter-active, .toast-leave-active { transition: opacity .18s var(--ease), transform .18s var(--ease); }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%,8px); }
-/* Canvas geometry and export stay unchanged; align its controls with the workbench. */
-.studio-shell .diagram-canvas { height: clamp(560px,calc(100vh - 250px),900px); min-height: 560px; border-color: transparent; border-radius: var(--r-lg); background: var(--paper); box-shadow: var(--shadow-sm); color: var(--ink); }
-.studio-shell .canvas-toolbar { min-height: 48px; height: auto; padding: 8px 14px; background: var(--paper); border-color: var(--line); flex-wrap: wrap; }
-.studio-shell .canvas-status { color: var(--muted); font-size: 12px; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%,-8px); }
+/* 画布去框：无卡片外框，状态徽标与缩放控件浮在画布上。 */
+.studio-shell .diagram-canvas { position: relative; height: 100%; min-height: 560px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink); }
+.studio-shell .canvas-toolbar { position: absolute; z-index: 7; top: 12px; right: 14px; left: auto; min-height: 0; height: auto; padding: 0; background: transparent; border: 0; flex-wrap: nowrap; gap: 6px; pointer-events: none; }
+.studio-shell .canvas-toolbar > * { pointer-events: auto; }
+.studio-shell .canvas-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; background: rgb(255 255 255 / .85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: var(--r-pill); box-shadow: var(--shadow-md); color: var(--muted); font-size: 11px; white-space: nowrap; }
+.studio-shell .canvas-status:not(:has(.busy)):not(:has(.failed)) { display: none; }
 .studio-shell .status-dot { background: var(--success); }
 .studio-shell .status-dot.busy { background: var(--warning); }
 .studio-shell .status-dot.failed { background: var(--danger); }
-.studio-shell .canvas-dimensions { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.studio-shell .canvas-dimensions { color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
 .studio-shell .canvas-stage { background-color: var(--paper-2); background-image: radial-gradient(circle, rgb(32 36 44 / .10) 1px, transparent 1.4px); background-size: 24px 24px; }
-.studio-shell .zoom-tools { gap: 2px; padding: 3px; background: var(--paper-2); border-radius: 8px; }
+.studio-shell .zoom-tools { gap: 2px; padding: 3px; background: rgb(255 255 255 / .85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: var(--r-pill); box-shadow: var(--shadow-md); }
 .studio-shell .zoom-tools button { width: 28px; min-height: 28px; height: 28px; border-radius: 6px; color: var(--muted); font-size: 15px; }
 .studio-shell .zoom-tools .fit-button { width: auto; padding: 0 8px; font-size: 12px; }
 .studio-shell .zoom-tools button:hover:not(:disabled) { background: var(--paper); box-shadow: var(--shadow-sm); color: var(--ink); }
@@ -2997,7 +3181,7 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
   .studio-colors { grid-template-columns: 1fr; }
   .number-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
   .data-panel { height: 650px; }
-  .studio-shell .diagram-canvas { height: 520px; min-height: 520px; }
+  .studio-shell .diagram-canvas { min-height: 520px; }
   .studio-shell .canvas-dimensions { display: none; }
   .json-actions > .button { flex-wrap: wrap; gap: 4px; }
 }
@@ -3027,14 +3211,24 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .workspace-meta { margin: 2px 0 12px; }
 .canvas-region { position: relative; flex: 1; min-height: 0; }
 .studio-inspector { position: sticky; top: 74px; align-self: flex-start; width: 288px; flex: none; max-height: calc(100vh - 92px); overflow-y: auto; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.sidebar-tabs { position: sticky; top: 0; z-index: 2; display: flex; gap: 4px; margin: 12px 0 0; padding: 4px; background: var(--paper-2); border-radius: var(--r-pill); }
+.sidebar-tabs > button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 30px; border: 0; border-radius: var(--r-pill); padding: 4px 8px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 550; }
+.sidebar-tabs > button:hover { color: var(--ink); }
+.sidebar-tabs > button[aria-selected="true"] { background: var(--paper); box-shadow: var(--shadow-sm); color: var(--ink); font-weight: 600; }
+.sidebar-tabs .tab-count { padding: 0 7px; border-radius: var(--r-pill); background: var(--paper-2); color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+.sidebar-tabs > button[aria-selected="true"] .tab-count { background: var(--accent-soft); color: var(--accent); }
 .sidebar-theme { border-top: 1px solid var(--line); }
 .sidebar-theme .theme-more { margin-left: auto; padding: 4px 8px; font-size: 12px; min-height: 26px; }
 .sidebar-theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 4px; }
 .sidebar-theme-grid .theme-option { padding: 4px 2px; font-size: 11px; }
 .sidebar-theme-grid .theme-preview { height: 26px; }
 
-/* 画布浮动工具条 / 导出条（absolute，不占布局） */
-.canvas-float-tools, .canvas-float-export { position: absolute; z-index: 6; top: 60px; display: flex; align-items: center; gap: 4px; padding: 4px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-md); }
+/* 画布浮动元素：标题徽标 / 工具条 / 导出条（absolute，半透明，不占布局） */
+.canvas-title-chip { position: absolute; z-index: 6; top: 12px; left: 14px; display: flex; align-items: center; gap: 8px; max-width: min(62%, 620px); padding: 6px 12px; background: rgb(255 255 255 / .85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: var(--r-pill); box-shadow: var(--shadow-md); }
+.canvas-title-chip strong { font-size: 12px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.canvas-title-chip .type-badge { flex: none; padding: 2px 9px; font-size: 11px; }
+.canvas-title-chip .chip-meta { flex: none; color: var(--faint); font-size: 11px; white-space: nowrap; }
+.canvas-float-tools, .canvas-float-export { position: absolute; z-index: 6; top: 56px; display: flex; align-items: center; gap: 4px; padding: 4px; background: rgb(255 255 255 / .85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: var(--r-md); box-shadow: var(--shadow-md); }
 .canvas-float-tools { left: 14px; }
 .canvas-float-export { right: 14px; }
 .float-group { display: flex; align-items: center; gap: 2px; }
@@ -3065,9 +3259,11 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
   .studio-inspector { display: none; }
 }
 @media (max-width: 860px) {
-  .canvas-float-tools { top: 56px; left: 10px; }
+  .canvas-title-chip { top: 10px; left: 10px; max-width: calc(100% - 170px); }
+  .studio-shell .canvas-toolbar { top: 10px; right: 10px; }
+  .canvas-float-tools { top: 52px; left: 10px; }
   .canvas-float-export { top: auto; bottom: 52px; right: 10px; }
-  .canvas-adjust-chip { bottom: auto; top: 100px; }
+  .canvas-adjust-chip { bottom: auto; top: 96px; }
   .canvas-quality { display: none; }
 }
 </style>

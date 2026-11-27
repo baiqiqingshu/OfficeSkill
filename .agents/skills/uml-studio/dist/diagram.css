@@ -219,7 +219,7 @@
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
   touch-action: none;
-  cursor: grab;
+  cursor: default;
   user-select: none;
   overscroll-behavior: contain;
 }
@@ -246,7 +246,7 @@
   display: block;
 }
 .canvas-stage.is-dragging {
-  cursor: grabbing;
+  cursor: move;
 }
 .canvas-position-tools {
   display: flex;
@@ -272,9 +272,9 @@
 }
 .canvas-waypoint-actions button:hover:not(:disabled) { background: var(--accent-soft);
 }
-.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move;
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: pointer;
 }
-.canvas-stage.is-position-editing [data-waypoint-key] { cursor: crosshair;
+.canvas-stage.is-position-editing [data-waypoint-key] { cursor: pointer;
 }
 .canvas-stage.is-position-editing [data-selected-waypoint-edge] > path:not(.canvas-edge-hit) { stroke: var(--accent);
 }
@@ -308,7 +308,7 @@
   outline-offset: 2px;
   box-shadow: var(--shadow-sm), 0 0 0 4px var(--ring);
 }
-.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move;
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: pointer;
 }
 .canvas-stage.is-connect-mode { cursor: crosshair;
 }

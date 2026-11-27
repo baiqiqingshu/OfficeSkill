@@ -98323,7 +98323,7 @@ var specSchema = {
     style,
     layout,
     direction: en("TB", "LR"),
-    nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note", "terminal", "subroutine", "io", "hexagon", "circle", "trapezoid"), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
+    nodes: array(object({ id, label, kind: en("action", "decision", "start", "end", "fork", "join", "actor", "usecase", "class", "interface", "component", "package", "database", "server", "queue", "state", "note", "image", "terminal", "subroutine", "io", "hexagon", "circle", "trapezoid"), src: { type: "string", pattern: "^data:image/", maxLength: 7340032, description: "kind 'image' \u7684\u56FE\u7247\u5185\u5BB9\uFF0C\u4EC5\u63A5\u53D7 data:image/ URL\uFF08\u7EA6 5MB \u4E0A\u9650\uFF09\u3002" }, width: num(8, 1e4), height: num(8, 1e4), detail: str, stereotype: str, attributes: strings, operations: strings, group: id, lane: id, style }, ["id", "label"])),
     edges: array(object({ id, from: id, to: id, label: str, kind: en("flow", "association", "dependency", "include", "extend", "inheritance", "realization", "aggregation", "composition"), dashed: { type: "boolean" }, fromLabel: str, toLabel: str, arrow: edgeArrow, startArrow: edgeArrow, thick: { type: "boolean" } }, ["from", "to"])),
     groups: array(object({ id, label, parent: id, kind: en("boundary", "package", "node") }, ["id", "label"])),
     lanes: array(object({ id, label }, ["id", "label"])),
@@ -98388,6 +98388,11 @@ function validateSpec(value) {
   }
   for (const lane of spec.lanes ?? []) if (nodes.has(lane.id)) throw new Error(`\u6CF3\u9053 ID \u4E0E\u8282\u70B9\u51B2\u7A81\uFF1A${lane.id}`);
   for (const node of spec.nodes ?? []) {
+    if (node.src !== void 0) {
+      if (!node.src.startsWith("data:image/")) throw new Error(`\u56FE\u7247\u8282\u70B9 ${node.id} \u7684 src \u53EA\u652F\u6301 data:image/ \u5F00\u5934\u7684\u5185\u5D4C\u56FE\u7247`);
+      if (node.src.length > 7340032) throw new Error(`\u56FE\u7247\u8282\u70B9 ${node.id} \u7684\u56FE\u7247\u8D85\u8FC7\u7EA6 5MB \u4E0A\u9650\uFF0C\u8BF7\u538B\u7F29\u540E\u518D\u7C98\u8D34`);
+    }
+    if (node.kind === "image" && !node.src) throw new Error(`\u56FE\u7247\u8282\u70B9 ${node.id} \u7F3A\u5C11 src \u56FE\u7247\u5185\u5BB9`);
     if (node.group && !groups.has(node.group)) throw new Error(`\u8282\u70B9 ${node.id} \u7684\u5206\u7EC4\u4E0D\u5B58\u5728\uFF1A${node.group}`);
     if (node.lane && !lanes.has(node.lane)) throw new Error(`\u8282\u70B9 ${node.id} \u7684\u6CF3\u9053\u4E0D\u5B58\u5728\uFF1A${node.lane}`);
     if (node.group && node.lane) throw new Error(`\u8282\u70B9 ${node.id} \u4E0D\u80FD\u540C\u65F6\u8BBE\u7F6E group \u548C lane`);
@@ -98774,6 +98779,13 @@ function createNode(node, index, spec, base2) {
     width = height = Math.max(theme.nodeHeight, contentWidth + 28, contentHeight + 28);
   }
   let symbol, internalCaption;
+  if (kind === "image") {
+    const iw = Math.max(16, node.width ?? 240);
+    const ih = Math.max(16, node.height ?? 160);
+    width = Math.max(iw, contentWidth + 24);
+    symbol = { x: (width - iw) / 2, y: 0, width: iw, height: ih };
+    height = ih + label2.height + 16;
+  }
   if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ["start", "end", "fork", "join"].includes(kind)) {
     const value = [node.stereotype ? `\xAB${node.stereotype}\xBB` : "", node.label, node.detail].filter(Boolean).join("\n");
     const captionSize = Math.max(10, theme.fontSize - 2), metrics = measure(value, captionSize);
@@ -99945,6 +99957,13 @@ function renderNode(box, spec, adjustmentMetadata = true) {
   } else if (kind === "note") {
     shape = `<path d="M${numeric(x)} ${numeric(y)} H${numeric(x + w - 18)} L${numeric(x + w)} ${numeric(y + 18)} V${numeric(y + h)} H${numeric(x)} Z" ${common}/><path d="M${numeric(x + w - 18)} ${numeric(y)} V${numeric(y + 18)} H${numeric(x + w)}" fill="none" stroke="${stroke}"/>`;
     content = centeredContent(ref, x + 6, y + 10, w - 18, h - 16);
+  } else if (kind === "image") {
+    const ix = symbolX, iy = symbolY, iw = symbol.width, ih = symbol.height;
+    const radius = Math.min(10, theme.radius + 2);
+    const clip = `uml-image-clip-${esc(node.id)}`;
+    const frameRect = `<rect x="${numeric(ix)}" y="${numeric(iy)}" width="${numeric(iw)}" height="${numeric(ih)}" rx="${numeric(radius)}"`;
+    shape = `<defs><clipPath id="${clip}">${frameRect}/></clipPath></defs>${frameRect} fill="${surface}"/>` + (node.src ? `<image href="${esc(node.src)}" x="${numeric(ix)}" y="${numeric(iy)}" width="${numeric(iw)}" height="${numeric(ih)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clip})"/>` : "") + `${frameRect} fill="none" stroke="${stroke}" stroke-width="${numeric(Math.max(1, theme.lineWidth * 0.9))}"/>`;
+    content = text(x + w / 2, iy + ih + 10 + theme.fontSize, node.label, theme, { weight: 550 });
   } else {
     const radius = kind === "state" ? Math.max(12, theme.radius) : kind === "action" && ["activity", "swimlane", "process", "scenario"].includes(spec.type) ? Math.max(14, theme.radius) : theme.radius;
     shape = `${rect} rx="${numeric(radius)}" ${common}/>`;

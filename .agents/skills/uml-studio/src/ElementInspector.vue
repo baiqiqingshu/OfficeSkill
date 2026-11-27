@@ -20,6 +20,8 @@ const props = defineProps<{
   loading?: boolean;
   /** 即时写回：检查器字段的每次修改都通过它应用到画布。 */
   onUpdate: (change: (spec: DiagramSpec) => void) => void;
+  /** 可选的合并提交通道：文本输入等高频修改走这里，由宿主防抖合并。 */
+  onUpdateDebounced?: (change: (spec: DiagramSpec) => void) => void;
 }>();
 const emit = defineEmits<{ "full-edit": []; delete: [keys: string[]] }>();
 
@@ -107,6 +109,16 @@ function patch(mutate: (item: any) => void): void {
     if (draft) mutate(draft);
   });
 }
+/** 文本输入的防抖提交：选中目标在提交时重新解析，避免引用过期。 */
+function dpatch(mutate: (item: any) => void): void {
+  const found = target.value;
+  if (!found) return;
+  const commit = props.onUpdateDebounced ?? props.onUpdate;
+  commit((spec) => {
+    const draft = found.get(spec);
+    if (draft) mutate(draft);
+  });
+}
 function text<K extends string>(field: K) {
   return (event: Event) =>
     patch((item: Record<K, unknown>) => {
@@ -114,6 +126,15 @@ function text<K extends string>(field: K) {
       if (value === "") delete item[field];
       else item[field] = value;
     });
+}
+function dtext<K extends string>(field: K) {
+  return (event: Event) => {
+    const value = (event.target as HTMLInputElement).value;
+    dpatch((item: Record<K, unknown>) => {
+      if (value === "") delete item[field];
+      else item[field] = value;
+    });
+  };
 }
 function check<K extends string>(field: K) {
   return (event: Event) =>
@@ -138,15 +159,15 @@ const nodeKindGroups: { label: string; types: DiagramSpec["type"][]; kinds: stri
   {
     label: "流程",
     types: ["activity", "flowchart", "swimlane"],
-    kinds: ["action", "decision", "start", "end", "fork", "join", "terminal", "subroutine", "io", "hexagon", "circle", "trapezoid", "note"],
+    kinds: ["action", "decision", "start", "end", "fork", "join", "terminal", "subroutine", "io", "hexagon", "circle", "trapezoid", "note", "image"],
   },
-  { label: "用例", types: ["usecase"], kinds: ["actor", "usecase", "note"] },
-  { label: "类图", types: ["class"], kinds: ["class", "interface", "note"] },
-  { label: "状态", types: ["state"], kinds: ["state", "start", "end", "note"] },
+  { label: "用例", types: ["usecase"], kinds: ["actor", "usecase", "note", "image"] },
+  { label: "类图", types: ["class"], kinds: ["class", "interface", "note", "image"] },
+  { label: "状态", types: ["state"], kinds: ["state", "start", "end", "note", "image"] },
   {
     label: "架构",
     types: ["component", "package", "deployment", "architecture", "module", "logical", "development", "process", "physical", "scenario"],
-    kinds: ["component", "package", "database", "server", "queue", "node", "note"],
+    kinds: ["component", "package", "database", "server", "queue", "node", "note", "image"],
   },
 ];
 const kindLabels: Record<string, string> = {
@@ -155,6 +176,7 @@ const kindLabels: Record<string, string> = {
   package: "包", database: "数据库", server: "服务器", queue: "队列", state: "状态",
   note: "注释", terminal: "起止胶囊", subroutine: "子流程", io: "输入输出",
   hexagon: "六边形", circle: "圆形", trapezoid: "梯形", node: "部署节点",
+  image: "图片",
   flow: "流程", association: "关联", dependency: "依赖", include: "包含", extend: "扩展",
   inheritance: "继承", realization: "实现", aggregation: "聚合", composition: "组合",
   sync: "同步", async: "异步", return: "返回", create: "创建", destroy: "销毁",
@@ -185,13 +207,32 @@ const message = computed(() => (target.value?.kind === "message" ? (item.value a
 const participant = computed(() => (target.value?.kind === "participant" ? (item.value as Participant) : undefined));
 const fragment = computed(() => (target.value?.kind === "fragment" ? (item.value as Fragment) : undefined));
 
+const imageSrcSummary = computed(() => {
+  const src = node.value?.src;
+  if (!src) return "";
+  const mime = /^data:image\/[^;,]+/.exec(src)?.[0] ?? "data:image/…";
+  return `${mime.replace("data:", "")} · 约 ${Math.round((src.length * 3) / 4 / 1024)} KB`;
+});
+function numberField<K extends string>(field: K) {
+  return (event: Event) => {
+    const raw = (event.target as HTMLInputElement).value;
+    const value = Number(raw);
+    dpatch((item: Record<K, unknown>) => {
+      if (raw === "" || !Number.isFinite(value)) delete item[field];
+      else item[field] = Math.min(10000, Math.max(8, Math.round(value)));
+    });
+  };
+}
 function setTitle(event: Event): void {
   const value = (event.target as HTMLInputElement).value.trim();
-  if (value) props.onUpdate((spec) => void (spec.title = value));
+  if (value)
+    (props.onUpdateDebounced ?? props.onUpdate)(
+      (spec) => void (spec.title = value),
+    );
 }
 function setDescription(event: Event): void {
   const value = (event.target as HTMLTextAreaElement).value;
-  props.onUpdate((spec) => {
+  (props.onUpdateDebounced ?? props.onUpdate)((spec) => {
     if (value === "") delete spec.description;
     else spec.description = value;
   });
@@ -241,14 +282,23 @@ function removeSelection(): void {
         <!-- 节点 -->
         <template v-if="target.kind === 'node' && node">
           <label class="inspector-field"><span>名称</span
-            ><input class="text-input" type="text" :value="node.label" :disabled="loading" @input="patch((n: DiagramNode) => (n.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="node.label" :disabled="loading" @input="dpatch((n: DiagramNode) => (n.label = ($event.target as HTMLInputElement).value))" /></label>
           <label class="inspector-field"><span>类型</span
             ><span class="select-wrap"><VSelect class="select-input" :value="node.kind ?? ''" :disabled="loading" @change="text('kind')($event)">
               <option value="">默认</option>
               <option v-for="kind in nodeKinds" :key="kind" :value="kind">{{ kindLabels[kind] ?? kind }} · {{ kind }}</option>
             </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
           <label class="inspector-field"><span>详情</span
-            ><textarea class="text-input" rows="2" :value="node.detail ?? ''" :disabled="loading" @input="text('detail')($event)" /></label>
+            ><textarea class="text-input" rows="2" :value="node.detail ?? ''" :disabled="loading" @input="dtext('detail')($event)" /></label>
+          <template v-if="node.kind === 'image'">
+            <div class="inspector-row">
+              <label class="inspector-field"><span>图片宽度</span
+                ><input class="text-input" type="number" min="8" max="10000" :value="node.width ?? 240" :disabled="loading" @input="numberField('width')($event)" /></label>
+              <label class="inspector-field"><span>图片高度</span
+                ><input class="text-input" type="number" min="8" max="10000" :value="node.height ?? 160" :disabled="loading" @input="numberField('height')($event)" /></label>
+            </div>
+            <p class="inspector-hint">内嵌图片：{{ imageSrcSummary || '未设置 src' }}。在画布中 Ctrl+V 可粘贴新图片。</p>
+          </template>
           <label v-if="groups.length" class="inspector-field"><span>所属分组</span
             ><span class="select-wrap"><VSelect class="select-input" :value="node.group ?? ''" :disabled="loading" @change="patch((n: DiagramNode) => { const v = ($event.target as HTMLSelectElement).value; if (v) { n.group = v; delete n.lane; } else delete n.group; })">
               <option value="">无分组</option>
@@ -271,7 +321,7 @@ function removeSelection(): void {
         <template v-else-if="target.kind === 'edge' && edge">
           <p class="inspector-route">{{ edge.from }} → {{ edge.to }}</p>
           <label class="inspector-field"><span>标签</span
-            ><input class="text-input" type="text" :value="edge.label ?? ''" :disabled="loading" @input="text('label')($event)" /></label>
+            ><input class="text-input" type="text" :value="edge.label ?? ''" :disabled="loading" @input="dtext('label')($event)" /></label>
           <label class="inspector-field"><span>关系类型</span
             ><span class="select-wrap"><VSelect class="select-input" :value="edge.kind ?? ''" :disabled="loading" @change="text('kind')($event)">
               <option value="">默认 · 流程</option>
@@ -291,9 +341,9 @@ function removeSelection(): void {
           </div>
           <div class="inspector-row">
             <label class="inspector-field"><span>起点标签</span
-              ><input class="text-input" type="text" :value="edge.fromLabel ?? ''" :disabled="loading" @input="text('fromLabel')($event)" /></label>
+              ><input class="text-input" type="text" :value="edge.fromLabel ?? ''" :disabled="loading" @input="dtext('fromLabel')($event)" /></label>
             <label class="inspector-field"><span>终点标签</span
-              ><input class="text-input" type="text" :value="edge.toLabel ?? ''" :disabled="loading" @input="text('toLabel')($event)" /></label>
+              ><input class="text-input" type="text" :value="edge.toLabel ?? ''" :disabled="loading" @input="dtext('toLabel')($event)" /></label>
           </div>
           <label class="inspector-check"><input type="checkbox" :checked="edge.dashed === true" :disabled="loading" @change="check('dashed')($event)" /><span>虚线</span></label>
           <label class="inspector-check"><input type="checkbox" :checked="edge.thick === true" :disabled="loading" @change="check('thick')($event)" /><span>粗线</span></label>
@@ -303,7 +353,7 @@ function removeSelection(): void {
         <!-- 分组 / 泳道 -->
         <template v-else-if="target.kind === 'group'">
           <label class="inspector-field"><span>名称</span
-            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="patch((g: { label: string }) => (g.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="dpatch((g: { label: string }) => (g.label = ($event.target as HTMLInputElement).value))" /></label>
           <label class="inspector-field"><span>容器类型</span
             ><span class="select-wrap"><VSelect class="select-input" :value="(item as { kind?: string }).kind ?? ''" :disabled="loading" @change="text('kind')($event)">
               <option value="">默认边界</option>
@@ -312,13 +362,13 @@ function removeSelection(): void {
         </template>
         <template v-else-if="target.kind === 'lane'">
           <label class="inspector-field"><span>泳道名称</span
-            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="patch((g: { label: string }) => (g.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="dpatch((g: { label: string }) => (g.label = ($event.target as HTMLInputElement).value))" /></label>
         </template>
 
         <!-- 参与者 -->
         <template v-else-if="target.kind === 'participant' && participant">
           <label class="inspector-field"><span>名称</span
-            ><input class="text-input" type="text" :value="participant.label" :disabled="loading" @input="patch((p: Participant) => (p.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="participant.label" :disabled="loading" @input="dpatch((p: Participant) => (p.label = ($event.target as HTMLInputElement).value))" /></label>
           <label class="inspector-field"><span>类型</span
             ><span class="select-wrap"><VSelect class="select-input" :value="participant.kind ?? ''" :disabled="loading" @change="text('kind')($event)">
               <option value="">默认参与者</option>
@@ -330,7 +380,7 @@ function removeSelection(): void {
         <template v-else-if="target.kind === 'message' && message">
           <p v-if="message.from || message.to" class="inspector-route">{{ message.from }} → {{ message.to }}</p>
           <label class="inspector-field"><span>标签</span
-            ><input class="text-input" type="text" :value="message.label" :disabled="loading" @input="patch((m: Message) => (m.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="message.label" :disabled="loading" @input="dpatch((m: Message) => (m.label = ($event.target as HTMLInputElement).value))" /></label>
           <label class="inspector-field"><span>消息类型</span
             ><span class="select-wrap"><VSelect class="select-input" :value="message.kind ?? ''" :disabled="loading" @change="text('kind')($event)">
               <option value="">默认 · 同步</option>
@@ -363,14 +413,14 @@ function removeSelection(): void {
               <option v-for="kind in fragmentKinds" :key="kind" :value="kind">{{ kindLabels[kind] ?? kind }}</option>
             </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></label>
           <label class="inspector-field"><span>标签</span
-            ><input class="text-input" type="text" :value="fragment.label" :disabled="loading" @input="patch((f: Fragment) => (f.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="fragment.label" :disabled="loading" @input="dpatch((f: Fragment) => (f.label = ($event.target as HTMLInputElement).value))" /></label>
           <p class="inspector-hint">片段范围（覆盖第 {{ fragment.from + 1 }}–{{ fragment.to + 1 }} 条消息）请在“完整编辑”中调整。</p>
         </template>
 
         <!-- 参与者分组框 -->
         <template v-else-if="target.kind === 'box'">
           <label class="inspector-field"><span>名称</span
-            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="patch((b: { label: string }) => (b.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="dpatch((b: { label: string }) => (b.label = ($event.target as HTMLInputElement).value))" /></label>
           <div class="inspector-colors">
             <ColorInput :model-value="(item as { color?: string }).color ?? ''" label="框颜色" allow-transparent @update:model-value="patch((b: { color?: string }) => { if ($event) b.color = $event; else delete b.color; })" />
           </div>
@@ -379,12 +429,12 @@ function removeSelection(): void {
         <!-- 鱼骨图 -->
         <template v-else-if="target.kind === 'category' || target.kind === 'cause'">
           <label class="inspector-field"><span>{{ target.kind === 'category' ? '分类名称' : '原因' }}</span
-            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="patch((c: { label: string }) => (c.label = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="(item as { label: string }).label" :disabled="loading" @input="dpatch((c: { label: string }) => (c.label = ($event.target as HTMLInputElement).value))" /></label>
           <p v-if="target.kind === 'cause'" class="inspector-hint">子原因（分叉分支）请在“完整编辑”中调整。</p>
         </template>
         <template v-else-if="target.kind === 'effect'">
           <label class="inspector-field"><span>鱼头结果</span
-            ><input class="text-input" type="text" :value="(item as { effect: string }).effect" :disabled="loading" @input="patch((f: { effect: string }) => (f.effect = ($event.target as HTMLInputElement).value))" /></label>
+            ><input class="text-input" type="text" :value="(item as { effect: string }).effect" :disabled="loading" @input="dpatch((f: { effect: string }) => (f.effect = ($event.target as HTMLInputElement).value))" /></label>
         </template>
 
         <div class="inspector-actions">

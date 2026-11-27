@@ -28,6 +28,11 @@ export function validateSpec(value: unknown): DiagramSpec {
   }
   for (const lane of spec.lanes ?? []) if (nodes.has(lane.id)) throw new Error(`泳道 ID 与节点冲突：${lane.id}`)
   for (const node of spec.nodes ?? []) {
+    if (node.src !== undefined) {
+      if (!node.src.startsWith('data:image/')) throw new Error(`图片节点 ${node.id} 的 src 只支持 data:image/ 开头的内嵌图片`)
+      if (node.src.length > 7_340_032) throw new Error(`图片节点 ${node.id} 的图片超过约 5MB 上限，请压缩后再粘贴`)
+    }
+    if (node.kind === 'image' && !node.src) throw new Error(`图片节点 ${node.id} 缺少 src 图片内容`)
     if (node.group && !groups.has(node.group)) throw new Error(`节点 ${node.id} 的分组不存在：${node.group}`)
     if (node.lane && !lanes.has(node.lane)) throw new Error(`节点 ${node.id} 的泳道不存在：${node.lane}`)
     if (node.group && node.lane) throw new Error(`节点 ${node.id} 不能同时设置 group 和 lane`)

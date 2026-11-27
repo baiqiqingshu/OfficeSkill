@@ -186,6 +186,13 @@ function createNode(node: DiagramNode, index: number, spec: DiagramSpec, base: T
     width = height = Math.max(theme.nodeHeight, contentWidth + 28, contentHeight + 28);
   }
   let symbol: Rect | undefined, internalCaption: LabelBox | undefined;
+  if (kind === 'image') {
+    const iw = Math.max(16, node.width ?? 240);
+    const ih = Math.max(16, node.height ?? 160);
+    width = Math.max(iw, contentWidth + 24);
+    symbol = { x: (width - iw) / 2, y: 0, width: iw, height: ih };
+    height = ih + label.height + 16;
+  }
   if ((spec.layout?.nodeMaxWidth || spec.layout?.nodeMaxHeight) && ['start', 'end', 'fork', 'join'].includes(kind)) {
     const value = [node.stereotype ? `«${node.stereotype}»` : '', node.label, node.detail].filter(Boolean).join('\n');
     const captionSize = Math.max(10, theme.fontSize - 2), metrics = measure(value, captionSize);
@@ -1321,6 +1328,15 @@ function renderNode(box: NodeBox, spec: DiagramSpec, adjustmentMetadata = true):
   } else if (kind === 'note') {
     shape = `<path d="M${numeric(x)} ${numeric(y)} H${numeric(x + w - 18)} L${numeric(x + w)} ${numeric(y + 18)} V${numeric(y + h)} H${numeric(x)} Z" ${common}/><path d="M${numeric(x + w - 18)} ${numeric(y)} V${numeric(y + 18)} H${numeric(x + w)}" fill="none" stroke="${stroke}"/>`;
     content = centeredContent(ref, x + 6, y + 10, w - 18, h - 16);
+  } else if (kind === 'image') {
+    const ix = symbolX, iy = symbolY, iw = symbol.width, ih = symbol.height;
+    const radius = Math.min(10, theme.radius + 2);
+    const clip = `uml-image-clip-${esc(node.id)}`;
+    const frameRect = `<rect x="${numeric(ix)}" y="${numeric(iy)}" width="${numeric(iw)}" height="${numeric(ih)}" rx="${numeric(radius)}"`;
+    shape = `<defs><clipPath id="${clip}">${frameRect}/></clipPath></defs>${frameRect} fill="${surface}"/>`
+      + (node.src ? `<image href="${esc(node.src)}" x="${numeric(ix)}" y="${numeric(iy)}" width="${numeric(iw)}" height="${numeric(ih)}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clip})"/>` : '')
+      + `${frameRect} fill="none" stroke="${stroke}" stroke-width="${numeric(Math.max(1, theme.lineWidth * 0.9))}"/>`;
+    content = text(x + w / 2, iy + ih + 10 + theme.fontSize, node.label, theme, { weight: 550 });
   } else {
     const radius = kind === 'state' ? Math.max(12, theme.radius) : kind === 'action' && ['activity', 'swimlane', 'process', 'scenario'].includes(spec.type) ? Math.max(14, theme.radius) : theme.radius;
     shape = `${rect} rx="${numeric(radius)}" ${common}/>`;

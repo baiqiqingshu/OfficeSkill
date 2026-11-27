@@ -12,8 +12,10 @@ export interface Theme {
 }
 export interface DiagramNode {
   id: string; label: string
-  kind?: 'action' | 'decision' | 'start' | 'end' | 'fork' | 'join' | 'actor' | 'usecase' | 'class' | 'interface' | 'component' | 'package' | 'database' | 'server' | 'queue' | 'state' | 'note'
+  kind?: 'action' | 'decision' | 'start' | 'end' | 'fork' | 'join' | 'actor' | 'usecase' | 'class' | 'interface' | 'component' | 'package' | 'database' | 'server' | 'queue' | 'state' | 'note' | 'image'
     | 'terminal' | 'subroutine' | 'io' | 'hexagon' | 'circle' | 'trapezoid'
+  /** kind 'image'：data:image/ URL；width/height 为期望显示尺寸（缺省 240×160）。 */
+  src?: string; width?: number; height?: number
   detail?: string; stereotype?: string; attributes?: string[]; operations?: string[]; group?: string; lane?: string; style?: Partial<Theme>
 }
 export interface DiagramEdge {
