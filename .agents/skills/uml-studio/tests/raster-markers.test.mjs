@@ -31,12 +31,13 @@ test('native raster arrowheads follow horizontal, vertical and diagonal relation
   const sequence = await renderDiagram({ version: 1, type: 'sequence', title: '返回与自调用', participants: [{ id: 'a', label: '调用方' }, { id: 'b', label: '服务' }], messages: [{ from: 'b', to: 'a', label: '返回', kind: 'return' }, { from: 'b', to: 'b', label: '自调用' }] })
   const graph = await renderDiagram({ version: 1, type: 'class', title: '关系方向', nodes: [{ id: 'a', label: '整体' }, { id: 'b', label: '部分' }], edges: [{ from: 'a', to: 'b', kind: 'composition' }] })
   const markers = [...`${sequence.svg}${graph.svg}`.matchAll(/<marker\b[\s\S]*?<\/marker>/g)].map(match => match[0])
-  assert.equal(markers.length, 16)
+  // Each family ships a secondary-colour (-sec) copy for dashed multicolor edges: 2 × (4 sequence + 12 graph).
+  assert.equal(markers.length, 32)
   for (const marker of markers) {
     const id = marker.match(/\bid="([^"]+)"/)[1]
     // Circle and cross ends are symmetric; direction checks only apply to pointed markers.
-    if (/-(?:circle|cross)(?:-start)?$/.test(id)) continue
-    const position = /-(?:aggregation|composition|start)$/.test(id) ? 'start' : 'end'
+    if (/-(?:circle|cross)(?:-start)?(?:-sec)?$/.test(id)) continue
+    const position = /-(?:aggregation|composition|start)(?:-sec)?$/.test(id) ? 'start' : 'end'
     await context.test(id, () => {
       for (const direction of directions) {
         const { ahead, behind } = markerPixels(marker, position, direction)

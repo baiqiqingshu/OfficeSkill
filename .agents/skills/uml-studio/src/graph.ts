@@ -1149,7 +1149,7 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
           const x = attach === 'left' ? bounds.x : attach === 'right' ? bounds.x + bounds.width : bounds.x + bounds.width * 0.5;
           const y = attach === 'top' ? bounds.y : attach === 'bottom' ? bounds.y + bounds.height : bounds.y + bounds.height * 0.5;
           const c = nodeClearance.get(box) ?? baseClearance;
-          let distance = Math.max(c + 2, Math.min(24, Math.round(theme.gap * 0.4)));
+          let distance = Math.max(c + 2, Math.min(24, Math.round(theme.gap * 0.5)));
           for (const container of result.containers) {
             if (box.x < container.x || box.x + box.width > container.x + container.width || box.y < container.y || box.y + box.height > container.y + container.height) continue;
             const toEdge = attach === 'right' ? (container.x + container.width) - (box.x + box.width)

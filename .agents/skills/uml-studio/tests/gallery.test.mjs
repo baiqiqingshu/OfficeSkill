@@ -44,7 +44,8 @@ test('complex node scenarios survive all four layout modes in both directions', 
 test('complex interactions retain every message, fragment and database cylinder', async () => {
   const spec = gallery.diagrams.find(item => item.type === 'sequence')
   const { svg } = results.get(spec.id) ?? await renderDiagram(spec)
-  const arrows = [...svg.matchAll(/<path\b[^>]*marker-end="url\(#[^\"]*-seq-(?:filled|open)\)"/g)]
+  // Dashed messages use the secondary-colour marker family (-sec) in multicolor themes.
+  const arrows = [...svg.matchAll(/<path\b[^>]*marker-end="url\(#[^\"]*-seq-(?:filled|open)(?:-sec)?\)"/g)]
   assert.equal(arrows.length, spec.messages.length)
   assert.equal([...svg.matchAll(/<ellipse\b/g)].length, spec.participants.filter(participant => participant.kind === 'database').length)
   for (const kind of ['sync', 'async', 'return', 'create', 'destroy']) assert.ok(spec.messages.some(message => message.kind === kind))
