@@ -29,7 +29,7 @@ function geometry(svg) {
         assert.ok(!/[CQ]/i.test(d), 'routes must be polylines')
         return [...d.matchAll(/[ML]([\d.-]+) ([\d.-]+)/g)].map(([, x, y]) => ({ x: +x, y: +y }))
       })
-      routes.push({ from, to, paths })
+      routes.push({ from, to, paths, merged: /data-merged="true"/.test(tag) })
     }
   }
   return { nodes, containers, routes }
@@ -52,9 +52,25 @@ function assertRoutes(graph, edges) {
         assert.ok(!crosses, `${route.from} → ${route.to} crosses ${id}`)
       }
     }
-    for (const [point, id] of [[path[0], route.from], [path.at(-1), route.to]]) {
+    const endpoints = route.merged ? [[path[0], route.from]] : [[path[0], route.from], [path.at(-1), route.to]]
+    for (const [point, id] of endpoints) {
       const box = graph.nodes.get(id)
       assert.ok(point.x >= box.x - 1 && point.x <= box.x + box.width + 1 && point.y >= box.y - 1 && point.y <= box.y + box.height + 1, `detached endpoint ${id}`)
+    }
+    if (route.merged) {
+      const end = path.at(-1)
+      const joined = graph.routes.some(other => other !== route && other.paths[0].some((b, i) => {
+        if (!i) return false
+        const a = other.paths[0][i - 1]
+        const horizontal = Math.abs(a.y - b.y) < .01
+        const lo = horizontal ? Math.min(a.x, b.x) : Math.min(a.y, b.y)
+        const hi = horizontal ? Math.max(a.x, b.x) : Math.max(a.y, b.y)
+        const fixed = horizontal ? a.y : a.x
+        const at = horizontal ? end.x : end.y
+        const off = horizontal ? end.y : end.x
+        return Math.abs(off - fixed) < .01 && at >= lo - .01 && at <= hi + .01
+      }))
+      assert.ok(joined, `${route.from} → ${route.to} merged end must join another route`)
     }
   }
 }

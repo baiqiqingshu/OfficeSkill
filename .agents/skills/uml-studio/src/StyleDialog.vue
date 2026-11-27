@@ -373,8 +373,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKeydown));
 .style-dialog {
   display: flex;
   flex-direction: column;
-  width: min(760px, 100%);
-  max-height: min(760px, calc(100vh - 48px));
+  width: min(1120px, 100%);
+  max-height: calc(100vh - 48px);
   background: var(--paper, #fff);
   border-radius: var(--r-lg, 16px);
   box-shadow: var(--shadow-lg, 0 20px 60px rgb(0 0 0 / 0.25));

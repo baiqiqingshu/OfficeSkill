@@ -41,7 +41,7 @@ interface ContainerRef {
 }
 interface ContainerBox extends Rect { ref: ContainerRef; depth: number }
 interface EdgeRef { id: string; key: string; edge: DiagramEdge; labels: { id: string; value: string; role: 'main' | 'from' | 'to'; width: number; height: number; size: number }[] }
-interface Route { ref: EdgeRef; paths: Point[][] }
+interface Route { ref: EdgeRef; paths: Point[][]; merged?: boolean }
 interface LabelBox extends Rect { value: string; size: number }
 interface EdgeLabelBox extends LabelBox { ref: EdgeRef; role: 'main' | 'from' | 'to'; anchor: Point; leader?: boolean }
 interface LayoutResult { nodes: NodeBox[]; containers: ContainerBox[]; routes: Route[]; width: number; height: number }
@@ -1269,6 +1269,120 @@ function routeEdges(edges: EdgeRef[], result: LayoutResult, direction: 'TB' | 'L
     usedEntries.add(best.entryKey);
     result.routes.push({ ref: item.ref, paths: [best.route] });
   }
+  // Fan-in merge: edges sharing one target port join the trunk route where they first
+  // come alongside it, instead of running parallel channels into the same entry point.
+  const faninGroups = new Map<string, number[]>();
+  routed.forEach((item, index) => {
+    if (!item.entryKey) return;
+    const list = faninGroups.get(item.entryKey) ?? [];
+    list.push(index);
+    faninGroups.set(item.entryKey, list);
+  });
+  const segMetrics = (a: Point, b: Point) => {
+    const horizontal = Math.abs(a.y - b.y) < 0.01;
+    return {
+      horizontal,
+      fixed: horizontal ? a.y : a.x,
+      lo: horizontal ? Math.min(a.x, b.x) : Math.min(a.y, b.y),
+      hi: horizontal ? Math.max(a.x, b.x) : Math.max(a.y, b.y),
+      dir: horizontal ? Math.sign(b.x - a.x) : Math.sign(b.y - a.y),
+      coord: (p: Point) => horizontal ? p.x : p.y,
+    };
+  };
+  const jogClear = (a: Point, b: Point): boolean => {
+    const horizontal = Math.abs(a.y - b.y) < 0.01;
+    return !obstacles.some(obstacle => {
+      const lo = horizontal ? Math.min(a.x, b.x) : Math.min(a.y, b.y);
+      const hi = horizontal ? Math.max(a.x, b.x) : Math.max(a.y, b.y);
+      const fixed = horizontal ? a.y : a.x;
+      const oLo = horizontal ? obstacle.x : obstacle.y;
+      const oHi = horizontal ? obstacle.x + obstacle.width : obstacle.y + obstacle.height;
+      const oFixedLo = horizontal ? obstacle.y : obstacle.x;
+      const oFixedHi = horizontal ? obstacle.y + obstacle.height : obstacle.x + obstacle.width;
+      return fixed > oFixedLo + 0.5 && fixed < oFixedHi - 0.5 && hi > oLo + 0.5 && lo < oHi - 0.5;
+    });
+  };
+  for (const indexes of faninGroups.values()) {
+    if (indexes.length < 2) continue;
+    const lengthOf = (index: number) => {
+      const path = result.routes[index].paths[0];
+      let total = 0;
+      for (let i = 1; i < path.length; i++) total += Math.abs(path[i].x - path[i - 1].x) + Math.abs(path[i].y - path[i - 1].y);
+      return total;
+    };
+    const trunkIndex = indexes.reduce((bestIndex, index) => lengthOf(index) < lengthOf(bestIndex) ? index : bestIndex);
+    const trunkRoute = result.routes[trunkIndex];
+    if (trunkRoute.paths.length !== 1) continue;
+    const trunk = trunkRoute.paths[0];
+    for (const index of indexes) {
+      if (index === trunkIndex) continue;
+      const branchRoute = result.routes[index];
+      if (branchRoute.paths.length !== 1) continue;
+      if ((adjustments?.edges?.[branchRoute.ref.key]?.waypoints ?? []).length) continue;
+      const branch = branchRoute.paths[0];
+      let mergedPath: Point[] | undefined;
+      for (let bi = 1; bi < branch.length && !mergedPath; bi++) {
+        const ba = branch[bi - 1], bb = branch[bi];
+        const bInfo = segMetrics(ba, bb);
+        if (!bInfo.dir) continue;
+        for (let ti = 1; ti < trunk.length; ti++) {
+          const ta = trunk[ti - 1], tb = trunk[ti];
+          const tInfo = segMetrics(ta, tb);
+          if (!tInfo.dir) continue;
+          let junction: Point | undefined;
+          let branchEnd: Point | undefined;
+          let needsJog = false;
+          if (bInfo.horizontal !== tInfo.horizontal) {
+            // Perpendicular contact: branch may end where it meets the trunk.
+            const x = bInfo.horizontal ? tInfo.fixed : bInfo.fixed;
+            const y = bInfo.horizontal ? bInfo.fixed : tInfo.fixed;
+            const onB = bInfo.coord({ x, y }) >= bInfo.lo - 0.01 && bInfo.coord({ x, y }) <= bInfo.hi + 0.01;
+            const onT = tInfo.coord({ x, y }) >= tInfo.lo - 0.01 && tInfo.coord({ x, y }) <= tInfo.hi + 0.01;
+            if (!onB || !onT) continue;
+            // Perpendicular crossings inside the shared suffix or at the final port are not merges.
+            if (Math.abs(x - branch[branch.length - 1].x) < 0.01 && Math.abs(y - branch[branch.length - 1].y) < 0.01) continue;
+            junction = { x, y };
+            branchEnd = { x, y };
+          } else if (Math.abs(bInfo.fixed - tInfo.fixed) < 0.01) {
+            // Collinear overlap: the branch reaches the trunk line itself.
+            const lo = Math.max(bInfo.lo, tInfo.lo), hi = Math.min(bInfo.hi, tInfo.hi);
+            if (hi - lo < 0.01) continue;
+            const at = bInfo.dir > 0 ? lo : hi;
+            // Skipping ahead to overlap inside the shared suffix is pointless.
+            branchEnd = bInfo.horizontal ? { x: at, y: bInfo.fixed } : { x: bInfo.fixed, y: at };
+            junction = { ...branchEnd };
+          } else {
+            // Parallel channels: jog across only when close, overlapping and unobstructed.
+            const distanceApart = Math.abs(bInfo.fixed - tInfo.fixed);
+            if (distanceApart < 2 || distanceApart > 72 || bInfo.dir !== tInfo.dir) continue;
+            const lo = Math.max(bInfo.lo, tInfo.lo), hi = Math.min(bInfo.hi, tInfo.hi);
+            if (hi - lo < 16) continue;
+            const at = bInfo.dir > 0 ? lo + 1 : hi - 1;
+            branchEnd = bInfo.horizontal ? { x: at, y: bInfo.fixed } : { x: bInfo.fixed, y: at };
+            junction = bInfo.horizontal ? { x: at, y: tInfo.fixed } : { x: tInfo.fixed, y: at };
+            if (!jogClear(branchEnd, junction)) continue;
+            needsJog = true;
+          }
+          // The merge must not land inside the shared suffix nor past the branch segment.
+          const along = bInfo.coord(branchEnd);
+          const alongFlow = bInfo.dir > 0 ? along - bInfo.coord(ba) : bInfo.coord(ba) - along;
+          if (alongFlow < -0.01) continue;
+          const clamped = bInfo.dir > 0 ? Math.min(along, bInfo.hi) : Math.max(along, bInfo.lo);
+          if (clamped !== along) continue;
+          mergedPath = [...branch.slice(0, bi - 1), ba];
+          if (Math.abs(ba.x - branchEnd.x) > 0.01 || Math.abs(ba.y - branchEnd.y) > 0.01) mergedPath.push(branchEnd);
+          if (needsJog) mergedPath.push(junction);
+          mergedPath = simplify(mergedPath);
+          if (mergedPath.length < 2) mergedPath = undefined;
+          break;
+        }
+      }
+      if (mergedPath) {
+        branchRoute.paths = [mergedPath];
+        branchRoute.merged = true;
+      }
+    }
+  }
 }
 
 function clipEndpoint(point: Point, neighbor: Point, box: NodeBox): void {
@@ -2301,7 +2415,7 @@ interface GraphBaseline {
   nodes: (Omit<NodeBox, 'ref'> & { id: string })[];
   containers: ContainerBox[];
   width: number; height: number;
-  routes: { edge: number; paths: Point[][] }[];
+  routes: { edge: number; paths: Point[][]; merged?: boolean }[];
   labels: (Omit<EdgeLabelBox, 'ref'> & { edge: number })[];
 }
 interface BaselineContext { key: string; entry?: GraphBaseline }
@@ -2373,7 +2487,7 @@ function snapshotBaseline(result: LayoutResult, edges: EdgeRef[], labels: EdgeLa
     nodes: result.nodes.map(({ ref, caption, ...box }) => ({ ...box, id: ref.id, caption: caption ? { ...caption } : undefined })),
     containers: result.containers.map(box => ({ ...box, ref: { ...box.ref } })),
     width: result.width, height: result.height,
-    routes: result.routes.map(route => ({ edge: edges.indexOf(route.ref), paths: clonePaths(route.paths) })),
+    routes: result.routes.map(route => ({ edge: edges.indexOf(route.ref), paths: clonePaths(route.paths), merged: route.merged })),
     labels: labels.map(({ ref, anchor, ...label }) => ({ ...label, anchor: { ...anchor }, edge: edges.indexOf(ref) })),
   };
 }
@@ -2483,7 +2597,7 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
   if (cached) {
     // The baseline routes/labels are only displayed when nothing is adjusted.
     if (!hasManualPositions) {
-      result.routes = cached.routes.map(route => ({ ref: edges[route.edge], paths: clonePaths(route.paths) }));
+      result.routes = cached.routes.map(route => ({ ref: edges[route.edge], paths: clonePaths(route.paths), merged: route.merged }));
       labels = cached.labels.map(({ edge, anchor, ...label }) => ({ ...label, anchor: { ...anchor }, ref: edges[edge] }));
     }
   } else {
@@ -2551,7 +2665,7 @@ async function renderGraphWithSpacing(spec: DiagramSpec, suppliedTheme: Theme, l
     const end = edge.arrow ? (edge.arrow === 'none' ? '' : edge.arrow) : defaultEnd;
     const start = edge.startArrow ? (edge.startArrow === 'none' ? '' : `${edge.startArrow}-start`) : kind === 'aggregation' || kind === 'composition' ? kind : '';
     const strokeWidth = theme.lineWidth * (edge.thick ? 2 : 1);
-    paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges!.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
+    paths += `<g class="uml-edge uml-edge-${kind}" data-waypoint-key="${esc(route.ref.key)}" data-waypoints="${esc(JSON.stringify(manual?.edges?.[route.ref.key]?.waypoints ?? []))}" data-editor-key="edges/${spec.edges!.indexOf(route.ref.edge)}" data-edge-id="${esc(route.ref.edge.id ?? route.ref.id)}" data-from="${esc(route.ref.edge.from)}" data-to="${esc(route.ref.edge.to)}"${route.merged ? ' data-merged="true"' : ''}><title>${esc([route.ref.edge.from, route.ref.edge.label, route.ref.edge.to].filter(Boolean).join(' → '))}</title>`;
     for (let index = 0; index < route.paths.length; index++) {
       const current = displayIndex++, data = crossings.data[current];
       const mask = crossings.masks[current].length ? ` mask="url(#${prefix}-crossing-${current})"` : '';

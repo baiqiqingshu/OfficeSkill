@@ -34,13 +34,14 @@ import {
 } from "./filesystem-save";
 import type { LocalDirectory, LocalHtmlTarget } from "./filesystem-save";
 import { isMermaidSource, mermaidToDocument } from "./mermaid";
-import { resolveTheme, themeLabels, themes } from "./themes";
+import { layoutModes, resolveTheme, themeLabels, themes } from "./themes";
 import { normalizeDocument, validateDocument } from "./document";
 import { validateSpec } from "./validate";
 import type {
   DiagramDocument,
   DiagramEdge,
   DiagramInput,
+  DiagramLayoutOptions,
   DiagramNode,
   DiagramSpec,
   DiagramType,
@@ -569,6 +570,31 @@ function selectTheme(name: ThemeName): void {
   void updateSpec((spec) => {
     spec.theme = name;
     delete spec.style;
+  });
+}
+const graphDiagram = computed(
+  () => applied.value.type !== "sequence" && applied.value.type !== "fishbone",
+);
+const staggerSupported = computed(() =>
+  ["activity", "flowchart", "swimlane"].includes(applied.value.type),
+);
+const layoutMode = computed(() => applied.value.layout?.mode ?? "balanced");
+const horizontalStagger = computed(() => applied.value.layout?.horizontalStagger === true);
+/* 与样式弹框一致：切换模式恢复该模式间距，保留尺寸上限等设置。 */
+function selectLayoutMode(mode: string): void {
+  void updateSpec((spec) => {
+    spec.layout = { ...spec.layout, mode: mode as NonNullable<DiagramLayoutOptions["mode"]> };
+    delete spec.layout.elementGap;
+    delete spec.layout.regionGap;
+    if (spec.style) {
+      delete spec.style.gap;
+      if (!Object.keys(spec.style).length) delete spec.style;
+    }
+  });
+}
+function toggleHorizontalStagger(): void {
+  void updateSpec((spec) => {
+    spec.layout = { ...spec.layout, horizontalStagger: !horizontalStagger.value };
   });
 }
 async function applyPositionChange(change: (spec: DiagramSpec) => void): Promise<boolean> {
@@ -2339,6 +2365,31 @@ defineExpose({
                 复位
               </button>
             </div>
+            <template v-if="graphDiagram">
+              <span class="float-divider"></span>
+              <div class="float-group">
+                <span class="float-select"><span class="select-wrap"><VSelect
+                  class="select-input"
+                  aria-label="布局模式"
+                  title="布局模式：切换会恢复该模式的元素 / 区域间距"
+                  :value="layoutMode"
+                  @change="selectLayoutMode(($event.target as HTMLSelectElement).value)"
+                >
+                  <option v-for="mode in layoutModes" :key="mode.value" :value="mode.value">{{ mode.label }}</option>
+                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></span>
+                <button
+                  v-if="staggerSupported"
+                  class="float-button"
+                  type="button"
+                  :aria-pressed="horizontalStagger"
+                  :title="horizontalStagger ? '横向相连元素沿流程方向错开：已开启，点击关闭以优先保持水平连接' : '横向相连元素沿流程方向错开：已关闭，点击开启'"
+                  @click="toggleHorizontalStagger"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h7M13 7h7M4 17h7m4 0h5"/><path d="m16 4 3 3-3 3M8 14l-3 3 3 3"/></svg>
+                  错开
+                </button>
+              </div>
+            </template>
           </div>
           <div class="canvas-float-export" role="toolbar" aria-label="导出当前图">
             <span class="export-format"><span class="select-wrap"><VSelect
@@ -3214,7 +3265,7 @@ input[type="range"], input[type="checkbox"], input[type="radio"] { accent-color:
 summary { list-style: none; }
 summary::-webkit-details-marker { display: none; }
 .visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
-.studio-shell { min-height: 100vh; color: var(--ink); }
+.studio-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: var(--ink); }
 .studio-header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 58px; padding: 0 20px; background: rgb(255 255 255 / .74); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); border-bottom: 1px solid var(--line); }
 .studio-header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--gradient-brand); pointer-events: none; }
 .studio-brand { display: flex; align-items: center; gap: 11px; color: var(--ink); text-decoration: none; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; white-space: nowrap; }
@@ -3247,8 +3298,8 @@ summary::-webkit-details-marker { display: none; }
 .danger-button { color: var(--danger); }
 .button-outline.danger-button:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger-line); }
 .mobile-menu-button, .sidebar-scrim { display: none; }
-.studio-body { display: flex; align-items: stretch; gap: 16px; min-height: calc(100vh - 60px); padding: 16px 18px 20px; }
-.studio-sidebar { position: sticky; top: 74px; align-self: flex-start; width: 270px; flex: none; max-height: calc(100vh - 92px); overflow-y: auto; padding: 2px 14px 16px; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.studio-body { display: flex; align-items: stretch; gap: 16px; flex: 1; min-height: 0; padding: 16px 18px 20px; }
+.studio-sidebar { position: sticky; top: 74px; align-self: flex-start; width: 270px; flex: none; max-height: 100%; overflow-y: auto; padding: 2px 14px 16px; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
 .sidebar-section { padding: 16px 0; }
 .section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
 .section-heading h2 { margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
@@ -3425,7 +3476,7 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .toast-enter-active, .toast-leave-active { transition: opacity .18s var(--ease), transform .18s var(--ease); }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%,-8px); }
 /* 画布去框：无卡片外框，状态徽标与缩放控件浮在画布上。 */
-.studio-shell .diagram-canvas { position: relative; height: calc(100vh - 92px); min-height: 560px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink); }
+.studio-shell .diagram-canvas { position: relative; flex: 1; min-height: 0; height: auto; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink); }
 .studio-shell .canvas-toolbar { position: absolute; z-index: 7; top: 12px; right: 14px; left: auto; min-height: 0; height: auto; padding: 0; background: transparent; border: 0; flex-wrap: nowrap; gap: 6px; pointer-events: none; }
 .studio-shell .canvas-toolbar > * { pointer-events: auto; }
 .studio-shell .canvas-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; background: rgb(255 255 255 / .85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: var(--r-pill); box-shadow: var(--shadow-md); color: var(--muted); font-size: 11px; white-space: nowrap; }
@@ -3484,7 +3535,6 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
   .studio-colors { grid-template-columns: 1fr; }
   .number-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
   .data-panel { height: 650px; }
-  .studio-shell .diagram-canvas { min-height: 520px; }
   .studio-shell .canvas-dimensions { display: none; }
   .json-actions > .button { flex-wrap: wrap; gap: 4px; }
 }
@@ -3492,6 +3542,8 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
   *,*::before,*::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 @media print {
+  .studio-shell { display: block; height: auto; overflow: visible; }
+  .studio-shell .diagram-canvas { height: 100vh; }
   .studio-header,.studio-sidebar,.workspace-heading,.workspace-meta,.export-toolbar,.data-panel,.workspace-footer,.studio-toast,.error-banner,.preview-style-panel { display: none !important; }
   .studio-main { padding: 0; background: #fff; }
   .workspace-panels.with-editor,.studio-body { display: block; }
@@ -3512,8 +3564,8 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .studio-main { display: flex; flex-direction: column; }
 .workspace-title { font-size: 14px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
 .workspace-meta { margin: 2px 0 12px; }
-.canvas-region { position: relative; flex: 1; min-height: 0; }
-.studio-inspector { position: sticky; top: 74px; align-self: flex-start; width: 288px; flex: none; max-height: calc(100vh - 92px); overflow-y: auto; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.canvas-region { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.studio-inspector { position: sticky; top: 74px; align-self: flex-start; width: 288px; flex: none; max-height: 100%; overflow-y: auto; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
 .sidebar-tabs { position: sticky; top: 0; z-index: 2; display: flex; gap: 4px; margin: 12px 0 0; padding: 4px; background: var(--paper-2); border-radius: var(--r-pill); }
 .sidebar-tabs > button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 30px; border: 0; border-radius: var(--r-pill); padding: 4px 8px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 550; }
 .sidebar-tabs > button:hover { color: var(--ink); }
@@ -3535,6 +3587,8 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .canvas-float-tools { left: 14px; }
 .canvas-float-export { right: 14px; }
 .float-group { display: flex; align-items: center; gap: 2px; }
+.float-select { width: 104px; flex: none; font-size: 12px; }
+.float-select .v-select-trigger { min-height: 30px; padding-block: 3px; font-size: 12px; }
 .float-divider { width: 1px; height: 20px; margin: 0 3px; background: var(--line); }
 .float-button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 5px 10px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink); font-size: 12px; font-weight: 550; white-space: nowrap; }
 .float-button > svg { width: 14px; height: 14px; flex: none; }

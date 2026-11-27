@@ -60,7 +60,7 @@ function geometry(svg) {
         if (command === 'A') arcs.push([points.at(-1), point])
         points.push(point)
       }
-      routes.set(attrs['data-edge-id'], { from: attrs['data-from'], to: attrs['data-to'], data, points, arcs })
+      routes.set(attrs['data-edge-id'], { from: attrs['data-from'], to: attrs['data-to'], data, points, arcs, merged: attrs['data-merged'] === 'true' })
     }
   }
   return { nodes, routes }
@@ -92,7 +92,23 @@ test('two and three branches share centered full-length stems in TB and LR, rega
       nodes: [{ id: 'hub', label: 'Hub', kind }, ...branches], edges: reverse ? edges.reverse() : edges,
       layout: { elementGap: 48, adjustments: { elements: { 'nodes/hub': { x: 400, y: 400 }, ...positions } } } })).svg)
     const box = nodes.get('hub'), ports = []
-    for (const { points, arcs } of routes.values()) {
+    const all = [...routes.values()]
+    const joinsTrunk = (point, own) => all.some(other => other !== own && !other.merged && other.points.some((b, i) => {
+      if (!i) return false
+      const a = other.points[i - 1]
+      const horizontal = Math.abs(a.y - b.y) < .01
+      const lo = horizontal ? Math.min(a.x, b.x) : Math.min(a.y, b.y)
+      const hi = horizontal ? Math.max(a.x, b.x) : Math.max(a.y, b.y)
+      const at = horizontal ? point.x : point.y
+      const off = horizontal ? point.y : point.x
+      return Math.abs(off - (horizontal ? a.y : a.x)) < .03 && at >= lo - .03 && at <= hi + .03
+    }))
+    for (const route of routes.values()) {
+      const { points, arcs } = route
+      if (incoming && route.merged) {
+        assert.ok(joinsTrunk(points.at(-1), route), `${context}: merged branch must join the shared trunk`)
+        continue
+      }
       const port = incoming ? points.at(-1) : points[0], neighbor = incoming ? points.at(-2) : points[1]
       ports.push(port)
       centered(port, box, context)
@@ -110,7 +126,8 @@ test('two and three branches share centered full-length stems in TB and LR, rega
       assert.ok(distance(port, neighbor) >= 23.99, `${context}: collapsed stem`)
       for (const arc of arcs) for (const point of arc) assert.ok(distance(point, port) > 24, `${context}: shared trunk must not gain a bridge`)
     }
-    assert.equal(ports.length, count)
+    assert.ok(ports.length >= 1, `${context}: at least the trunk reaches the hub`)
+    assert.ok(ports.length <= count)
     for (const port of ports) assert.deepEqual(port, ports[0], context)
   }
 })
