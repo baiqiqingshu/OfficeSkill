@@ -19,17 +19,18 @@ const emit = defineEmits<{ close: [] }>();
 const root = ref<HTMLElement>();
 const openChild = ref(-1);
 const flipped = ref(false);
+const pos = ref({ left: 0, top: 0 });
 
-const style = computed(() => ({ left: `${props.x}px`, top: `${props.y}px` }));
+const style = computed(() => ({ left: `${pos.value.left}px`, top: `${pos.value.top}px` }));
 
 function clamp(): void {
   const menu = root.value;
   if (!menu) return;
   const rect = menu.getBoundingClientRect();
-  if (rect.right > innerWidth - 8)
-    menu.style.left = `${Math.max(8, props.x - rect.width)}px`;
-  if (rect.bottom > innerHeight - 8)
-    menu.style.top = `${Math.max(8, innerHeight - rect.height - 8)}px`;
+  pos.value = {
+    left: Math.max(8, Math.min(props.x, innerWidth - rect.width - 8)),
+    top: Math.max(8, Math.min(props.y, innerHeight - rect.height - 8)),
+  };
   flipped.value = props.x + rect.width + 240 > innerWidth - 8;
 }
 
@@ -52,6 +53,7 @@ watch(
   () => [props.x, props.y],
   async () => {
     openChild.value = -1;
+    pos.value = { left: props.x, top: props.y };
     await nextTick();
     clamp();
   },
