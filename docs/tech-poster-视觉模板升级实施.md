@@ -363,7 +363,9 @@ node .agents/skills/tech-poster/scripts/poster.mjs .agents/skills/tech-poster/ex
 
 - 浅色企业技术简报：`temp/tech-poster-corporate-samples/01-internal-brief-light.html` / `.png`
 - 低调深色技术面板：`temp/tech-poster-corporate-samples/02-internal-panel-dark.html` / `.png`
-- PNG 尺寸均为 `1620×2354`（1080px CSS 宽，1.5x 导出）
+- 浅色 PNG 尺寸 `2160×3280`（1080×1640 CSS，2x 导出）
+- 深色 PNG 尺寸 `2160×3476`（1080×1738 CSS，2x 导出）
+- 评估 artifact 已更新为 version 2，采用子代理最终精修版样例
 
 设计调整：
 
