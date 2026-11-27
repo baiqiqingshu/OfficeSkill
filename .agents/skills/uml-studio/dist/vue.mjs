@@ -99495,7 +99495,7 @@ function markerDefinitions(prefix, theme) {
   const stroke = esc(theme.primary), secondary = esc(theme.secondary), background = esc(theme.background === "transparent" ? theme.surface : theme.background);
   return `<defs>${markerSet(prefix, "", stroke, background)}${secondary !== stroke ? markerSet(prefix, "-sec", secondary, background) : ""}</defs>`;
 }
-function renderContainer(box, theme, direction, region) {
+function renderContainer(box, theme, direction, spec, region) {
   const { x, y, width: w, height: h, ref: ref2 } = box;
   const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
   const headerOpacity = region ? "1" : "0.08";
@@ -99517,7 +99517,10 @@ function renderContainer(box, theme, direction, region) {
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${strokeW}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref2.kind}" data-adjustment-key="${ref2.kind === "lane" ? "lanes" : "groups"}/${esc(ref2.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref2.kind === "lane" ? "lane" : "group"}-id="${esc(ref2.originalId)}"${ref2.lane && ref2.kind !== "lane" ? ` data-lane-id="${esc(ref2.lane)}"` : ""}><title>${esc(ref2.label)}</title>${shape}${text(labelX, labelY, ref2.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
+  const field = ref2.kind === "lane" ? "lanes" : "groups";
+  const editorIndex = (spec[field] ?? []).findIndex((item) => item.id === ref2.originalId);
+  const editorKey = editorIndex >= 0 ? ` data-editor-key="${field}/${editorIndex}"` : "";
+  return `<g class="uml-container uml-${ref2.kind}"${editorKey} data-adjustment-key="${field}/${esc(ref2.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref2.kind === "lane" ? "lane" : "group"}-id="${esc(ref2.originalId)}"${ref2.lane && ref2.kind !== "lane" ? ` data-lane-id="${esc(ref2.lane)}"` : ""}><title>${esc(ref2.label)}</title>${shape}${text(labelX, labelY, ref2.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
 }
 function centeredContent(ref2, x, y, width, height) {
   const { node, theme, kind } = ref2;
@@ -100374,6 +100377,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
     box,
     theme,
     direction,
+    spec,
     palette && regionIds.includes(box.ref.originalId) ? regionPaint(theme, palette, regionIds.indexOf(box.ref.originalId)) : void 0
   )).join("");
   const paletteDefs = gradientDefs(nodes.flatMap((node) => node.paint ? [node.paint] : []));
@@ -101385,24 +101389,26 @@ const _hoisted_11 = {
   class: "canvas-position-tools",
   role: "status"
 };
-const _hoisted_12 = {
-  key: 0,
+const _hoisted_12 = { key: 0 };
+const _hoisted_13 = { key: 1 };
+const _hoisted_14 = {
+  key: 2,
   class: "canvas-waypoint-actions"
 };
-const _hoisted_13 = ["disabled"];
-const _hoisted_14 = ["disabled"];
-const _hoisted_15 = ["aria-label"];
-const _hoisted_16 = ["innerHTML"];
-const _hoisted_17 = {
+const _hoisted_15 = ["disabled"];
+const _hoisted_16 = ["disabled"];
+const _hoisted_17 = ["aria-label"];
+const _hoisted_18 = ["innerHTML"];
+const _hoisted_19 = {
   key: 1,
   class: "canvas-empty"
 };
-const _hoisted_18 = {
+const _hoisted_20 = {
   key: 1,
   class: "canvas-error",
   role: "status"
 };
-const _hoisted_19 = { class: "canvas-footer" };
+const _hoisted_21 = { class: "canvas-footer" };
 const svgNamespace = "http://www.w3.org/2000/svg";
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "DiagramCanvas",
@@ -101410,9 +101416,12 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     spec: {},
     runtime: {},
     elementSelection: { type: Boolean },
-    positionEditing: { type: Boolean }
+    positionEditing: { type: Boolean },
+    interactionMode: { default: "select" },
+    selectedKeys: {},
+    marqueeKeys: {}
   },
-  emits: ["rendered", "error", "loading", "selectElement", "adjustElement", "adjustWaypoints"],
+  emits: ["rendered", "error", "loading", "selectElement", "selectionChange", "requestDelete", "connectNodes", "adjustElement", "adjustWaypoints"],
   setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const emit = __emit;
@@ -101428,7 +101437,13 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     const zoomValue = computed(() => zoom.value === "fit" ? Math.min(1, Math.max(0.05, Math.min(availableWidth.value / (diagram.value?.width ?? 900), availableHeight.value / (diagram.value?.height ?? 600)))) : zoom.value);
     const transparent = computed(() => applied.value ? resolveTheme(applied.value).background === "transparent" : false);
     const dragging = ref$1(false);
+    const selectMode = computed(() => props.interactionMode === "select");
+    const connectMode = computed(() => props.interactionMode === "connect");
+    const editingEnabled = computed(() => selectMode.value);
     const selectedEdge = ref$1("");
+    const selectedEdgeKey = ref$1("");
+    const connectSource = ref$1("");
+    const marqueeBox = ref$1();
     const selectedPoint = ref$1(-1);
     const selectedWaypoints = computed(() => applied.value?.layout?.adjustments?.edges?.[selectedEdge.value]?.waypoints ?? []);
     const supportsWaypoints = computed(() => props.spec.type !== "sequence" && props.spec.type !== "fishbone");
@@ -101461,6 +101476,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         await nextTick();
         if (ticket !== request) return;
         refreshPositionHandles();
+        refreshSelectionOverlay();
         emit("rendered", rendered, structuredClone(candidate));
         if (firstRender) {
           firstRender = false;
@@ -101551,7 +101567,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       if (!root) return;
       root.querySelector("[data-position-handles]")?.remove();
       artboard.value?.querySelectorAll("[data-selected-waypoint-edge]").forEach((element) => element.removeAttribute("data-selected-waypoint-edge"));
-      if (!props.positionEditing) {
+      if (!editingEnabled.value) {
         artboard.value?.querySelectorAll(".canvas-edge-hit").forEach((element) => element.remove());
         return;
       }
@@ -101590,8 +101606,52 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     }
     function selectWaypointEdge(key) {
       selectedEdge.value = key;
+      selectedEdgeKey.value = artboard.value?.querySelector(`[data-waypoint-key="${key}"]`)?.getAttribute("data-editor-key") ?? "";
       selectedPoint.value = -1;
       refreshPositionHandles();
+    }
+    function clearWaypointEdge() {
+      selectedEdge.value = "";
+      selectedEdgeKey.value = "";
+      selectedPoint.value = -1;
+      refreshPositionHandles();
+    }
+    function refreshSelectionOverlay() {
+      const root = layoutRoot();
+      if (!root) return;
+      root.querySelector("[data-selection-overlay]")?.remove();
+      const namespace = "http://www.w3.org/2000/svg";
+      const overlay = document.createElementNS(namespace, "g");
+      overlay.setAttribute("data-selection-overlay", "");
+      overlay.setAttribute("pointer-events", "none");
+      const draw = (keys, cls) => {
+        for (const key of keys ?? []) {
+          const element = artboard.value?.querySelector(`[data-editor-key="${key.replace(/"/g, "")}"]`);
+          if (!element || element.closest("[data-selection-overlay]")) continue;
+          const box = layoutBox(element);
+          if (!box) continue;
+          const rect = document.createElementNS(namespace, "rect");
+          rect.setAttribute("x", String(box.left - 4));
+          rect.setAttribute("y", String(box.top - 4));
+          rect.setAttribute("width", String(box.right - box.left + 8));
+          rect.setAttribute("height", String(box.bottom - box.top + 8));
+          rect.setAttribute("rx", "4");
+          rect.setAttribute("class", cls);
+          overlay.append(rect);
+        }
+      };
+      draw(props.marqueeKeys, "canvas-marquee-pick");
+      draw(props.selectedKeys, "canvas-selection-rect");
+      if (overlay.childElementCount) root.append(overlay);
+    }
+    function clearConnectSource() {
+      connectSource.value = "";
+      artboard.value?.querySelectorAll("[data-connect-source]").forEach((element) => element.removeAttribute("data-connect-source"));
+    }
+    function currentSelectionKeys() {
+      if (props.marqueeKeys?.length) return [...props.marqueeKeys];
+      if (selectedEdge.value && selectedEdgeKey.value) return [selectedEdgeKey.value];
+      return [...props.selectedKeys ?? []];
     }
     function layoutBox(element) {
       const rect = element.getBoundingClientRect();
@@ -101753,7 +101813,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       }
     }
     function beginPositionDrag(event) {
-      if (!props.positionEditing || pending.value || !(event.target instanceof Element)) return false;
+      if (!editingEnabled.value || pending.value || !(event.target instanceof Element)) return false;
       const handle = event.target.closest("[data-waypoint-index]");
       const element = event.target.closest("[data-adjustment-key]");
       const origin = layoutPoint(event.clientX, event.clientY);
@@ -101826,11 +101886,19 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       dragEvent = void 0;
       const drag = positionDrag;
       const commit = event?.type === "pointerup" && drag.moved;
+      const clicked = event?.type === "pointerup" && !drag.moved;
       positionDrag = void 0;
       dragging.value = false;
       if (commit && drag.element) drag.preview?.guides?.remove();
       else restorePreview(drag);
       if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
+      if (clicked && drag.pointIndex === void 0 && drag.element && selectMode.value) {
+        const key = drag.element.getAttribute("data-editor-key") ?? drag.element.closest("[data-editor-key]")?.getAttribute("data-editor-key");
+        if (key) {
+          emit("selectElement", key);
+          emit("selectionChange", []);
+        }
+      }
       if (commit) {
         if (drag.pointIndex !== void 0 && drag.points) {
           const points = drag.points;
@@ -101842,7 +101910,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       return true;
     }
     function addWaypoint(event) {
-      if (!props.positionEditing || pending.value || !(event.target instanceof Element) || event.target.closest("[data-waypoint-index]")) return;
+      if (!editingEnabled.value || pending.value || !(event.target instanceof Element) || event.target.closest("[data-waypoint-index]")) return;
       const edge = event.target.closest("[data-waypoint-key]");
       if (!edge) return;
       const key = edge.getAttribute("data-waypoint-key");
@@ -101884,17 +101952,77 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       emit("adjustWaypoints", { key: selectedEdge.value, waypoints: [] });
     }
     function positionKeydown(event) {
-      if (!props.positionEditing || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return;
       if (event.key === "Escape") {
         finishPositionDrag();
         endPan();
-        selectedEdge.value = "";
-        selectedPoint.value = -1;
-        refreshPositionHandles();
+        clearConnectSource();
+        clearWaypointEdge();
         event.preventDefault();
-      } else if ((event.key === "Delete" || event.key === "Backspace") && selectedPoint.value >= 0) {
+        return;
+      }
+      if (event.key !== "Delete" && event.key !== "Backspace") return;
+      if (editingEnabled.value && selectedPoint.value >= 0 && selectedEdge.value) {
         removeWaypoint();
         event.preventDefault();
+        return;
+      }
+      if (!selectMode.value || pending.value) return;
+      const keys = currentSelectionKeys();
+      if (keys.length) {
+        emit("requestDelete", keys);
+        event.preventDefault();
+      }
+    }
+    function stageLocal(clientX, clientY) {
+      const rect = stage.value.getBoundingClientRect();
+      return { x: clientX - rect.left + stage.value.scrollLeft, y: clientY - rect.top + stage.value.scrollTop };
+    }
+    function drawMarquee(marquee) {
+      const a = stageLocal(marquee.startX, marquee.startY), b = stageLocal(marquee.x, marquee.y);
+      marqueeBox.value = { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y) };
+    }
+    function armMarquee(marquee) {
+      marquee.armed = false;
+      marquee.active = true;
+      if (pan && stage.value) {
+        stage.value.scrollLeft = pan.left;
+        stage.value.scrollTop = pan.top;
+      }
+      drawMarquee(marquee);
+    }
+    function finishMarquee(marquee) {
+      window.clearTimeout(marquee.timer);
+      if (!marquee.active) {
+        marqueeBox.value = void 0;
+        return;
+      }
+      marqueeBox.value = void 0;
+      const left = Math.min(marquee.startX, marquee.x), right = Math.max(marquee.startX, marquee.x);
+      const top = Math.min(marquee.startY, marquee.y), bottom = Math.max(marquee.startY, marquee.y);
+      const keys = [];
+      artboard.value?.querySelectorAll("[data-editor-key]").forEach((element) => {
+        const rect = element.getBoundingClientRect();
+        if (rect.left < right && rect.right > left && rect.top < bottom && rect.bottom > top) {
+          const key = element.getAttribute("data-editor-key");
+          if (key) keys.push(key);
+        }
+      });
+      emit("selectionChange", keys);
+    }
+    function pickConnectNode(element) {
+      const node = element.closest(".uml-node[data-node-id]");
+      if (!node) return;
+      const id2 = node.getAttribute("data-node-id");
+      if (!connectSource.value) {
+        connectSource.value = id2;
+        node.setAttribute("data-connect-source", "");
+      } else if (connectSource.value === id2) {
+        clearConnectSource();
+      } else {
+        emit("connectNodes", { from: connectSource.value, to: id2 });
+        clearConnectSource();
       }
     }
     function startPan(event) {
@@ -101904,28 +102032,55 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       const rect = viewport.getBoundingClientRect();
       if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
       if (beginPositionDrag(event)) return;
-      if (props.positionEditing && event.target instanceof Element) {
+      if (editingEnabled.value && event.target instanceof Element) {
         const edge = event.target.closest("[data-waypoint-key]");
         if (edge) {
           selectWaypointEdge(edge.getAttribute("data-waypoint-key"));
+          const key = edge.getAttribute("data-editor-key");
+          if (key) {
+            emit("selectElement", key);
+            emit("selectionChange", []);
+          }
           stage.value?.focus({ preventScroll: true });
           event.preventDefault();
           return;
-        } else {
-          selectedEdge.value = "";
-          selectedPoint.value = -1;
-          refreshPositionHandles();
-        }
+        } else clearWaypointEdge();
       }
       viewport.setPointerCapture(event.pointerId);
       pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : void 0, moved: false };
+      const blank = !(event.target instanceof Element && event.target.closest("[data-editor-key], [data-adjustment-key], [data-waypoint-key], [data-position-handles], .canvas-edge-hit"));
+      if (blank && selectMode.value && !pending.value) {
+        const marquee = { active: false, armed: true, timer: 0, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY };
+        if (event.shiftKey) armMarquee(marquee);
+        else marquee.timer = window.setTimeout(() => {
+          if (pan?.marquee === marquee && marquee.armed) armMarquee(marquee);
+        }, 350);
+        pan.marquee = marquee;
+      }
       dragging.value = true;
       event.preventDefault();
     }
     function movePan(event) {
       if (movePositionDrag(event)) return;
       if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
-      if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
+      const marquee = pan.marquee;
+      if (marquee) {
+        marquee.x = event.clientX;
+        marquee.y = event.clientY;
+      }
+      if (marquee?.active) {
+        pan.moved = true;
+        drawMarquee(marquee);
+        return;
+      }
+      if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) {
+        pan.moved = true;
+        if (marquee?.armed) {
+          marquee.armed = false;
+          window.clearTimeout(marquee.timer);
+          pan.marquee = void 0;
+        }
+      }
       stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
       stage.value.scrollTop = pan.top - (event.clientY - pan.y);
     }
@@ -101934,22 +102089,27 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       if (!pan || event && pan.pointerId !== event.pointerId) return;
       const pointerId = pan.pointerId;
       const target = pan.target;
-      const selected = event?.type === "pointerup" && !pan.moved && props.elementSelection && !props.positionEditing && !pending.value;
-      if (selected && target) {
-        const element = target.closest("[data-editor-key], .uml-container");
-        let key = element?.getAttribute("data-editor-key");
-        if (!key && element) {
-          const lane = element.getAttribute("data-lane-id");
-          const group = element.getAttribute("data-group-id");
-          const field = group ? "groups" : "lanes";
-          const index = applied.value?.[field]?.findIndex((item) => item.id === (group ?? lane));
-          if (index !== void 0 && index >= 0) key = `${field}/${index}`;
-        }
-        if (key) emit("selectElement", key);
-      }
+      const moved = pan.moved;
+      const marquee = pan.marquee;
       pan = void 0;
       dragging.value = false;
       if (stage.value?.hasPointerCapture(pointerId)) stage.value.releasePointerCapture(pointerId);
+      if (marquee) {
+        marquee.x = event?.clientX ?? marquee.x;
+        marquee.y = event?.clientY ?? marquee.y;
+        finishMarquee(marquee);
+        if (marquee.active) return;
+      }
+      if (event?.type !== "pointerup" || moved || pending.value) return;
+      if (connectMode.value) {
+        if (target) pickConnectNode(target);
+        return;
+      }
+      if (!selectMode.value || !target) return;
+      const element = target.closest("[data-editor-key]");
+      const key = element?.getAttribute("data-editor-key");
+      emit("selectElement", key ?? "");
+      emit("selectionChange", []);
     }
     function measureStage() {
       const viewport = stage.value;
@@ -101962,13 +102122,13 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       void setSpec(value).catch(() => {
       });
     }, { immediate: true, deep: true });
-    watch(() => props.positionEditing, () => {
+    watch(() => [props.positionEditing, props.interactionMode], () => {
       finishPositionDrag();
       endPan();
-      selectedEdge.value = "";
-      selectedPoint.value = -1;
-      refreshPositionHandles();
+      clearWaypointEdge();
+      clearConnectSource();
     });
+    watch(() => [props.selectedKeys, props.marqueeKeys], () => refreshSelectionOverlay(), { deep: true });
     onMounted(() => {
       if (!stage.value) return;
       measureStage();
@@ -102091,15 +102251,15 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             }, "适应画布", 10, _hoisted_10)
           ])
         ]),
-        __props.positionEditing ? (openBlock(), createElementBlock("div", _hoisted_11, [
-          createElementVNode(
+        selectedEdge.value || connectSource.value ? (openBlock(), createElementBlock("div", _hoisted_11, [
+          connectSource.value ? (openBlock(), createElementBlock("span", _hoisted_12, "已选中源节点，点击目标节点完成连线；Esc 或切回选择模式取消。")) : (openBlock(), createElementBlock(
             "span",
-            null,
-            toDisplayString(supportsWaypoints.value ? "拖动元素调整位置，自动吸附对齐（按住 Alt 关闭），连线实时跟随；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。" : "拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。"),
+            _hoisted_13,
+            toDisplayString(supportsWaypoints.value ? "已选中连线：拖动途经点调整，双击连线添加途经点，Delete 删除选中点或连线，Esc 取消。" : "已选中连线：Delete 删除，Esc 取消。"),
             1
             /* TEXT */
-          ),
-          selectedEdge.value ? (openBlock(), createElementBlock("div", _hoisted_12, [
+          )),
+          selectedEdge.value && !connectSource.value ? (openBlock(), createElementBlock("div", _hoisted_14, [
             createElementVNode(
               "span",
               null,
@@ -102111,20 +102271,20 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               type: "button",
               disabled: selectedPoint.value < 0 || pending.value,
               onClick: removeWaypoint
-            }, "删除选中点", 8, _hoisted_13),
+            }, "删除选中点", 8, _hoisted_15),
             createElementVNode("button", {
               type: "button",
               disabled: !selectedWaypoints.value.length || pending.value,
               onClick: clearWaypoints
-            }, "清空此连线途经点", 8, _hoisted_14)
+            }, "清空此连线途经点", 8, _hoisted_16)
           ])) : createCommentVNode("v-if", true)
         ])) : createCommentVNode("v-if", true),
         createElementVNode("div", {
           ref_key: "stage",
           ref: stage,
-          class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "can-select-elements": __props.elementSelection && !__props.positionEditing, "is-position-editing": __props.positionEditing }]),
+          class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "can-select-elements": selectMode.value, "is-position-editing": editingEnabled.value, "is-connect-mode": connectMode.value }]),
           tabindex: "0",
-          "aria-label": __props.positionEditing ? "位置调整画布，拖动元素调整，双击连线添加途经点，Esc 取消" : "图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览",
+          "aria-label": connectMode.value ? "连线模式，依次点击两个节点创建连线" : "选择画布，单击选中元素，拖动调整位置，空白处长按或 Shift 拖动框选，双击连线添加途经点，滚轮缩放",
           onPointerdown: startPan,
           onPointermove: movePan,
           onPointerup: endPan,
@@ -102147,11 +102307,11 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
                 class: "canvas-svg",
                 style: normalizeStyle({ width: `${diagram.value.width}px`, height: `${diagram.value.height}px`, transform: `scale(${zoomValue.value})` }),
                 innerHTML: diagram.value.svg
-              }, null, 12, _hoisted_16)
+              }, null, 12, _hoisted_18)
             ],
             6
             /* CLASS, STYLE */
-          )) : (openBlock(), createElementBlock("div", _hoisted_17, [
+          )) : (openBlock(), createElementBlock("div", _hoisted_19, [
             _cache[6] || (_cache[6] = createElementVNode(
               "svg",
               {
@@ -102188,20 +102348,31 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               1
               /* TEXT */
             )
-          ]))
-        ], 42, _hoisted_15),
+          ])),
+          marqueeBox.value ? (openBlock(), createElementBlock(
+            "div",
+            {
+              key: 2,
+              class: "canvas-marquee",
+              style: normalizeStyle({ left: `${marqueeBox.value.left}px`, top: `${marqueeBox.value.top}px`, width: `${marqueeBox.value.width}px`, height: `${marqueeBox.value.height}px` })
+            },
+            null,
+            4
+            /* STYLE */
+          )) : createCommentVNode("v-if", true)
+        ], 42, _hoisted_17),
         failure.value && diagram.value ? (openBlock(), createElementBlock(
           "div",
-          _hoisted_18,
+          _hoisted_20,
           "未替换当前图表：" + toDisplayString(failure.value),
           1
           /* TEXT */
         )) : createCommentVNode("v-if", true),
-        createElementVNode("div", _hoisted_19, [
+        createElementVNode("div", _hoisted_21, [
           createElementVNode(
             "span",
             null,
-            toDisplayString(__props.positionEditing ? "拖动元素调整 · 空白处拖动平移 · 调整后请保存 HTML" : "滚轮定位缩放 · 按住拖动画布 · 本地字体"),
+            toDisplayString(connectMode.value ? "依次点击两个节点创建连线 · 滚轮缩放" : "单击选中 · 拖动调整 · 空白长按/Shift 拖动框选 · 滚轮缩放"),
             1
             /* TEXT */
           ),

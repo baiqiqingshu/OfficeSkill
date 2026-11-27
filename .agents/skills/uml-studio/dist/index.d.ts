@@ -26,6 +26,9 @@ export type __VLS_Props = {
     runtime?: StudioRuntime;
     elementSelection?: boolean;
     positionEditing?: boolean;
+    interactionMode?: 'select' | 'connect';
+    selectedKeys?: string[];
+    marqueeKeys?: string[];
 };
 export function setSpec(input: DiagramSpec): Promise<void>;
 export function getSpec(): DiagramSpec;
@@ -44,6 +47,12 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
     error: (error: Error) => any;
     loading: (loading: boolean) => any;
     selectElement: (key: string) => any;
+    selectionChange: (keys: string[]) => any;
+    requestDelete: (keys: string[]) => any;
+    connectNodes: (nodes: {
+        from: string;
+        to: string;
+    }) => any;
     adjustElement: (change: {
         key: string;
         dx: number;
@@ -61,6 +70,12 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
     onError?: ((error: Error) => any) | undefined;
     onLoading?: ((loading: boolean) => any) | undefined;
     onSelectElement?: ((key: string) => any) | undefined;
+    onSelectionChange?: ((keys: string[]) => any) | undefined;
+    onRequestDelete?: ((keys: string[]) => any) | undefined;
+    onConnectNodes?: ((nodes: {
+        from: string;
+        to: string;
+    }) => any) | undefined;
     onAdjustElement?: ((change: {
         key: string;
         dx: number;
@@ -73,7 +88,9 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
             y: number;
         }[];
     }) => any) | undefined;
-}>, {}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
+}>, {
+    interactionMode: "select" | "connect";
+}, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
 export const _default: typeof __VLS_export;
 }
 

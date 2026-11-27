@@ -308,6 +308,36 @@
   outline-offset: 2px;
   box-shadow: var(--shadow-sm), 0 0 0 4px var(--ring);
 }
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move;
+}
+.canvas-stage.is-connect-mode { cursor: crosshair;
+}
+.canvas-stage.is-connect-mode .uml-node { cursor: crosshair;
+}
+.canvas-stage.is-connect-mode .uml-node[data-connect-source] { outline: 3px solid var(--accent); outline-offset: 3px;
+}
+.canvas-marquee {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  opacity: 0.85;
+}
+.canvas-selection-rect {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+  vector-effect: non-scaling-stroke;
+}
+.canvas-marquee-pick {
+  fill: rgb(13 110 85 / 0.08);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
 .canvas-artboard.is-transparent {
   background-color: var(--paper);
   background-image: conic-gradient(

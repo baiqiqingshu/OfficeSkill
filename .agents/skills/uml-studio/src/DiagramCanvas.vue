@@ -7,12 +7,19 @@ import { createHtml, exportSvgImage } from './export';
 import type { StudioRuntime } from './export';
 import type { DiagramSpec, ExportOptions, RenderedDiagram } from './types';
 
-const props = defineProps<{ spec: DiagramSpec; runtime?: StudioRuntime; elementSelection?: boolean; positionEditing?: boolean }>();
+const props = withDefaults(defineProps<{
+  spec: DiagramSpec; runtime?: StudioRuntime; elementSelection?: boolean; positionEditing?: boolean;
+  interactionMode?: 'select' | 'connect';
+  selectedKeys?: string[]; marqueeKeys?: string[];
+}>(), { interactionMode: 'select' });
 const emit = defineEmits<{
   rendered: [diagram: RenderedDiagram, spec: DiagramSpec];
   error: [error: Error];
   loading: [loading: boolean];
   selectElement: [key: string];
+  selectionChange: [keys: string[]];
+  requestDelete: [keys: string[]];
+  connectNodes: [nodes: { from: string; to: string }];
   adjustElement: [change: { key: string; dx: number; dy: number }];
   adjustWaypoints: [change: { key: string; waypoints: { x: number; y: number }[] }];
 }>();
@@ -28,13 +35,20 @@ const zoom = ref<number | 'fit'>('fit');
 const zoomValue = computed(() => zoom.value === 'fit' ? Math.min(1, Math.max(0.05, Math.min(availableWidth.value / (diagram.value?.width ?? 900), availableHeight.value / (diagram.value?.height ?? 600)))) : zoom.value);
 const transparent = computed(() => applied.value ? resolveTheme(applied.value).background === 'transparent' : false);
 const dragging = ref(false);
+const selectMode = computed(() => props.interactionMode === 'select');
+const connectMode = computed(() => props.interactionMode === 'connect');
+const editingEnabled = computed(() => selectMode.value);
 const selectedEdge = ref('');
+const selectedEdgeKey = ref('');
+const connectSource = ref('');
+const marqueeBox = ref<{ left: number; top: number; width: number; height: number }>();
 const selectedPoint = ref(-1);
 const selectedWaypoints = computed(() => applied.value?.layout?.adjustments?.edges?.[selectedEdge.value]?.waypoints ?? []);
 const supportsWaypoints = computed(() => props.spec.type !== 'sequence' && props.spec.type !== 'fishbone');
 type PositionPoint = { x: number; y: number };
 let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number; preview?: DragPreview } | undefined;
-let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean } | undefined;
+let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean; marquee?: Marquee } | undefined;
+interface Marquee { active: boolean; armed: boolean; timer: number; startX: number; startY: number; x: number; y: number }
 let request = 0;
 let zoomRequest = 0;
 let observer: ResizeObserver | undefined;
@@ -59,6 +73,7 @@ async function setSpec(input: DiagramSpec): Promise<void> {
     await nextTick();
     if (ticket !== request) return;
     refreshPositionHandles();
+    refreshSelectionOverlay();
     emit('rendered', rendered, structuredClone(candidate));
     if (firstRender) { firstRender = false; resolveReady(); }
   } catch (reason) {
@@ -133,7 +148,7 @@ function refreshPositionHandles(): void {
   if (!root) return;
   root.querySelector('[data-position-handles]')?.remove();
   artboard.value?.querySelectorAll('[data-selected-waypoint-edge]').forEach(element => element.removeAttribute('data-selected-waypoint-edge'));
-  if (!props.positionEditing) {
+  if (!editingEnabled.value) {
     artboard.value?.querySelectorAll('.canvas-edge-hit').forEach(element => element.remove());
     return;
   }
@@ -172,8 +187,53 @@ function refreshPositionHandles(): void {
 }
 function selectWaypointEdge(key: string): void {
   selectedEdge.value = key;
+  selectedEdgeKey.value = artboard.value?.querySelector(`[data-waypoint-key="${key}"]`)?.getAttribute('data-editor-key') ?? '';
   selectedPoint.value = -1;
   refreshPositionHandles();
+}
+function clearWaypointEdge(): void {
+  selectedEdge.value = '';
+  selectedEdgeKey.value = '';
+  selectedPoint.value = -1;
+  refreshPositionHandles();
+}
+/** Selected/marquee highlight outlines drawn in an SVG overlay; original shapes untouched. */
+function refreshSelectionOverlay(): void {
+  const root = layoutRoot();
+  if (!root) return;
+  root.querySelector('[data-selection-overlay]')?.remove();
+  const namespace = 'http://www.w3.org/2000/svg';
+  const overlay = document.createElementNS(namespace, 'g');
+  overlay.setAttribute('data-selection-overlay', '');
+  overlay.setAttribute('pointer-events', 'none');
+  const draw = (keys: string[] | undefined, cls: string) => {
+    for (const key of keys ?? []) {
+      const element = artboard.value?.querySelector<SVGGraphicsElement>(`[data-editor-key="${key.replace(/"/g, '')}"]`);
+      if (!element || element.closest('[data-selection-overlay]')) continue;
+      const box = layoutBox(element);
+      if (!box) continue;
+      const rect = document.createElementNS(namespace, 'rect');
+      rect.setAttribute('x', String(box.left - 4));
+      rect.setAttribute('y', String(box.top - 4));
+      rect.setAttribute('width', String(box.right - box.left + 8));
+      rect.setAttribute('height', String(box.bottom - box.top + 8));
+      rect.setAttribute('rx', '4');
+      rect.setAttribute('class', cls);
+      overlay.append(rect);
+    }
+  };
+  draw(props.marqueeKeys, 'canvas-marquee-pick');
+  draw(props.selectedKeys, 'canvas-selection-rect');
+  if (overlay.childElementCount) root.append(overlay);
+}
+function clearConnectSource(): void {
+  connectSource.value = '';
+  artboard.value?.querySelectorAll('[data-connect-source]').forEach(element => element.removeAttribute('data-connect-source'));
+}
+function currentSelectionKeys(): string[] {
+  if (props.marqueeKeys?.length) return [...props.marqueeKeys];
+  if (selectedEdge.value && selectedEdgeKey.value) return [selectedEdgeKey.value];
+  return [...(props.selectedKeys ?? [])];
 }
 type Box = { left: number; top: number; right: number; bottom: number };
 type Moved = { element: SVGGraphicsElement; transform: string | null; factor: number };
@@ -321,7 +381,7 @@ function restorePreview(drag: NonNullable<typeof positionDrag>): void {
   }
 }
 function beginPositionDrag(event: PointerEvent): boolean {
-  if (!props.positionEditing || pending.value || !(event.target instanceof Element)) return false;
+  if (!editingEnabled.value || pending.value || !(event.target instanceof Element)) return false;
   const handle = event.target.closest<SVGCircleElement>('[data-waypoint-index]');
   const element = event.target.closest<SVGGraphicsElement>('[data-adjustment-key]');
   const origin = layoutPoint(event.clientX, event.clientY);
@@ -385,12 +445,17 @@ function finishPositionDrag(event?: PointerEvent): boolean {
   dragEvent = undefined;
   const drag = positionDrag;
   const commit = event?.type === 'pointerup' && drag.moved;
+  const clicked = event?.type === 'pointerup' && !drag.moved;
   positionDrag = undefined;
   dragging.value = false;
   // A committed move keeps its preview until the new layout replaces the SVG, avoiding a snap-back.
   if (commit && drag.element) drag.preview?.guides?.remove();
   else restorePreview(drag);
   if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
+  if (clicked && drag.pointIndex === undefined && drag.element && selectMode.value) {
+    const key = drag.element.getAttribute('data-editor-key') ?? drag.element.closest('[data-editor-key]')?.getAttribute('data-editor-key');
+    if (key) { emit('selectElement', key); emit('selectionChange', []); }
+  }
   if (commit) {
     if (drag.pointIndex !== undefined && drag.points) {
       const points = drag.points;
@@ -402,7 +467,7 @@ function finishPositionDrag(event?: PointerEvent): boolean {
   return true;
 }
 function addWaypoint(event: MouseEvent): void {
-  if (!props.positionEditing || pending.value || !(event.target instanceof Element) || event.target.closest('[data-waypoint-index]')) return;
+  if (!editingEnabled.value || pending.value || !(event.target instanceof Element) || event.target.closest('[data-waypoint-index]')) return;
   const edge = event.target.closest<SVGGraphicsElement>('[data-waypoint-key]');
   if (!edge) return;
   const key = edge.getAttribute('data-waypoint-key')!;
@@ -441,11 +506,63 @@ function clearWaypoints(): void {
   emit('adjustWaypoints', { key: selectedEdge.value, waypoints: [] });
 }
 function positionKeydown(event: KeyboardEvent): void {
-  if (!props.positionEditing || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+  const target = event.target;
+  if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]')) return;
   if (event.key === 'Escape') {
-    finishPositionDrag(); endPan(); selectedEdge.value = ''; selectedPoint.value = -1; refreshPositionHandles(); event.preventDefault();
-  } else if ((event.key === 'Delete' || event.key === 'Backspace') && selectedPoint.value >= 0) {
+    finishPositionDrag(); endPan(); clearConnectSource(); clearWaypointEdge(); event.preventDefault();
+    return;
+  }
+  if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+  if (editingEnabled.value && selectedPoint.value >= 0 && selectedEdge.value) {
     removeWaypoint(); event.preventDefault();
+    return;
+  }
+  if (!selectMode.value || pending.value) return;
+  const keys = currentSelectionKeys();
+  if (keys.length) { emit('requestDelete', keys); event.preventDefault(); }
+}
+function stageLocal(clientX: number, clientY: number): { x: number; y: number } {
+  const rect = stage.value!.getBoundingClientRect();
+  return { x: clientX - rect.left + stage.value!.scrollLeft, y: clientY - rect.top + stage.value!.scrollTop };
+}
+function drawMarquee(marquee: Marquee): void {
+  const a = stageLocal(marquee.startX, marquee.startY), b = stageLocal(marquee.x, marquee.y);
+  marqueeBox.value = { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), width: Math.abs(b.x - a.x), height: Math.abs(b.y - a.y) };
+}
+function armMarquee(marquee: Marquee): void {
+  marquee.armed = false;
+  marquee.active = true;
+  if (pan && stage.value) { stage.value.scrollLeft = pan.left; stage.value.scrollTop = pan.top; }
+  drawMarquee(marquee);
+}
+function finishMarquee(marquee: Marquee): void {
+  window.clearTimeout(marquee.timer);
+  if (!marquee.active) { marqueeBox.value = undefined; return; }
+  marqueeBox.value = undefined;
+  const left = Math.min(marquee.startX, marquee.x), right = Math.max(marquee.startX, marquee.x);
+  const top = Math.min(marquee.startY, marquee.y), bottom = Math.max(marquee.startY, marquee.y);
+  const keys: string[] = [];
+  artboard.value?.querySelectorAll('[data-editor-key]').forEach(element => {
+    const rect = element.getBoundingClientRect();
+    if (rect.left < right && rect.right > left && rect.top < bottom && rect.bottom > top) {
+      const key = element.getAttribute('data-editor-key');
+      if (key) keys.push(key);
+    }
+  });
+  emit('selectionChange', keys);
+}
+function pickConnectNode(element: Element): void {
+  const node = element.closest('.uml-node[data-node-id]');
+  if (!node) return;
+  const id = node.getAttribute('data-node-id')!;
+  if (!connectSource.value) {
+    connectSource.value = id;
+    node.setAttribute('data-connect-source', '');
+  } else if (connectSource.value === id) {
+    clearConnectSource();
+  } else {
+    emit('connectNodes', { from: connectSource.value, to: id });
+    clearConnectSource();
   }
 }
 function startPan(event: PointerEvent): void {
@@ -456,26 +573,46 @@ function startPan(event: PointerEvent): void {
   // Leave the native scrollbars draggable rather than capturing their pointer.
   if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
   if (beginPositionDrag(event)) return;
-  if (props.positionEditing && event.target instanceof Element) {
+  if (editingEnabled.value && event.target instanceof Element) {
     const edge = event.target.closest('[data-waypoint-key]');
     if (edge) {
       selectWaypointEdge(edge.getAttribute('data-waypoint-key')!);
+      const key = edge.getAttribute('data-editor-key');
+      if (key) { emit('selectElement', key); emit('selectionChange', []); }
       stage.value?.focus({ preventScroll: true });
       // Keep clicks on the edge: pointer capture retargets dblclick to the viewport.
       event.preventDefault();
       return;
     }
-    else { selectedEdge.value = ''; selectedPoint.value = -1; refreshPositionHandles(); }
+    else clearWaypointEdge();
   }
   viewport.setPointerCapture(event.pointerId);
   pan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop, target: event.target instanceof Element ? event.target : undefined, moved: false };
+  // Blank press in select mode may become a marquee: Shift+drag immediately, or after a >350ms long-press.
+  const blank = !(event.target instanceof Element && event.target.closest('[data-editor-key], [data-adjustment-key], [data-waypoint-key], [data-position-handles], .canvas-edge-hit'));
+  if (blank && selectMode.value && !pending.value) {
+    const marquee: Marquee = { active: false, armed: true, timer: 0, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY };
+    if (event.shiftKey) armMarquee(marquee);
+    else marquee.timer = window.setTimeout(() => { if (pan?.marquee === marquee && marquee.armed) armMarquee(marquee); }, 350);
+    pan.marquee = marquee;
+  }
   dragging.value = true;
   event.preventDefault();
 }
 function movePan(event: PointerEvent): void {
   if (movePositionDrag(event)) return;
   if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
-  if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) pan.moved = true;
+  const marquee = pan.marquee;
+  if (marquee) { marquee.x = event.clientX; marquee.y = event.clientY; }
+  if (marquee?.active) {
+    pan.moved = true;
+    drawMarquee(marquee);
+    return;
+  }
+  if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > 5) {
+    pan.moved = true;
+    if (marquee?.armed) { marquee.armed = false; window.clearTimeout(marquee.timer); pan.marquee = undefined; }
+  }
   stage.value.scrollLeft = pan.left - (event.clientX - pan.x);
   stage.value.scrollTop = pan.top - (event.clientY - pan.y);
 }
@@ -484,22 +621,27 @@ function endPan(event?: PointerEvent): void {
   if (!pan || (event && pan.pointerId !== event.pointerId)) return;
   const pointerId = pan.pointerId;
   const target = pan.target;
-  const selected = event?.type === 'pointerup' && !pan.moved && props.elementSelection && !props.positionEditing && !pending.value;
-  if (selected && target) {
-    const element = target.closest('[data-editor-key], .uml-container');
-    let key = element?.getAttribute('data-editor-key');
-    if (!key && element) {
-      const lane = element.getAttribute('data-lane-id');
-      const group = element.getAttribute('data-group-id');
-      const field = group ? 'groups' : 'lanes';
-      const index = applied.value?.[field]?.findIndex(item => item.id === (group ?? lane));
-      if (index !== undefined && index >= 0) key = `${field}/${index}`;
-    }
-    if (key) emit('selectElement', key);
-  }
+  const moved = pan.moved;
+  const marquee = pan.marquee;
   pan = undefined;
   dragging.value = false;
   if (stage.value?.hasPointerCapture(pointerId)) stage.value.releasePointerCapture(pointerId);
+  if (marquee) {
+    marquee.x = event?.clientX ?? marquee.x;
+    marquee.y = event?.clientY ?? marquee.y;
+    finishMarquee(marquee);
+    if (marquee.active) return;
+  }
+  if (event?.type !== 'pointerup' || moved || pending.value) return;
+  if (connectMode.value) {
+    if (target) pickConnectNode(target);
+    return;
+  }
+  if (!selectMode.value || !target) return;
+  const element = target.closest('[data-editor-key]');
+  const key = element?.getAttribute('data-editor-key');
+  emit('selectElement', key ?? '');
+  emit('selectionChange', []);
 }
 function measureStage(): void {
   const viewport = stage.value;
@@ -509,9 +651,10 @@ function measureStage(): void {
   availableHeight.value = Math.max(1, viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
 }
 watch(() => props.spec, value => { void setSpec(value).catch(() => {}); }, { immediate: true, deep: true });
-watch(() => props.positionEditing, () => {
-  finishPositionDrag(); endPan(); selectedEdge.value = ''; selectedPoint.value = -1; refreshPositionHandles();
+watch(() => [props.positionEditing, props.interactionMode], () => {
+  finishPositionDrag(); endPan(); clearWaypointEdge(); clearConnectSource();
 });
+watch(() => [props.selectedKeys, props.marqueeKeys], () => refreshSelectionOverlay(), { deep: true });
 onMounted(() => {
   if (!stage.value) return;
   measureStage();
@@ -545,22 +688,24 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
         <button type="button" class="fit-button" :class="{ active: zoom === 'fit' }" :disabled="!diagram" @click="fitCanvas">适应画布</button>
       </div>
     </div>
-    <div v-if="positionEditing" class="canvas-position-tools" role="status">
-      <span>{{ supportsWaypoints ? '拖动元素调整位置，自动吸附对齐（按住 Alt 关闭），连线实时跟随；双击连线添加途经点。选中点后可拖动或按 Delete 删除，Esc 取消。' : '拖动元素调整位置，Esc 取消；时序消息横向拖动调整文字、纵向拖动调整消息行。' }}</span>
-      <div v-if="selectedEdge" class="canvas-waypoint-actions">
+    <div v-if="selectedEdge || connectSource" class="canvas-position-tools" role="status">
+      <span v-if="connectSource">已选中源节点，点击目标节点完成连线；Esc 或切回选择模式取消。</span>
+      <span v-else>{{ supportsWaypoints ? '已选中连线：拖动途经点调整，双击连线添加途经点，Delete 删除选中点或连线，Esc 取消。' : '已选中连线：Delete 删除，Esc 取消。' }}</span>
+      <div v-if="selectedEdge && !connectSource" class="canvas-waypoint-actions">
         <span>{{ selectedWaypoints.length }} 个途经点</span>
         <button type="button" :disabled="selectedPoint < 0 || pending" @click="removeWaypoint">删除选中点</button>
         <button type="button" :disabled="!selectedWaypoints.length || pending" @click="clearWaypoints">清空此连线途经点</button>
       </div>
     </div>
-    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': elementSelection && !positionEditing, 'is-position-editing': positionEditing }" tabindex="0" :aria-label="positionEditing ? '位置调整画布，拖动元素调整，双击连线添加途经点，Esc 取消' : '图表画布，滚轮缩放，按住拖动平移，也可用滚动条浏览'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @keydown="positionKeydown">
+    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': selectMode, 'is-position-editing': editingEnabled, 'is-connect-mode': connectMode }" tabindex="0" :aria-label="connectMode ? '连线模式，依次点击两个节点创建连线' : '选择画布，单击选中元素，拖动调整位置，空白处长按或 Shift 拖动框选，双击连线添加途经点，滚轮缩放'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @keydown="positionKeydown">
       <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${diagram.width * zoomValue}px`, height: `${diagram.height * zoomValue}px` }">
         <div class="canvas-svg" :style="{ width: `${diagram.width}px`, height: `${diagram.height}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>
       <div v-else class="canvas-empty"><svg class="loading-ring" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 1 1-9 9" /></svg><strong>{{ failure ? '暂时无法绘制图表' : '正在整理你的想法…' }}</strong><p>{{ failure || '布局引擎正在安排每一个节点与连接。' }}</p></div>
+      <div v-if="marqueeBox" class="canvas-marquee" :style="{ left: `${marqueeBox.left}px`, top: `${marqueeBox.top}px`, width: `${marqueeBox.width}px`, height: `${marqueeBox.height}px` }"></div>
     </div>
     <div v-if="failure && diagram" class="canvas-error" role="status">未替换当前图表：{{ failure }}</div>
-    <div class="canvas-footer"><span>{{ positionEditing ? '拖动元素调整 · 空白处拖动平移 · 调整后请保存 HTML' : '滚轮定位缩放 · 按住拖动画布 · 本地字体' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
+    <div class="canvas-footer"><span>{{ connectMode ? '依次点击两个节点创建连线 · 滚轮缩放' : '单击选中 · 拖动调整 · 空白长按/Shift 拖动框选 · 滚轮缩放' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
   </section>
 </template>
 
@@ -861,6 +1006,32 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   box-shadow: var(--shadow-sm), 0 0 0 4px var(--ring);
+}
+.canvas-stage.is-position-editing [data-adjustment-key] { cursor: move; }
+.canvas-stage.is-connect-mode { cursor: crosshair; }
+.canvas-stage.is-connect-mode .uml-node { cursor: crosshair; }
+.canvas-stage.is-connect-mode .uml-node[data-connect-source] { outline: 3px solid var(--accent); outline-offset: 3px; }
+.canvas-marquee {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  opacity: 0.85;
+}
+.canvas-selection-rect {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 5 3;
+  vector-effect: non-scaling-stroke;
+}
+.canvas-marquee-pick {
+  fill: rgb(13 110 85 / 0.08);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
 }
 .canvas-artboard.is-transparent {
   background-color: var(--paper);

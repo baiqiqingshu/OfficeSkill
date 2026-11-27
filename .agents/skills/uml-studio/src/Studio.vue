@@ -10,8 +10,13 @@ import {
 } from "vue";
 import DiagramCanvas from "./DiagramCanvas.vue";
 import FormEditor from "./FormEditor.vue";
-import ColorInput from "./ColorInput.vue";
 import VSelect from "./VSelect.vue";
+import ElementInspector from "./ElementInspector.vue";
+import StyleDialog from "./StyleDialog.vue";
+import AddElementDialog from "./AddElementDialog.vue";
+import ContextMenu from "./ContextMenu.vue";
+import type { MenuEntry } from "./ContextMenu.vue";
+import type { AddElementPayload } from "./AddElementDialog.vue";
 import { createHtml, downloadBlob } from "./export";
 import type { StudioRuntime } from "./export";
 import {
@@ -28,26 +33,19 @@ import {
 } from "./filesystem-save";
 import type { LocalDirectory, LocalHtmlTarget } from "./filesystem-save";
 import { isMermaidSource, mermaidToDocument } from "./mermaid";
-import {
-  fontPresets,
-  layoutModes,
-  paletteModes,
-  paletteTargets,
-  resolveLayout,
-  resolveTheme,
-  themeLabels,
-  themes,
-} from "./themes";
+import { themeLabels, themes } from "./themes";
 import { normalizeDocument, validateDocument } from "./document";
 import { validateSpec } from "./validate";
 import type {
   DiagramDocument,
+  DiagramEdge,
   DiagramInput,
-  DiagramLayoutOptions,
+  DiagramNode,
   DiagramSpec,
   DiagramType,
   ExportOptions,
-  Theme,
+  FishboneCause,
+  Participant,
   ThemeName,
 } from "./types";
 
@@ -114,83 +112,6 @@ const families: { label: string; types: DiagramType[] }[] = [
   },
 ];
 const themeNames = Object.keys(themes) as ThemeName[];
-const colorControls = [
-  { key: "primary", label: "主色" },
-  { key: "secondary", label: "辅助色" },
-  { key: "background", label: "画布背景" },
-  { key: "surface", label: "节点填色" },
-  { key: "text", label: "文字" },
-  { key: "border", label: "边框" },
-  { key: "muted", label: "次要文字" },
-] as const;
-const numericControls = [
-  { key: "fontSize", label: "字号", min: 8, max: 48, step: 1 },
-  { key: "lineWidth", label: "线宽", min: 0.5, max: 8, step: 0.5 },
-  { key: "radius", label: "圆角", min: 0, max: 32, step: 1 },
-  { key: "nodeWidth", label: "节点基础宽度", min: 80, max: 600, step: 1 },
-  { key: "nodeHeight", label: "节点基础高度", min: 32, max: 300, step: 1 },
-] as const;
-const layoutControls = [
-  {
-    key: "maxWidth",
-    label: "绘图最大宽度",
-    min: 0,
-    max: 100000,
-    step: 1,
-    hint: "0 = 不限制；整图等比缩放",
-  },
-  {
-    key: "maxHeight",
-    label: "绘图最大高度",
-    min: 0,
-    max: 100000,
-    step: 1,
-    hint: "0 = 不限制；保留全部内容",
-  },
-  {
-    key: "nodeMaxWidth",
-    label: "节点最大宽度",
-    min: 0,
-    max: 100000,
-    step: 1,
-    hint: "0 = 不限制；文字自动换行",
-    graphOnly: true,
-  },
-  {
-    key: "nodeMaxHeight",
-    label: "节点最大高度",
-    min: 0,
-    max: 100000,
-    step: 1,
-    hint: "0 = 不限制；文字自适应",
-    graphOnly: true,
-  },
-  {
-    key: "regionGap",
-    label: "区域 / 分组间距",
-    min: 0,
-    max: 600,
-    step: 1,
-    hint: "分组或分析维度间距；泳道连续相接",
-  },
-  {
-    key: "elementGap",
-    label: "元素间距",
-    min: 8,
-    max: 400,
-    step: 1,
-    hint: "节点、消息或原因之间的间距",
-  },
-  {
-    key: "maxPerColumn",
-    label: "每列最多节点",
-    min: 0,
-    max: 30,
-    step: 1,
-    hint: "0 = 不限制；区域内自动换列",
-    graphOnly: true,
-  },
-] as const;
 const json = (value: unknown) => JSON.stringify(value, null, 2);
 let initial: DiagramDocument;
 let initialError = props.startupError ?? "";
@@ -264,8 +185,12 @@ const runtimeError = ref("");
 const error = ref(initialError);
 const notice = ref("");
 const editorOpen = ref(false);
-const styleOpen = ref(false);
-const positionEditing = ref(false);
+const styleDialogOpen = ref(false);
+const addDialogOpen = ref(false);
+const interactionMode = ref<"select" | "connect">("select");
+const selectedKeys = ref<string[]>([]);
+const marqueeKeys = ref<string[]>([]);
+const menuState = ref<{ x: number; y: number; canvas: boolean } | undefined>();
 const adjustmentsOpen = ref(false);
 const savingHtml = ref(false);
 const localSaveSupported = canSaveLocalHtml();
@@ -291,7 +216,6 @@ void (async () => {
 })();
 const adjustmentCount = computed(() => Object.keys(applied.value.layout?.adjustments?.elements ?? {}).length + Object.keys(applied.value.layout?.adjustments?.edges ?? {}).length);
 const adjustmentsJson = computed(() => json(applied.value.layout?.adjustments ?? { elements: {}, edges: {} }));
-const stylePanel = ref<HTMLDetailsElement>();
 const pendingSave = computed(() => json(collection.value) !== savedSnapshot.value);
 const formDirty = computed(() => !!formEditor.value?.hasChanges());
 async function toggleEditor(): Promise<void> {
@@ -300,14 +224,6 @@ async function toggleEditor(): Promise<void> {
   await nextTick();
   const panel = document.getElementById("diagram-editor");
   panel?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true });
-  if (matchMedia("(max-width: 1200px)").matches) panel?.scrollIntoView({ block: "start", behavior: "auto" });
-}
-async function showStyles(): Promise<void> {
-  styleOpen.value = !styleOpen.value;
-  if (!styleOpen.value) return;
-  await nextTick();
-  stylePanel.value?.scrollIntoView({ block: "nearest", behavior: "auto" });
-  stylePanel.value?.querySelector("summary")?.focus({ preventScroll: true });
 }
 const editorMode = ref<"form" | "source">("form");
 const sidebarOpen = ref(false);
@@ -318,15 +234,6 @@ const addType = ref<DiagramType>("fishbone");
 const format = ref<NonNullable<ExportOptions["format"]>>("png");
 const scale = ref(2);
 const quality = ref(0.94);
-const currentTheme = computed(() => resolveTheme(applied.value));
-const graphDiagram = computed(
-  () => applied.value.type !== "sequence" && applied.value.type !== "fishbone",
-);
-const selectedFont = computed(() =>
-  fontPresets.some((font) => font.value === currentTheme.value.fontFamily)
-    ? currentTheme.value.fontFamily
-    : "",
-);
 const itemCount = computed(() =>
   applied.value.type === "fishbone"
     ? `${applied.value.fishbone?.categories.length ?? 0} 个分析维度`
@@ -629,36 +536,6 @@ function selectTheme(name: ThemeName): void {
     delete spec.style;
   });
 }
-function updateStyle(key: keyof Theme, value: string | number): void {
-  void updateSpec((spec) => {
-    spec.style = { ...spec.style, [key]: value };
-  });
-}
-function updateLayout(
-  key: keyof DiagramLayoutOptions,
-  value: number | boolean | 'bridge' | 'plain',
-): void {
-  void updateSpec((spec) => {
-    spec.layout = { ...spec.layout, [key]: value };
-  });
-}
-function selectLayoutMode(
-  mode: NonNullable<DiagramLayoutOptions["mode"]>,
-): void {
-  void updateSpec((spec) => {
-    spec.layout = { ...spec.layout, mode };
-    delete spec.layout.elementGap;
-    delete spec.layout.regionGap;
-    if (spec.style) {
-      delete spec.style.gap;
-      if (!Object.keys(spec.style).length) delete spec.style;
-    }
-  });
-}
-function layoutValue(key: keyof DiagramLayoutOptions): number {
-  const value = resolveLayout(applied.value)[key];
-  return typeof value === "number" ? value : 0;
-}
 async function applyPositionChange(change: (spec: DiagramSpec) => void): Promise<void> {
   try {
     if (savingHtml.value) throw new Error("正在保存 HTML，请保存结束后再调整位置。");
@@ -697,6 +574,322 @@ function clearAdjustments(): void {
   void applyPositionChange((spec) => {
     if (spec.layout) delete spec.layout.adjustments;
   });
+}
+/* ---------- 画布选择与编辑（契约：select-element / selection-change / request-delete / connect-nodes） ---------- */
+function onSelectElement(key: string): void {
+  selectedKeys.value = [key];
+  formEditor.value?.focusElement(key).catch(() => {});
+}
+function onSelectionChange(keys: string[]): void {
+  selectedKeys.value = keys;
+  marqueeKeys.value = keys;
+}
+function uniqueElementId(spec: DiagramSpec, prefix: string): string {
+  const used = new Set(
+    [
+      ...(spec.nodes ?? []),
+      ...(spec.edges ?? []),
+      ...(spec.groups ?? []),
+      ...(spec.lanes ?? []),
+      ...(spec.participants ?? []),
+      ...(spec.fishbone?.categories ?? []),
+    ]
+      .map((item) => item.id)
+      .filter(Boolean),
+  );
+  let index = 1;
+  while (used.has(`${prefix}_${index}`)) index++;
+  return `${prefix}_${index}`;
+}
+function dropEdge(spec: DiagramSpec, index: number): void {
+  const edge = spec.edges?.[index];
+  if (!edge) return;
+  const key = edge.id ?? `edge-${index}`;
+  spec.edges!.splice(index, 1);
+  const adjustments = spec.layout?.adjustments;
+  if (adjustments?.edges) delete adjustments.edges[key];
+  if (adjustments?.elements)
+    for (const name of Object.keys(adjustments.elements))
+      if (name.startsWith(`edge-labels/${key}/`)) delete adjustments.elements[name];
+}
+function dropElement(spec: DiagramSpec, key: string): void {
+  const [field, raw] = key.split("/");
+  const index = Number(raw);
+  const elements = spec.layout?.adjustments?.elements;
+  switch (field) {
+    case "edges":
+      dropEdge(spec, index);
+      return;
+    case "nodes": {
+      const node = spec.nodes?.[index];
+      if (!node) return;
+      for (let i = (spec.edges?.length ?? 0) - 1; i >= 0; i--)
+        if (spec.edges![i]!.from === node.id || spec.edges![i]!.to === node.id)
+          dropEdge(spec, i);
+      spec.nodes!.splice(index, 1);
+      if (elements) delete elements[`nodes/${node.id}`];
+      return;
+    }
+    case "groups": {
+      const group = spec.groups?.[index];
+      if (!group) return;
+      spec.groups!.splice(index, 1);
+      spec.nodes?.forEach((node) => {
+        if (node.group === group.id) delete node.group;
+      });
+      spec.groups?.forEach((child) => {
+        if (child.parent === group.id) delete child.parent;
+      });
+      if (elements) delete elements[`groups/${group.id}`];
+      return;
+    }
+    case "lanes": {
+      const lane = spec.lanes?.[index];
+      if (!lane) return;
+      spec.lanes!.splice(index, 1);
+      spec.nodes?.forEach((node) => {
+        if (node.lane === lane.id) delete node.lane;
+      });
+      if (elements) delete elements[`lanes/${lane.id}`];
+      return;
+    }
+    case "participants": {
+      const participant = spec.participants?.[index];
+      if (!participant) return;
+      if (
+        spec.messages?.some(
+          (message) =>
+            message.from === participant.id || message.to === participant.id,
+        )
+      )
+        throw new Error(
+          `参与者「${participant.label}」仍被消息引用；请先删除相关消息。`,
+        );
+      spec.participants!.splice(index, 1);
+      spec.boxes?.forEach((box) => {
+        box.participants = box.participants.filter((id) => id !== participant.id);
+      });
+      if (elements) delete elements[`participants/${participant.id}`];
+      return;
+    }
+    case "messages": {
+      const message = spec.messages?.[index];
+      if (!message) return;
+      if (
+        spec.fragments?.some(
+          (fragment) => fragment.from <= index && fragment.to >= index,
+        )
+      )
+        throw new Error(
+          `第 ${index + 1} 条消息属于组合片段，暂不支持直接删除；请在“完整编辑”中调整片段范围。`,
+        );
+      spec.messages!.splice(index, 1);
+      for (const fragment of spec.fragments ?? []) {
+        if (fragment.from > index) fragment.from--;
+        if (fragment.to > index) fragment.to--;
+        if (fragment.elseAt !== undefined && fragment.elseAt > index)
+          fragment.elseAt--;
+        fragment.elses?.forEach((item) => {
+          if (item.at > index) item.at--;
+        });
+      }
+      return;
+    }
+    case "fragments":
+      spec.fragments?.splice(index, 1);
+      return;
+    case "boxes":
+      spec.boxes?.splice(index, 1);
+      return;
+    case "categories": {
+      // categories/<i> 或 categories/<i>/causes/<j>/children/<k>…：逐对下钻到父容器
+      const parts = key.split("/");
+      const pairs: [string, number][] = [];
+      for (let d = 0; d + 1 < parts.length; d += 2)
+        pairs.push([parts[d]!, Number(parts[d + 1])]);
+      const prop = (name: string) =>
+        name === "children" ? "children" : name === "causes" ? "causes" : name;
+      let container: any = spec.fishbone;
+      for (let p = 0; container && p + 1 < pairs.length; p++)
+        container = container[prop(pairs[p]![0])]?.[pairs[p]![1]];
+      if (!container) return;
+      const [lastName, at] = pairs[pairs.length - 1]!;
+      const list = container[prop(lastName)] as { label: string }[] | undefined;
+      if (!Array.isArray(list) || !list[at]) return;
+      if (lastName === "categories" && list.length <= 1)
+        throw new Error("鱼骨图至少保留一个分类。");
+      if (lastName === "causes" && list.length <= 1)
+        throw new Error("每个鱼骨分类至少保留一个原因。");
+      list.splice(at, 1);
+      return;
+    }
+    default:
+      // effect / edge-labels / 其他图元暂不支持删除
+      return;
+  }
+}
+function onRequestDelete(keys: string[]): void {
+  if (!keys.length) return;
+  const order = [
+    "edges",
+    "messages",
+    "fragments",
+    "boxes",
+    "nodes",
+    "groups",
+    "lanes",
+    "participants",
+    "categories",
+  ];
+  const sorted = [...new Set(keys)].sort((a, b) => {
+    const fa = order.indexOf(a.split("/")[0]!);
+    const fb = order.indexOf(b.split("/")[0]!);
+    if (fa !== fb) return fa - fb;
+    return Number(b.split("/")[1]) - Number(a.split("/")[1]);
+  });
+  void updateSpec((spec) => {
+    for (const key of sorted) dropElement(spec, key);
+  }).then(() => {
+    selectedKeys.value = [];
+    marqueeKeys.value = [];
+    showNotice(`已删除 ${sorted.length} 个元素`);
+  });
+}
+function onConnectNodes({ from, to }: { from: string; to: string }): void {
+  if (!applied.value.nodes?.length) {
+    showNotice("当前图类型不支持手动连线。");
+    return;
+  }
+  void updateSpec((spec) => {
+    (spec.edges ??= []).push({
+      id: uniqueElementId(spec, "edge"),
+      from,
+      to,
+      kind: "flow",
+    });
+  }).then(() => showNotice(`已连接 ${from} → ${to}`));
+}
+function onAddElement(payload: AddElementPayload): void {
+  void updateSpec((spec) => {
+    if (payload.element === "group") {
+      const id = uniqueElementId(spec, "group");
+      (spec.groups ??= []).push({
+        id,
+        label: payload.label || "新分组",
+        kind: "boundary",
+      });
+      for (const key of payload.memberKeys) {
+        const node = spec.nodes?.[Number(key.split("/")[1])];
+        if (node) {
+          node.group = id;
+          delete node.lane;
+        }
+      }
+    } else if (payload.element === "lane") {
+      const id = uniqueElementId(spec, "lane");
+      (spec.lanes ??= []).push({ id, label: payload.label || "新泳道" });
+      for (const key of payload.memberKeys) {
+        const node = spec.nodes?.[Number(key.split("/")[1])];
+        if (node) {
+          node.lane = id;
+          delete node.group;
+        }
+      }
+    } else if (payload.element === "category") {
+      spec.fishbone ??= { effect: "待分析结果", categories: [] };
+      spec.fishbone.categories.push({
+        id: uniqueElementId(spec, "category"),
+        label: payload.label || "新分类",
+        causes: [{ label: "新原因" }],
+      });
+    } else if (payload.element.startsWith("participant:")) {
+      (spec.participants ??= []).push({
+        id: uniqueElementId(spec, "participant"),
+        label: payload.label || "新参与者",
+        kind: payload.element.slice(12) as Participant["kind"],
+      });
+    } else if (payload.element.startsWith("node:")) {
+      (spec.nodes ??= []).push({
+        id: uniqueElementId(spec, "node"),
+        label: payload.label || "新节点",
+        kind: payload.element.slice(5) as DiagramNode["kind"],
+        ...(payload.group ? { group: payload.group } : {}),
+      });
+    }
+  }).then(() => showNotice("已添加元素"));
+}
+/* ---------- 溢出菜单 / 画布右键菜单 ---------- */
+function newDiagramEntries(): MenuEntry[] {
+  const entries: MenuEntry[] = [];
+  for (const family of families) {
+    entries.push({ type: "heading", label: family.label });
+    for (const type of family.types)
+      entries.push({ label: labels[type], action: () => addExample(type) });
+  }
+  return entries;
+}
+function buildMenu(canvas: boolean): MenuEntry[] {
+  const entries: MenuEntry[] = [
+    { label: "新建图表", children: newDiagramEntries() },
+    { label: "添加元素…", action: () => void (addDialogOpen.value = true) },
+  ];
+  if (canvas)
+    entries.push({
+      label: "删除所选",
+      hint: selectedKeys.value.length ? `${selectedKeys.value.length} 项` : "",
+      danger: true,
+      disabled: !selectedKeys.value.length,
+      action: () => onRequestDelete(selectedKeys.value),
+    });
+  entries.push(
+    { type: "separator" },
+    {
+      label: "导入 JSON / HTML / Mermaid…",
+      action: () => importInput.value?.click(),
+    },
+    { label: "下载文档 JSON", action: downloadDocumentJson },
+  );
+  if (localSaveSupported)
+    entries.push(
+      { type: "separator" },
+      {
+        label: localTargetName.value ? "另选本地文件…" : "授权本地保存…",
+        disabled: savingHtml.value,
+        action: () => saveLocalHtml(!localTargetName.value),
+      },
+      ...(directoryPickerSupported
+        ? [
+            {
+              label: defaultDirectoryName.value
+                ? `默认目录：${defaultDirectoryName.value}`
+                : "设置默认保存目录…",
+              action: setDefaultDirectory,
+            } satisfies MenuEntry,
+            ...(defaultDirectoryName.value
+              ? [
+                  {
+                    label: "清除默认保存目录",
+                    action: clearDefaultDirectory,
+                  } satisfies MenuEntry,
+                ]
+              : []),
+          ]
+        : []),
+    );
+  entries.push(
+    { type: "separator" },
+    { label: "调整样式…", action: () => void (styleDialogOpen.value = true) },
+    { label: "完整编辑（表单 / JSON）…", action: () => void toggleEditor() },
+  );
+  return entries;
+}
+function openHeaderMenu(event: MouseEvent): void {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  menuState.value = { x: rect.left, y: rect.bottom + 6, canvas: false };
+}
+function openCanvasMenu(event: MouseEvent): void {
+  event.preventDefault();
+  menuState.value = { x: event.clientX, y: event.clientY, canvas: true };
 }
 function renameDocument(event: Event): void {
   const title = (event.target as HTMLInputElement).value.trim();
@@ -1156,8 +1349,15 @@ defineExpose({
         ></a
       >
       <div class="header-center">
-        <span class="live-indicator"></span>本地工作台
-        <span class="header-slash">/</span> 一个文件，多张图表
+        <span class="header-doc-name" :title="collection.title">{{
+          collection.title
+        }}</span>
+        <span v-if="anySourceDirty || formDirty" class="draft-indicator" role="status"
+          >有未应用{{ formDirty ? "表单" : "JSON" }}草稿</span
+        >
+        <span v-else-if="pendingSave" class="save-state" role="status"
+          >待保存 HTML</span
+        >
       </div>
       <div class="header-actions">
         <button
@@ -1178,29 +1378,6 @@ defineExpose({
             <path d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
           </svg>
           图表列表
-        </button>
-        <button
-          class="button button-outline"
-          type="button"
-          title="导入单张图表或整个文档；替换当前集合"
-          @click="importInput?.click()"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path
-              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-            />
-          </svg>
-          导入<span class="hide-small">
-            JSON / HTML</span
-          >
         </button>
         <button
           class="button button-dark"
@@ -1226,12 +1403,37 @@ defineExpose({
             · 全部 {{ collection.diagrams.length }} 张</span
           >
         </button>
-        <button class="button button-outline local-save-button" type="button"
+        <button
+          class="button button-outline local-save-button"
+          type="button"
           :disabled="!runtime || loading || savingHtml || !localSaveSupported"
-          :title="!localSaveSupported ? '当前浏览器不支持本地写入，请用保存 HTML 下载' : localTargetName ? `同步至 ${localTargetName}` : '选择本地 HTML 文件并授权保存；后续点击同步修改'"
-          @click="saveLocalHtml()">
+          :title="
+            !localSaveSupported
+              ? '当前浏览器不支持本地写入，请用保存 HTML 下载'
+              : localTargetName
+                ? `同步至 ${localTargetName}`
+                : '选择本地 HTML 文件并授权保存；后续点击同步修改'
+          "
+          @click="saveLocalHtml()"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0V5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v2M12 12v6m-3-3 3 3 3-3" /></svg>
-          {{ savingHtml ? '正在保存…' : localTargetName ? '同步到本地' : '授权本地保存' }}
+          {{
+            savingHtml
+              ? "正在保存…"
+              : localTargetName
+                ? "同步到本地"
+                : "授权本地保存"
+          }}
+        </button>
+        <button
+          class="button button-outline menu-trigger"
+          type="button"
+          aria-label="更多操作"
+          title="更多操作"
+          :aria-expanded="!!menuState && !menuState.canvas"
+          @click="openHeaderMenu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5.5h.01M12 12h.01M12 18.5h.01" stroke-width="3"/></svg>
         </button>
       </div>
       <input
@@ -1467,32 +1669,59 @@ defineExpose({
               >
                 <path d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              新增图表
+              新增
             </button>
           </div>
-          <details class="quick-presets-disclosure"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>常用图型快捷新增</summary><div class="quick-presets">
-            <button
-              v-for="type in [
-                'fishbone',
-                'flowchart',
-                'sequence',
-                'class',
-              ] as const"
-              :key="type"
-              type="button"
-              :disabled="loading"
-              @click="addExample(type)"
-            >
-              {{ labels[type] }}
-            </button>
-          </div></details>
           <details class="quick-presets-disclosure mermaid-import"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>粘贴 Mermaid 新增</summary><div class="mermaid-import-body">
             <textarea v-model="mermaidSource" class="mermaid-import-input" rows="6" spellcheck="false" placeholder="flowchart / sequenceDiagram / stateDiagram / classDiagram，或含多个 mermaid 代码块的 Markdown"></textarea>
             <button class="button button-accent" type="button" :disabled="loading || !mermaidSource.trim()" @click="addMermaid">转换并新增</button>
           </div></details>
-          <p class="export-tip">
-            允许同类多图。每张图独立保存主题、布局和数据。“导入”也支持 .mmd / .md 文件。
-          </p>
+        </div>
+
+        <div class="sidebar-section sidebar-theme">
+          <div class="section-heading">
+            <h2>主题</h2>
+            <button
+              class="button button-quiet theme-more"
+              type="button"
+              title="打开完整样式面板"
+              @click="styleDialogOpen = true"
+            >调整样式…</button>
+          </div>
+          <div class="theme-grid sidebar-theme-grid" aria-label="主题预设">
+            <button
+              v-for="name in themeNames"
+              :key="name"
+              type="button"
+              class="theme-option"
+              :class="{ selected: (applied.theme ?? 'modern') === name }"
+              :aria-pressed="(applied.theme ?? 'modern') === name"
+              :title="themeLabels[name]"
+              @click="selectTheme(name)"
+            >
+              <span
+                class="theme-preview"
+                :style="{
+                  background: themes[name].background,
+                  borderColor: themes[name].border,
+                }"
+                ><template v-if="themes[name].palette"
+                  ><i
+                    v-for="color in themes[name].palette!.slice(0, 4)"
+                    :key="color"
+                    class="palette-swatch"
+                    :class="themes[name].paletteMode"
+                    :style="{ background: color }"
+                  ></i></template
+                ><template v-else
+                  ><i :style="{ background: themes[name].primary }"></i
+                  ><i :style="{ background: themes[name].secondary }"></i
+                ></template
+              ></span
+              ><span>{{ themeLabels[name] }}</span>
+            </button>
+          </div>
+          <p class="export-tip">主题只影响当前图；配色、字体与布局在“调整样式”中设置。</p>
         </div>
 
         <div class="sidebar-footnote">
@@ -1501,41 +1730,8 @@ defineExpose({
       </aside>
 
       <main class="studio-main">
-        <div class="workspace-heading">
-          <div>
-            <h1>{{ applied.title }}</h1>
-            <p v-if="applied.description">{{ applied.description }}</p>
-          </div>
-          <div class="workspace-actions">
-          <button class="button button-outline" type="button" :aria-pressed="positionEditing" :disabled="loading || savingHtml" @click="positionEditing = !positionEditing">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3" /></svg>{{ positionEditing ? '结束位置调整' : '调整位置' }}
-          </button>
-          <button class="button button-outline" type="button" :aria-expanded="styleOpen" aria-controls="diagram-styles" @click="showStyles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>调整样式</button>
-          <button
-            class="button button-accent editor-toggle"
-            type="button"
-            :aria-expanded="editorOpen"
-            aria-controls="diagram-editor"
-            @click="toggleEditor"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.7"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path
-                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-              />
-            </svg>
-            {{ editorOpen ? "收起编辑器" : "编辑图表" }}
-          </button>
-          </div>
-        </div>
         <div class="workspace-meta">
+          <strong class="workspace-title">{{ applied.title }}</strong>
           <span class="type-badge"
             >{{ activeIndex + 1 }} / {{ collection.diagrams.length }} ·
             {{ labels[applied.type] }}</span
@@ -1545,112 +1741,8 @@ defineExpose({
             >{{ themeLabels[applied.theme ?? "modern"] }}主题{{
               applied.style ? " / 自定义" : ""
             }}</span
-          ><span v-if="anySourceDirty || formDirty" class="draft-indicator" role="status">有未应用{{ formDirty ? '表单' : 'JSON' }}草稿</span>
-          <span v-else-if="pendingSave" class="save-state" role="status">待保存 HTML</span>
-          <span v-else class="save-state">修改后请保存 HTML</span>
+          >
         </div>
-        <section
-          class="export-section export-toolbar"
-          aria-label="导出与复制当前图"
-        >
-
-          <div class="export-fields">
-            <label for="export-format"
-              >文件格式<span class="select-wrap"><VSelect
-                id="export-format"
-                v-model="format"
-                class="select-input"
-              >
-                <option value="svg">SVG · 矢量</option>
-                <option value="png">PNG · 无损</option>
-                <option value="jpeg">JPEG · 通用</option>
-                <option value="webp">WebP · 轻量</option>
-              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
-            ><label for="export-scale"
-              >导出倍率<span class="select-wrap"><VSelect
-                id="export-scale"
-                v-model.number="scale"
-                class="select-input"
-              >
-                <option :value="1">1× 原始</option>
-                <option :value="2">2× 清晰</option>
-                <option :value="3">3× 高清</option>
-                <option :value="4">4× 超清</option>
-              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
-            >
-          </div>
-          <label
-            v-if="format === 'jpeg' || format === 'webp'"
-            class="range-control quality-control"
-            ><span
-              >图片质量<output>{{ Math.round(quality * 100) }}%</output></span
-            ><input
-              v-model.number="quality"
-              type="range"
-              min="0.1"
-              max="1"
-              step="0.01"
-          /></label>
-          <div class="export-image-actions">
-            <button
-              class="button button-accent export-button"
-              type="button"
-              :disabled="loading || exporting"
-              @click="downloadImage"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path
-                  d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                />
-              </svg>
-              {{ exporting ? "正在导出…" : "导出图片" }}
-            </button>
-            <button
-              class="button button-outline export-button"
-              type="button"
-              :disabled="loading || copyingImage"
-              @click="copyImage"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <rect x="8" y="2.5" width="8" height="4" rx="1" />
-                <path
-                  d="M16 4.5h2.5A1.5 1.5 0 0 1 20 6v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H8"
-                />
-              </svg>
-              {{ copyingImage ? "正在复制 PNG…" : "复制图片（PNG）" }}
-            </button>
-          </div>
-          <details class="more-export">
-            <summary>更多导出<svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></summary>
-            <div class="more-export-content">
-              <button v-if="localSaveSupported && localTargetName" class="button button-outline" type="button" :disabled="savingHtml || loading" @click="saveLocalHtml(true)">另选本地 HTML 文件</button>
-              <p v-if="localTargetName" class="export-tip">同步至 {{ localTargetName }}；浏览器会记住此文件，重新打开同一 HTML 后点击即可授权并继续同步。</p>
-              <div v-if="localSaveSupported && directoryPickerSupported" class="default-directory-row">
-                <button class="button button-outline" type="button" :disabled="savingHtml" @click="setDefaultDirectory">{{ defaultDirectoryName ? `默认目录：${defaultDirectoryName}` : "设置默认保存目录" }}</button>
-                <button v-if="defaultDirectoryName" class="text-button" type="button" @click="clearDefaultDirectory">清除</button>
-              </div>
-              <p v-if="localSaveSupported && currentPageDirectory" class="export-tip">当前 HTML 位于 <code>{{ currentPageDirectory }}</code>；保存对话框默认使用该文件名。浏览器不允许脚本直接指定任意路径，首次在对话框中选到此目录（或设为默认目录）后即会记住。</p>
-              <button class="button button-outline" type="button" @click="downloadDocumentJson"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>下载整个文档 JSON</button>
-              <p class="export-tip">图片导出当前图；HTML 与文档 JSON 包含全部图表。PNG / WebP 支持透明，JPEG 铺白底。</p>
-            </div>
-          </details>
-        </section>
         <div v-if="error" class="error-banner" role="alert">
           <svg
             class="error-icon"
@@ -1689,500 +1781,144 @@ defineExpose({
             </svg>
           </button>
         </div>
-        <div class="workspace-panels" :class="{ 'with-editor': editorOpen }">
-          <div class="preview-column">
-            <DiagramCanvas
-              ref="canvas"
-              :spec="initialSpec"
-              :runtime="runtime"
-              :position-editing="positionEditing"
-              :element-selection="editorOpen && editorMode === 'form'"
-              @adjust-element="adjustElement"
-              @adjust-waypoints="adjustWaypoints"
-              @select-element="formEditor?.focusElement($event)"
-              @loading="loading = $event"
-              @error="reportError"
-            />
-            <div v-if="positionEditing || adjustmentCount" class="position-adjustments">
-              <div class="position-adjustment-actions">
-                <span>{{ adjustmentCount ? `已记录 ${adjustmentCount} 项位置调整` : '位置调整会随 HTML / JSON 保存' }}</span>
-                <button class="text-button" type="button" :aria-expanded="adjustmentsOpen" aria-controls="position-parameters" @click="adjustmentsOpen = !adjustmentsOpen">{{ adjustmentsOpen ? '收起参数' : '查看参数' }}</button>
-                <button class="text-button" type="button" :disabled="!adjustmentCount || loading || savingHtml" @click="clearAdjustments">清空调整，恢复自动布局</button>
-              </div>
-              <div v-if="adjustmentsOpen" id="position-parameters">
-                <p class="control-hint">拖动默认记录相对自动布局的偏移；固定坐标和折线途经点也可在图表 JSON 的 layout.adjustments 中配置。</p>
-                <pre class="adjustment-json" tabindex="0" aria-label="当前图表位置调整参数">{{ adjustmentsJson }}</pre>
-              </div>
-            </div>
-            <details id="diagram-styles" ref="stylePanel" class="preview-style-panel" :open="styleOpen" @toggle="styleOpen = ($event.target as HTMLDetailsElement).open">
-              <summary>
-                <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>图形样式与布局 <span>展开调整配色、字体和布局参数</span>
-              </summary>
-              <div class="style-panel-content">
-                <div class="sidebar-section">
-                  <div class="section-heading">
-                    <h2>当前图的视觉风格</h2>
-                    <button
-                      class="text-button"
-                      type="button"
-                      :disabled="!applied.style"
-                      @click="
-                        updateSpec((spec) => {
-                          delete spec.style;
-                        })
-                      "
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>重置定制
-                    </button>
-                  </div>
-                  <div class="theme-grid" aria-label="主题预设">
-                    <button
-                      v-for="name in themeNames"
-                      :key="name"
-                      type="button"
-                      class="theme-option"
-                      :class="{ selected: (applied.theme ?? 'modern') === name }"
-                      :aria-pressed="(applied.theme ?? 'modern') === name"
-                      @click="selectTheme(name)"
-                    >
-                      <span
-                        class="theme-preview"
-                        :style="{
-                          background: themes[name].background,
-                          borderColor: themes[name].border,
-                        }"
-                        ><template v-if="themes[name].palette"
-                          ><i
-                            v-for="color in themes[name].palette!.slice(0, 4)"
-                            :key="color"
-                            class="palette-swatch"
-                            :class="themes[name].paletteMode"
-                            :style="{ background: color }"
-                          ></i></template
-                        ><template v-else
-                          ><i :style="{ background: themes[name].primary }"></i
-                          ><i
-                            :style="{ background: themes[name].secondary }"
-                          ></i></template
-                      ></span
-                      ><span>{{ themeLabels[name] }}</span>
-                    </button>
-                  </div>
-                  <div class="palette-controls">
-                    <label class="field-label" for="palette-mode">多色模式<span class="select-wrap"><VSelect
-                      id="palette-mode"
-                      class="select-input"
-                      :value="currentTheme.paletteMode ?? (currentTheme.palette?.length ? 'tint' : 'mono')"
-                      @change="updateStyle('paletteMode', ($event.target as HTMLSelectElement).value)"
-                    ><option v-for="mode in paletteModes" :key="mode.value" :value="mode.value">{{ mode.label }}</option></VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label>
-                    <label class="field-label" for="palette-by">着色依据<span class="select-wrap"><VSelect
-                      id="palette-by"
-                      class="select-input"
-                      :disabled="(currentTheme.paletteMode ?? (currentTheme.palette?.length ? 'tint' : 'mono')) === 'mono'"
-                      :value="currentTheme.paletteBy ?? 'auto'"
-                      @change="updateStyle('paletteBy', ($event.target as HTMLSelectElement).value)"
-                    ><option v-for="target in paletteTargets" :key="target.value" :value="target.value">{{ target.label }}</option></VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label>
-                  </div>
-                  <details class="advanced-styles"><summary><svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>自定义配色</summary><div class="advanced-inner">
-                  <div class="style-subheading">
-                    配色覆盖<span v-if="applied.style" class="custom-badge"
-                      >已定制</span
-                    >
-                  </div>
-                  <div class="studio-colors">
-                    <ColorInput
-                      v-for="control in colorControls"
-                      :key="control.key"
-                      :model-value="currentTheme[control.key]"
-                      :label="control.label"
-                      :allow-transparent="
-                        control.key === 'background' ||
-                        control.key === 'surface'
-                      "
-                      @update:model-value="updateStyle(control.key, $event)"
-                    />
-                  </div>
-                  </div></details>
-                  <details class="advanced-styles">
-                    <summary>
-                      <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>字体与细节
-                    </summary>
-                    <div class="advanced-inner">
-                      <label class="field-label" for="font-preset"
-                        >字体预设（只使用本机字体）</label
-                      ><span class="select-wrap"><VSelect
-                        id="font-preset"
-                        class="select-input"
-                        :value="selectedFont"
-                        @change="
-                          ($event.target as HTMLSelectElement).value &&
-                          updateStyle(
-                            'fontFamily',
-                            ($event.target as HTMLSelectElement).value,
-                          )
-                        "
-                      >
-                        <option value="">自定义字体</option>
-                        <option
-                          v-for="font in fontPresets"
-                          :key="font.value"
-                          :value="font.value"
-                        >
-                          {{ font.label }}
-                        </option>
-                      </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
-                      <label class="field-label" for="font-family"
-                        >自定义字体 / 回退列表</label
-                      ><input
-                        id="font-family"
-                        class="text-input"
-                        type="text"
-                        :value="currentTheme.fontFamily"
-                        @change="
-                          updateStyle(
-                            'fontFamily',
-                            ($event.target as HTMLInputElement).value,
-                          )
-                        "
-                      />
-                      <div class="font-format-row">
-                        <label for="font-weight"
-                          >字重<span class="select-wrap"><VSelect
-                            id="font-weight"
-                            class="select-input"
-                            :value="currentTheme.fontWeight"
-                            @change="
-                              updateStyle(
-                                'fontWeight',
-                                Number(
-                                  ($event.target as HTMLSelectElement).value,
-                                ),
-                              )
-                            "
-                          >
-                            <option :value="300">300 轻体</option>
-                            <option :value="400">400 常规</option>
-                            <option :value="500">500 中等</option>
-                            <option :value="600">600 半粗</option>
-                            <option :value="700">700 粗体</option>
-                            <option :value="800">800 特粗</option>
-                            <option :value="900">900 重体</option>
-                          </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
-                        ><button
-                          type="button"
-                          class="format-button"
-                          :aria-pressed="currentTheme.fontStyle === 'italic'"
-                          @click="
-                            updateStyle(
-                              'fontStyle',
-                              currentTheme.fontStyle === 'italic'
-                                ? 'normal'
-                                : 'italic',
-                            )
-                          "
-                        >
-                          <i>I</i><span>斜体</span></button
-                        ><button
-                          type="button"
-                          class="format-button"
-                          :aria-pressed="
-                            currentTheme.textDecoration === 'underline'
-                          "
-                          @click="
-                            updateStyle(
-                              'textDecoration',
-                              currentTheme.textDecoration === 'underline'
-                                ? 'none'
-                                : 'underline',
-                            )
-                          "
-                        >
-                          <u>U</u><span>下划线</span>
-                        </button>
-                      </div>
-                      <div class="number-grid">
-                        <label
-                          v-for="control in numericControls"
-                          :key="control.key"
-                          class="number-control"
-                          ><span>{{ control.label }} <small>px</small></span
-                          ><input
-                            class="text-input"
-                            type="number"
-                            :min="control.min"
-                            :max="control.max"
-                            :step="control.step"
-                            :value="currentTheme[control.key]"
-                            @change="
-                              updateStyle(
-                                control.key,
-                                Number(
-                                  ($event.target as HTMLInputElement).value,
-                                ),
-                              )
-                            "
-                        /></label>
-                      </div>
-                    </div>
-                  </details>
-                  <details class="advanced-styles">
-                    <summary>
-                      <svg class="summary-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>布局与尺寸
-                    </summary>
-                    <div class="advanced-inner">
-                      <template v-if="graphDiagram">
-                        <label v-if="['activity', 'flowchart', 'swimlane'].includes(applied.type)" class="checkbox-control">
-                          <input type="checkbox" :checked="applied.layout?.horizontalStagger === true" @change="updateLayout('horizontalStagger', ($event.target as HTMLInputElement).checked)" />
-                          <span>横向相连元素沿流程方向错开</span>
-                        </label>
-                        <p v-if="['activity', 'flowchart', 'swimlane'].includes(applied.type)" class="field-hint">关闭时优先保持水平连接；横向泳道对应沿横轴错开。</p>
-                        <label class="field-label" for="edge-crossing">连线交叉表示</label>
-                        <span class="select-wrap"><VSelect id="edge-crossing" class="select-input"
-                          :value="applied.layout?.edgeCrossing ?? 'bridge'"
-                          @change="updateLayout('edgeCrossing', ($event.target as HTMLSelectElement).value as 'bridge' | 'plain')">
-                          <option value="bridge">拱桥形跳线（默认）</option>
-                          <option value="plain">直接交叉（无圆点）</option>
-                        </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
-                        <p class="field-hint">拱桥或无圆点交叉均表示不相连。</p>
-                      </template>
-                      <label class="field-label" for="layout-mode"
-                        >布局模式</label
-                      ><span class="select-wrap"><VSelect
-                        id="layout-mode"
-                        class="select-input layout-mode-select"
-                        :value="applied.layout?.mode ?? 'balanced'"
-                        @change="
-                          selectLayoutMode(
-                            ($event.target as HTMLSelectElement)
-                              .value as NonNullable<
-                              DiagramLayoutOptions['mode']
-                            >,
-                          )
-                        "
-                      >
-                        <option
-                          v-for="mode in layoutModes"
-                          :key="mode.value"
-                          :value="mode.value"
-                        >
-                          {{ mode.label }}
-                        </option>
-                      </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
-                      <p class="control-hint">
-                        切换模式会恢复该模式的元素 /
-                        区域间距，保留尺寸上限等设置。
-                      </p>
-                      <label class="checkbox-control"
-                        ><input
-                          type="checkbox"
-                          :checked="applied.layout?.showTitle === true"
-                          @change="
-                            updateLayout(
-                              'showTitle',
-                              ($event.target as HTMLInputElement).checked,
-                            )
-                          "
-                        /><span>在图中显示标题和说明</span></label
-                      >
-                      <label class="field-label" for="layout-direction"
-                        >布局方向</label
-                      ><span class="select-wrap"><VSelect
-                        id="layout-direction"
-                        class="select-input"
-                        :value="applied.direction ?? (applied.type === 'usecase' ? 'LR' : 'TB')"
-                        :disabled="!graphDiagram"
-                        @change="
-                          updateSpec((spec) => {
-                            spec.direction = (
-                              $event.target as HTMLSelectElement
-                            ).value as 'TB' | 'LR';
-                          })
-                        "
-                      >
-                        <option value="TB">从上到下</option>
-                        <option value="LR">从左到右</option>
-                      </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
-                      <p v-if="!graphDiagram" class="control-hint">
-                        方向、节点尺寸及每列节点数只用于节点图；时序图和鱼骨图采用专用布局。
-                      </p>
-                      <div class="number-grid layout-number-grid">
-                        <label
-                          v-for="control in layoutControls"
-                          :key="control.key"
-                          class="number-control"
-                          ><span>{{ control.label }}</span
-                          ><input
-                            class="text-input"
-                            type="number"
-                            :min="control.min"
-                            :max="control.max"
-                            :step="control.step"
-                            :disabled="
-                              'graphOnly' in control &&
-                              control.graphOnly &&
-                              !graphDiagram
-                            "
-                            :value="layoutValue(control.key)"
-                            @change="
-                              updateLayout(
-                                control.key,
-                                Number(
-                                  ($event.target as HTMLInputElement).value,
-                                ),
-                              )
-                            "
-                          /><small>{{ control.hint }}</small></label
-                        >
-                      </div>
-                    </div>
-                  </details>
-                </div>
-              </div>
-            </details>
-          </div>
-          <section
-            id="diagram-editor"
-            v-show="editorOpen"
-            class="data-panel"
-            aria-label="当前图表编辑器"
-          >
-            <div class="editor-mode-tabs" role="tablist" aria-label="编辑模式">
+        <div class="canvas-region" @contextmenu="openCanvasMenu">
+          <DiagramCanvas
+            ref="canvas"
+            :spec="initialSpec"
+            :runtime="runtime"
+            :position-editing="true"
+            :element-selection="true"
+            :interaction-mode="interactionMode"
+            :selected-keys="selectedKeys"
+            :marquee-keys="marqueeKeys"
+            @adjust-element="adjustElement"
+            @adjust-waypoints="adjustWaypoints"
+            @select-element="onSelectElement"
+            @selection-change="onSelectionChange"
+            @request-delete="onRequestDelete"
+            @connect-nodes="onConnectNodes"
+            @loading="loading = $event"
+            @error="reportError"
+          />
+          <div class="canvas-float-tools" role="toolbar" aria-label="画布工具">
+            <div class="float-group">
               <button
-                id="form-tab"
+                class="float-button"
                 type="button"
-                role="tab"
-                :aria-selected="editorMode === 'form'"
-                aria-controls="form-panel"
-                @click="editorMode = 'form'"
+                :aria-pressed="interactionMode === 'select'"
+                title="选择模式：点击选中元素，拖动调整位置，空白处长按拖动框选"
+                @click="interactionMode = 'select'"
               >
-                表单编辑</button
-              ><button
-                id="source-tab"
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 4.5 6.8 15.2 2-6.4 6.4-2L4.5 4.5Z"/></svg>
+                选择
+              </button>
+              <button
+                class="float-button"
                 type="button"
-                role="tab"
-                :aria-selected="editorMode === 'source'"
-                aria-controls="source-panel"
-                @click="editorMode = 'source'"
+                :aria-pressed="interactionMode === 'connect'"
+                title="连线模式：依次点击两个节点创建连线，Esc 退出"
+                @click="interactionMode = 'connect'"
               >
-                JSON 源码
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 19 5"/><circle cx="5" cy="19" r="2.2"/><circle cx="19" cy="5" r="2.2"/></svg>
+                连线
               </button>
             </div>
-            <div
-              id="form-panel"
-              v-show="editorMode === 'form'"
-              class="form-panel"
-              role="tabpanel"
-              aria-labelledby="form-tab"
-            >
-              <fieldset class="editor-fields" :disabled="loading">
-                <FormEditor
-                  ref="formEditor"
-                  :model-value="applied"
-                  @update:model-value="applyForm"
-                />
-              </fieldset>
-            </div>
-            <div
-              id="source-panel"
-              v-show="editorMode === 'source'"
-              class="json-panel"
-              role="tabpanel"
-              aria-labelledby="source-tab"
-            >
-              <div class="json-header">
-                <h2>JSON 源码</h2>
-                <button
-                  class="text-button"
-                  type="button"
-                  :disabled="loading"
-                  @click="formatJson"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></svg>格式化
-                </button>
-              </div>
-              <label class="source-scope"
-                >编辑范围<span class="select-wrap"><VSelect v-model="sourceScope" class="select-input">
-                  <option value="diagram">当前图表 · 单图 JSON</option>
-                  <option value="document">整个文档 · 全部图表 JSON</option>
-                </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+            <span class="float-divider"></span>
+            <div class="float-group">
+              <button
+                class="float-button"
+                type="button"
+                title="添加元素（节点 / 容器 / 参与者 / 分类）"
+                :disabled="loading"
+                @click="addDialogOpen = true"
               >
-              <div class="editor-filebar">
-                <span class="file-dot"></span
-                >{{
-                  sourceScope === "document"
-                    ? "document.json"
-                    : `diagram-${activeIndex + 1}.json`
-                }}<span :class="dirty ? 'file-dirty' : 'file-saved'">{{
-                  dirty ? "未应用草稿" : "已同步"
-                }}</span>
-              </div>
-              <label class="visually-hidden" for="json-editor"
-                >编辑 JSON，按 Ctrl 或 Command 加 Enter 应用</label
-              ><textarea
-                id="json-editor"
-                ref="editor"
-                v-model="draft"
-                class="json-editor"
-                :readonly="loading"
-                spellcheck="false"
-                autocapitalize="off"
-                autocomplete="off"
-                autocorrect="off"
-                @keydown="editorKeydown"
-              ></textarea>
-              <div class="json-actions">
-                <button
-                  class="button button-accent"
-                  type="button"
-                  :disabled="loading"
-                  @click="applyDraft"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="m4.5 12.75 6 6 9-13.5" />
-                  </svg>
-                  <span>{{
-                    loading
-                      ? "正在绘制…"
-                      : sourceScope === "document"
-                        ? "应用整个文档"
-                        : "应用当前图表"
-                  }}</span><kbd>Ctrl / Cmd + Enter</kbd>
-                </button>
-                <div>
-                  <button class="text-button" type="button" @click="copyJson">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5" /></svg>复制草稿</button
-                  ><span>·</span
-                  ><button
-                    class="text-button"
-                    type="button"
-                    @click="downloadJson"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>下载草稿</button
-                  ><span>·</span
-                  ><button
-                    class="text-button"
-                    type="button"
-                    :disabled="loading"
-                    @click="resetSource"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>恢复已应用
-                  </button>
-                </div>
-              </div>
-              <p class="editor-hint">
-                切换编辑模式和图表会保留 JSON
-                草稿。无效输入不会覆盖画布。整个文档的草稿独立保存，应用后会替换全部图表。
-              </p>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                添加
+              </button>
+              <button
+                class="float-button danger"
+                type="button"
+                title="删除所选元素（Delete）"
+                :disabled="loading || !selectedKeys.length"
+                @click="onRequestDelete(selectedKeys)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"/><path d="M19 6l-.8 12.4a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+                删除{{ selectedKeys.length > 1 ? ` ${selectedKeys.length} 项` : "" }}
+              </button>
+              <button
+                class="float-button"
+                type="button"
+                title="清空全部位置调整，恢复自动布局"
+                :disabled="loading || !adjustmentCount"
+                @click="clearAdjustments"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+                复位
+              </button>
             </div>
-          </section>
+          </div>
+          <div class="canvas-float-export" role="toolbar" aria-label="导出当前图">
+            <span class="export-format"><span class="select-wrap"><VSelect
+              v-model="format"
+              class="select-input"
+              aria-label="导出文件格式"
+            >
+              <option value="svg">SVG</option>
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp">WebP</option>
+            </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></span>
+            <span class="export-scale"><span class="select-wrap"><VSelect
+              v-model.number="scale"
+              class="select-input"
+              aria-label="导出倍率"
+            >
+              <option :value="1">1×</option>
+              <option :value="2">2×</option>
+              <option :value="3">3×</option>
+              <option :value="4">4×</option>
+            </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></span>
+            <button
+              class="float-button"
+              type="button"
+              :disabled="loading || exporting"
+              title="导出当前图为图片文件"
+              @click="downloadImage"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+              {{ exporting ? "导出中…" : "导出图片" }}
+            </button>
+            <button
+              class="float-button"
+              type="button"
+              :disabled="loading || copyingImage"
+              title="复制当前图 PNG 到剪贴板"
+              @click="copyImage"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2.5" width="8" height="4" rx="1" /><path d="M16 4.5h2.5A1.5 1.5 0 0 1 20 6v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H8" /></svg>
+              {{ copyingImage ? "复制中…" : "复制 PNG" }}
+            </button>
+          </div>
+          <div v-if="adjustmentCount" class="canvas-adjust-chip">
+            <span>已记录 {{ adjustmentCount }} 项位置调整</span>
+            <button class="text-button" type="button" :aria-expanded="adjustmentsOpen" @click="adjustmentsOpen = !adjustmentsOpen">{{ adjustmentsOpen ? "收起" : "参数" }}</button>
+            <button class="text-button" type="button" :disabled="loading || savingHtml" @click="clearAdjustments">清空</button>
+            <div v-if="adjustmentsOpen" class="adjust-pop">
+              <pre class="adjustment-json" tabindex="0" aria-label="当前图表位置调整参数">{{ adjustmentsJson }}</pre>
+            </div>
+          </div>
+          <label
+            v-if="format === 'jpeg' || format === 'webp'"
+            class="canvas-quality range-control"
+            ><span
+              >质量<output>{{ Math.round(quality * 100) }}%</output></span
+            ><input
+              v-model.number="quality"
+              type="range"
+              min="0.1"
+              max="1"
+              step="0.01"
+          /></label>
         </div>
         <footer class="workspace-footer">
           <span>修改保留在当前页面，保存 HTML 后可继续离线编辑。</span
@@ -2192,11 +1928,194 @@ defineExpose({
             :title="runtimeError"
             >独立 HTML 运行时尚未就绪</span
           ><span v-else
-            >18 种图表 · {{ themeNames.length }} 套主题 · 多图离线文档</span
+            >{{ themeNames.length }} 套主题 · 多图离线文档 · 右键画布可打开菜单</span
           >
         </footer>
       </main>
+
+      <aside class="studio-inspector" aria-label="元素检查器">
+        <ElementInspector
+          :spec="applied"
+          :selected-keys="selectedKeys"
+          :loading="loading"
+          :on-update="updateSpec"
+          @full-edit="toggleEditor"
+          @delete="onRequestDelete"
+        />
+      </aside>
     </div>
+
+    <Teleport to="body">
+      <div v-if="editorOpen" class="editor-scrim" @pointerdown.self="editorOpen = false">
+        <section
+          id="diagram-editor"
+          class="data-panel editor-drawer"
+          aria-label="当前图表编辑器"
+        >
+          <div class="editor-mode-tabs" role="tablist" aria-label="编辑模式">
+            <button
+              id="form-tab"
+              type="button"
+              role="tab"
+              :aria-selected="editorMode === 'form'"
+              aria-controls="form-panel"
+              @click="editorMode = 'form'"
+            >
+              表单编辑</button
+            ><button
+              id="source-tab"
+              type="button"
+              role="tab"
+              :aria-selected="editorMode === 'source'"
+              aria-controls="source-panel"
+              @click="editorMode = 'source'"
+            >
+              JSON 源码
+            </button>
+            <button class="icon-button drawer-close" type="button" aria-label="收起编辑器" @click="editorOpen = false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div
+            id="form-panel"
+            v-show="editorMode === 'form'"
+            class="form-panel"
+            role="tabpanel"
+            aria-labelledby="form-tab"
+          >
+            <fieldset class="editor-fields" :disabled="loading">
+              <FormEditor
+                ref="formEditor"
+                :model-value="applied"
+                @update:model-value="applyForm"
+              />
+            </fieldset>
+          </div>
+          <div
+            id="source-panel"
+            v-show="editorMode === 'source'"
+            class="json-panel"
+            role="tabpanel"
+            aria-labelledby="source-tab"
+          >
+            <div class="json-header">
+              <h2>JSON 源码</h2>
+              <button
+                class="text-button"
+                type="button"
+                :disabled="loading"
+                @click="formatJson"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></svg>格式化
+              </button>
+            </div>
+            <label class="source-scope"
+              >编辑范围<span class="select-wrap"><VSelect v-model="sourceScope" class="select-input">
+                <option value="diagram">当前图表 · 单图 JSON</option>
+                <option value="document">整个文档 · 全部图表 JSON</option>
+              </VSelect><svg class="select-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span></label
+            >
+            <div class="editor-filebar">
+              <span class="file-dot"></span
+              >{{
+                sourceScope === "document"
+                  ? "document.json"
+                  : `diagram-${activeIndex + 1}.json`
+              }}<span :class="dirty ? 'file-dirty' : 'file-saved'">{{
+                dirty ? "未应用草稿" : "已同步"
+              }}</span>
+            </div>
+            <label class="visually-hidden" for="json-editor"
+              >编辑 JSON，按 Ctrl 或 Command 加 Enter 应用</label
+            ><textarea
+              id="json-editor"
+              ref="editor"
+              v-model="draft"
+              class="json-editor"
+              :readonly="loading"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              autocorrect="off"
+              @keydown="editorKeydown"
+            ></textarea>
+            <div class="json-actions">
+              <button
+                class="button button-accent"
+                type="button"
+                :disabled="loading"
+                @click="applyDraft"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+                <span>{{
+                  loading
+                    ? "正在绘制…"
+                    : sourceScope === "document"
+                      ? "应用整个文档"
+                      : "应用当前图表"
+                }}</span><kbd>Ctrl / Cmd + Enter</kbd>
+              </button>
+              <div>
+                <button class="text-button" type="button" @click="copyJson">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5" /></svg>复制草稿</button
+                ><span>·</span
+                ><button
+                  class="text-button"
+                  type="button"
+                  @click="downloadJson"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>下载草稿</button
+                ><span>·</span
+                ><button
+                  class="text-button"
+                  type="button"
+                  :disabled="loading"
+                  @click="resetSource"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>恢复已应用
+                </button>
+              </div>
+            </div>
+            <p class="editor-hint">
+              切换编辑模式和图表会保留 JSON
+              草稿。无效输入不会覆盖画布。整个文档的草稿独立保存，应用后会替换全部图表。
+            </p>
+          </div>
+        </section>
+      </div>
+    </Teleport>
+
+    <StyleDialog
+      :open="styleDialogOpen"
+      :spec="applied"
+      :loading="loading"
+      :on-update="updateSpec"
+      @close="styleDialogOpen = false"
+    />
+    <AddElementDialog
+      :open="addDialogOpen"
+      :spec="applied"
+      :marquee-keys="marqueeKeys"
+      @close="addDialogOpen = false"
+      @submit="onAddElement"
+    />
+    <ContextMenu
+      v-if="menuState"
+      :x="menuState.x"
+      :y="menuState.y"
+      :entries="buildMenu(menuState.canvas)"
+      @close="menuState = undefined"
+    />
     <Transition name="toast"
       ><div v-if="notice" class="studio-toast" role="status">
         {{ notice }}
@@ -3098,4 +3017,57 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .studio-shell .loading-ring circle { stroke: var(--line); }
 .studio-shell .loading-ring path { stroke: var(--accent); }
 .sidebar-close { margin-top: 12px; }
+
+/* ---------- 工作台新布局：左栏 / 大画布 / 右栏检查器 ---------- */
+.header-doc-name { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-size: 13px; font-weight: 600; }
+.menu-trigger { padding-inline: 10px; }
+.studio-body { align-items: stretch; }
+.studio-main { display: flex; flex-direction: column; }
+.workspace-title { font-size: 14px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.workspace-meta { margin: 2px 0 12px; }
+.canvas-region { position: relative; flex: 1; min-height: 0; }
+.studio-inspector { position: sticky; top: 74px; align-self: flex-start; width: 288px; flex: none; max-height: calc(100vh - 92px); overflow-y: auto; background: var(--paper); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.sidebar-theme { border-top: 1px solid var(--line); }
+.sidebar-theme .theme-more { margin-left: auto; padding: 4px 8px; font-size: 12px; min-height: 26px; }
+.sidebar-theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 4px; }
+.sidebar-theme-grid .theme-option { padding: 4px 2px; font-size: 11px; }
+.sidebar-theme-grid .theme-preview { height: 26px; }
+
+/* 画布浮动工具条 / 导出条（absolute，不占布局） */
+.canvas-float-tools, .canvas-float-export { position: absolute; z-index: 6; top: 60px; display: flex; align-items: center; gap: 4px; padding: 4px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-md); }
+.canvas-float-tools { left: 14px; }
+.canvas-float-export { right: 14px; }
+.float-group { display: flex; align-items: center; gap: 2px; }
+.float-divider { width: 1px; height: 20px; margin: 0 3px; background: var(--line); }
+.float-button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 5px 10px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--ink); font-size: 12px; font-weight: 550; white-space: nowrap; }
+.float-button > svg { width: 14px; height: 14px; flex: none; }
+.float-button:hover:not(:disabled) { background: var(--paper-2); }
+.float-button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent-line); }
+.float-button.danger:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); }
+.float-button:disabled { opacity: .5; }
+.canvas-float-export .select-input { min-height: 30px; min-width: 78px; padding: 4px 24px 4px 9px; font-size: 12px; border-color: var(--line); }
+.export-scale .select-input { min-width: 58px; }
+.canvas-float-export .select-chevron { right: 7px; width: 12px; height: 12px; }
+.canvas-adjust-chip { position: absolute; z-index: 6; left: 14px; bottom: 52px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--paper); border-radius: var(--r-pill); box-shadow: var(--shadow-md); color: var(--muted); font-size: 12px; }
+.canvas-adjust-chip .text-button { padding: 0; }
+.adjust-pop { position: absolute; left: 0; bottom: calc(100% + 8px); width: 320px; padding: 10px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-lg); }
+.adjust-pop .adjustment-json { margin: 0; max-height: 220px; }
+.canvas-quality { position: absolute; z-index: 6; right: 14px; bottom: 52px; width: 150px; padding: 8px 12px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-md); }
+.canvas-quality input { margin-top: 4px; }
+
+/* 完整编辑抽屉（表单 / JSON） */
+.editor-scrim { position: fixed; inset: 0; z-index: 60; background: rgb(32 36 44 / .32); }
+.editor-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 61; width: min(560px, 100vw); height: auto; max-height: none; border-radius: var(--r-lg) 0 0 var(--r-lg); box-shadow: var(--shadow-lg); }
+.drawer-close { margin-left: auto; color: var(--muted); }
+.drawer-close:hover { background: var(--paper-2); color: var(--ink); }
+
+@media (max-width: 1100px) {
+  .studio-inspector { display: none; }
+}
+@media (max-width: 860px) {
+  .canvas-float-tools { top: 56px; left: 10px; }
+  .canvas-float-export { top: auto; bottom: 52px; right: 10px; }
+  .canvas-adjust-chip { bottom: auto; top: 100px; }
+  .canvas-quality { display: none; }
+}
 </style>

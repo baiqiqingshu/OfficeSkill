@@ -99826,7 +99826,7 @@ function markerDefinitions(prefix, theme) {
   const stroke = esc(theme.primary), secondary = esc(theme.secondary), background = esc(theme.background === "transparent" ? theme.surface : theme.background);
   return `<defs>${markerSet(prefix, "", stroke, background)}${secondary !== stroke ? markerSet(prefix, "-sec", secondary, background) : ""}</defs>`;
 }
-function renderContainer(box, theme, direction2, region) {
+function renderContainer(box, theme, direction2, spec, region) {
   const { x, y, width: w, height: h, ref } = box;
   const border = esc(region?.stroke ?? theme.border), surface = esc(region?.fill ?? theme.surface), primary = esc(region?.header ?? theme.primary);
   const headerOpacity = region ? "1" : "0.08";
@@ -99848,7 +99848,10 @@ function renderContainer(box, theme, direction2, region) {
   } else {
     shape = `<rect x="${numeric(x)}" y="${numeric(y)}" width="${numeric(w)}" height="${numeric(h)}" rx="${numeric(theme.radius)}" fill="${surface}" stroke="${border}" stroke-width="${strokeW}" stroke-dasharray="7 5"/>`;
   }
-  return `<g class="uml-container uml-${ref.kind}" data-adjustment-key="${ref.kind === "lane" ? "lanes" : "groups"}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
+  const field = ref.kind === "lane" ? "lanes" : "groups";
+  const editorIndex = (spec[field] ?? []).findIndex((item) => item.id === ref.originalId);
+  const editorKey = editorIndex >= 0 ? ` data-editor-key="${field}/${editorIndex}"` : "";
+  return `<g class="uml-container uml-${ref.kind}"${editorKey} data-adjustment-key="${field}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
 }
 function centeredContent(ref, x, y, width, height) {
   const { node, theme, kind } = ref;
@@ -100705,6 +100708,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
     box,
     theme,
     direction2,
+    spec,
     palette && regionIds.includes(box.ref.originalId) ? regionPaint(theme, palette, regionIds.indexOf(box.ref.originalId)) : void 0
   )).join("");
   const paletteDefs = gradientDefs(nodes.flatMap((node) => node.paint ? [node.paint] : []));
