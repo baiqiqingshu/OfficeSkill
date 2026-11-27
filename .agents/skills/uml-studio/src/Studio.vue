@@ -17,6 +17,7 @@ import AddElementDialog from "./AddElementDialog.vue";
 import ContextMenu from "./ContextMenu.vue";
 import type { MenuEntry } from "./ContextMenu.vue";
 import type { AddElementPayload } from "./AddElementDialog.vue";
+import type { ElementMove, LayoutBox, LayoutItem, LayoutSnapshot } from "./DiagramCanvas.vue";
 import { createHtml, downloadBlob } from "./export";
 import type { StudioRuntime } from "./export";
 import {
@@ -33,7 +34,7 @@ import {
 } from "./filesystem-save";
 import type { LocalDirectory, LocalHtmlTarget } from "./filesystem-save";
 import { isMermaidSource, mermaidToDocument } from "./mermaid";
-import { themeLabels, themes } from "./themes";
+import { resolveTheme, themeLabels, themes } from "./themes";
 import { normalizeDocument, validateDocument } from "./document";
 import { validateSpec } from "./validate";
 import type {
@@ -43,6 +44,7 @@ import type {
   DiagramNode,
   DiagramSpec,
   DiagramType,
+  ElementAdjustment,
   ExportOptions,
   FishboneCause,
   Participant,
@@ -55,6 +57,8 @@ interface CanvasHandle {
   setSpec(spec: DiagramSpec): Promise<void>;
   getSvg(): string;
   exportImage(options?: ExportOptions): Promise<Blob>;
+  layoutSnapshot(): LayoutSnapshot | undefined;
+  restoreRendered(): void;
 }
 interface FormHandle {
   hasChanges(): boolean;
@@ -112,7 +116,17 @@ const families: { label: string; types: DiagramType[] }[] = [
   },
 ];
 const themeNames = Object.keys(themes) as ThemeName[];
-const json = (value: unknown) => JSON.stringify(value, null, 2);
+// Committed specs/documents are never mutated in place (every edit clones and replaces), so the
+// pretty JSON of an object can be memoised: dirty checks, drafts and the save snapshot otherwise
+// re-serialised the whole document (images included) several times per edit.
+const jsonCache = new WeakMap<object, string>();
+const json = (value: unknown): string => {
+  if (!value || typeof value !== "object") return JSON.stringify(value, null, 2);
+  const raw = toRaw(value) as object;
+  let text = jsonCache.get(raw);
+  if (text === undefined) jsonCache.set(raw, (text = JSON.stringify(raw, null, 2)));
+  return text;
+};
 let initial: DiagramDocument;
 let initialError = props.startupError ?? "";
 try {
@@ -310,15 +324,19 @@ async function applySpec(
   error.value = "";
   try {
     const candidate = structuredClone(validateSpec(toRaw(input)));
-    const next = validateDocument({
-      ...getDocument(),
+    // Other diagrams are already validated and immutable: share them instead of cloning and
+    // re-validating the whole document; only the document-level ID uniqueness needs a check.
+    if (candidate.id && collection.value.diagrams.some((spec, position) => position !== index && spec.id === candidate.id))
+      throw new Error(`图形存在重复 ID：${candidate.id}`);
+    const next: DiagramDocument = {
+      ...collection.value,
       diagrams: collection.value.diagrams.map((spec, position) =>
         position === index ? candidate : spec,
       ),
-    });
+    };
     ticket = ++revision;
     if (!(await renderCandidate(next.diagrams[index]!, ticket))) return false;
-    commitCollection(structuredClone(next));
+    commitCollection(next);
     if (
       sourceDrafts.value[index] === oldSource &&
       (sourceWasClean || fromSource === oldSource)
@@ -525,8 +543,11 @@ async function updateSpec(change: (spec: DiagramSpec) => void): Promise<void> {
     const candidate = activeDirty.value
       ? structuredClone(validateSpec(JSON.parse(source)))
       : structuredClone(applied.value);
+    frozenOrigins.length = 0;
     change(candidate);
+    const frozen = frozenOrigins.splice(0);
     await applySpec(candidate, source);
+    if (frozen.length) convertToCenters(frozen);
   } catch (reason) {
     reportError(reason);
   }
@@ -550,30 +571,68 @@ function selectTheme(name: ThemeName): void {
     delete spec.style;
   });
 }
-async function applyPositionChange(change: (spec: DiagramSpec) => void): Promise<void> {
+async function applyPositionChange(change: (spec: DiagramSpec) => void): Promise<boolean> {
   try {
     if (savingHtml.value) throw new Error("正在保存 HTML，请保存结束后再调整位置。");
     if (activeDirty.value || formEditor.value?.hasChanges())
       throw new Error("请先应用当前表单或 JSON 草稿，再调整位置；草稿仍保留。");
     const candidate = getSpec();
     change(candidate);
-    await applySpec(candidate);
+    return await applySpec(candidate);
   } catch (reason) {
-    // A rejected gesture must also discard its temporary SVG preview.
-    if (canvas.value) await canvas.value.setSpec(getSpec()).catch(() => {});
+    // A rejected gesture must also discard its temporary SVG preview. The canvas keeps its last
+    // successful render (a failed render never replaces it), so restore that without re-rendering.
+    canvas.value?.restoreRendered();
     reportError(reason);
+    showNotice("位置调整未生效，已恢复上一次的布局");
+    return false;
   }
 }
-function adjustElement(change: { key: string; dx: number; dy: number }): void {
+const isPinnedAdjustment = (value?: ElementAdjustment): boolean => !!value && ("cx" in value || "x" in value);
+const roundCoordinate = (value: number) => Math.round(value * 100) / 100;
+/** Drag commit: the element is pinned at its new absolute centre `{cx, cy}`. */
+function adjustElement(change: ElementMove): void {
+  // Sequence / fishbone centres are renderer-defined anchors; without data-layout-cx (first
+  // adjustment of the diagram) the canvas can only estimate them, so record the exact legacy
+  // offset once and convert it to {cx, cy} from the next render's metadata.
+  const special = applied.value.type === "sequence" || applied.value.type === "fishbone";
+  const legacy = special && !change.exact;
   void applyPositionChange((spec) => {
     const adjustments = spec.layout?.adjustments ?? {};
     const elements = { ...adjustments.elements };
     const old = elements[change.key];
-    elements[change.key] = old && "x" in old
-      ? { x: old.x + change.dx, y: old.y + change.dy }
-      : { dx: (old?.dx ?? 0) + change.dx, dy: (old?.dy ?? 0) + change.dy };
+    elements[change.key] = !legacy ? { cx: change.cx, cy: change.cy }
+      : old && "cx" in old ? { cx: old.cx + change.dx, cy: old.cy + change.dy }
+      : old && "x" in old ? { x: old.x + change.dx, y: old.y + change.dy }
+      : { dx: (old && "dx" in old ? old.dx : 0) + change.dx, dy: (old && "dy" in old ? old.dy : 0) + change.dy };
+    // Pinned containers carry unpinned members; already pinned followers move explicitly.
+    for (const member of change.members ?? [])
+      if (isPinnedAdjustment(elements[member.key])) elements[member.key] = { cx: member.cx, cy: member.cy };
     spec.layout = { ...spec.layout, adjustments: { ...adjustments, elements } };
-  });
+  }).then((committed) => { if (committed && legacy) convertToCenters([change.key]); });
+}
+/**
+ * Rewrite legacy offsets as `{cx, cy}` from the current render's centre metadata. The element
+ * already sits there, so this is a data-only commit (no re-render).
+ */
+function convertToCenters(keys: string[]): void {
+  const snapshot = canvas.value?.layoutSnapshot();
+  if (!snapshot || activeDirty.value || formEditor.value?.hasChanges()) return;
+  const spec = getSpec();
+  const elements = spec.layout?.adjustments?.elements;
+  if (!elements) return;
+  let changed = false;
+  for (const key of keys) {
+    const item = snapshot.items.find((entry) => entry.key === key);
+    if (!item?.exact || !elements[key] || "cx" in elements[key]!) continue;
+    elements[key] = { cx: roundCoordinate(item.center.x), cy: roundCoordinate(item.center.y) };
+    changed = true;
+  }
+  if (!changed) return;
+  const index = activeIndex.value;
+  const sourceWasClean = sourceDrafts.value[index] === json(applied.value);
+  commitCollection({ ...collection.value, diagrams: collection.value.diagrams.map((value, position) => position === index ? spec : value) });
+  if (sourceWasClean) sourceDrafts.value[index] = json(spec);
 }
 function adjustWaypoints(change: { key: string; waypoints: { x: number; y: number }[] }): void {
   void applyPositionChange((spec) => {
@@ -786,7 +845,238 @@ function onConnectNodes({ from, to }: { from: string; to: string }): void {
     });
   }).then(() => showNotice(`已连接 ${from} → ${to}`));
 }
+/* ---------- 新增元素：冻结现有节点 + 空位放置（仅节点图） ---------- */
+type PlacedSize = { width: number; height: number };
+interface Addition { key: string; size: PlacedSize; offset: { x: number; y: number } }
+/** Clearance kept between new elements and existing content (layout units). */
+const PLACE_GAP = 64;
+function isNodeGraph(spec: DiagramSpec): boolean {
+  return spec.type !== "sequence" && spec.type !== "fishbone";
+}
+function textWidth(value: string, size: number): number {
+  return Math.max(0, ...value.replace(/\r\n?/g, "\n").split("\n").map((line) =>
+    Array.from(line).reduce((width, char) => width + (/[\u2e80-\uffff]/.test(char) ? size : size * 0.62), 0)));
+}
+/** Generous estimate of the renderer's node box (the new node is pinned at its centre). */
+function estimateNodeSize(spec: DiagramSpec, node: DiagramNode): PlacedSize {
+  const size = resolveTheme(spec).fontSize;
+  const lines = (value?: string) => (value ? value.split("\n").length : 0);
+  const label = textWidth(node.label ?? "", size), detail = node.detail ? textWidth(node.detail, size - 2) : 0;
+  const content = Math.max(label, detail);
+  const contentHeight = (lines(node.label) || 1) * size * 1.4 + lines(node.detail) * (size - 2) * 1.4;
+  switch (node.kind) {
+    case "image": {
+      const width = Math.min(node.width ?? 240, 10000), height = node.height ?? 160;
+      return { width: Math.max(width, label + 24), height: height + size * 1.4 + 16 };
+    }
+    case "start": case "end": return { width: 32, height: 32 };
+    case "fork": case "join": return spec.direction === "LR" ? { width: 12, height: 120 } : { width: 120, height: 12 };
+    case "actor": return { width: Math.max(88, label + 24), height: 98 + contentHeight };
+    case "decision": return { width: Math.max(160, content * 2 + 40), height: Math.max(84, contentHeight * 2 + 28) };
+    default: return { width: Math.max(140, content + 64), height: Math.max(60, contentHeight + 40) };
+  }
+}
+const boxOverlaps = (a: LayoutBox, b: LayoutBox) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+const inflateBox = (box: LayoutBox, by: number): LayoutBox => ({ left: box.left - by, top: box.top - by, right: box.right + by, bottom: box.bottom + by });
+const boxContains = (outer: LayoutBox, inner: LayoutBox) => inner.left >= outer.left - 1 && inner.top >= outer.top - 1 && inner.right <= outer.right + 1 && inner.bottom <= outer.bottom + 1;
+const boxUnion = (a: LayoutBox, b: LayoutBox): LayoutBox => ({ left: Math.min(a.left, b.left), top: Math.min(a.top, b.top), right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom) });
+const boxArea = (box: LayoutBox) => (box.right - box.left) * (box.bottom - box.top);
+/**
+ * Pick a free spot for a cluster of new elements (relative offsets kept). Returns the centre of
+ * each addition. Without a container the cluster goes just outside the content bounds (right of
+ * top-down flows, below left-right flows), as close to the visible viewport as possible; inside a
+ * container it takes the spot that grows the container least without touching anything else.
+ */
+function placeAdditions(spec: DiagramSpec, snapshot: LayoutSnapshot, additions: Addition[], containerKey?: string): Map<string, { x: number; y: number }> {
+  const result = new Map<string, { x: number; y: number }>();
+  const items = snapshot.items, bounds = snapshot.bounds;
+  if (!additions.length || !items.length || !bounds) return result;
+  let cluster: LayoutBox | undefined;
+  for (const item of additions) {
+    const box = { left: item.offset.x - item.size.width / 2, top: item.offset.y - item.size.height / 2, right: item.offset.x + item.size.width / 2, bottom: item.offset.y + item.size.height / 2 };
+    cluster = cluster ? boxUnion(cluster, box) : box;
+  }
+  const width = cluster!.right - cluster!.left, height = cluster!.bottom - cluster!.top;
+  const middle = { x: (cluster!.left + cluster!.right) / 2, y: (cluster!.top + cluster!.bottom) / 2 };
+  const boxAt = (x: number, y: number): LayoutBox => ({ left: x - width / 2, top: y - height / 2, right: x + width / 2, bottom: y + height / 2 });
+  const view = snapshot.viewport && boxOverlaps(snapshot.viewport, bounds) ? snapshot.viewport : bounds;
+  const focus = { x: (view.left + view.right) / 2, y: (view.top + view.bottom) / 2 };
+  let best: { x: number; y: number; score: number } | undefined;
+  const container = containerKey ? items.find((item) => item.key === containerKey) : undefined;
+  if (container) {
+    const frame = container.box;
+    const members = items.filter((item) => item !== container && boxContains(frame, item.box));
+    const others = items.filter((item) => item !== container && !members.includes(item) && !boxContains(item.box, frame));
+    const centre = { x: (frame.left + frame.right) / 2, y: (frame.top + frame.bottom) / 2 };
+    // Elements already overlapping the container are not held against the growth it needs.
+    const outside = others.filter((item) => !boxOverlaps(frame, inflateBox(item.box, 16)));
+    for (let ring = 0; ring < 6 && !best; ring++) {
+      const reach = Math.max(width, height) / 2 + PLACE_GAP + ring * 160, step = 16 + ring * 8;
+      for (let y = frame.top - reach; y <= frame.bottom + reach; y += step) for (let x = frame.left - reach; x <= frame.right + reach; x += step) {
+        const box = boxAt(x, y);
+        if (members.some((item) => boxOverlaps(inflateBox(box, PLACE_GAP / 2), item.box))) continue;
+        if (others.some((item) => boxOverlaps(inflateBox(box, PLACE_GAP), item.box))) continue;
+        const grown = boxUnion(frame, inflateBox(box, 28));
+        if (outside.some((item) => boxOverlaps(grown, inflateBox(item.box, 16)))) continue;
+        const score = boxArea(grown) - boxArea(frame) + Math.hypot(x - centre.x, y - centre.y) * 4;
+        if (!best || score < best.score) best = { x, y, score };
+      }
+    }
+  }
+  if (!best) {
+    const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), Math.max(low, high));
+    const preferBelow = spec.direction === "LR";
+    const candidates = [
+      { x: bounds.right + PLACE_GAP + width / 2, y: clamp(focus.y, bounds.top + height / 2, bounds.bottom - height / 2), preferred: !preferBelow },
+      { x: clamp(focus.x, bounds.left + width / 2, bounds.right - width / 2), y: bounds.bottom + PLACE_GAP + height / 2, preferred: preferBelow },
+    ];
+    for (const candidate of candidates) {
+      // Outside the content bounds nothing can collide; keep the check for exotic geometry anyway.
+      let { x, y } = candidate;
+      for (let guard = 0; guard < 200 && items.some((item) => boxOverlaps(inflateBox(boxAt(x, y), PLACE_GAP), item.box)); guard++)
+        if (candidate.preferred !== preferBelow) x += 16; else y += 16;
+      const score = Math.hypot(x - focus.x, y - focus.y) * (candidate.preferred ? 1 : 1.35);
+      if (!best || score < best.score) best = { x, y, score };
+    }
+  }
+  for (const item of additions)
+    result.set(item.key, { x: roundCoordinate(best!.x + item.offset.x - middle.x), y: roundCoordinate(best!.y + item.offset.y - middle.y) });
+  return result;
+}
+/* 泳道：新节点必须归属一条泳道，并放在该泳道带内的空位（可沿流程方向延长泳道）。 */
+function clusterOf(additions: Addition[]): { width: number; height: number; middle: { x: number; y: number } } {
+  let cluster: LayoutBox | undefined;
+  for (const item of additions) {
+    const box = { left: item.offset.x - item.size.width / 2, top: item.offset.y - item.size.height / 2, right: item.offset.x + item.size.width / 2, bottom: item.offset.y + item.size.height / 2 };
+    cluster = cluster ? boxUnion(cluster, box) : box;
+  }
+  return { width: cluster!.right - cluster!.left, height: cluster!.bottom - cluster!.top, middle: { x: (cluster!.left + cluster!.right) / 2, y: (cluster!.top + cluster!.bottom) / 2 } };
+}
+function laneItems(spec: DiagramSpec, snapshot?: LayoutSnapshot): LayoutItem[] {
+  const ids = new Set((spec.lanes ?? []).map((lane) => lane.id));
+  return (snapshot?.items ?? []).filter((item) => item.key.startsWith("lanes/") && ids.has(item.key.slice(6)));
+}
+/** The axis lanes are laid out across (x for top-down bands, y for left-right bands). */
+function laneCrossAxis(spec: DiagramSpec, lanes: LayoutItem[]): "x" | "y" {
+  if (lanes.length >= 2) {
+    const xs = lanes.map((lane) => (lane.box.left + lane.box.right) / 2), ys = lanes.map((lane) => (lane.box.top + lane.box.bottom) / 2);
+    return Math.max(...xs) - Math.min(...xs) >= Math.max(...ys) - Math.min(...ys) ? "x" : "y";
+  }
+  return (spec.direction ?? "TB") === "LR" ? "y" : "x";
+}
+const low = (box: LayoutBox, axis: "x" | "y") => (axis === "x" ? box.left : box.top);
+const high = (box: LayoutBox, axis: "x" | "y") => (axis === "x" ? box.right : box.bottom);
+/** Lane of the current selection: a selected lane, or the lane of a selected node. */
+function selectedLane(spec: DiagramSpec): string | undefined {
+  const lanes = new Set((spec.lanes ?? []).map((lane) => lane.id));
+  for (const key of [...selectedKeys.value, ...marqueeKeys.value]) {
+    const [field, raw] = key.split("/");
+    const index = Number(raw);
+    if (field === "lanes" && spec.lanes?.[index]) return spec.lanes[index]!.id;
+    const lane = field === "nodes" ? spec.nodes?.[index]?.lane : undefined;
+    if (lane && lanes.has(lane)) return lane;
+  }
+}
+/** Selection first; else the band the free spot falls in (across the flow); else the nearest band. */
+function pickLane(spec: DiagramSpec, snapshot: LayoutSnapshot | undefined, additions: Addition[]): string {
+  const chosen = selectedLane(spec);
+  if (chosen) return chosen;
+  const lanes = laneItems(spec, snapshot);
+  if (!snapshot || !lanes.length) return spec.lanes![0]!.id;
+  const spot = placeAdditions(spec, snapshot, additions);
+  const first = additions[0]!, point = spot.get(first.key);
+  if (!point) return lanes[0]!.key.slice(6);
+  const { middle } = clusterOf(additions);
+  const axis = laneCrossAxis(spec, lanes), value = axis === "x" ? point.x - first.offset.x + middle.x : point.y - first.offset.y + middle.y;
+  const distance = (lane: LayoutItem) => Math.max(0, low(lane.box, axis) - value, value - high(lane.box, axis));
+  return [...lanes].sort((a, b) => distance(a) - distance(b))[0]!.key.slice(6);
+}
+/** Free spot inside the lane band: across the flow within the band, along the flow anywhere (the lane may grow). */
+function placeInLane(spec: DiagramSpec, snapshot: LayoutSnapshot, additions: Addition[], lane: LayoutItem): Map<string, { x: number; y: number }> {
+  const result = new Map<string, { x: number; y: number }>();
+  if (!additions.length || !snapshot.bounds) return result;
+  const cross = laneCrossAxis(spec, laneItems(spec, snapshot)), flow = cross === "x" ? "y" : "x";
+  const { width, height, middle } = clusterOf(additions);
+  const crossSize = cross === "x" ? width : height, flowSize = cross === "x" ? height : width;
+  const band = lane.box;
+  let crossMin = low(band, cross) + 24 + crossSize / 2, crossMax = high(band, cross) - 24 - crossSize / 2;
+  if (crossMin > crossMax) crossMin = crossMax = (low(band, cross) + high(band, cross)) / 2;
+  // Keep clear of the lane header at the start of the flow.
+  const flowMin = low(band, flow) + 56 + flowSize / 2;
+  const flowEnd = Math.max(high(band, flow), high(snapshot.bounds, flow));
+  const flowMax = flowEnd + PLACE_GAP + flowSize / 2 + 480;
+  const others = snapshot.items.filter((item) => !item.key.startsWith("lanes/"));
+  const view = snapshot.viewport ?? snapshot.bounds;
+  const focus = { x: (view.left + view.right) / 2, y: (view.top + view.bottom) / 2 };
+  const at = (c: number, f: number) => (cross === "x" ? { x: c, y: f } : { x: f, y: c });
+  let best: { x: number; y: number; score: number } | undefined;
+  for (const gap of [PLACE_GAP, 40]) {
+    for (let f = flowMin; f <= flowMax; f += 16) for (let c = crossMin; c <= crossMax + 0.01; c += Math.max(8, Math.min(16, crossMax - crossMin || 16))) {
+      const point = at(c, f);
+      const box = { left: point.x - width / 2, top: point.y - height / 2, right: point.x + width / 2, bottom: point.y + height / 2 };
+      if (others.some((item) => boxOverlaps(inflateBox(box, gap), item.box))) continue;
+      // Prefer spots inside the current band extent over lengthening the lane.
+      const beyond = Math.max(0, f + flowSize / 2 - high(band, flow));
+      const score = Math.hypot(point.x - focus.x, point.y - focus.y) + beyond * 2;
+      if (!best || score < best.score) best = { ...point, score };
+    }
+    if (best) break;
+  }
+  const spot = best ?? { ...at((crossMin + crossMax) / 2, flowEnd + PLACE_GAP + flowSize / 2), score: 0 };
+  for (const item of additions)
+    result.set(item.key, { x: roundCoordinate(spot.x + item.offset.x - middle.x), y: roundCoordinate(spot.y + item.offset.y - middle.y) });
+  return result;
+}
+/**
+ * Keep the current layout while adding: every existing node without a `{cx, cy}` pin is frozen at
+ * its rendered centre (legacy dx/dy or x/y are converted), then the additions are pinned on a free
+ * spot. Containers are not pinned; the renderer fits them to their members.
+ */
+/** Keys frozen at their exact `{x, y}` origin during the current updateSpec change. */
+const frozenOrigins: string[] = [];
+function pinAdditions(spec: DiagramSpec, snapshot: LayoutSnapshot | undefined, additions: Addition[], containerKey?: string): void {
+  // Diagrams with lanes: every new node gets a lane (group and lane are exclusive; a swimlane
+  // node must have a lane, elsewhere an explicit group is kept).
+  const laneNodes = (spec.lanes?.length ? additions : [])
+    .map((item) => (item.key.startsWith("nodes/") ? spec.nodes?.find((node) => node.id === item.key.slice(6)) : undefined))
+    .filter((node): node is DiagramNode => !!node && (spec.type === "swimlane" || !node.group));
+  let lane: LayoutItem | undefined;
+  if (laneNodes.length) {
+    const laneId = pickLane(spec, snapshot, additions);
+    for (const node of laneNodes) { node.lane = laneId; delete node.group; }
+    lane = laneItems(spec, snapshot).find((item) => item.key === `lanes/${laneId}`);
+  }
+  if (!snapshot || !isNodeGraph(spec) || !snapshot.items.length) return;
+  const adjustments = spec.layout?.adjustments ?? {};
+  const elements = { ...adjustments.elements };
+  const nodeIds = new Set((spec.nodes ?? []).map((node) => node.id));
+  const added = new Set(additions.map((item) => item.key));
+  for (const item of snapshot.items) {
+    if (!item.key.startsWith("nodes/") || added.has(item.key) || !nodeIds.has(item.key.slice(6))) continue;
+    const old = elements[item.key];
+    if (old && "cx" in old) continue;
+    // Unadjusted renders only allow an estimated centre; pin the exact top-left instead and
+    // convert it to {cx, cy} from the next render's metadata (see updateSpec).
+    if (!item.exact && item.origin) {
+      elements[item.key] = { x: item.origin.x, y: item.origin.y };
+      frozenOrigins.push(item.key);
+    } else elements[item.key] = { cx: roundCoordinate(item.center.x), cy: roundCoordinate(item.center.y) };
+  }
+  // A pinned group keeps its centre and grows symmetrically, which would sweep over neighbours
+  // once its (now frozen) members change. Groups with node members drop the pin and hug them.
+  for (const group of spec.groups ?? [])
+    if (isPinnedAdjustment(elements[`groups/${group.id}`]) && spec.nodes?.some((node) => node.group === group.id))
+      delete elements[`groups/${group.id}`];
+  for (const [key, point] of lane ? placeInLane(spec, snapshot, additions, lane) : placeAdditions(spec, snapshot, additions, containerKey))
+    elements[key] = { cx: point.x, cy: point.y };
+  spec.layout = { ...spec.layout, adjustments: { ...adjustments, elements } };
+}
+/** Geometry of the applied render, captured before an addition changes the spec. */
+function currentLayout(): LayoutSnapshot | undefined {
+  return isNodeGraph(applied.value) ? canvas.value?.layoutSnapshot() : undefined;
+}
 function onAddElement(payload: AddElementPayload): void {
+  const snapshot = currentLayout();
   void updateSpec((spec) => {
     if (payload.element === "group") {
       const id = uniqueElementId(spec, "group");
@@ -802,6 +1092,8 @@ function onAddElement(payload: AddElementPayload): void {
           delete node.lane;
         }
       }
+      // An empty group gets a free spot of its own; otherwise it fits the (frozen) members.
+      pinAdditions(spec, snapshot, payload.memberKeys.length ? [] : [{ key: `groups/${id}`, size: { width: 220, height: 140 }, offset: { x: 0, y: 0 } }]);
     } else if (payload.element === "lane") {
       const id = uniqueElementId(spec, "lane");
       (spec.lanes ??= []).push({ id, label: payload.label || "新泳道" });
@@ -812,6 +1104,7 @@ function onAddElement(payload: AddElementPayload): void {
           delete node.group;
         }
       }
+      pinAdditions(spec, snapshot, []);
     } else if (payload.element === "category") {
       spec.fishbone ??= { effect: "待分析结果", categories: [] };
       spec.fishbone.categories.push({
@@ -826,12 +1119,15 @@ function onAddElement(payload: AddElementPayload): void {
         kind: payload.element.slice(12) as Participant["kind"],
       });
     } else if (payload.element.startsWith("node:")) {
-      (spec.nodes ??= []).push({
+      const node: DiagramNode = {
         id: uniqueElementId(spec, "node"),
         label: payload.label || "新节点",
         kind: payload.element.slice(5) as DiagramNode["kind"],
         ...(payload.group ? { group: payload.group } : {}),
-      });
+      };
+      (spec.nodes ??= []).push(node);
+      pinAdditions(spec, snapshot, [{ key: `nodes/${node.id}`, size: estimateNodeSize(spec, node), offset: { x: 0, y: 0 } }],
+        payload.group ? `groups/${payload.group}` : undefined);
     }
   }).then(() => showNotice("已添加元素"));
 }
@@ -886,8 +1182,11 @@ async function pasteImage(src: string): Promise<void> {
     throw new Error("粘贴的图片超过约 5MB 上限，请先在图片工具中压缩后再粘贴。");
   const size = await probeImage(src);
   if (applied.value.nodes) {
+    const snapshot = currentLayout();
     await updateSpec((spec) => {
-      spec.nodes!.push(makeImageNode(spec, src, size));
+      const node = makeImageNode(spec, src, size);
+      spec.nodes!.push(node);
+      pinAdditions(spec, snapshot, [{ key: `nodes/${node.id}`, size: estimateNodeSize(spec, node), offset: { x: 0, y: 0 } }]);
     });
     showNotice("已把剪贴板图片添加为图片节点");
   } else {
@@ -940,13 +1239,16 @@ async function pasteText(raw: string): Promise<void> {
   const label = text.replace(/\s+/g, " ").trim();
   const truncated = label.length > 60 ? `${label.slice(0, 60)}…` : label;
   if (applied.value.nodes) {
+    const snapshot = currentLayout();
     await updateSpec((spec) => {
-      spec.nodes!.push({
+      const node: DiagramNode = {
         id: uniqueElementId(spec, "note"),
         label: truncated,
         kind: "note",
         detail: text,
-      });
+      };
+      spec.nodes!.push(node);
+      pinAdditions(spec, snapshot, [{ key: `nodes/${node.id}`, size: estimateNodeSize(spec, node), offset: { x: 0, y: 0 } }]);
     });
     showNotice("已把剪贴板文本添加为注释节点");
   } else {
@@ -2081,11 +2383,12 @@ defineExpose({
             </button>
           </div>
           <div v-if="adjustmentCount" class="canvas-adjust-chip">
-            <span>已记录 {{ adjustmentCount }} 项位置调整</span>
+            <span title="元素以中心点绝对坐标 {cx, cy} 固定；连线途经点为绝对坐标">已记录 {{ adjustmentCount }} 项位置调整</span>
             <button class="text-button" type="button" :aria-expanded="adjustmentsOpen" @click="adjustmentsOpen = !adjustmentsOpen">{{ adjustmentsOpen ? "收起" : "参数" }}</button>
             <button class="text-button" type="button" :disabled="loading || savingHtml" @click="clearAdjustments">清空</button>
             <div v-if="adjustmentsOpen" class="adjust-pop">
-              <pre class="adjustment-json" tabindex="0" aria-label="当前图表位置调整参数">{{ adjustmentsJson }}</pre>
+              <p class="adjustment-hint">elements：元素中心点绝对坐标 {cx, cy}（已固定）；edges：连线途经点。</p>
+              <pre class="adjustment-json" tabindex="0" aria-label="当前图表位置调整参数（元素中心点坐标与连线途经点）">{{ adjustmentsJson }}</pre>
             </div>
           </div>
           <label
@@ -3246,6 +3549,7 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .canvas-adjust-chip .text-button { padding: 0; }
 .adjust-pop { position: absolute; left: 0; bottom: calc(100% + 8px); width: 320px; padding: 10px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-lg); }
 .adjust-pop .adjustment-json { margin: 0; max-height: 220px; }
+.adjust-pop .adjustment-hint { margin: 0 0 6px; font-size: 11px; color: var(--muted); line-height: 1.5; }
 .canvas-quality { position: absolute; z-index: 6; right: 14px; bottom: 52px; width: 150px; padding: 8px 12px; background: var(--paper); border-radius: var(--r-md); box-shadow: var(--shadow-md); }
 .canvas-quality input { margin-top: 4px; }
 

@@ -190,8 +190,12 @@ function hasChanges(): boolean {
   return JSON.stringify(draft.value) !== appliedSource.value;
 }
 function resetDraft(): void {
-  draft.value = clone(props.modelValue);
-  indexElements();
+  // Studio resets explicitly after every apply and the appliedSource watcher does too; skip the
+  // second deep clone + full form re-render when the draft already matches.
+  if (JSON.stringify(draft.value) !== appliedSource.value) {
+    draft.value = clone(props.modelValue);
+    indexElements();
+  }
   query.value = "";
   root.value?.querySelectorAll(".uml-editor-selected").forEach(item => item.classList.remove("uml-editor-selected"));
   error.value = "";

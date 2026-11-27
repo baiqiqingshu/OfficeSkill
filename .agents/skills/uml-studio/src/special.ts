@@ -14,15 +14,32 @@ import { contrastText, gradientDefs, luminance, mix, notePaint, paintFor, palett
 /** Positions stay in renderer coordinates; the outer frame only expands to keep edits visible. */
 class SpecialPositions {
   minX = 0; minY = 0; maxX = 0; maxY = 0;
-  constructor(private spec: DiagramSpec) {}
-  at(key: string, x: number, y: number) {
+  /** Offset from each element's anchor (x, y) to its visual centre. */
+  private centers = new Map<string, { ox: number; oy: number }>();
+  private readonly adjusted: boolean;
+  constructor(private spec: DiagramSpec) {
+    const adjustments = spec.layout?.adjustments;
+    this.adjusted = !!(Object.keys(adjustments?.elements ?? {}).length || Object.keys(adjustments?.edges ?? {}).length);
+  }
+  /** `ox/oy` lead from the anchor to the element's visual centre, which `{cx, cy}` pins. */
+  at(key: string, x: number, y: number, ox = 0, oy = 0) {
+    this.centers.set(key, { ox, oy });
     const adjustment = this.spec.layout?.adjustments?.elements?.[key];
-    const nx = adjustment && 'x' in adjustment ? adjustment.x : x + (adjustment?.dx ?? 0);
-    const ny = adjustment && 'y' in adjustment ? adjustment.y : y + (adjustment?.dy ?? 0);
+    let nx = x, ny = y;
+    if (adjustment && 'cx' in adjustment) { nx = adjustment.cx - ox; ny = adjustment.cy - oy; }
+    else if (adjustment && 'x' in adjustment) { nx = adjustment.x; ny = adjustment.y; }
+    else if (adjustment) { nx = x + adjustment.dx; ny = y + adjustment.dy; }
     return { x: nx, y: ny, dx: nx - x, dy: ny - y };
   }
   attrs(key: string, x: number, y: number): string {
-    return `data-adjustment-key="${esc(key)}" data-layout-x="${x}" data-layout-y="${y}"`;
+    const base = `data-adjustment-key="${esc(key)}" data-layout-x="${x}" data-layout-y="${y}"`;
+    // Unadjusted diagrams keep their historical byte-for-byte output.
+    if (!this.adjusted) return base;
+    const center = this.centers.get(key) ?? { ox: 0, oy: 0 };
+    const adjustment = this.spec.layout?.adjustments?.elements?.[key];
+    const pinned = !!adjustment && ('cx' in adjustment || 'x' in adjustment);
+    const round = (value: number) => String(Math.round(value * 1000) / 1000);
+    return `${base} data-layout-cx="${round(x + center.ox)}" data-layout-cy="${round(y + center.oy)}"${pinned ? ' data-pinned="true"' : ''}`;
   }
   include(x: number, y: number, width: number, height: number): void {
     this.minX = Math.min(this.minX, x - 16); this.minY = Math.min(this.minY, y - 16);
@@ -173,7 +190,7 @@ export function renderSequence(
   const paints = participants.map((p, i) =>
     palette ? paintFor(theme, palette, boxes.length && palette.by !== "node" && boxOf.has(p.id) ? boxOf.get(p.id)! : i) : undefined);
   const x = new Map(
-    participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x]),
+    participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top, 0, boxHeight / 2).x]),
   );
   const ys: number[] = [];
   const rowLines: string[][] = [],
@@ -313,7 +330,9 @@ export function renderSequence(
   const messagePositions = messages.map((message, index) => {
     const sx = x.get(message.from) ?? 70, tx = x.get(message.to) ?? sx;
     const anchor = isEvent(message) ? events[index]!.left : message.from === message.to ? sx + 18 : (sx + tx) / 2;
-    const position = positions.at(`messages/${index}`, anchor, ys[index]!);
+    const event = isEvent(message) ? events[index]! : undefined;
+    const position = positions.at(`messages/${index}`, anchor, ys[index]!,
+      event ? event.width / 2 : 0, event ? event.top + event.height / 2 - ys[index]! : 0);
     ys[index] = position.y;
     labelTops[index] = labelTops[index]! + position.dy;
     return position;
@@ -328,7 +347,7 @@ export function renderSequence(
   });
   const headerY = (p: Participant): number => {
     const original = createAt.has(p.id) ? ys[createAt.get(p.id)!]! - boxHeight / 2 : top;
-    return positions.at(`participants/${p.id}`, 0, original).y;
+    return positions.at(`participants/${p.id}`, 0, original, 0, boxHeight / 2).y;
   };
   const stroke = esc(theme.primary);
   const secondaryStroke = esc(theme.secondary);
@@ -370,7 +389,7 @@ export function renderSequence(
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
     const index = spec.fragments!.indexOf(fragment), key = `fragments/${index}`;
-    const position = positions.at(key, left, frameTop);
+    const position = positions.at(key, left, frameTop, (right - left) / 2, (frameBottom - frameTop) / 2);
     const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
     positions.include(position.x, position.y, right - left, frameBottom - frameTop);
     if (fragment.kind === "rect") {
@@ -783,7 +802,7 @@ export function renderFishbone(
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
       const baseCategoryY = upper ? baseOuterY - categoryHeight : baseOuterY;
       const categoryKey = `fishbone/categories/${item.category.id}`;
-      const categoryPosition = positions.at(categoryKey, baseTipX - categoryWidth / 2, baseCategoryY);
+      const categoryPosition = positions.at(categoryKey, baseTipX - categoryWidth / 2, baseCategoryY, categoryWidth / 2, categoryHeight / 2);
       const tipX = baseTipX + categoryPosition.dx;
       const categoryY = baseCategoryY + categoryPosition.dy;
       const outerY = baseOuterY + categoryPosition.dy;
@@ -804,7 +823,8 @@ export function renderFishbone(
       );
       const rowPositions = item.rows.map(row => positions.at(`fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf('/causes/') + 1)}`,
         left + 12 + row.depth * 26 + categoryPosition.dx,
-        (upper ? baseOuterY : spineY) + 35 + row.offset + row.height / 2 + categoryPosition.dy));
+        (upper ? baseOuterY : spineY) + 35 + row.offset + row.height / 2 + categoryPosition.dy,
+        Math.max(0, ...row.lines.map(value => measure(value, size))) / 2, 0));
       item.rows.forEach((row, ri) => {
         const causeKey = `fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf('/causes/') + 1)}`;
         const rowPosition = rowPositions[ri]!;
@@ -861,7 +881,7 @@ export function renderFishbone(
     left += colWidth + regionGap;
   }
   const headY = spineY - headHeight / 2;
-  const headPosition = positions.at('fishbone/effect', headX, headY);
+  const headPosition = positions.at('fishbone/effect', headX, headY, headWidth / 2, headHeight / 2);
   positions.include(headPosition.x, headPosition.y - headHeight * 0.15, headWidth, headHeight * 1.3);
   if (headPosition.dx || headPosition.dy) body += line(classicHead ? headX + 28 : headX + headWidth * 0.15, spineY,
     (classicHead ? headX + 28 : headX + headWidth * 0.15) + headPosition.dx, spineY + headPosition.dy, theme.primary, theme.lineWidth + 2);

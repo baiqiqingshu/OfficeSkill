@@ -154,8 +154,16 @@ export interface DiagramPoint {
     x: number;
     y: number;
 }
-/** Logical layout coordinates; offsets follow the automatic layout, positions pin an element. */
-export type ElementAdjustment = {
+/**
+ * Logical layout coordinates (the `[data-layout-root]` space).
+ * `{cx, cy}` pins the element's visual centre (recommended); legacy `{dx, dy}` offsets follow
+ * the automatic layout and legacy `{x, y}` pins the top-left corner (renderer anchor).
+ */
+export interface ElementCenter {
+    cx: number;
+    cy: number;
+}
+export type ElementAdjustment = ElementCenter | {
     dx: number;
     dy: number;
 } | DiagramPoint;
@@ -564,6 +572,8 @@ export import FishboneHeadStyle = __Uml_1_types_d_ts.FishboneHeadStyle;
 export import FishboneData = __Uml_1_types_d_ts.FishboneData;
 
 export import DiagramPoint = __Uml_1_types_d_ts.DiagramPoint;
+
+export import ElementCenter = __Uml_1_types_d_ts.ElementCenter;
 
 export import ElementAdjustment = __Uml_1_types_d_ts.ElementAdjustment;
 

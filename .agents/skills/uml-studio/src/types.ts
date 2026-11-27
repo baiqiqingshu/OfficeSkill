@@ -42,8 +42,13 @@ export const fishboneHeadStyles = ['classic', 'fish', 'slim', 'shark', 'roundfis
 export type FishboneHeadStyle = typeof fishboneHeadStyles[number]
 export interface FishboneData { effect: string; headStyle?: FishboneHeadStyle; categories: { id: string; label: string; causes: FishboneCause[] }[] }
 export interface DiagramPoint { x: number; y: number }
-/** Logical layout coordinates; offsets follow the automatic layout, positions pin an element. */
-export type ElementAdjustment = { dx: number; dy: number } | DiagramPoint
+/**
+ * Logical layout coordinates (the `[data-layout-root]` space).
+ * `{cx, cy}` pins the element's visual centre (recommended); legacy `{dx, dy}` offsets follow
+ * the automatic layout and legacy `{x, y}` pins the top-left corner (renderer anchor).
+ */
+export interface ElementCenter { cx: number; cy: number }
+export type ElementAdjustment = ElementCenter | { dx: number; dy: number } | DiagramPoint
 export interface EdgeAdjustment { waypoints: DiagramPoint[] }
 export interface DiagramAdjustments {
   elements?: Record<string, ElementAdjustment>

@@ -165,8 +165,9 @@ npm run demo:verify
     "horizontalStagger": false,
     "adjustments": {
       "elements": {
-        "nodes/review": { "dx": 20, "dy": 40 },
-        "nodes/approve": { "x": 320, "y": 180 }
+        "nodes/review": { "cx": 320, "cy": 180 },
+        "groups/backend": { "cx": 640, "cy": 260 },
+        "edge-labels/review-approve/main": { "cx": 300, "cy": 120 }
       },
       "edges": {
         "review-approve": { "waypoints": [{ "x": 300, "y": 140 }] }
@@ -176,7 +177,10 @@ npm run demo:verify
 }
 ```
 
-默认保存相对自动布局的 `dx/dy`，便于改文字、尺寸后继续使用自动布局；`x/y` 固定位置用于精确定位，两种模式互斥。图节点、分组、泳道键分别为 `nodes/<id>`、`groups/<id>`、`lanes/<id>`；连线键使用显式 `edge.id`，缺省为 `edge-<从0开始的序号>`。需要持久配置途经点时建议显式指定连线 id。坐标是图内逻辑坐标，不是屏幕像素。网页可拖动调整、查看参数或清空恢复自动布局；HTML、JSON 与原生图片导出保留调整。更多特殊元素键与限制见仓库 `docs/uml-studio-editing-persistence.md`。
+推荐用 `cx/cy` 记录元素**视觉中心的绝对坐标**（图内逻辑坐标，即 `[data-layout-root]` 坐标系，不是屏幕像素），该元素被固定：改文字、加节点后仍留在原处。未固定的元素继续自动布局；若与固定元素（含 `elementGap` 间距）重叠，会沿位移最小的方向（同等时优先流程方向）推到最近空位并连锁避让。固定分组带动其未单独固定的成员；容器自动扩展以包住成员，成员全部固定时贴合成员（保留内边距与标题）；固定的分组以设定中心对称扩展。泳道的 `cx/cy` 只定位泳道横跨流程的位置（TB 取 `cx`、LR 取 `cy`），沿流程方向所有泳道保持同一长度，泳道之间互不重叠。
+中心定义：节点 / 分组 / 泳道 / 连线标注为其矩形中心；时序参与者为头部框中心，消息为连线中点（备注、分隔为其框中心），组合片段为外框中心；鱼骨鱼头、分类框为其中心，原因为文字行中心。
+兼容旧格式：`dx/dy` 为相对自动布局的偏移（随自动布局漂移，不推开其它元素）；`x/y` 为左上角（时序 / 鱼骨为渲染锚点）固定位置，同样视为固定。三种格式互斥。网页拖动统一写入 `cx/cy`。有调整的图在可调整元素上额外输出 `data-layout-cx/cy`（当前渲染中心）与固定时的 `data-pinned="true"`。
+图节点、分组、泳道键分别为 `nodes/<id>`、`groups/<id>`、`lanes/<id>`，连线标注为 `edge-labels/<连线键>/<main|from|to>`；连线键使用显式 `edge.id`，缺省为 `edge-<从0开始的序号>`。需要持久配置途经点时建议显式指定连线 id。网页可拖动调整、查看参数或清空恢复自动布局；HTML、JSON 与原生图片导出保留调整。更多特殊元素键与限制见仓库 `docs/uml-studio-editing-persistence.md`。
 
 文字使用 `style.fontFamily,fontSize,fontWeight,fontStyle,textDecoration`；字形为 `normal/italic`，装饰为 `none/underline`。可从字体预设选择，也可输入自定义回退列表。
 

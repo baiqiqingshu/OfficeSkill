@@ -256,7 +256,14 @@ var adjustmentMap = (values) => ({
   additionalProperties: values
 });
 var adjustments = object({
-  elements: adjustmentMap({ oneOf: [object({ dx: coordinate, dy: coordinate }, ["dx", "dy"]), point] }),
+  elements: {
+    ...adjustmentMap({ oneOf: [
+      { ...object({ cx: coordinate, cy: coordinate }, ["cx", "cy"]), description: "\u63A8\u8350\uFF1A\u5143\u7D20\u89C6\u89C9\u4E2D\u5FC3\u7684\u7EDD\u5BF9\u5750\u6807\uFF08\u56FE\u5185\u903B\u8F91\u5750\u6807\uFF0C\u5373 [data-layout-root] \u5750\u6807\u7CFB\uFF09\uFF0C\u5143\u7D20\u88AB\u56FA\u5B9A\uFF1B\u5176\u4F59\u5143\u7D20\u81EA\u52A8\u5E03\u5C40\u5E76\u907F\u8BA9\u3002" },
+      { ...object({ dx: coordinate, dy: coordinate }, ["dx", "dy"]), description: "\u517C\u5BB9\u65E7\u683C\u5F0F\uFF1A\u76F8\u5BF9\u81EA\u52A8\u5E03\u5C40\u4F4D\u7F6E\u7684\u504F\u79FB\uFF0C\u968F\u81EA\u52A8\u5E03\u5C40\u6F02\u79FB\u3002" },
+      { ...point, description: "\u517C\u5BB9\u65E7\u683C\u5F0F\uFF1A\u5143\u7D20\u5DE6\u4E0A\u89D2\uFF08\u65F6\u5E8F/\u9C7C\u9AA8\u4E3A\u6E32\u67D3\u951A\u70B9\uFF09\u7684\u7EDD\u5BF9\u5750\u6807\uFF0C\u5143\u7D20\u88AB\u56FA\u5B9A\u3002" }
+    ] }),
+    description: "\u5143\u7D20\u4F4D\u7F6E\u8C03\u6574\uFF0C\u952E\u5982 nodes/<id>\u3001groups/<id>\u3001lanes/<id>\u3001edge-labels/<edgeKey>/<main|from|to>\u3001participants/<id>\u3001messages/<index>\u3001fragments/<index>\u3001fishbone/effect\u3001fishbone/categories/<id>\u3002"
+  },
   edges: adjustmentMap(object({ waypoints: array(point) }, ["waypoints"]))
 });
 var layout = object({
@@ -1143,6 +1150,43 @@ function borderHugPenalty(a, b, containers) {
   }
   return penalty;
 }
+var routerScratch = {
+  size: 0,
+  epoch: 0,
+  valid: new Uint8Array(0),
+  edgeStamp: new Uint32Array(0),
+  edgeOk: new Uint8Array(0),
+  edgeValues: new Float64Array(0),
+  costStamp: new Uint32Array(0),
+  costs: new Float64Array(0),
+  previous: new Int32Array(0)
+};
+function routerBuffers(vertexCount) {
+  const scratch = routerScratch;
+  if (scratch.size < vertexCount) {
+    const size = Math.max(vertexCount, scratch.size * 2);
+    scratch.valid = new Uint8Array(size);
+    scratch.edgeStamp = new Uint32Array(size * 2);
+    scratch.edgeOk = new Uint8Array(size * 2);
+    scratch.edgeValues = new Float64Array(size * 12);
+    scratch.costStamp = new Uint32Array(size * 3);
+    scratch.costs = new Float64Array(size * 3);
+    scratch.previous = new Int32Array(size * 3);
+    scratch.size = size;
+    scratch.epoch = 0;
+  }
+  if (++scratch.epoch >= 4294967295) {
+    scratch.edgeStamp.fill(0);
+    scratch.costStamp.fill(0);
+    scratch.epoch = 1;
+  }
+  return scratch;
+}
+function routerLines(count) {
+  const lines = [];
+  for (let i = 0; i < count; i++) lines.push({ interior: [], wall: [], parallel: [], crossing: [], border: [] });
+  return lines;
+}
 function obstacleRouter(start, end, obstacles, used, guards, containers = []) {
   const xs = /* @__PURE__ */ new Set([start.x, end.x]);
   const ys = /* @__PURE__ */ new Set([start.y, end.y]);
@@ -1213,112 +1257,257 @@ function obstacleRouter(start, end, obstacles, used, guards, containers = []) {
   ys.add(bottom + 44);
   const columns = compactCoords(xs, [start.x, end.x]);
   const rows = compactCoords(ys, [start.y, end.y]);
-  const columnsCount = columns.length;
-  const vertexCount = columnsCount * rows.length;
-  const valid = new Uint8Array(vertexCount);
-  for (let row = 0; row < rows.length; row++) for (let column = 0; column < columnsCount; column++) {
-    const x = columns[column], y = rows[row];
-    valid[row * columnsCount + column] = obstacles.some((box) => x > box.x + 0.01 && x < box.x + box.width - 0.01 && y > box.y + 0.01 && y < box.y + box.height - 0.01) ? 0 : 1;
+  const columnsCount = columns.length, rowsCount = rows.length;
+  const vertexCount = columnsCount * rowsCount;
+  const obstacleCount = obstacles.length;
+  const innerX0 = new Float64Array(obstacleCount), innerX1 = new Float64Array(obstacleCount);
+  const innerY0 = new Float64Array(obstacleCount), innerY1 = new Float64Array(obstacleCount);
+  const wallX0 = new Float64Array(obstacleCount), wallX1 = new Float64Array(obstacleCount);
+  const wallY0 = new Float64Array(obstacleCount), wallY1 = new Float64Array(obstacleCount);
+  for (let i = 0; i < obstacleCount; i++) {
+    const box = obstacles[i];
+    innerX0[i] = box.x + 0.01;
+    innerX1[i] = box.x + box.width - 0.01;
+    innerY0[i] = box.y + 0.01;
+    innerY1[i] = box.y + box.height - 0.01;
+    wallX0[i] = box.x + 1;
+    wallX1[i] = box.x + box.width - 1;
+    wallY0[i] = box.y + 1;
+    wallY1[i] = box.y + box.height - 1;
+  }
+  const segCX = [], segCY = [], segDX = [], segDY = [];
+  for (const path of used) for (let index = 1; index < path.length; index++) {
+    const c = path[index - 1], d = path[index];
+    segCX.push(c.x);
+    segCY.push(c.y);
+    segDX.push(d.x);
+    segDY.push(d.y);
+  }
+  const segmentCount = segCX.length;
+  const zone = 18;
+  const rowLines = routerLines(rowsCount);
+  for (let row = 0; row < rowsCount; row++) {
+    const y = rows[row], line2 = rowLines[row];
+    for (let i = 0; i < obstacleCount; i++) {
+      const box = obstacles[i];
+      if (y > innerY0[i] && y < innerY1[i]) line2.interior.push(i);
+      if (Math.abs(y - box.y) < 3 || Math.abs(y - (box.y + box.height)) < 3) line2.wall.push(i);
+    }
+    for (let i = 0; i < segmentCount; i++) {
+      const cx = segCX[i], cy = segCY[i], dx = segDX[i], dy = segDY[i];
+      if (cy === dy) {
+        const dist = Math.abs(y - cy);
+        if (dist < 16) line2.parallel.push(Math.min(cx, dx), Math.max(cx, dx), dist);
+      }
+      if (!(Math.abs(cy - dy) < 0.01) && y > Math.min(y, y, cy, dy) + 0.01 && y < Math.max(y, y, cy, dy) - 0.01) line2.crossing.push(cx, Math.min(cx, dx), Math.max(cx, dx));
+    }
+    for (let i = 0; i < containers.length; i++) {
+      const box = containers[i];
+      let dist = Math.min(Math.abs(y - box.y), Math.abs(y - (box.y + box.height)));
+      if (box.ref.kind === "node") dist = Math.min(dist, Math.abs(y - (box.y + 10)));
+      if (dist < zone) line2.border.push(box.x - zone, box.x + box.width + zone, dist);
+    }
+  }
+  const columnLines = routerLines(columnsCount);
+  for (let column = 0; column < columnsCount; column++) {
+    const x = columns[column], line2 = columnLines[column];
+    for (let i = 0; i < obstacleCount; i++) {
+      const box = obstacles[i];
+      if (x > innerX0[i] && x < innerX1[i]) line2.interior.push(i);
+      if (Math.abs(x - box.x) < 3 || Math.abs(x - (box.x + box.width)) < 3) line2.wall.push(i);
+    }
+    for (let i = 0; i < segmentCount; i++) {
+      const cx = segCX[i], cy = segCY[i], dx = segDX[i], dy = segDY[i];
+      if (cx === dx) {
+        const dist = Math.abs(x - cx);
+        if (dist < 16) line2.parallel.push(Math.min(cy, dy), Math.max(cy, dy), dist);
+      }
+      if (Math.abs(cy - dy) < 0.01 && x > Math.min(x, x, cx, dx) + 0.01 && x < Math.max(x, x, cx, dx) - 0.01) line2.crossing.push(cy, Math.min(cy, dy), Math.max(cy, dy));
+    }
+    for (let i = 0; i < containers.length; i++) {
+      const box = containers[i];
+      let dist = Math.min(Math.abs(x - box.x), Math.abs(x - (box.x + box.width)));
+      if (box.ref.kind === "node") dist = Math.min(dist, Math.abs(x - (box.x + box.width - 12)));
+      if (dist < zone) line2.border.push(box.y - zone, box.y + box.height + zone, dist);
+    }
+  }
+  const scratch = routerBuffers(vertexCount), epoch = scratch.epoch;
+  const { valid, edgeStamp, edgeOk, edgeValues, costStamp, costs, previous } = scratch;
+  for (let row = 0; row < rowsCount; row++) {
+    const interior = rowLines[row].interior;
+    for (let column = 0; column < columnsCount; column++) {
+      const x = columns[column];
+      let inside = false;
+      for (let k = 0; k < interior.length; k++) {
+        const i = interior[k];
+        if (x > innerX0[i] && x < innerX1[i]) {
+          inside = true;
+          break;
+        }
+      }
+      valid[row * columnsCount + column] = inside ? 0 : 1;
+    }
   }
   const startVertex = rows.indexOf(start.y) * columnsCount + columns.indexOf(start.x);
   const endVertex = rows.indexOf(end.y) * columnsCount + columns.indexOf(end.x);
   if (!valid[startVertex] || !valid[endVertex]) return void 0;
-  const costs = new Float64Array(vertexCount * 3).fill(Infinity);
-  const previous = new Int32Array(vertexCount * 3).fill(-1);
-  const heap = [];
-  function push(item) {
-    heap.push(item);
-    let index = heap.length - 1;
+  const evaluate = (line2, lo, hi, wallLo, wallHi, innerLo, innerHi, out, at) => {
+    const interior = line2.interior;
+    for (let k = 0; k < interior.length; k++) {
+      const i = interior[k];
+      if (hi > innerLo[i] && lo < innerHi[i]) return false;
+    }
+    let overlap = 0, crossings = 0, nearParallel = 0;
+    const parallel = line2.parallel;
+    for (let k = 0; k < parallel.length; k += 3) {
+      const span = Math.max(0, Math.min(hi, parallel[k + 1]) - Math.max(lo, parallel[k]));
+      if (span > 0) {
+        const dist = parallel[k + 2];
+        if (dist < 0.1) overlap += span;
+        else nearParallel += span * (16 - dist) * 0.9 + 18;
+      }
+    }
+    const crossing = line2.crossing;
+    for (let k = 0; k < crossing.length; k += 3) {
+      const value = crossing[k];
+      if (value > Math.min(lo, crossing[k + 1]) + 0.01 && value < Math.max(hi, crossing[k + 2]) - 0.01) crossings++;
+    }
+    const segLen = hi - lo;
+    let hug = false;
+    const wall = line2.wall;
+    for (let k = 0; k < wall.length; k++) {
+      const i = wall[k];
+      if (hi > wallLo[i] && lo < wallHi[i]) {
+        hug = true;
+        break;
+      }
+    }
+    let borderHug = 0;
+    if (containers.length && !(hi - lo < 1)) {
+      const border = line2.border;
+      for (let k = 0; k < border.length; k += 3) {
+        const overlapSpan = Math.min(hi, border[k + 1]) - Math.max(lo, border[k]);
+        if (overlapSpan <= 2) continue;
+        const dist = border[k + 2];
+        borderHug += (zone - dist) * overlapSpan * 0.6 + (zone - dist) * 8 + 70;
+      }
+    }
+    out[at] = segLen;
+    out[at + 1] = overlap * 8;
+    out[at + 2] = nearParallel;
+    out[at + 3] = crossings * 80;
+    out[at + 4] = hug ? Math.min(44, segLen * 0.55 + 22) : 0;
+    out[at + 5] = borderHug;
+    return true;
+  };
+  const heapState = [], heapCost = [], heapScore = [];
+  const push = (state, cost, score) => {
+    let index = heapState.length;
+    heapState.push(state);
+    heapCost.push(cost);
+    heapScore.push(score);
     while (index > 0) {
       const parent = index - 1 >> 1;
-      if (heap[parent].score <= item.score) break;
-      heap[index] = heap[parent];
+      if (heapScore[parent] <= score) break;
+      heapState[index] = heapState[parent];
+      heapCost[index] = heapCost[parent];
+      heapScore[index] = heapScore[parent];
       index = parent;
     }
-    heap[index] = item;
-  }
+    heapState[index] = state;
+    heapCost[index] = cost;
+    heapScore[index] = score;
+  };
+  const startOut = guards?.startSide ? outward(guards.startSide) : void 0;
+  const endOut = guards?.endSide ? outward(guards.endSide) : void 0;
+  const startAlignedHorizontal = guards?.startSide ? guards.startSide === "left" || guards.startSide === "right" : false;
+  const turnBias = guards?.startSide ? guards.turnBias : void 0;
   costs[startVertex * 3] = 0;
-  push({ state: startVertex * 3, cost: 0, score: Math.abs(start.x - end.x) + Math.abs(start.y - end.y) });
+  costStamp[startVertex * 3] = epoch;
+  previous[startVertex * 3] = -1;
+  push(startVertex * 3, 0, Math.abs(start.x - end.x) + Math.abs(start.y - end.y));
   let finish = -1;
-  while (heap.length) {
-    const current = heap[0];
-    const last = heap.pop();
-    if (heap.length) {
+  while (heapState.length) {
+    const currentState = heapState[0], currentCost = heapCost[0];
+    const lastState = heapState.pop(), lastCost = heapCost.pop(), lastScore = heapScore.pop();
+    const size = heapState.length;
+    if (size) {
       let index = 0;
-      while (index * 2 + 1 < heap.length) {
+      while (index * 2 + 1 < size) {
         let child = index * 2 + 1;
-        if (child + 1 < heap.length && heap[child + 1].score < heap[child].score) child++;
-        if (last.score <= heap[child].score) break;
-        heap[index] = heap[child];
+        if (child + 1 < size && heapScore[child + 1] < heapScore[child]) child++;
+        if (lastScore <= heapScore[child]) break;
+        heapState[index] = heapState[child];
+        heapCost[index] = heapCost[child];
+        heapScore[index] = heapScore[child];
         index = child;
       }
-      heap[index] = last;
+      heapState[index] = lastState;
+      heapCost[index] = lastCost;
+      heapScore[index] = lastScore;
     }
-    if (current.cost !== costs[current.state]) continue;
-    const vertex = Math.floor(current.state / 3);
+    if (currentCost !== costs[currentState]) continue;
+    const vertex = currentState / 3 | 0;
     if (vertex === endVertex) {
-      finish = current.state;
+      finish = currentState;
       break;
     }
-    const column = vertex % columnsCount, row = Math.floor(vertex / columnsCount);
-    const a = { x: columns[column], y: rows[row] };
-    const neighbors = [column > 0 ? vertex - 1 : -1, column + 1 < columnsCount ? vertex + 1 : -1, row > 0 ? vertex - columnsCount : -1, row + 1 < rows.length ? vertex + columnsCount : -1];
-    for (const neighbor of neighbors) {
-      if (neighbor < 0 || !valid[neighbor]) continue;
-      const b = { x: columns[neighbor % columnsCount], y: rows[Math.floor(neighbor / columnsCount)] };
-      if (guards?.startSide && vertex === startVertex) {
-        const out = outward(guards.startSide);
-        if ((b.x - a.x) * out.x + (b.y - a.y) * out.y < -0.01) continue;
+    const currentDirection = currentState % 3;
+    const column = vertex % columnsCount, row = vertex / columnsCount | 0;
+    const ax = columns[column], ay = rows[row];
+    for (let n2 = 0; n2 < 4; n2++) {
+      let neighbor, edge, bx, by;
+      const horizontal = n2 < 2;
+      if (n2 === 0) {
+        if (column === 0) continue;
+        neighbor = vertex - 1;
+        edge = neighbor;
+        bx = columns[column - 1];
+        by = ay;
+      } else if (n2 === 1) {
+        if (column + 1 >= columnsCount) continue;
+        neighbor = vertex + 1;
+        edge = vertex;
+        bx = columns[column + 1];
+        by = ay;
+      } else if (n2 === 2) {
+        if (row === 0) continue;
+        neighbor = vertex - columnsCount;
+        edge = neighbor;
+        bx = ax;
+        by = rows[row - 1];
+      } else {
+        if (row + 1 >= rowsCount) continue;
+        neighbor = vertex + columnsCount;
+        edge = vertex;
+        bx = ax;
+        by = rows[row + 1];
       }
-      if (guards?.endSide && neighbor === endVertex) {
-        const out = outward(guards.endSide);
-        if ((b.x - a.x) * out.x + (b.y - a.y) * out.y > 0.01) continue;
+      if (!valid[neighbor]) continue;
+      if (startOut && vertex === startVertex && (bx - ax) * startOut.x + (by - ay) * startOut.y < -0.01) continue;
+      if (endOut && neighbor === endVertex && (bx - ax) * endOut.x + (by - ay) * endOut.y > 0.01) continue;
+      const edgeIndex = horizontal ? edge : edge + vertexCount, at = edgeIndex * 6, values = edgeValues;
+      if (edgeStamp[edgeIndex] !== epoch) {
+        edgeStamp[edgeIndex] = epoch;
+        edgeOk[edgeIndex] = (horizontal ? evaluate(rowLines[row], Math.min(ax, bx), Math.max(ax, bx), wallX0, wallX1, innerX0, innerX1, values, at) : evaluate(columnLines[column], Math.min(ay, by), Math.max(ay, by), wallY0, wallY1, innerY0, innerY1, values, at)) ? 1 : 0;
       }
-      const horizontal = a.y === b.y;
-      const blocked = obstacles.some((box) => horizontal ? a.y > box.y + 0.01 && a.y < box.y + box.height - 0.01 && Math.max(a.x, b.x) > box.x + 0.01 && Math.min(a.x, b.x) < box.x + box.width - 0.01 : a.x > box.x + 0.01 && a.x < box.x + box.width - 0.01 && Math.max(a.y, b.y) > box.y + 0.01 && Math.min(a.y, b.y) < box.y + box.height - 0.01);
-      if (blocked) continue;
-      let overlap = 0, crossings = 0, nearParallel = 0;
-      for (const path of used) for (let index = 1; index < path.length; index++) {
-        const c = path[index - 1], d = path[index];
-        if (horizontal && c.y === d.y) {
-          const span = Math.max(0, Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
-          if (span > 0) {
-            const dist = Math.abs(a.y - c.y);
-            if (dist < 0.1) overlap += span;
-            else if (dist < 16) nearParallel += span * (16 - dist) * 0.9 + 18;
-          }
-        } else if (!horizontal && c.x === d.x) {
-          const span = Math.max(0, Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
-          if (span > 0) {
-            const dist = Math.abs(a.x - c.x);
-            if (dist < 0.1) overlap += span;
-            else if (dist < 16) nearParallel += span * (16 - dist) * 0.9 + 18;
-          }
-        }
-        if (horizontal !== Math.abs(c.y - d.y) < 0.01) {
-          const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
-          if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
-        }
-      }
-      const segLen = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-      const wallHug = obstacles.some((box) => horizontal ? (Math.abs(a.y - box.y) < 3 || Math.abs(a.y - (box.y + box.height)) < 3) && Math.max(a.x, b.x) > box.x + 1 && Math.min(a.x, b.x) < box.x + box.width - 1 : (Math.abs(a.x - box.x) < 3 || Math.abs(a.x - (box.x + box.width)) < 3) && Math.max(a.y, b.y) > box.y + 1 && Math.min(a.y, b.y) < box.y + box.height - 1) ? Math.min(44, segLen * 0.55 + 22) : 0;
-      const borderHug = borderHugPenalty(a, b, containers);
+      if (!edgeOk[edgeIndex]) continue;
       const direction = horizontal ? 1 : 2;
       const state = neighbor * 3 + direction;
-      const startAligned = guards?.startSide ? horizontal === (guards.startSide === "left" || guards.startSide === "right") : false;
-      const bias = guards?.startSide && guards.turnBias && vertex === startVertex && (guards.turnBias === "early" && startAligned || guards.turnBias === "late" && !startAligned) ? 0.5 : 0;
-      const cost = current.cost + segLen + (current.state % 3 && current.state % 3 !== direction ? 28 : 0) + overlap * 8 + nearParallel + crossings * 80 + wallHug + borderHug + bias;
-      if (cost >= costs[state]) continue;
+      const bias = turnBias && vertex === startVertex && (turnBias === "early" && horizontal === startAlignedHorizontal || turnBias === "late" && horizontal !== startAlignedHorizontal) ? 0.5 : 0;
+      const cost = currentCost + values[at] + (currentDirection && currentDirection !== direction ? 28 : 0) + values[at + 1] + values[at + 2] + values[at + 3] + values[at + 4] + values[at + 5] + bias;
+      if (costStamp[state] === epoch && cost >= costs[state]) continue;
       costs[state] = cost;
-      previous[state] = current.state;
-      push({ state, cost, score: cost + Math.abs(b.x - end.x) + Math.abs(b.y - end.y) });
+      costStamp[state] = epoch;
+      previous[state] = currentState;
+      push(state, cost, cost + Math.abs(bx - end.x) + Math.abs(by - end.y));
     }
   }
   if (finish < 0) return void 0;
   const result = [];
   for (let state = finish; state >= 0; state = previous[state]) {
-    const vertex = Math.floor(state / 3);
-    result.push({ x: columns[vertex % columnsCount], y: rows[Math.floor(vertex / columnsCount)] });
+    const vertex = state / 3 | 0;
+    result.push({ x: columns[vertex % columnsCount], y: rows[vertex / columnsCount | 0] });
   }
   result.reverse();
   return simplify(result);
@@ -1649,6 +1838,7 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
     const targetSides = [item.targetSide, ...["left", "right", "top", "bottom"].filter((side) => side !== item.targetSide)];
     let best;
     let bestScore = Infinity;
+    const combos = [];
     for (const side of sides) {
       for (const targetSide of targetSides) {
         if (item.source === item.target && side === targetSide) continue;
@@ -1692,67 +1882,76 @@ function routeEdges(edges, result, direction, theme, type, adjustments2) {
           });
         });
         if (!clear) continue;
-        const stops = [anchors[0].stub, ...waypoints, anchors[1].stub];
-        const middle = [];
-        let reachable = true;
-        const turnBias = side !== opposite(targetSide) ? void 0 : sourceFanout > 1 && side === item.side ? "early" : targetFanin > 1 && targetSide === item.targetSide ? "late" : void 0;
-        for (let index = 1; index < stops.length; index++) {
-          const guards = {
-            startSide: index === 1 ? side : void 0,
-            endSide: index === stops.length - 1 ? targetSide : void 0,
-            turnBias: stops.length === 2 ? turnBias : void 0
-          };
-          const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used, guards, result.containers) ?? obstacleRouter(stops[index - 1], stops[index], obstacles, used, void 0, result.containers);
-          if (!section) {
-            reachable = false;
-            break;
-          }
-          middle.push(...index === 1 ? section : section.slice(1));
+        const portDx = Math.abs(anchors[0].port.x - anchors[1].port.x), portDy = Math.abs(anchors[0].port.y - anchors[1].port.y);
+        const bound = portDx + portDy + (portDx > 1 && portDy > 1 ? 28 : 0) + (usedEntries.has(`${item.source.ref.id}:${side}`) ? 220 : 0) + (usedExits.has(`${item.target.ref.id}:${targetSide}`) ? 220 : 0) + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32) + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 240 : item.forwardFlow ? 96 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
+        combos.push({ side, targetSide, anchors, bound, order: combos.length });
+      }
+    }
+    combos.sort((first, second) => first.bound - second.bound);
+    let bestOrder = Infinity;
+    for (const { side, targetSide, anchors, bound, order } of combos) {
+      if (bound - 0.05 > bestScore) break;
+      const stops = [anchors[0].stub, ...waypoints, anchors[1].stub];
+      const middle = [];
+      let reachable = true;
+      const turnBias = side !== opposite(targetSide) ? void 0 : sourceFanout > 1 && side === item.side ? "early" : targetFanin > 1 && targetSide === item.targetSide ? "late" : void 0;
+      for (let index = 1; index < stops.length; index++) {
+        const guards = {
+          startSide: index === 1 ? side : void 0,
+          endSide: index === stops.length - 1 ? targetSide : void 0,
+          turnBias: stops.length === 2 ? turnBias : void 0
+        };
+        const section = obstacleRouter(stops[index - 1], stops[index], obstacles, used, guards, result.containers) ?? obstacleRouter(stops[index - 1], stops[index], obstacles, used, void 0, result.containers);
+        if (!section) {
+          reachable = false;
+          break;
         }
-        if (!reachable) continue;
-        const candidate = simplify([anchors[0].port, ...middle, anchors[1].port]);
-        const exitKey = `${item.source.ref.id}:${side}`;
-        const entryKey = `${item.target.ref.id}:${targetSide}`;
-        const sourceStem = [anchors[0].port, anchors[0].stub];
-        const targetStem = [anchors[1].stub, anchors[1].port];
-        let length = 0, overlaps = 0, crossings = 0, borderHug = 0;
-        for (let i = 1; i < candidate.length; i++) {
-          const a = candidate[i - 1], b = candidate[i], horizontal = Math.abs(a.y - b.y) < 0.01;
-          length += Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-          borderHug += borderHugPenalty(a, b, result.containers);
-          for (const prev of routed) for (let j = 1; j < prev.path.length; j++) {
-            const c = prev.path[j - 1], d = prev.path[j], otherHorizontal = Math.abs(c.y - d.y) < 0.01;
-            if (horizontal && otherHorizontal && Math.abs(a.y - c.y) < 0.01) {
-              const lo = Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)), hi = Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x));
-              if (hi > lo) {
-                const allowed = [];
-                if (prev.exitKey === exitKey && Math.abs(sourceStem[0].y - sourceStem[1].y) < 0.01 && Math.abs(sourceStem[0].y - a.y) < 0.01)
-                  allowed.push([Math.min(sourceStem[0].x, sourceStem[1].x), Math.max(sourceStem[0].x, sourceStem[1].x)]);
-                if (prev.entryKey === entryKey && Math.abs(targetStem[0].y - targetStem[1].y) < 0.01 && Math.abs(targetStem[0].y - a.y) < 0.01)
-                  allowed.push([Math.min(targetStem[0].x, targetStem[1].x), Math.max(targetStem[0].x, targetStem[1].x)]);
-                overlaps += uncoveredOverlap(lo, hi, allowed);
-              }
-            } else if (!horizontal && !otherHorizontal && Math.abs(a.x - c.x) < 0.01) {
-              const lo = Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)), hi = Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y));
-              if (hi > lo) {
-                const allowed = [];
-                if (prev.exitKey === exitKey && Math.abs(sourceStem[0].x - sourceStem[1].x) < 0.01 && Math.abs(sourceStem[0].x - a.x) < 0.01)
-                  allowed.push([Math.min(sourceStem[0].y, sourceStem[1].y), Math.max(sourceStem[0].y, sourceStem[1].y)]);
-                if (prev.entryKey === entryKey && Math.abs(targetStem[0].x - targetStem[1].x) < 0.01 && Math.abs(targetStem[0].x - a.x) < 0.01)
-                  allowed.push([Math.min(targetStem[0].y, targetStem[1].y), Math.max(targetStem[0].y, targetStem[1].y)]);
-                overlaps += uncoveredOverlap(lo, hi, allowed);
-              }
-            } else if (horizontal !== otherHorizontal) {
-              const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
-              if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
+        middle.push(...index === 1 ? section : section.slice(1));
+      }
+      if (!reachable) continue;
+      const candidate = simplify([anchors[0].port, ...middle, anchors[1].port]);
+      const exitKey = `${item.source.ref.id}:${side}`;
+      const entryKey = `${item.target.ref.id}:${targetSide}`;
+      const sourceStem = [anchors[0].port, anchors[0].stub];
+      const targetStem = [anchors[1].stub, anchors[1].port];
+      let length = 0, overlaps = 0, crossings = 0, borderHug = 0;
+      for (let i = 1; i < candidate.length; i++) {
+        const a = candidate[i - 1], b = candidate[i], horizontal = Math.abs(a.y - b.y) < 0.01;
+        length += Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        borderHug += borderHugPenalty(a, b, result.containers);
+        for (const prev of routed) for (let j = 1; j < prev.path.length; j++) {
+          const c = prev.path[j - 1], d = prev.path[j], otherHorizontal = Math.abs(c.y - d.y) < 0.01;
+          if (horizontal && otherHorizontal && Math.abs(a.y - c.y) < 0.01) {
+            const lo = Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)), hi = Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x));
+            if (hi > lo) {
+              const allowed = [];
+              if (prev.exitKey === exitKey && Math.abs(sourceStem[0].y - sourceStem[1].y) < 0.01 && Math.abs(sourceStem[0].y - a.y) < 0.01)
+                allowed.push([Math.min(sourceStem[0].x, sourceStem[1].x), Math.max(sourceStem[0].x, sourceStem[1].x)]);
+              if (prev.entryKey === entryKey && Math.abs(targetStem[0].y - targetStem[1].y) < 0.01 && Math.abs(targetStem[0].y - a.y) < 0.01)
+                allowed.push([Math.min(targetStem[0].x, targetStem[1].x), Math.max(targetStem[0].x, targetStem[1].x)]);
+              overlaps += uncoveredOverlap(lo, hi, allowed);
             }
+          } else if (!horizontal && !otherHorizontal && Math.abs(a.x - c.x) < 0.01) {
+            const lo = Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)), hi = Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y));
+            if (hi > lo) {
+              const allowed = [];
+              if (prev.exitKey === exitKey && Math.abs(sourceStem[0].x - sourceStem[1].x) < 0.01 && Math.abs(sourceStem[0].x - a.x) < 0.01)
+                allowed.push([Math.min(sourceStem[0].y, sourceStem[1].y), Math.max(sourceStem[0].y, sourceStem[1].y)]);
+              if (prev.entryKey === entryKey && Math.abs(targetStem[0].x - targetStem[1].x) < 0.01 && Math.abs(targetStem[0].x - a.x) < 0.01)
+                allowed.push([Math.min(targetStem[0].y, targetStem[1].y), Math.max(targetStem[0].y, targetStem[1].y)]);
+              overlaps += uncoveredOverlap(lo, hi, allowed);
+            }
+          } else if (horizontal !== otherHorizontal) {
+            const x = horizontal ? c.x : a.x, y = horizontal ? a.y : c.y;
+            if (x > Math.min(a.x, b.x, c.x, d.x) + 0.01 && x < Math.max(a.x, b.x, c.x, d.x) - 0.01 && y > Math.min(a.y, b.y, c.y, d.y) + 0.01 && y < Math.max(a.y, b.y, c.y, d.y) - 0.01) crossings++;
           }
         }
-        const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + borderHug * 0.5 + (usedEntries.has(exitKey) ? 220 : 0) + (usedExits.has(entryKey) ? 220 : 0) + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32) + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 240 : item.forwardFlow ? 96 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
-        if (score < bestScore) {
-          bestScore = score;
-          best = { route: candidate, exitKey, entryKey, sourceStem, targetStem };
-        }
+      }
+      const score = length + Math.max(0, candidate.length - 2) * 28 + overlaps * 8 + crossings * 80 + borderHug * 0.5 + (usedEntries.has(exitKey) ? 220 : 0) + (usedExits.has(entryKey) ? 220 : 0) + (side === item.side ? 0 : sourceFanout > 1 ? 240 : 32) + (targetSide === item.targetSide ? 0 : targetFanin > 1 ? 240 : item.forwardFlow ? 96 : 32) + (item.target.ref.kind === "end" && targetSide !== item.targetSide ? 200 : 0);
+      if (score < bestScore || score === bestScore && order < bestOrder) {
+        bestScore = score;
+        bestOrder = order;
+        best = { route: candidate, exitKey, entryKey, sourceStem, targetStem };
       }
     }
     if (!best) throw new Error(waypoints.length ? `\u8FDE\u7EBF ${item.ref.edge.from} \u2192 ${item.ref.edge.to} \u65E0\u6CD5\u7ECF\u8FC7\u6307\u5B9A\u9014\u7ECF\u70B9\uFF1B\u8BF7\u5C06\u70B9\u79FB\u51FA\u8282\u70B9\u3001\u6807\u9898\u6216\u8FC7\u7A84\u7684\u95F4\u9699\u3002` : `Unable to route relationship ${item.ref.edge.from} \u2192 ${item.ref.edge.to}.`);
@@ -1860,7 +2059,7 @@ function renderContainer(box, theme, direction, spec, region) {
   const field = ref.kind === "lane" ? "lanes" : "groups";
   const editorIndex = (spec[field] ?? []).findIndex((item) => item.id === ref.originalId);
   const editorKey = editorIndex >= 0 ? ` data-editor-key="${field}/${editorIndex}"` : "";
-  return `<g class="uml-container uml-${ref.kind}"${editorKey} data-adjustment-key="${field}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}" data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
+  return `<g class="uml-container uml-${ref.kind}"${editorKey} data-adjustment-key="${field}/${esc(ref.originalId)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}"${layoutCenterMetadata(spec, `${field}/${ref.originalId}`, box)} data-${ref.kind === "lane" ? "lane" : "group"}-id="${esc(ref.originalId)}"${ref.lane && ref.kind !== "lane" ? ` data-lane-id="${esc(ref.lane)}"` : ""}><title>${esc(ref.label)}</title>${shape}${text(labelX, labelY, ref.label, theme, { anchor: "start", weight: 650, fill: region?.text })}</g>`;
 }
 function centeredContent(ref, x, y, width, height) {
   const { node, theme, kind } = ref;
@@ -1882,7 +2081,7 @@ function centeredContent(ref, x, y, width, height) {
 function renderNode(box, spec, adjustmentMetadata = true) {
   const { x, y, width: w, height: h, ref } = box;
   const { theme, kind, node } = ref;
-  const metadata = adjustmentMetadata ? ` data-adjustment-key="nodes/${esc(node.id)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}"` : "";
+  const metadata = adjustmentMetadata ? ` data-adjustment-key="nodes/${esc(node.id)}" data-layout-x="${numeric(x)}" data-layout-y="${numeric(y)}"${layoutCenterMetadata(spec, `nodes/${node.id}`, box)}` : "";
   if (w !== ref.renderWidth || h !== ref.renderHeight) {
     const scaleX = w / ref.renderWidth, scaleY = h / ref.renderHeight;
     const virtual = { ...box, x: 0, y: 0, width: ref.renderWidth, height: ref.renderHeight, caption: void 0 };
@@ -1984,36 +2183,54 @@ function renderNode(box, spec, adjustmentMetadata = true) {
 }
 function segmentIntersectsRect(a, b, box, margin = 0) {
   let low = 0, high = 1;
-  for (const [start, delta, min, max] of [
-    [a.x, b.x - a.x, box.x - margin, box.x + box.width + margin],
-    [a.y, b.y - a.y, box.y - margin, box.y + box.height + margin]
-  ]) {
-    if (Math.abs(delta) < 1e-3) {
-      if (start < min || start > max) return false;
-    } else {
-      const first = (min - start) / delta, last = (max - start) / delta;
-      low = Math.max(low, Math.min(first, last));
-      high = Math.min(high, Math.max(first, last));
-      if (low > high) return false;
-    }
+  const deltaX = b.x - a.x, minX = box.x - margin, maxX = box.x + box.width + margin;
+  if (Math.abs(deltaX) < 1e-3) {
+    if (a.x < minX || a.x > maxX) return false;
+  } else {
+    const first = (minX - a.x) / deltaX, last = (maxX - a.x) / deltaX;
+    low = Math.max(low, Math.min(first, last));
+    high = Math.min(high, Math.max(first, last));
+    if (low > high) return false;
+  }
+  const deltaY = b.y - a.y, minY = box.y - margin, maxY = box.y + box.height + margin;
+  if (Math.abs(deltaY) < 1e-3) {
+    if (a.y < minY || a.y > maxY) return false;
+  } else {
+    const first = (minY - a.y) / deltaY, last = (maxY - a.y) / deltaY;
+    low = Math.max(low, Math.min(first, last));
+    high = Math.min(high, Math.max(first, last));
+    if (low > high) return false;
   }
   return true;
 }
+function cornerDistance(px, py, ax, ay, dx, dy, squared, best) {
+  const fraction = squared ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / squared)) : 0;
+  const ex = px - ax - dx * fraction, ey = py - ay - dy * fraction;
+  if (Math.abs(ex) >= best || Math.abs(ey) >= best) return best;
+  const distance = Math.hypot(ex, ey);
+  return distance < best ? distance : best;
+}
 function segmentRectDistance(a, b, box) {
   if (segmentIntersectsRect(a, b, box)) return 0;
-  const dx = b.x - a.x, dy = b.y - a.y, squared = dx * dx + dy * dy;
-  const corners = [
-    { x: box.x, y: box.y },
-    { x: box.x + box.width, y: box.y },
-    { x: box.x, y: box.y + box.height },
-    { x: box.x + box.width, y: box.y + box.height }
-  ];
-  const distances = corners.map((point2) => {
-    const fraction = squared ? Math.max(0, Math.min(1, ((point2.x - a.x) * dx + (point2.y - a.y) * dy) / squared)) : 0;
-    return Math.hypot(point2.x - a.x - dx * fraction, point2.y - a.y - dy * fraction);
-  });
-  for (const point2 of [a, b]) distances.push(Math.hypot(Math.max(box.x - point2.x, 0, point2.x - box.x - box.width), Math.max(box.y - point2.y, 0, point2.y - box.y - box.height)));
-  return Math.min(...distances);
+  const ax = a.x, ay = a.y, dx = b.x - ax, dy = b.y - ay, squared = dx * dx + dy * dy;
+  const x0 = box.x, y0 = box.y, x1 = box.x + box.width, y1 = box.y + box.height;
+  let best = cornerDistance(x0, y0, ax, ay, dx, dy, squared, Infinity);
+  best = cornerDistance(x1, y0, ax, ay, dx, dy, squared, best);
+  best = cornerDistance(x0, y1, ax, ay, dx, dy, squared, best);
+  best = cornerDistance(x1, y1, ax, ay, dx, dy, squared, best);
+  for (let index = 0; index < 2; index++) {
+    const point2 = index ? b : a;
+    const gx = Math.max(box.x - point2.x, 0, point2.x - box.x - box.width), gy = Math.max(box.y - point2.y, 0, point2.y - box.y - box.height);
+    if (gx >= best || gy >= best) continue;
+    const distance = Math.hypot(gx, gy);
+    if (distance < best) best = distance;
+  }
+  return best;
+}
+function segmentRectGap(a, b, box) {
+  const gx = Math.max(box.x - Math.max(a.x, b.x), Math.min(a.x, b.x) - (box.x + box.width), 0);
+  const gy = Math.max(box.y - Math.max(a.y, b.y), Math.min(a.y, b.y) - (box.y + box.height), 0);
+  return gx > gy ? gx : gy;
 }
 function labelIntersectsNode(label2, node) {
   if (!intersects(label2, node, 5)) return false;
@@ -2038,7 +2255,8 @@ function placeLabels(routes, nodes, containers, direction, finalPass = false) {
   }
   const placed = [];
   for (const route of routes) for (const label2 of route.ref.labels) {
-    const candidates = [];
+    const candidateX = [], candidateY = [], anchorXs = [], anchorYs = [];
+    const scoreHead = [], scoreTail = [], sharedFlags = [];
     const segments = allSegments.filter((segment) => segment.route === route);
     const others = allSegments.filter((segment) => segment.route !== route);
     const total = segments.reduce((sum, segment) => sum + segment.length, 0);
@@ -2083,45 +2301,102 @@ function placeLabels(routes, nodes, containers, direction, finalPass = false) {
         for (let step = 0; step <= steps; step++) positions.add(start + (end - start) * step / Math.max(1, steps));
         const shifts = end - start < Math.abs(ux) * label2.width + Math.abs(uy) * label2.height + 16 ? [0, -12, 12, -24, 24] : [0];
         for (const position of positions) for (const gap of finalPass ? [8, 5, 12, 18, 28, 44, 68, 100, 160, 256, 512] : [8, 5, 12, 18, 28, 44]) for (const sign of [1, -1]) for (const shift of shifts) {
-          const anchor = { x: a.x + ux * position, y: a.y + uy * position };
+          const anchorX = a.x + ux * position, anchorY = a.y + uy * position;
           const normalX = -uy * sign, normalY = ux * sign;
           const distance = gap + Math.abs(normalX) * label2.width / 2 + Math.abs(normalY) * label2.height / 2;
-          const box = {
-            x: anchor.x + normalX * distance + ux * shift - label2.width / 2,
-            y: anchor.y + normalY * distance + uy * shift - label2.height / 2,
-            width: label2.width,
-            height: label2.height,
-            value: label2.value,
-            size: label2.size,
-            ref: route.ref,
-            role: label2.role,
-            anchor
-          };
-          const nearest = Math.min(...others.map((other) => segmentRectDistance(other.a, other.b, box)));
-          const own = Math.min(...segments.map((segment2) => segmentRectDistance(segment2.a, segment2.b, box)));
-          const ambiguous = shared || nearest < own + 3;
-          box.leader = ambiguous || own > 18;
-          candidates.push({ box, score: Math.abs(offset + position - desired) * (branch || label2.role !== "main" ? 0.3 : 0.1) + gap * 2 + (gap < 8 ? 20 : 0) + Math.abs(shift) + (shared ? 4e3 : ambiguous ? 1e3 : 0) + (gap > 18 ? 500 : 0) });
+          candidateX.push(anchorX + normalX * distance + ux * shift - label2.width / 2);
+          candidateY.push(anchorY + normalY * distance + uy * shift - label2.height / 2);
+          anchorXs.push(anchorX);
+          anchorYs.push(anchorY);
+          scoreHead.push(Math.abs(offset + position - desired) * (branch || label2.role !== "main" ? 0.3 : 0.1) + gap * 2 + (gap < 8 ? 20 : 0) + Math.abs(shift));
+          scoreTail.push(gap > 18 ? 500 : 0);
+          sharedFlags.push(shared);
         }
       }
     }
-    candidates.sort((a, b) => a.score - b.score);
     const sharedAnchor = (anchor) => others.some((other) => segmentRectDistance(other.a, other.b, { ...anchor, width: 0, height: 0 }) < 0.01);
+    const count = candidateX.length;
+    const keys = new Float64Array(count);
+    const boxes = new Array(count);
+    for (let i = 0; i < count; i++) keys[i] = sharedFlags[i] ? scoreHead[i] + 4e3 + scoreTail[i] : scoreHead[i] + scoreTail[i];
+    const heap = new Int32Array(count);
+    for (let i = 0; i < count; i++) heap[i] = i;
+    let heapSize = count;
+    const before = (first, second) => keys[first] < keys[second] || keys[first] === keys[second] && first < second;
+    const siftDown = (index) => {
+      const item = heap[index];
+      while (index * 2 + 1 < heapSize) {
+        let child = index * 2 + 1;
+        if (child + 1 < heapSize && before(heap[child + 1], heap[child])) child++;
+        if (!before(heap[child], item)) break;
+        heap[index] = heap[child];
+        index = child;
+      }
+      heap[index] = item;
+    };
+    for (let index = (heapSize >> 1) - 1; index >= 0; index--) siftDown(index);
+    const popTop = () => {
+      heap[0] = heap[--heapSize];
+      if (heapSize) siftDown(0);
+    };
+    const probe = { x: 0, y: 0, width: label2.width, height: label2.height };
     let chosen;
-    for (const candidate of candidates) {
-      if (nodes.some((node) => labelIntersectsNode(candidate.box, node))) continue;
-      if (occupied.some((box) => intersects(candidate.box, box, 5))) continue;
-      if (allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, candidate.box, 4))) continue;
-      if (candidate.box.leader) {
-        const anchor = candidate.box.anchor;
+    while (heapSize) {
+      const i = heap[0];
+      let box = boxes[i];
+      if (!box) {
+        box = boxes[i] = {
+          x: candidateX[i],
+          y: candidateY[i],
+          width: label2.width,
+          height: label2.height,
+          value: label2.value,
+          size: label2.size,
+          ref: route.ref,
+          role: label2.role,
+          anchor: { x: anchorXs[i], y: anchorYs[i] }
+        };
+        const candidate = box;
+        if (nodes.some((node) => labelIntersectsNode(candidate, node)) || occupied.some((other) => intersects(candidate, other, 5)) || allSegments.some(({ a, b }) => segmentIntersectsRect(a, b, candidate, 4))) {
+          popTop();
+          continue;
+        }
+        let ambiguous = sharedFlags[i], own = Infinity;
+        if (!ambiguous) {
+          probe.x = candidateX[i];
+          probe.y = candidateY[i];
+          for (const segment of segments) {
+            if (segmentRectGap(segment.a, segment.b, probe) > own + 1e-6) continue;
+            const distance = segmentRectDistance(segment.a, segment.b, probe);
+            if (distance < own) own = distance;
+          }
+          const threshold = own + 3;
+          for (const other of others) {
+            if (segmentRectGap(other.a, other.b, probe) >= threshold + 1e-6) continue;
+            if (segmentRectDistance(other.a, other.b, probe) < threshold) {
+              ambiguous = true;
+              break;
+            }
+          }
+          if (ambiguous) {
+            keys[i] = scoreHead[i] + 1e3 + scoreTail[i];
+            siftDown(0);
+          }
+        }
+        box.leader = ambiguous || own > 18;
+        if (heap[0] !== i) continue;
+      }
+      popTop();
+      if (box.leader) {
+        const anchor = box.anchor;
         const end = {
-          x: Math.max(candidate.box.x, Math.min(candidate.box.x + candidate.box.width, anchor.x)),
-          y: Math.max(candidate.box.y, Math.min(candidate.box.y + candidate.box.height, anchor.y))
+          x: Math.max(box.x, Math.min(box.x + box.width, anchor.x)),
+          y: Math.max(box.y, Math.min(box.y + box.height, anchor.y))
         };
         if (!finalPass && (sharedAnchor(anchor) || Math.hypot(end.x - anchor.x, end.y - anchor.y) > 48)) continue;
-        if (nodes.some((node) => segmentIntersectsRect(anchor, end, node, 1)) || occupied.some((box) => segmentIntersectsRect(anchor, end, box, 2))) continue;
+        if (nodes.some((node) => segmentIntersectsRect(anchor, end, node, 1)) || occupied.some((other) => segmentIntersectsRect(anchor, end, other, 2))) continue;
       }
-      chosen = candidate.box;
+      chosen = box;
       break;
     }
     if (!chosen) {
@@ -2432,11 +2707,26 @@ function placeFlowTerminals(result, edges, direction, gap) {
 }
 function adjustmentDelta(box, adjustment) {
   if (!adjustment) return { x: 0, y: 0 };
+  if ("cx" in adjustment) return { x: adjustment.cx - (box.x + box.width / 2), y: adjustment.cy - (box.y + box.height / 2) };
   return "dx" in adjustment ? { x: adjustment.dx, y: adjustment.dy } : { x: adjustment.x - box.x, y: adjustment.y - box.y };
 }
-function applyManualElements(result, spec, direction) {
+function isPinned(adjustment) {
+  return !!adjustment && ("cx" in adjustment || "x" in adjustment);
+}
+function hasAdjustments(spec) {
+  const manual = spec.layout?.adjustments;
+  return !!(Object.keys(manual?.elements ?? {}).length || Object.keys(manual?.edges ?? {}).length);
+}
+function layoutCenterMetadata(spec, key, box) {
+  if (!hasAdjustments(spec)) return "";
+  const pinned = isPinned(spec.layout?.adjustments?.elements?.[key]);
+  return ` data-layout-cx="${numeric(box.x + box.width / 2)}" data-layout-cy="${numeric(box.y + box.height / 2)}"${pinned ? ' data-pinned="true"' : ""}`;
+}
+function applyManualElements(result, spec, direction, edges = [], fontSize = 14) {
   const adjustments2 = spec.layout?.adjustments?.elements;
   if (!adjustments2 || !Object.keys(adjustments2).length) return;
+  const flowAxis = direction === "LR" ? "x" : "y";
+  const pinnedNodes = /* @__PURE__ */ new Set(), pinnedContainers = /* @__PURE__ */ new Set();
   const parents = new Map((spec.groups ?? []).map((group) => [group.id, group.parent]));
   const withinGroup = (id2, ancestor) => {
     while (id2) {
@@ -2454,7 +2744,12 @@ function applyManualElements(result, spec, direction) {
   let moved = false;
   for (const container of [...result.containers].sort((a, b) => a.depth - b.depth)) {
     const key = `${container.ref.kind === "lane" ? "lanes" : "groups"}/${container.ref.originalId}`;
-    const delta = adjustmentDelta(container, adjustments2[key]);
+    const adjustment = adjustments2[key];
+    const delta = adjustmentDelta(container, adjustment);
+    if (isPinned(adjustment)) {
+      pinnedContainers.add(container);
+      if (container.ref.kind === "lane") delta[flowAxis] = 0;
+    }
     if (!delta.x && !delta.y) continue;
     moved = true;
     container.x += delta.x;
@@ -2469,26 +2764,170 @@ function applyManualElements(result, spec, direction) {
     }
   }
   for (const node of result.nodes) {
-    const delta = adjustmentDelta(node, adjustments2[`nodes/${node.ref.node.id}`]);
+    const adjustment = adjustments2[`nodes/${node.ref.node.id}`];
+    if (isPinned(adjustment)) pinnedNodes.add(node);
+    const delta = adjustmentDelta(node, adjustment);
     if (delta.x || delta.y) moved = true;
     node.x += delta.x;
     node.y += delta.y;
   }
-  if (!moved) return;
+  const labelPins = [];
+  for (const edge of edges) for (const label2 of edge.labels) {
+    const adjustment = adjustments2[`edge-labels/${edge.key}/${label2.role}`];
+    if (adjustment && "cx" in adjustment) labelPins.push({ x: adjustment.cx - label2.width / 2, y: adjustment.cy - label2.height / 2, width: label2.width, height: label2.height });
+    else if (adjustment && "x" in adjustment) labelPins.push({ x: adjustment.x, y: adjustment.y, width: label2.width, height: label2.height });
+  }
+  const pinning = pinnedNodes.size > 0 || pinnedContainers.size > 0 || labelPins.length > 0;
+  if (!moved && !pinning) return;
+  const isNode = (item) => "node" in item.ref;
+  const nodeAncestors = new Map(result.nodes.map((node) => [node, result.containers.filter((box) => nodeWithin(node, box)).sort((a, b) => b.depth - a.depth)]));
+  const containerAncestors = new Map(result.containers.map((child) => [child, result.containers.filter((box) => containerWithin(child, box)).sort((a, b) => b.depth - a.depth)]));
+  const ancestors = (item) => (isNode(item) ? nodeAncestors.get(item) : containerAncestors.get(item)) ?? [];
+  const pinnedItem = (item) => isNode(item) ? pinnedNodes.has(item) : pinnedContainers.has(item);
+  const fixedNode = (node) => pinnedNodes.has(node) || ancestors(node).some((box) => pinnedContainers.has(box));
+  const rectOf = (item) => isNode(item) ? occupiedNode(item) : item;
+  const shift = (item, dx, dy) => {
+    item.x += dx;
+    item.y += dy;
+    if (isNode(item)) return;
+    const anchored = (descendant) => pinnedItem(descendant) || ancestors(descendant).some((box) => box !== item && pinnedContainers.has(box) && ancestors(box).includes(item));
+    for (const child of result.containers) if (containerWithin(child, item) && !anchored(child)) {
+      child.x += dx;
+      child.y += dy;
+    }
+    for (const node of result.nodes) if (nodeWithin(node, item) && !anchored(node)) {
+      node.x += dx;
+      node.y += dy;
+    }
+  };
   const pad = containerPad(spec);
-  for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) {
+  const fit = (container) => {
     const cPad = container.ref.kind === "lane" ? 28 : pad;
-    const members = result.nodes.filter((node) => !["start", "end"].includes(node.ref.kind) && nodeWithin(node, container)).map(occupiedNode);
+    const memberNodes = result.nodes.filter((node) => !["start", "end"].includes(node.ref.kind) && nodeWithin(node, container));
+    const members = memberNodes.map(occupiedNode);
     members.push(...result.containers.filter((child) => containerWithin(child, container)));
-    if (!members.length) continue;
+    if (!members.length) return;
     const headerX = container.ref.kind === "lane" && direction === "LR" ? container.ref.header : 0;
     const headerY = container.ref.kind === "lane" && direction === "LR" ? 0 : container.ref.header;
-    const right = Math.max(container.x + container.width, ...members.map((box) => box.x + box.width + cPad));
-    const bottom = Math.max(container.y + container.height, ...members.map((box) => box.y + box.height + cPad));
-    container.x = Math.min(container.x, ...members.map((box) => box.x - cPad - headerX));
-    container.y = Math.min(container.y, ...members.map((box) => box.y - cPad - headerY));
-    container.width = right - container.x;
-    container.height = bottom - container.y;
+    const bounds = {
+      x: [Math.min(...members.map((box) => box.x - cPad - headerX)), Math.max(...members.map((box) => box.x + box.width + cPad))],
+      y: [Math.min(...members.map((box) => box.y - cPad - headerY)), Math.max(...members.map((box) => box.y + box.height + cPad))]
+    };
+    const pinnedBox = pinnedContainers.has(container);
+    const tight = pinning && !pinnedBox && memberNodes.length > 0 && memberNodes.every(fixedNode);
+    for (const [axis, size] of [["x", "width"], ["y", "height"]]) {
+      const [low, high] = bounds[axis];
+      const band = container.ref.kind === "lane" && axis === flowAxis;
+      if (pinnedBox && !band) {
+        const center = container[axis] + container[size] / 2, half = Math.max(container[size] / 2, center - low, high - center);
+        container[axis] = center - half;
+        container[size] = half * 2;
+      } else if (tight && !band) {
+        const title = measure(container.ref.label, fontSize);
+        const titleRoom = container.ref.kind === "lane" && direction === "LR" ? axis === "y" ? title.height + 28 : 0 : axis === "x" ? title.width + 36 : 0;
+        container[axis] = low;
+        container[size] = Math.max(high - low, titleRoom);
+      } else {
+        const end = Math.max(container[axis] + container[size], high);
+        container[axis] = Math.min(container[axis], low);
+        container[size] = end - container[axis];
+      }
+    }
+  };
+  const fitAll = () => {
+    for (const container of [...result.containers].sort((a, b) => b.depth - a.depth)) fit(container);
+  };
+  fitAll();
+  if (!pinning) return;
+  const crossAxis = flowAxis === "x" ? "y" : "x", crossSize = crossAxis === "x" ? "width" : "height";
+  const lanes = result.containers.filter((box) => box.ref.kind === "lane");
+  const separateLanes = () => {
+    if (lanes.length < 2) return;
+    const ordered = [...lanes].sort((a, b) => a[crossAxis] + a[crossSize] / 2 - (b[crossAxis] + b[crossSize] / 2));
+    const overlap = (first, second) => first[crossAxis] + first[crossSize] - second[crossAxis];
+    const slide = (lane, amount) => {
+      shift(lane, crossAxis === "x" ? amount : 0, crossAxis === "y" ? amount : 0);
+      fitAll();
+    };
+    for (let index = 1; index < ordered.length; index++) {
+      const amount = overlap(ordered[index - 1], ordered[index]);
+      if (amount > 0.01 && !pinnedContainers.has(ordered[index])) slide(ordered[index], amount);
+    }
+    for (let index = ordered.length - 2; index >= 0; index--) {
+      const amount = overlap(ordered[index], ordered[index + 1]);
+      if (amount > 0.01 && !pinnedContainers.has(ordered[index])) slide(ordered[index], -amount);
+    }
+  };
+  separateLanes();
+  const gap = spec.layout?.elementGap ?? 24;
+  const trigger = Math.min(gap, 12);
+  const obstacles = [
+    ...result.containers.filter((box) => pinnedContainers.has(box) && box.ref.kind !== "lane").map((item) => ({ rect: () => rectOf(item), item })),
+    ...result.nodes.filter((box) => pinnedNodes.has(box)).map((item) => ({ rect: () => rectOf(item), item })),
+    ...labelPins.map((rect) => ({ rect: () => rect }))
+  ];
+  const related = (item, other) => !!other && (item === other || ancestors(item).includes(other) || ancestors(other).includes(item));
+  const blockOf = (item, obstacle) => {
+    const shared = new Set(obstacle.item ? ancestors(obstacle.item) : []);
+    let block = item;
+    for (const ancestor of ancestors(item)) {
+      if (shared.has(ancestor) || ancestor.ref.kind === "lane" || pinnedContainers.has(ancestor)) break;
+      block = ancestor;
+    }
+    return block;
+  };
+  const clearance = (box, other, dir) => dir === "right" ? other.x + other.width + gap - box.x : dir === "left" ? box.x + box.width + gap - other.x : dir === "down" ? other.y + other.height + gap - box.y : box.y + box.height + gap - other.y;
+  const move = (item, dir, amount) => shift(item, dir === "right" ? amount : dir === "left" ? -amount : 0, dir === "down" ? amount : dir === "up" ? -amount : 0);
+  const preference = direction === "LR" ? ["right", "down", "up", "left"] : ["down", "right", "left", "up"];
+  const movables = [
+    ...result.containers.filter((box) => !pinnedContainers.has(box) && box.ref.kind !== "lane"),
+    ...result.nodes.filter((box) => !pinnedNodes.has(box))
+  ].sort((a, b) => a[flowAxis] - b[flowAxis] || a[crossAxis] - b[crossAxis]);
+  const pushed = /* @__PURE__ */ new Map();
+  let budget = Math.max(64, movables.length * 4);
+  for (let round = 0; round < 4 && budget > 0; round++) {
+    let changed = false;
+    for (let index = 0; index < obstacles.length && budget > 0; index++) {
+      const obstacle = obstacles[index];
+      for (const candidate of movables) {
+        if (budget <= 0) break;
+        if (related(candidate, obstacle.item) || !intersects(rectOf(candidate), obstacle.rect(), trigger)) continue;
+        const block = blockOf(candidate, obstacle);
+        const box = rectOf(block), target = obstacle.rect();
+        if (related(block, obstacle.item) || !intersects(box, target, trigger)) continue;
+        const dir = obstacle.dir ?? preference.reduce((best, option) => clearance(box, target, option) < clearance(box, target, best) - 0.5 ? option : best, preference[0]);
+        move(block, dir, clearance(box, target, dir));
+        for (let guard = 0; guard < 64; guard++) {
+          const current = rectOf(block);
+          const hit = obstacles.find((other) => !related(block, other.item) && intersects(current, other.rect(), trigger));
+          if (!hit) break;
+          move(block, dir, Math.max(1, clearance(current, hit.rect(), dir)));
+        }
+        if (!isNode(block)) fit(block);
+        for (const ancestor of ancestors(block)) fit(ancestor);
+        budget--;
+        changed = true;
+        const existing = pushed.get(block);
+        if (existing) existing.dir = dir;
+        else {
+          const entry = { rect: () => rectOf(block), item: block, dir };
+          pushed.set(block, entry);
+          obstacles.push(entry);
+        }
+      }
+    }
+    if (!changed) break;
+  }
+  fitAll();
+  separateLanes();
+  if (lanes.length) {
+    const flowSize = flowAxis === "x" ? "width" : "height";
+    const start = Math.min(...lanes.map((lane) => lane[flowAxis]));
+    for (const lane of lanes) {
+      lane[flowSize] += lane[flowAxis] - start;
+      lane[flowAxis] = start;
+    }
+    equalizeLaneExtents(result, direction);
   }
 }
 function preserveWaypoints(path, pins) {
@@ -2551,10 +2990,84 @@ function hasCrowdedRoutes(result, elementGap) {
   }
   return false;
 }
-async function renderGraph(spec, suppliedTheme) {
-  return renderGraphWithSpacing(spec, suppliedTheme, 0, 0);
+var baselineCache = /* @__PURE__ */ new Map();
+var baselineCacheLimit = 16;
+function stableJson(value) {
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value)) return `[${value.map((item) => item === void 0 ? "null" : stableJson(item)).join(",")}]`;
+  const record = value;
+  return `{${Object.keys(record).filter((key) => record[key] !== void 0).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(",")}}`;
 }
-async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPass = 0) {
+function hashText(value) {
+  let first = 3735928559 ^ value.length, second = 1103547991 ^ value.length;
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    first = Math.imul(first ^ code, 2654435761);
+    second = Math.imul(second ^ code, 1597334677);
+  }
+  first = Math.imul(first ^ first >>> 16, 2246822507) ^ Math.imul(second ^ second >>> 13, 3266489909);
+  second = Math.imul(second ^ second >>> 16, 2246822507) ^ Math.imul(first ^ first >>> 13, 3266489909);
+  return `${(first >>> 0).toString(36)}-${(second >>> 0).toString(36)}`;
+}
+var geometryThemeFields = ["fontSize", "nodeWidth", "nodeHeight", "gap"];
+function geometryStyle(style2) {
+  if (!style2) return void 0;
+  const picked = Object.fromEntries(geometryThemeFields.filter((field) => style2[field] !== void 0).map((field) => [field, style2[field]]));
+  return Object.keys(picked).length ? picked : void 0;
+}
+function baselineKey(spec, theme) {
+  const { adjustments: _adjustments, ...layout2 } = spec.layout ?? {};
+  const { theme: _name, style: style2, nodes, ...rest } = spec;
+  const value = stableJson({
+    spec: { ...rest, layout: layout2, style: geometryStyle(style2), nodes: nodes?.map((node) => ({ ...node, style: geometryStyle(node.style) })) },
+    theme: geometryStyle(theme)
+  });
+  return value.length > 8192 ? `#${value.length}:${hashText(value)}` : value;
+}
+function readBaseline(key) {
+  const entry = baselineCache.get(key);
+  if (entry) {
+    baselineCache.delete(key);
+    baselineCache.set(key, entry);
+  }
+  return entry;
+}
+function storeBaseline(key, entry) {
+  baselineCache.delete(key);
+  baselineCache.set(key, entry);
+  while (baselineCache.size > baselineCacheLimit) baselineCache.delete(baselineCache.keys().next().value);
+}
+function clonePaths(paths) {
+  return paths.map((path) => path.map((point2) => ({ ...point2 })));
+}
+function snapshotBaseline(result, edges, labels, spacing) {
+  return {
+    spacing,
+    nodes: result.nodes.map(({ ref, caption, ...box }) => ({ ...box, id: ref.id, caption: caption ? { ...caption } : void 0 })),
+    containers: result.containers.map((box) => ({ ...box, ref: { ...box.ref } })),
+    width: result.width,
+    height: result.height,
+    routes: result.routes.map((route) => ({ edge: edges.indexOf(route.ref), paths: clonePaths(route.paths) })),
+    labels: labels.map(({ ref, anchor, ...label2 }) => ({ ...label2, anchor: { ...anchor }, edge: edges.indexOf(ref) }))
+  };
+}
+function restoreBaseline(entry, refs) {
+  if (entry.nodes.some((box) => !refs.has(box.id))) return void 0;
+  return {
+    nodes: entry.nodes.map(({ id: id2, caption, ...box }) => ({ ...box, ref: refs.get(id2), caption: caption ? { ...caption } : void 0 })),
+    containers: entry.containers.map((box) => ({ ...box, ref: { ...box.ref } })),
+    routes: [],
+    width: entry.width,
+    height: entry.height
+  };
+}
+async function renderGraph(spec, suppliedTheme) {
+  const key = baselineKey(spec, suppliedTheme);
+  return renderGraphWithSpacing(spec, suppliedTheme, 0, 0, { key, entry: readBaseline(key) });
+}
+async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPass = 0, baseline) {
+  const cachedSpacing = baseline?.entry?.spacing;
+  if (cachedSpacing) spec = { ...spec, layout: { ...spec.layout, ...cachedSpacing } };
   const requestedSpec = spec;
   const automaticColumns = spec.layout?.maxPerColumn === void 0;
   spec = { ...spec, layout: resolveLayout(spec) };
@@ -2567,7 +3080,11 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
   const columns = /* @__PURE__ */ new Map();
   const elk = layoutEngine ??= new ELK();
   let result;
-  if (spec.type === "usecase" && !spec.lanes?.length) {
+  const restored = baseline?.entry ? restoreBaseline(baseline.entry, refs) : void 0;
+  const cached = restored ? baseline.entry : void 0;
+  if (restored) {
+    result = restored;
+  } else if (spec.type === "usecase" && !spec.lanes?.length) {
     result = layoutUsecases(nodes, edges, spec, theme);
   } else if (spec.lanes?.length) {
     const lanes = [...spec.lanes];
@@ -2623,9 +3140,11 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
     const output = await layoutRegions(input, spec, elk, refs, columns, automaticColumns);
     result = collectLayout(output, refs, containers);
   }
-  if (spec.type !== "usecase" && !alignLaneFlow(result, edges, spec, theme)) alignConnectedNodes(result, edges, columns, spec);
-  if (spec.lanes?.length) equalizeLaneExtents(result, direction);
-  placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
+  if (!cached) {
+    if (spec.type !== "usecase" && !alignLaneFlow(result, edges, spec, theme)) alignConnectedNodes(result, edges, columns, spec);
+    if (spec.lanes?.length) equalizeLaneExtents(result, direction);
+    placeFlowTerminals(result, edges, direction, spec.layout?.elementGap ?? 24);
+  }
   const routeResult = (adjustments2) => {
     result.routes = [];
     routeEdges(edges, result, direction, { ...theme, gap: spec.layout?.elementGap ?? 24 }, spec.type, adjustments2);
@@ -2642,26 +3161,36 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
   };
   const manual = spec.layout?.adjustments;
   const hasManualPositions = !!(Object.keys(manual?.elements ?? {}).length || Object.keys(manual?.edges ?? {}).length);
-  routeResult();
-  const currentGap = spec.layout?.elementGap ?? 56;
-  if (spec.type !== "usecase" && crowdingPass < 2 && currentGap < 110 && hasCrowdedRoutes(result, currentGap)) {
-    return renderGraphWithSpacing({ ...requestedSpec, layout: {
-      ...requestedSpec.layout,
-      elementGap: Math.ceil(currentGap * 1.35),
-      regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.3)
-    } }, suppliedTheme, labelPass, crowdingPass + 1);
+  let labels = [];
+  if (cached) {
+    if (!hasManualPositions) {
+      result.routes = cached.routes.map((route) => ({ ref: edges[route.edge], paths: clonePaths(route.paths) }));
+      labels = cached.labels.map(({ edge, anchor, ...label2 }) => ({ ...label2, anchor: { ...anchor }, ref: edges[edge] }));
+    }
+  } else {
+    const retry = baseline && { key: baseline.key };
+    routeResult();
+    const currentGap = spec.layout?.elementGap ?? 56;
+    if (spec.type !== "usecase" && crowdingPass < 2 && currentGap < 110 && hasCrowdedRoutes(result, currentGap)) {
+      return renderGraphWithSpacing({ ...requestedSpec, layout: {
+        ...requestedSpec.layout,
+        elementGap: Math.ceil(currentGap * 1.35),
+        regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.3)
+      } }, suppliedTheme, labelPass, crowdingPass + 1, retry);
+    }
+    const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
+    if (!baselineLabels) {
+      return renderGraphWithSpacing({ ...requestedSpec, layout: {
+        ...requestedSpec.layout,
+        elementGap: Math.ceil((spec.layout?.elementGap ?? 56) * 1.45),
+        regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.45)
+      } }, suppliedTheme, labelPass + 1, crowdingPass, retry);
+    }
+    if (baseline) storeBaseline(baseline.key, snapshotBaseline(result, edges, baselineLabels, labelPass || crowdingPass ? { elementGap: requestedSpec.layout?.elementGap, regionGap: requestedSpec.layout?.regionGap } : void 0));
+    labels = baselineLabels;
   }
-  const baselineLabels = placeLabels(result.routes, result.nodes, result.containers, direction, labelPass >= 4);
-  if (!baselineLabels) {
-    return renderGraphWithSpacing({ ...requestedSpec, layout: {
-      ...requestedSpec.layout,
-      elementGap: Math.ceil((spec.layout?.elementGap ?? 56) * 1.45),
-      regionGap: Math.ceil((spec.layout?.regionGap ?? 84) * 1.45)
-    } }, suppliedTheme, labelPass + 1, crowdingPass);
-  }
-  let labels = baselineLabels;
   if (hasManualPositions) {
-    applyManualElements(result, spec, direction);
+    applyManualElements(result, spec, direction, edges, theme.fontSize);
     routeResult(manual);
     labels = placeLabels(result.routes, result.nodes, result.containers, direction, true);
   }
@@ -2734,7 +3263,7 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
     const dashed = label2.ref.edge.dashed || ["dependency", "include", "extend", "realization"].includes(kind);
     const labelColor = dashed && palette && secondaryEdgeColor ? darkBackground ? mix(theme.secondary, "#ffffff", 0.35) : mix(theme.secondary, "#0f172a", 0.24) : theme.text;
     const leader = label2.leader ? `<path class="uml-label-leader" d="M${numeric(label2.anchor.x)} ${numeric(label2.anchor.y)} L${numeric(Math.max(label2.x, Math.min(label2.x + label2.width, label2.anchor.x)))} ${numeric(Math.max(label2.y, Math.min(label2.y + label2.height, label2.anchor.y)))}" fill="none" stroke="${esc(theme.muted)}" stroke-width="1" stroke-dasharray="3 3"/>` : "";
-    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label2.ref.key)}/${label2.role}" data-layout-x="${numeric(label2.x)}" data-layout-y="${numeric(label2.y)}" data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="4" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: labelColor, weight: 550 })}</g>`;
+    return `<g class="uml-edge-label" data-adjustment-key="edge-labels/${esc(label2.ref.key)}/${label2.role}" data-layout-x="${numeric(label2.x)}" data-layout-y="${numeric(label2.y)}"${layoutCenterMetadata(spec, `edge-labels/${label2.ref.key}/${label2.role}`, label2)} data-editor-key="edges/${spec.edges.indexOf(label2.ref.edge)}" data-edge-id="${esc(label2.ref.edge.id ?? label2.ref.id)}" data-from="${esc(label2.ref.edge.from)}" data-to="${esc(label2.ref.edge.to)}" data-label-role="${label2.role}">${leader}<rect x="${numeric(label2.x)}" y="${numeric(label2.y)}" width="${numeric(label2.width)}" height="${numeric(label2.height)}" rx="4" fill="${esc(theme.background === "transparent" ? theme.surface : theme.background)}"/>${text(label2.x + label2.width / 2, label2.y + 5 + label2.size, label2.value, theme, { size: label2.size, fill: labelColor, weight: 550 })}</g>`;
   }).join("");
   let minX = 0, minY = 0, maxX = result.width, maxY = result.height;
   for (const box of [...result.nodes, ...result.containers, ...labels]) {
@@ -2771,19 +3300,41 @@ async function renderGraphWithSpacing(spec, suppliedTheme, labelPass, crowdingPa
 var SpecialPositions = class {
   constructor(spec) {
     this.spec = spec;
+    const adjustments2 = spec.layout?.adjustments;
+    this.adjusted = !!(Object.keys(adjustments2?.elements ?? {}).length || Object.keys(adjustments2?.edges ?? {}).length);
   }
   minX = 0;
   minY = 0;
   maxX = 0;
   maxY = 0;
-  at(key, x, y) {
+  /** Offset from each element's anchor (x, y) to its visual centre. */
+  centers = /* @__PURE__ */ new Map();
+  adjusted;
+  /** `ox/oy` lead from the anchor to the element's visual centre, which `{cx, cy}` pins. */
+  at(key, x, y, ox = 0, oy = 0) {
+    this.centers.set(key, { ox, oy });
     const adjustment = this.spec.layout?.adjustments?.elements?.[key];
-    const nx = adjustment && "x" in adjustment ? adjustment.x : x + (adjustment?.dx ?? 0);
-    const ny = adjustment && "y" in adjustment ? adjustment.y : y + (adjustment?.dy ?? 0);
+    let nx = x, ny = y;
+    if (adjustment && "cx" in adjustment) {
+      nx = adjustment.cx - ox;
+      ny = adjustment.cy - oy;
+    } else if (adjustment && "x" in adjustment) {
+      nx = adjustment.x;
+      ny = adjustment.y;
+    } else if (adjustment) {
+      nx = x + adjustment.dx;
+      ny = y + adjustment.dy;
+    }
     return { x: nx, y: ny, dx: nx - x, dy: ny - y };
   }
   attrs(key, x, y) {
-    return `data-adjustment-key="${esc(key)}" data-layout-x="${x}" data-layout-y="${y}"`;
+    const base2 = `data-adjustment-key="${esc(key)}" data-layout-x="${x}" data-layout-y="${y}"`;
+    if (!this.adjusted) return base2;
+    const center = this.centers.get(key) ?? { ox: 0, oy: 0 };
+    const adjustment = this.spec.layout?.adjustments?.elements?.[key];
+    const pinned = !!adjustment && ("cx" in adjustment || "x" in adjustment);
+    const round = (value) => String(Math.round(value * 1e3) / 1e3);
+    return `${base2} data-layout-cx="${round(x + center.ox)}" data-layout-cy="${round(y + center.oy)}"${pinned ? ' data-pinned="true"' : ""}`;
   }
   include(x, y, width, height) {
     this.minX = Math.min(this.minX, x - 16);
@@ -2904,7 +3455,7 @@ function renderSequence(spec, theme) {
   );
   const paints = participants.map((p, i) => palette ? paintFor(theme, palette, boxes.length && palette.by !== "node" && boxOf.has(p.id) ? boxOf.get(p.id) : i) : void 0);
   const x = new Map(
-    participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top).x])
+    participants.map((p, i) => [p.id, positions.at(`participants/${p.id}`, 70 + participantWidth / 2 + i * column, top, 0, boxHeight / 2).x])
   );
   const ys = [];
   const rowLines = [], labelTops = [];
@@ -3026,7 +3577,14 @@ function renderSequence(spec, theme) {
   const messagePositions = messages.map((message, index) => {
     const sx = x.get(message.from) ?? 70, tx = x.get(message.to) ?? sx;
     const anchor = isEvent(message) ? events[index].left : message.from === message.to ? sx + 18 : (sx + tx) / 2;
-    const position = positions.at(`messages/${index}`, anchor, ys[index]);
+    const event = isEvent(message) ? events[index] : void 0;
+    const position = positions.at(
+      `messages/${index}`,
+      anchor,
+      ys[index],
+      event ? event.width / 2 : 0,
+      event ? event.top + event.height / 2 - ys[index] : 0
+    );
     ys[index] = position.y;
     labelTops[index] = labelTops[index] + position.dy;
     return position;
@@ -3041,7 +3599,7 @@ function renderSequence(spec, theme) {
   });
   const headerY = (p) => {
     const original = createAt.has(p.id) ? ys[createAt.get(p.id)] - boxHeight / 2 : top;
-    return positions.at(`participants/${p.id}`, 0, original).y;
+    return positions.at(`participants/${p.id}`, 0, original, 0, boxHeight / 2).y;
   };
   const stroke = esc(theme.primary);
   const secondaryStroke = esc(theme.secondary);
@@ -3072,7 +3630,7 @@ function renderSequence(spec, theme) {
   for (const box of frames) {
     const { fragment, left, right, top: frameTop, bottom: frameBottom } = box;
     const index = spec.fragments.indexOf(fragment), key = `fragments/${index}`;
-    const position = positions.at(key, left, frameTop);
+    const position = positions.at(key, left, frameTop, (right - left) / 2, (frameBottom - frameTop) / 2);
     const attrs = `${positions.attrs(key, position.x, position.y)} transform="translate(${position.dx} ${position.dy})"`;
     positions.include(position.x, position.y, right - left, frameBottom - frameTop);
     if (fragment.kind === "rect") {
@@ -3431,7 +3989,7 @@ function renderFishbone(spec, theme) {
       const categoryHeight = categoryLines.length * (size + 1) * 1.4 + 20;
       const baseCategoryY = upper ? baseOuterY - categoryHeight : baseOuterY;
       const categoryKey = `fishbone/categories/${item.category.id}`;
-      const categoryPosition = positions.at(categoryKey, baseTipX - categoryWidth / 2, baseCategoryY);
+      const categoryPosition = positions.at(categoryKey, baseTipX - categoryWidth / 2, baseCategoryY, categoryWidth / 2, categoryHeight / 2);
       const tipX = baseTipX + categoryPosition.dx;
       const categoryY = baseCategoryY + categoryPosition.dy;
       const outerY = baseOuterY + categoryPosition.dy;
@@ -3453,7 +4011,9 @@ function renderFishbone(spec, theme) {
       const rowPositions = item.rows.map((row) => positions.at(
         `fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf("/causes/") + 1)}`,
         left + 12 + row.depth * 26 + categoryPosition.dx,
-        (upper ? baseOuterY : spineY) + 35 + row.offset + row.height / 2 + categoryPosition.dy
+        (upper ? baseOuterY : spineY) + 35 + row.offset + row.height / 2 + categoryPosition.dy,
+        Math.max(0, ...row.lines.map((value) => measure2(value, size))) / 2,
+        0
       ));
       item.rows.forEach((row, ri) => {
         const causeKey = `fishbone/categories/${item.category.id}/${row.path.slice(row.path.indexOf("/causes/") + 1)}`;
@@ -3510,7 +4070,7 @@ function renderFishbone(spec, theme) {
     left += colWidth + regionGap;
   }
   const headY = spineY - headHeight / 2;
-  const headPosition = positions.at("fishbone/effect", headX, headY);
+  const headPosition = positions.at("fishbone/effect", headX, headY, headWidth / 2, headHeight / 2);
   positions.include(headPosition.x, headPosition.y - headHeight * 0.15, headWidth, headHeight * 1.3);
   if (headPosition.dx || headPosition.dy) body += line(
     classicHead ? headX + 28 : headX + headWidth * 0.15,

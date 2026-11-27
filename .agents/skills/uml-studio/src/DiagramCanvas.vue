@@ -1,8 +1,24 @@
+<script lang="ts">
+export type LayoutBox = { left: number; top: number; right: number; bottom: number };
+/** cx/cy: new absolute centre in layout-root coordinates; dx/dy kept for compatibility. */
+export interface ElementMove {
+  key: string; cx: number; cy: number; dx: number; dy: number;
+  /** false when the start centre was estimated from geometry (unadjusted render without data-layout-cx). */
+  exact: boolean;
+  /** Followers of a container drag with their new centres. */
+  members?: { key: string; cx: number; cy: number }[];
+}
+/** One adjustable element of the current render, in layout-root coordinates. */
+export interface LayoutItem { key: string; box: LayoutBox; center: { x: number; y: number }; exact: boolean; pinned: boolean; container: boolean; groupId?: string; laneId?: string;
+  /** Renderer's exact box top-left (data-layout-x/y), the `{x, y}` pin of this element. */
+  origin?: { x: number; y: number } }
+export interface LayoutSnapshot { items: LayoutItem[]; bounds?: LayoutBox; viewport?: LayoutBox }
+</script>
+
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, watch } from 'vue';
+import { computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, watch } from 'vue';
 import { renderDiagram } from './render';
 import { resolveTheme } from './themes';
-import { validateSpec } from './validate';
 import { createHtml, exportSvgImage } from './export';
 import type { StudioRuntime } from './export';
 import type { DiagramSpec, ExportOptions, RenderedDiagram } from './types';
@@ -20,7 +36,7 @@ const emit = defineEmits<{
   selectionChange: [keys: string[]];
   requestDelete: [keys: string[]];
   connectNodes: [nodes: { from: string; to: string }];
-  adjustElement: [change: { key: string; dx: number; dy: number }];
+  adjustElement: [change: ElementMove];
   adjustWaypoints: [change: { key: string; waypoints: { x: number; y: number }[] }];
 }>();
 const diagram = shallowRef<RenderedDiagram>();
@@ -46,7 +62,7 @@ const selectedPoint = ref(-1);
 const selectedWaypoints = computed(() => applied.value?.layout?.adjustments?.edges?.[selectedEdge.value]?.waypoints ?? []);
 const supportsWaypoints = computed(() => props.spec.type !== 'sequence' && props.spec.type !== 'fishbone');
 type PositionPoint = { x: number; y: number };
-let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number; preview?: DragPreview } | undefined;
+let positionDrag: { pointerId: number; origin: PositionPoint; clientX: number; clientY: number; moved: boolean; key: string; element?: SVGGraphicsElement; originalTransform?: string | null; pointIndex?: number; points?: PositionPoint[]; dx: number; dy: number; preview?: DragPreview; center?: PositionPoint } | undefined;
 let pan: { pointerId: number; x: number; y: number; left: number; top: number; target?: Element; moved: boolean; marquee?: Marquee } | undefined;
 interface Marquee { active: boolean; rightButton: boolean; startX: number; startY: number; x: number; y: number }
 // Retain the completed right-drag flag until its contextmenu (which may follow pointerup).
@@ -58,6 +74,7 @@ function canvasContextMenu(event: MouseEvent): void {
   suppressContextMenu = false;
 }
 let request = 0;
+const instance = getCurrentInstance();
 let zoomRequest = 0;
 let observer: ResizeObserver | undefined;
 let firstRender = true;
@@ -73,19 +90,34 @@ async function setSpec(input: DiagramSpec): Promise<void> {
   failure.value = '';
   emit('loading', true);
   try {
-    const candidate = structuredClone(validateSpec(toRaw(input)));
+    // renderDiagram() validates the same object; a second validateSpec pass here was redundant.
+    const candidate = structuredClone(toRaw(input));
     const rendered = await renderDiagram(candidate);
     if (ticket !== request) return;
+    const anchor = pendingAnchor;
+    pendingAnchor = undefined;
+    // The new SVG replaces any live drag growth; reset before the single re-render.
+    frameState = undefined;
+    grow.value = zeroBox;
+    shift.value = { x: 0, y: 0 };
+    if (artboard.value) artboard.value.style.translate = '';
     diagram.value = rendered;
     applied.value = candidate;
     await nextTick();
     if (ticket !== request) return;
+    if (anchor) {
+      // Keep the dropped element where the pointer released it, even if the canvas grew left/up.
+      const screen = layoutToScreen(anchor.layout);
+      if (screen && stage.value) { stage.value.scrollLeft += screen.x - anchor.screen.x; stage.value.scrollTop += screen.y - anchor.screen.y; }
+    }
     refreshPositionHandles();
     refreshSelectionOverlay();
-    emit('rendered', rendered, structuredClone(candidate));
+    // Clone for listeners only; Studio does not listen, so large specs are not copied per render.
+    if (instance?.vnode.props?.onRendered) emit('rendered', rendered, structuredClone(candidate));
     if (firstRender) { firstRender = false; resolveReady(); }
   } catch (reason) {
     if (ticket !== request) return;
+    pendingAnchor = undefined;
     const error = reason instanceof Error ? reason : new Error(String(reason));
     failure.value = error.message;
     emit('error', error);
@@ -116,7 +148,7 @@ async function setZoom(value: number, anchor?: { x: number; y: number }): Promis
   const viewportRect = viewport.getBoundingClientRect();
   const point = anchor ?? { x: viewportRect.left + viewport.clientWidth / 2, y: viewportRect.top + viewport.clientHeight / 2 };
   const before = board.getBoundingClientRect();
-  const oldScale = before.width / diagram.value.width;
+  const oldScale = zoomValue.value;
   const localX = (point.x - before.left) / oldScale;
   const localY = (point.y - before.top) / oldScale;
   const ticket = ++zoomRequest;
@@ -252,10 +284,10 @@ function currentSelectionKeys(): string[] {
   if (selectedEdge.value && selectedEdgeKey.value) return [selectedEdgeKey.value];
   return [...(props.selectedKeys ?? [])];
 }
-type Box = { left: number; top: number; right: number; bottom: number };
-type Moved = { element: SVGGraphicsElement; transform: string | null; factor: number };
+type Box = LayoutBox;
+type Moved = { element: SVGGraphicsElement; transform: string | null; factor: number; box?: Box };
 type LiveEdge = { group: SVGGraphicsElement; originals: SVGPathElement[]; preview: SVGPathElement; start: PositionPoint; end: PositionPoint; startVertical: boolean; endVertical: boolean; moveStart: boolean; moveEnd: boolean };
-interface DragPreview { moved: Moved[]; edges: LiveEdge[]; box?: Box; candidates: Box[]; extent?: Box; threshold: number; guides?: SVGGElement }
+interface DragPreview { moved: Moved[]; edges: LiveEdge[]; box?: Box; candidates: Box[]; extent?: Box; threshold: number; guides?: SVGGElement; centers: Map<string, PositionPoint> }
 const svgNamespace = 'http://www.w3.org/2000/svg';
 function layoutBox(element: Element, inverse = layoutRoot()?.getScreenCTM()?.inverse()): Box | undefined {
   if (!inverse) return;
@@ -264,6 +296,50 @@ function layoutBox(element: Element, inverse = layoutRoot()?.getScreenCTM()?.inv
   const a = new DOMPoint(rect.left, rect.top).matrixTransform(inverse);
   const b = new DOMPoint(rect.right, rect.bottom).matrixTransform(inverse);
   return { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), right: Math.max(a.x, b.x), bottom: Math.max(a.y, b.y) };
+}
+function unionBox(a: Box | undefined, b: Box): Box {
+  return a ? { left: Math.min(a.left, b.left), top: Math.min(a.top, b.top), right: Math.max(a.right, b.right), bottom: Math.max(a.bottom, b.bottom) } : { ...b };
+}
+/** Geometry box (getBBox, transformed into layout-root coordinates); excludes stroke and is zoom independent. */
+function geometryBox(element: SVGGraphicsElement, inverse: DOMMatrix): Box | undefined {
+  let bbox: DOMRect;
+  try { bbox = element.getBBox(); } catch { return; }
+  const matrix = element.getScreenCTM();
+  if (!matrix || (!bbox.width && !bbox.height)) return;
+  const local = inverse.multiply(matrix);
+  const corners = [[bbox.x, bbox.y], [bbox.x + bbox.width, bbox.y], [bbox.x, bbox.y + bbox.height], [bbox.x + bbox.width, bbox.y + bbox.height]]
+    .map(([x, y]) => new DOMPoint(x, y).matrixTransform(local));
+  return { left: Math.min(...corners.map(p => p.x)), top: Math.min(...corners.map(p => p.y)), right: Math.max(...corners.map(p => p.x)), bottom: Math.max(...corners.map(p => p.y)) };
+}
+/** Rendered centre: the renderer's data-layout-cx/cy when present, else the geometry box centre. */
+function elementCenter(element: SVGGraphicsElement, inverse: DOMMatrix): PositionPoint | undefined {
+  const cx = element.getAttribute('data-layout-cx'), cy = element.getAttribute('data-layout-cy');
+  if (cx !== null && cy !== null && Number.isFinite(Number(cx)) && Number.isFinite(Number(cy))) return { x: Number(cx), y: Number(cy) };
+  // Unadjusted renders carry no centre metadata (byte-stable output): estimate the renderer's
+  // box centre from geometry. Edge labels include a leader line, so measure their label plate.
+  const plate = element.matches('.uml-edge-label') ? element.querySelector<SVGGraphicsElement>(':scope > rect') : null;
+  const box = geometryBox(plate ?? element, inverse);
+  if (!box) return;
+  const centre = { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2 };
+  const kind = element.matches('.uml-node') ? [...element.classList].find(name => name.startsWith('uml-node-'))?.slice(9) : undefined;
+  const layout = applied.value?.layout;
+  if ((kind === 'start' || kind === 'end' || kind === 'fork' || kind === 'join') && !layout?.nodeMaxWidth && !layout?.nodeMaxHeight) {
+    // The caption sits outside the node box; the symbol itself spans the box.
+    const symbol = [...element.children].find(child => child.tagName === 'circle' || child.tagName === 'rect') as SVGGraphicsElement | undefined;
+    const shape = symbol && geometryBox(symbol, inverse);
+    if (shape) return { x: (shape.left + shape.right) / 2, y: (shape.top + shape.bottom) / 2 };
+  }
+  if (kind === 'actor') {
+    // Label content is centred in the box area below the 88-unit stick figure:
+    // label centre = top + 88 + (height - 88) / 2, so the box centre is 44 units above it.
+    let label: Box | undefined;
+    for (const child of element.children) if (child.tagName === 'text') { const value = geometryBox(child as SVGGraphicsElement, inverse); if (value) label = unionBox(label, value); }
+    if (label) return { x: centre.x, y: (label.top + label.bottom) / 2 - 44 };
+  }
+  return centre;
+}
+function hasExactCenter(element: Element): boolean {
+  return element.hasAttribute('data-layout-cx') && element.hasAttribute('data-layout-cy');
 }
 function descendantGroups(id: string): Set<string> {
   const groups = applied.value?.groups ?? [];
@@ -294,13 +370,23 @@ function createPreview(element: SVGGraphicsElement, key: string, clientX: number
       if (node) nodeIds.add(node);
     });
   }
-  const moved: Moved[] = [...moving].map(item => ({ element: item, transform: item.getAttribute('transform'), factor: 1 }));
+  const inverse = layoutRoot()?.getScreenCTM()?.inverse();
+  const centers = new Map<string, PositionPoint>();
+  const moved: Moved[] = [...moving].map(item => {
+    const itemKey = item.getAttribute('data-adjustment-key');
+    // Container drags also pin the followers, so the committed layout matches the preview.
+    if (inverse && itemKey && (itemKey === key || /^(nodes|groups|lanes)\//.test(itemKey)) && !centers.has(itemKey)) {
+      const center = elementCenter(item, inverse);
+      if (center) centers.set(itemKey, center);
+    }
+    return { element: item, transform: item.getAttribute('transform'), factor: 1, box: layoutBox(item, inverse) };
+  });
   const edges: LiveEdge[] = [];
   if (nodeIds.size) {
     board.querySelectorAll<SVGGraphicsElement>('[data-waypoint-key]').forEach(group => {
       const moveStart = nodeIds.has(group.getAttribute('data-from') ?? ''), moveEnd = nodeIds.has(group.getAttribute('data-to') ?? '');
       if (!moveStart && !moveEnd) return;
-      if (moveStart && moveEnd) { moved.push({ element: group, transform: group.getAttribute('transform'), factor: 1 }); return; }
+      if (moveStart && moveEnd) { moved.push({ element: group, transform: group.getAttribute('transform'), factor: 1, box: layoutBox(group, inverse) }); return; }
       const originals = [...group.querySelectorAll<SVGPathElement>('path:not(.canvas-edge-hit):not(.canvas-live-edge)')];
       const first = originals[0], last = originals[originals.length - 1];
       if (!first || !last) return;
@@ -320,7 +406,7 @@ function createPreview(element: SVGGraphicsElement, key: string, clientX: number
     });
     board.querySelectorAll<SVGGraphicsElement>('.uml-edge-label[data-adjustment-key]').forEach(label => {
       const a = nodeIds.has(label.getAttribute('data-from') ?? ''), b = nodeIds.has(label.getAttribute('data-to') ?? '');
-      if ((a || b) && !moving.has(label)) moved.push({ element: label, transform: label.getAttribute('transform'), factor: a && b ? 1 : 0.5 });
+      if ((a || b) && !moving.has(label)) moved.push({ element: label, transform: label.getAttribute('transform'), factor: a && b ? 1 : 0.5, box: layoutBox(label, inverse) });
     });
   }
   const box = layoutBox(element);
@@ -333,7 +419,7 @@ function createPreview(element: SVGGraphicsElement, key: string, clientX: number
   const all = box ? [box, ...candidates] : candidates;
   const extent = all.length ? { left: Math.min(...all.map(b => b.left)), top: Math.min(...all.map(b => b.top)), right: Math.max(...all.map(b => b.right)), bottom: Math.max(...all.map(b => b.bottom)) } : undefined;
   const a = layoutPoint(clientX, clientY), b = layoutPoint(clientX + 6, clientY);
-  return { moved, edges, box, candidates, extent, threshold: a && b ? Math.abs(b.x - a.x) : 6 };
+  return { moved, edges, box, candidates, extent, threshold: a && b ? Math.abs(b.x - a.x) : 6, centers };
 }
 function snapAxis(delta: number, own: number[], targets: number[], threshold: number): { delta: number; at?: number } {
   let best: { diff: number; at: number } | undefined;
@@ -398,6 +484,145 @@ function restorePreview(drag: NonNullable<typeof positionDrag>): void {
     else drag.element.setAttribute('transform', drag.originalTransform);
   }
 }
+/* ---------- Live canvas growth while dragging ---------- */
+// The rendered SVG clips at its viewBox, so a drag past the edge temporarily widens the
+// viewBox, the svg size and the frame() background rect; scrolling (or, when the artboard
+// cannot scroll, a CSS translate) compensates so the layout root never moves on screen.
+const zeroBox: Box = { left: 0, top: 0, right: 0, bottom: 0 };
+/** Extra artboard size in physical (unzoomed) px. */
+const grow = shallowRef<Box>(zeroBox);
+const shift = shallowRef<PositionPoint>({ x: 0, y: 0 });
+interface FrameState {
+  svg: SVGSVGElement; background?: SVGRectElement; viewBox: [number, number, number, number]; ratio: number;
+  /** layout-root -> svg user units */
+  toSvg: DOMMatrix; original: [string, string | null][]; backgroundOriginal: [string, string | null][]; applied: Box;
+}
+let frameState: FrameState | undefined;
+/** After a committed drag, keep this layout point at the same screen position across the re-render. */
+let pendingAnchor: { layout: PositionPoint; screen: PositionPoint } | undefined;
+function rootOrigin(): PositionPoint | undefined {
+  const matrix = layoutRoot()?.getScreenCTM();
+  return matrix ? { x: matrix.e, y: matrix.f } : undefined;
+}
+function layoutToScreen(point: PositionPoint): PositionPoint | undefined {
+  const matrix = layoutRoot()?.getScreenCTM();
+  if (!matrix) return;
+  const value = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+  return { x: value.x, y: value.y };
+}
+function captureFrame(): FrameState | undefined {
+  if (frameState) return frameState;
+  const svg = artboard.value?.querySelector<SVGSVGElement>('.canvas-svg > svg');
+  const root = layoutRoot();
+  const box = svg?.viewBox.baseVal;
+  const svgMatrix = svg?.getScreenCTM(), rootMatrix = root?.getScreenCTM();
+  if (!svg || !root || !box || !box.width || !box.height || !svgMatrix || !rootMatrix || !diagram.value) return;
+  // frame() emits the background as the first direct <rect> child spanning the whole viewBox.
+  const first = [...svg.children].find(child => child.tagName.toLowerCase() === 'rect') as SVGRectElement | undefined;
+  const background = first && !first.hasAttribute('x') && !first.hasAttribute('y') && Number(first.getAttribute('width')) === box.width && Number(first.getAttribute('height')) === box.height ? first : undefined;
+  const names = ['viewBox', 'width', 'height'], backgroundNames = ['x', 'y', 'width', 'height'];
+  frameState = {
+    svg, background, viewBox: [box.x, box.y, box.width, box.height], ratio: diagram.value.width / box.width,
+    toSvg: svgMatrix.inverse().multiply(rootMatrix),
+    original: names.map(name => [name, svg.getAttribute(name)]),
+    backgroundOriginal: background ? backgroundNames.map(name => [name, background.getAttribute(name)]) : [],
+    applied: zeroBox,
+  };
+  return frameState;
+}
+function writeArtboardSize(): void {
+  const board = artboard.value, view = diagram.value;
+  if (!board || !view) return;
+  const g = grow.value, width = view.width + g.left + g.right, height = view.height + g.top + g.bottom;
+  board.style.width = `${width * zoomValue.value}px`;
+  board.style.height = `${height * zoomValue.value}px`;
+  board.style.translate = shift.value.x || shift.value.y ? `${shift.value.x}px ${shift.value.y}px` : '';
+  const inner = board.querySelector<HTMLElement>('.canvas-svg');
+  if (inner) { inner.style.width = `${width}px`; inner.style.height = `${height}px`; }
+}
+/** Keep the layout root fixed on screen after a size change measured from `before`. */
+function compensate(before: PositionPoint | undefined, allowShift: boolean): void {
+  const viewport = stage.value;
+  const after = rootOrigin();
+  if (!viewport || !before || !after) return;
+  if (Math.abs(after.x - before.x) > 0.01) viewport.scrollLeft += after.x - before.x;
+  if (Math.abs(after.y - before.y) > 0.01) viewport.scrollTop += after.y - before.y;
+  if (!allowShift) return;
+  const final = rootOrigin()!;
+  const rx = final.x - before.x, ry = final.y - before.y;
+  if (Math.abs(rx) < 0.01 && Math.abs(ry) < 0.01) return;
+  shift.value = { x: shift.value.x - rx, y: shift.value.y - ry };
+  writeArtboardSize();
+}
+/** Grow the canvas (svg user units beyond each viewBox edge). */
+function setGrow(need: Box): void {
+  const state = frameState;
+  if (!state || !state.svg.isConnected) return;
+  const same = (a: Box, b: Box) => Math.abs(a.left - b.left) < 0.5 && Math.abs(a.top - b.top) < 0.5 && Math.abs(a.right - b.right) < 0.5 && Math.abs(a.bottom - b.bottom) < 0.5;
+  if (same(need, state.applied)) return;
+  const before = rootOrigin();
+  state.applied = need;
+  const [x, y, w, h] = state.viewBox;
+  const nx = x - need.left, ny = y - need.top, nw = w + need.left + need.right, nh = h + need.top + need.bottom;
+  const round = (value: number) => String(Math.round(value * 1000) / 1000);
+  state.svg.setAttribute('viewBox', `${round(nx)} ${round(ny)} ${round(nw)} ${round(nh)}`);
+  state.svg.setAttribute('width', round(nw * state.ratio));
+  state.svg.setAttribute('height', round(nh * state.ratio));
+  if (state.background) {
+    state.background.setAttribute('x', round(nx));
+    state.background.setAttribute('y', round(ny));
+    state.background.setAttribute('width', round(nw));
+    state.background.setAttribute('height', round(nh));
+  }
+  grow.value = { left: need.left * state.ratio, top: need.top * state.ratio, right: need.right * state.ratio, bottom: need.bottom * state.ratio };
+  writeArtboardSize();
+  compensate(before, true);
+}
+/** Undo the live growth; `keepView` scrolls so the content stays put. */
+function resetFrame(keepView: boolean): void {
+  const state = frameState;
+  frameState = undefined;
+  if (!state) return;
+  const before = keepView ? rootOrigin() : undefined;
+  if (state.svg.isConnected) {
+    for (const [name, value] of state.original) value === null ? state.svg.removeAttribute(name) : state.svg.setAttribute(name, value);
+    for (const [name, value] of state.backgroundOriginal) value === null ? state.background!.removeAttribute(name) : state.background!.setAttribute(name, value);
+  }
+  grow.value = zeroBox;
+  shift.value = { x: 0, y: 0 };
+  writeArtboardSize();
+  if (keepView) compensate(before, false);
+}
+/** Required growth for the current drag preview (moved boxes + live edges + a margin). */
+function updateGrow(drag: NonNullable<typeof positionDrag>): void {
+  const state = captureFrame();
+  if (!state) return;
+  let bounds: Box | undefined;
+  const preview = drag.preview;
+  if (preview) {
+    for (const item of preview.moved) if (item.box) {
+      const dx = drag.dx * item.factor, dy = drag.dy * item.factor;
+      bounds = unionBox(bounds, { left: item.box.left + dx, top: item.box.top + dy, right: item.box.right + dx, bottom: item.box.bottom + dy });
+    }
+    for (const edge of preview.edges) for (const [point, moves] of [[edge.start, edge.moveStart], [edge.end, edge.moveEnd]] as const) {
+      const x = point.x + (moves ? drag.dx : 0), y = point.y + (moves ? drag.dy : 0);
+      bounds = unionBox(bounds, { left: x, top: y, right: x, bottom: y });
+    }
+  } else if (drag.pointIndex !== undefined && drag.points) {
+    const point = drag.points[drag.pointIndex]!;
+    const x = point.x + drag.dx, y = point.y + drag.dy;
+    bounds = { left: x - 8, top: y - 8, right: x + 8, bottom: y + 8 };
+  }
+  if (!bounds) return;
+  const pad = 24;
+  const corners = [[bounds.left - pad, bounds.top - pad], [bounds.right + pad, bounds.bottom + pad]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(state.toSvg));
+  const [x, y, w, h] = state.viewBox;
+  const ceil = (value: number) => Math.max(0, Math.ceil(value));
+  setGrow({
+    left: ceil(x - Math.min(corners[0]!.x, corners[1]!.x)), top: ceil(y - Math.min(corners[0]!.y, corners[1]!.y)),
+    right: ceil(Math.max(corners[0]!.x, corners[1]!.x) - (x + w)), bottom: ceil(Math.max(corners[0]!.y, corners[1]!.y) - (y + h)),
+  });
+}
 function beginPositionDrag(event: PointerEvent): boolean {
   if (!editingEnabled.value || pending.value || !(event.target instanceof Element)) return false;
   const handle = event.target.closest<SVGCircleElement>('[data-waypoint-index]');
@@ -413,7 +638,8 @@ function beginPositionDrag(event: PointerEvent): boolean {
     refreshPositionHandles();
   } else if (element) {
     const key = element.getAttribute('data-adjustment-key')!;
-    positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key, element, originalTransform: element.getAttribute('transform'), dx: 0, dy: 0 };
+    const inverse = layoutRoot()?.getScreenCTM()?.inverse();
+    positionDrag = { pointerId: event.pointerId, origin, clientX: event.clientX, clientY: event.clientY, moved: false, key, element, originalTransform: element.getAttribute('transform'), dx: 0, dy: 0, center: inverse && elementCenter(element, inverse) };
   }
   dragging.value = true;
   event.preventDefault();
@@ -449,6 +675,7 @@ function flushPositionDrag(): void {
     circle?.setAttribute('cx', String(original.x + drag.dx));
     circle?.setAttribute('cy', String(original.y + drag.dy));
   }
+  updateGrow(drag);
 }
 function movePositionDrag(event: PointerEvent): boolean {
   if (!positionDrag || event.pointerId !== positionDrag.pointerId) return false;
@@ -466,9 +693,10 @@ function finishPositionDrag(event?: PointerEvent): boolean {
   const clicked = event?.type === 'pointerup' && !drag.moved;
   positionDrag = undefined;
   dragging.value = false;
-  // A committed move keeps its preview until the new layout replaces the SVG, avoiding a snap-back.
+  // A committed move keeps its preview (and live canvas growth) until the new layout replaces the SVG, avoiding a snap-back.
   if (commit && drag.element) drag.preview?.guides?.remove();
   else restorePreview(drag);
+  if (!commit) resetFrame(true);
   if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
   if (clicked && drag.pointIndex === undefined && drag.element && selectMode.value) {
     const key = drag.element.getAttribute('data-editor-key') ?? drag.element.closest('[data-editor-key]')?.getAttribute('data-editor-key');
@@ -478,11 +706,71 @@ function finishPositionDrag(event?: PointerEvent): boolean {
     if (drag.pointIndex !== undefined && drag.points) {
       const points = drag.points;
       points[drag.pointIndex] = { x: points[drag.pointIndex]!.x + drag.dx, y: points[drag.pointIndex]!.y + drag.dy };
+      pendingAnchor = anchorFor(points[drag.pointIndex]!);
       emit('adjustWaypoints', { key: drag.key, waypoints: points });
-    } else emit('adjustElement', { key: drag.key, dx: drag.dx, dy: drag.dy });
+    } else {
+      const round = (value: number) => Math.round(value * 100) / 100;
+      clearPinnedOverlap(drag);
+      const center = drag.preview?.centers.get(drag.key) ?? drag.center;
+      if (center) {
+        const cx = round(center.x + drag.dx), cy = round(center.y + drag.dy);
+        const members = [...(drag.preview?.centers ?? [])].filter(([key]) => key !== drag.key)
+          .map(([key, point]) => ({ key, cx: round(point.x + drag.dx), cy: round(point.y + drag.dy) }));
+        pendingAnchor = anchorFor({ x: cx, y: cy });
+        emit('adjustElement', { key: drag.key, cx, cy, dx: drag.dx, dy: drag.dy, exact: !!drag.element && hasExactCenter(drag.element), ...(members.length ? { members } : {}) });
+      } else { restorePreview(drag); resetFrame(true); }
+    }
   }
   refreshPositionHandles();
   return true;
+}
+/**
+ * Pinned nodes are placed exactly, so a drop onto one would leave two pinned boxes overlapping
+ * (and routing between them failing). Push the dropped node further along the drag direction
+ * until it clears every other pinned node by 16 units.
+ */
+function clearPinnedOverlap(drag: NonNullable<typeof positionDrag>): void {
+  const preview = drag.preview, box = preview?.box;
+  const length = Math.hypot(drag.dx, drag.dy);
+  if (!preview || !box || !drag.key.startsWith('nodes/') || length < 0.5) return;
+  const inverse = layoutRoot()?.getScreenCTM()?.inverse();
+  if (!inverse) return;
+  const moving = new Set(preview.moved.map(item => item.element));
+  const obstacles: Box[] = [];
+  artboard.value?.querySelectorAll<SVGGraphicsElement>('[data-adjustment-key^="nodes/"][data-pinned="true"]').forEach(element => {
+    if (moving.has(element)) return;
+    const value = layoutBox(element, inverse);
+    if (value) obstacles.push(value);
+  });
+  const gap = 16;
+  const hits = (dx: number, dy: number) => obstacles.some(other => box.left + dx < other.right + gap && box.right + dx > other.left - gap
+    && box.top + dy < other.bottom + gap && box.bottom + dy > other.top - gap);
+  if (!obstacles.length || !hits(drag.dx, drag.dy)) return;
+  const ux = drag.dx / length, uy = drag.dy / length;
+  for (let step = 4; step <= 4000; step += 4) {
+    const dx = drag.dx + ux * step, dy = drag.dy + uy * step;
+    if (hits(dx, dy)) continue;
+    drag.dx = Math.round(dx * 100) / 100;
+    drag.dy = Math.round(dy * 100) / 100;
+    applyPreview(drag, drag.dx, drag.dy);
+    updateGrow(drag);
+    return;
+  }
+}
+/** Drop the uncommitted drag preview / live growth and show the last successful render again. */
+function restoreRendered(): void {
+  finishPositionDrag();
+  pendingAnchor = undefined;
+  resetFrame(true);
+  const inner = artboard.value?.querySelector<HTMLElement>('.canvas-svg');
+  // v-html does not re-patch an unchanged string, so re-insert the last good SVG directly.
+  if (inner && diagram.value) inner.innerHTML = diagram.value.svg;
+  refreshPositionHandles();
+  refreshSelectionOverlay();
+}
+function anchorFor(point: PositionPoint): typeof pendingAnchor {
+  const screen = layoutToScreen(point);
+  return screen && { layout: { ...point }, screen };
 }
 function addWaypoint(event: MouseEvent): void {
   if (!editingEnabled.value || pending.value || !(event.target instanceof Element) || event.target.closest('[data-waypoint-index]')) return;
@@ -677,7 +965,11 @@ function measureStage(): void {
   availableWidth.value = Math.max(1, viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
   availableHeight.value = Math.max(1, viewport.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom));
 }
-watch(() => props.spec, value => { void setSpec(value).catch(() => {}); }, { immediate: true, deep: true });
+// Deep: library consumers may mutate a reactive spec in place. Studio passes a constant initial
+// spec and drives renders through setSpec(), so this fires once there.
+watch(() => props.spec, value => {
+  void setSpec(value).catch(() => {});
+}, { immediate: true, deep: true });
 watch(() => [props.positionEditing, props.interactionMode], () => {
   finishPositionDrag(); endPan(); clearWaypointEdge(); clearConnectSource();
 });
@@ -700,7 +992,42 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointerup', endPan);
   window.removeEventListener('pointercancel', endPan);
 });
-defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
+/** Rendered geometry of every adjustable element (layout-root coordinates) plus the visible viewport. */
+function layoutSnapshot(): LayoutSnapshot | undefined {
+  const root = layoutRoot(), board = artboard.value, viewport = stage.value;
+  const inverse = root?.getScreenCTM()?.inverse();
+  if (!root || !board || !inverse) return;
+  const items: LayoutItem[] = [];
+  let bounds: Box | undefined;
+  board.querySelectorAll<SVGGraphicsElement>('[data-adjustment-key]').forEach(element => {
+    if (element.closest('[data-position-handles], [data-selection-overlay]')) return;
+    const key = element.getAttribute('data-adjustment-key')!;
+    const box = geometryBox(element, inverse);
+    const center = box && elementCenter(element, inverse);
+    if (!box || !center) return;
+    const container = element.classList.contains('uml-container');
+    const node = element.matches('.uml-node') ? element : element.querySelector('.uml-node');
+    const source = container ? element : node;
+    const originX = Number(element.getAttribute('data-layout-x') ?? NaN), originY = Number(element.getAttribute('data-layout-y') ?? NaN);
+    items.push({ key, box, center, exact: hasExactCenter(element), pinned: element.getAttribute('data-pinned') === 'true', container,
+      groupId: source?.getAttribute('data-group-id') ?? undefined, laneId: source?.getAttribute('data-lane-id') ?? undefined,
+      ...(Number.isFinite(originX) && Number.isFinite(originY) ? { origin: { x: originX, y: originY } } : {}) });
+    bounds = unionBox(bounds, box);
+  });
+  board.querySelectorAll<SVGGraphicsElement>('[data-waypoint-key]').forEach(edge => {
+    const box = geometryBox(edge, inverse);
+    if (box) bounds = unionBox(bounds, box);
+  });
+  let view: Box | undefined;
+  if (viewport) {
+    const rect = viewport.getBoundingClientRect();
+    const a = new DOMPoint(rect.left, rect.top).matrixTransform(inverse);
+    const b = new DOMPoint(rect.left + viewport.clientWidth, rect.top + viewport.clientHeight).matrixTransform(inverse);
+    view = { left: Math.min(a.x, b.x), top: Math.min(a.y, b.y), right: Math.max(a.x, b.x), bottom: Math.max(a.y, b.y) };
+  }
+  return { items, bounds, viewport: view };
+}
+defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml, layoutSnapshot, restoreRendered });
 </script>
 
 <template>
@@ -730,8 +1057,8 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml });
       </div>
     </div>
     <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': selectMode, 'is-position-editing': editingEnabled, 'is-connect-mode': connectMode }" tabindex="0" :aria-label="connectMode ? '连线模式，依次点击两个节点创建连线' : '选择画布，单击选中元素，拖动调整位置，空白处右键拖动或 Shift+左键拖动框选，双击连线添加途经点，滚轮缩放'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @contextmenu="canvasContextMenu" @keydown="positionKeydown">
-      <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${diagram.width * zoomValue}px`, height: `${diagram.height * zoomValue}px` }">
-        <div class="canvas-svg" :style="{ width: `${diagram.width}px`, height: `${diagram.height}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
+      <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${(diagram.width + grow.left + grow.right) * zoomValue}px`, height: `${(diagram.height + grow.top + grow.bottom) * zoomValue}px`, translate: shift.x || shift.y ? `${shift.x}px ${shift.y}px` : '' }">
+        <div class="canvas-svg" :style="{ width: `${diagram.width + grow.left + grow.right}px`, height: `${diagram.height + grow.top + grow.bottom}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>
       <div v-else class="canvas-empty"><svg class="loading-ring" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 1 1-9 9" /></svg><strong>{{ failure ? '暂时无法绘制图表' : '正在整理你的想法…' }}</strong><p>{{ failure || '布局引擎正在安排每一个节点与连接。' }}</p></div>
       <div v-if="marqueeBox" class="canvas-marquee" :style="{ left: `${marqueeBox.left}px`, top: `${marqueeBox.top}px`, width: `${marqueeBox.width}px`, height: `${marqueeBox.height}px` }"></div>

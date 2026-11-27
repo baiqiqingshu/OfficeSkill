@@ -26,7 +26,14 @@ const adjustmentMap = (values: unknown) => ({
   type: 'object', propertyNames: { type: 'string', minLength: 1, pattern: '^[A-Za-z0-9_./:-]+$' }, additionalProperties: values,
 })
 const adjustments = object({
-  elements: adjustmentMap({ oneOf: [object({ dx: coordinate, dy: coordinate }, ['dx', 'dy']), point] }),
+  elements: {
+    ...adjustmentMap({ oneOf: [
+      { ...object({ cx: coordinate, cy: coordinate }, ['cx', 'cy']), description: '推荐：元素视觉中心的绝对坐标（图内逻辑坐标，即 [data-layout-root] 坐标系），元素被固定；其余元素自动布局并避让。' },
+      { ...object({ dx: coordinate, dy: coordinate }, ['dx', 'dy']), description: '兼容旧格式：相对自动布局位置的偏移，随自动布局漂移。' },
+      { ...point, description: '兼容旧格式：元素左上角（时序/鱼骨为渲染锚点）的绝对坐标，元素被固定。' },
+    ] }),
+    description: '元素位置调整，键如 nodes/<id>、groups/<id>、lanes/<id>、edge-labels/<edgeKey>/<main|from|to>、participants/<id>、messages/<index>、fragments/<index>、fishbone/effect、fishbone/categories/<id>。',
+  },
   edges: adjustmentMap(object({ waypoints: array(point) }, ['waypoints'])),
 })
 const layout = object({

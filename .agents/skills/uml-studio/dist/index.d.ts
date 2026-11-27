@@ -21,27 +21,70 @@ import StudioRuntime = __Uml_0_export_d_ts.StudioRuntime;
 import DiagramSpec = __Core.DiagramSpec;
 import ExportOptions = __Core.ExportOptions;
 import RenderedDiagram = __Core.RenderedDiagram;
-export type __VLS_Props = {
+export type LayoutBox = {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+};
+/** cx/cy: new absolute centre in layout-root coordinates; dx/dy kept for compatibility. */
+export interface ElementMove {
+    key: string;
+    cx: number;
+    cy: number;
+    dx: number;
+    dy: number;
+    /** false when the start centre was estimated from geometry (unadjusted render without data-layout-cx). */
+    exact: boolean;
+    /** Followers of a container drag with their new centres. */
+    members?: {
+        key: string;
+        cx: number;
+        cy: number;
+    }[];
+}
+/** One adjustable element of the current render, in layout-root coordinates. */
+export interface LayoutItem {
+    key: string;
+    box: LayoutBox;
+    center: {
+        x: number;
+        y: number;
+    };
+    exact: boolean;
+    pinned: boolean;
+    container: boolean;
+    groupId?: string;
+    laneId?: string;
+    /** Renderer's exact box top-left (data-layout-x/y), the `{x, y}` pin of this element. */
+    origin?: {
+        x: number;
+        y: number;
+    };
+}
+export interface LayoutSnapshot {
+    items: LayoutItem[];
+    bounds?: LayoutBox;
+    viewport?: LayoutBox;
+}
+export const _default: typeof __VLS_export;
+export const __VLS_export: import("vue").DefineComponent<{
     spec: DiagramSpec;
     runtime?: StudioRuntime;
     elementSelection?: boolean;
     positionEditing?: boolean;
-    interactionMode?: 'select' | 'connect';
+    interactionMode?: "select" | "connect";
     selectedKeys?: string[];
     marqueeKeys?: string[];
-};
-export function setSpec(input: DiagramSpec): Promise<void>;
-export function getSpec(): DiagramSpec;
-export function getSvg(): string;
-export function exportImage(options?: ExportOptions): Promise<Blob>;
-export function saveHtml(): string;
-export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
+}, {
     ready: Promise<void>;
-    getSpec: typeof getSpec;
-    setSpec: typeof setSpec;
-    getSvg: typeof getSvg;
-    exportImage: typeof exportImage;
-    saveHtml: typeof saveHtml;
+    getSpec: () => DiagramSpec;
+    setSpec: (input: DiagramSpec) => Promise<void>;
+    getSvg: () => string;
+    exportImage: (options?: ExportOptions) => Promise<Blob>;
+    saveHtml: () => string;
+    layoutSnapshot: () => LayoutSnapshot | undefined;
+    restoreRendered: () => void;
 }, {}, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     rendered: (diagram: RenderedDiagram, spec: DiagramSpec) => any;
     error: (error: Error) => any;
@@ -53,11 +96,7 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
         from: string;
         to: string;
     }) => any;
-    adjustElement: (change: {
-        key: string;
-        dx: number;
-        dy: number;
-    }) => any;
+    adjustElement: (change: ElementMove) => any;
     adjustWaypoints: (change: {
         key: string;
         waypoints: {
@@ -65,7 +104,15 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
             y: number;
         }[];
     }) => any;
-}, string, import("vue").PublicProps, Readonly<__VLS_Props> & Readonly<{
+}, string, import("vue").PublicProps, Readonly<{
+    spec: DiagramSpec;
+    runtime?: StudioRuntime;
+    elementSelection?: boolean;
+    positionEditing?: boolean;
+    interactionMode?: "select" | "connect";
+    selectedKeys?: string[];
+    marqueeKeys?: string[];
+}> & Readonly<{
     onRendered?: ((diagram: RenderedDiagram, spec: DiagramSpec) => any) | undefined;
     onError?: ((error: Error) => any) | undefined;
     onLoading?: ((loading: boolean) => any) | undefined;
@@ -76,11 +123,7 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
         from: string;
         to: string;
     }) => any) | undefined;
-    onAdjustElement?: ((change: {
-        key: string;
-        dx: number;
-        dy: number;
-    }) => any) | undefined;
+    onAdjustElement?: ((change: ElementMove) => any) | undefined;
     onAdjustWaypoints?: ((change: {
         key: string;
         waypoints: {
@@ -91,7 +134,6 @@ export const __VLS_export: import("vue").DefineComponent<__VLS_Props, {
 }>, {
     interactionMode: "select" | "connect";
 }, {}, {}, {}, string, import("vue").ComponentProvideOptions, false, {}, any>;
-export const _default: typeof __VLS_export;
 }
 
 export import renderDiagram = __Core.renderDiagram;
@@ -167,6 +209,8 @@ export import FishboneHeadStyle = __Core.FishboneHeadStyle;
 export import FishboneData = __Core.FishboneData;
 
 export import DiagramPoint = __Core.DiagramPoint;
+
+export import ElementCenter = __Core.ElementCenter;
 
 export import ElementAdjustment = __Core.ElementAdjustment;
 
