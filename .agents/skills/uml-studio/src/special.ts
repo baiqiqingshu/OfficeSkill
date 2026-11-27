@@ -338,7 +338,8 @@ export function renderSequence(
     return position;
   });
   const bottom = Math.max(cursor + 36, ...ys.map(y => y + messageGap + 36));
-  const height = bottom + 56;
+  // Mirror the top margin: lifelines end 24px above the edge, boxes keep their 20px inset.
+  const height = bottom + (boxes.length ? 40 : 24);
   const createAt = new Map<string, number>();
   const destroyAt = new Map<string, number>();
   messages.forEach((m, i) => {
@@ -578,13 +579,6 @@ export function renderSequence(
       body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
-  body += text(
-    40,
-    height - 18,
-    "实心箭头 同步 / 返回　空心箭头 异步 / 创建　× 生命周期结束",
-    theme,
-    { anchor: "start", size: 12, fill: theme.muted },
-  );
   return positions.finish(theme, width, height, body);
 }
 
@@ -764,7 +758,8 @@ export function renderFishbone(
     ),
   );
   const spineY = header.bottom + topSpan + categoryMargin;
-  const height = spineY + bottomSpan + Math.max(110, categoryMargin + 48);
+  // Lower category boxes sit below bottomSpan; mirror the space reserved above the spine.
+  const height = spineY + bottomSpan + categoryMargin + 24;
   const headX = width - headWidth - 48;
   let body = header.svg;
   body += `<path d="M 96 ${spineY} L 42 ${spineY - 40} Q 52 ${spineY} 42 ${spineY + 40} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth + 1}"/>`;
@@ -902,13 +897,6 @@ export function renderFishbone(
     { size: effectSize, anchor: "middle", weight: 700 },
   );
   body += `</g>`;
-  body += text(
-    40,
-    height - 24,
-    `${data.categories.length} 个原因维度 · 分支逐级展开 · 鱼头表示观察到的结果`,
-    theme,
-    { anchor: "start", size: 11, fill: theme.muted },
-  );
   body += gradientDefs(categoryPaints);
   return positions.finish(theme, width, height, body);
 }

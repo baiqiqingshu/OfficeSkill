@@ -101593,7 +101593,7 @@ function renderSequence(spec, theme) {
     return position;
   });
   const bottom = Math.max(cursor + 36, ...ys.map((y) => y + messageGap + 36));
-  const height = bottom + 56;
+  const height = bottom + (boxes.length ? 40 : 24);
   const createAt = /* @__PURE__ */ new Map();
   const destroyAt = /* @__PURE__ */ new Map();
   messages.forEach((m, i) => {
@@ -101809,13 +101809,6 @@ function renderSequence(spec, theme) {
       body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
-  body += text(
-    40,
-    height - 18,
-    "\u5B9E\u5FC3\u7BAD\u5934 \u540C\u6B65 / \u8FD4\u56DE\u3000\u7A7A\u5FC3\u7BAD\u5934 \u5F02\u6B65 / \u521B\u5EFA\u3000\xD7 \u751F\u547D\u5468\u671F\u7ED3\u675F",
-    theme,
-    { anchor: "start", size: 12, fill: theme.muted }
-  );
   return positions.finish(theme, width, height, body);
 }
 function fishHeadMetrics(style2) {
@@ -101955,7 +101948,7 @@ function renderFishbone(spec, theme) {
     )
   );
   const spineY = header.bottom + topSpan + categoryMargin;
-  const height = spineY + bottomSpan + Math.max(110, categoryMargin + 48);
+  const height = spineY + bottomSpan + categoryMargin + 24;
   const headX = width - headWidth - 48;
   let body = header.svg;
   body += `<path d="M 96 ${spineY} L 42 ${spineY - 40} Q 52 ${spineY} 42 ${spineY + 40} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth + 1}"/>`;
@@ -102099,13 +102092,6 @@ function renderFishbone(spec, theme) {
     { size: effectSize, anchor: "middle", weight: 700 }
   );
   body += `</g>`;
-  body += text(
-    40,
-    height - 24,
-    `${data.categories.length} \u4E2A\u539F\u56E0\u7EF4\u5EA6 \xB7 \u5206\u652F\u9010\u7EA7\u5C55\u5F00 \xB7 \u9C7C\u5934\u8868\u793A\u89C2\u5BDF\u5230\u7684\u7ED3\u679C`,
-    theme,
-    { anchor: "start", size: 11, fill: theme.muted }
-  );
   body += gradientDefs(categoryPaints);
   return positions.finish(theme, width, height, body);
 }

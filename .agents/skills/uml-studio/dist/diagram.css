@@ -248,6 +248,9 @@
 .canvas-stage.is-dragging {
   cursor: move;
 }
+.canvas-stage.is-dragging.is-panning {
+  cursor: grabbing;
+}
 .canvas-position-tools {
   display: flex;
   flex-wrap: wrap;

@@ -101260,7 +101260,7 @@ function renderSequence(spec, theme) {
     return position;
   });
   const bottom = Math.max(cursor + 36, ...ys.map((y) => y + messageGap + 36));
-  const height = bottom + 56;
+  const height = bottom + (boxes.length ? 40 : 24);
   const createAt = /* @__PURE__ */ new Map();
   const destroyAt = /* @__PURE__ */ new Map();
   messages.forEach((m, i) => {
@@ -101476,13 +101476,6 @@ function renderSequence(spec, theme) {
       body += `<path d="M ${tx - 10} ${y - 10} l 20 20 M ${tx - 10} ${y + 10} l 20 -20" stroke="${msgStroke}" stroke-width="${theme.lineWidth + 1}"/>`;
     body += `</g>`;
   });
-  body += text(
-    40,
-    height - 18,
-    "实心箭头 同步 / 返回　空心箭头 异步 / 创建　× 生命周期结束",
-    theme,
-    { anchor: "start", size: 12, fill: theme.muted }
-  );
   return positions.finish(theme, width, height, body);
 }
 function fishHeadMetrics(style2) {
@@ -101622,7 +101615,7 @@ function renderFishbone(spec, theme) {
     )
   );
   const spineY = header.bottom + topSpan + categoryMargin;
-  const height = spineY + bottomSpan + Math.max(110, categoryMargin + 48);
+  const height = spineY + bottomSpan + categoryMargin + 24;
   const headX = width - headWidth - 48;
   let body = header.svg;
   body += `<path d="M 96 ${spineY} L 42 ${spineY - 40} Q 52 ${spineY} 42 ${spineY + 40} Z" fill="${esc(theme.surface)}" stroke="${esc(theme.secondary)}" stroke-width="${theme.lineWidth + 1}"/>`;
@@ -101766,13 +101759,6 @@ function renderFishbone(spec, theme) {
     { size: effectSize, anchor: "middle", weight: 700 }
   );
   body += `</g>`;
-  body += text(
-    40,
-    height - 24,
-    `${data.categories.length} 个原因维度 · 分支逐级展开 · 鱼头表示观察到的结果`,
-    theme,
-    { anchor: "start", size: 11, fill: theme.muted }
-  );
   body += gradientDefs(categoryPaints);
   return positions.finish(theme, width, height, body);
 }
@@ -102033,6 +102019,47 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       event.preventDefault();
       event.stopPropagation();
       suppressContextMenu = false;
+    }
+    let chordPan;
+    const panning = ref$1(false);
+    let suppressClick = false;
+    const isChord = (event) => (event.buttons & 3) === 3;
+    function canvasClick(event) {
+      if (!suppressClick) return;
+      suppressClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    function beginChordPan(event) {
+      const viewport = stage.value;
+      if (!viewport) return;
+      finishPositionDrag();
+      endPan();
+      marqueeBox.value = void 0;
+      chordPan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+      suppressContextMenu = true;
+      suppressClick = true;
+      dragging.value = true;
+      panning.value = true;
+      try {
+        viewport.setPointerCapture(event.pointerId);
+      } catch {
+      }
+      viewport.focus({ preventScroll: true });
+      event.preventDefault();
+    }
+    function endChordPan(event) {
+      const drag = chordPan;
+      if (!drag) return;
+      chordPan = void 0;
+      dragging.value = false;
+      panning.value = false;
+      if (event?.buttons) return;
+      if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
+    }
+    function lostCapture(event) {
+      if (chordPan && stage.value?.hasPointerCapture(event.pointerId)) return;
+      endPan(event);
     }
     let request = 0;
     const instance = getCurrentInstance();
@@ -102871,13 +102898,23 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         clearConnectSource();
       }
     }
+    function overScrollbar(viewport, event) {
+      const rect = viewport.getBoundingClientRect();
+      return event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight;
+    }
     function startPan(event) {
       const viewport = stage.value;
+      if (chordPan) return;
       suppressContextMenu = false;
-      if (!viewport || !diagram.value || pan || positionDrag || !event.isPrimary || event.button !== 0 && event.button !== 2) return;
+      suppressClick = false;
+      if (!viewport || !diagram.value || !event.isPrimary || event.button !== 0 && event.button !== 2) return;
       if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
-      const rect = viewport.getBoundingClientRect();
-      if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
+      if (overScrollbar(viewport, event)) return;
+      if (isChord(event)) {
+        beginChordPan(event);
+        return;
+      }
+      if (pan || positionDrag) return;
       const blank = !(event.target instanceof Element && event.target.closest("[data-editor-key], [data-adjustment-key], [data-waypoint-key], [data-position-handles], .canvas-edge-hit"));
       const rightButton = event.button === 2;
       if (rightButton) {
@@ -102918,6 +102955,21 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       event.preventDefault();
     }
     function movePan(event) {
+      if (chordPan) {
+        if (event.pointerId !== chordPan.pointerId || !stage.value) return;
+        if (!isChord(event)) {
+          endChordPan(event);
+          return;
+        }
+        stage.value.scrollLeft = chordPan.left - (event.clientX - chordPan.x);
+        stage.value.scrollTop = chordPan.top - (event.clientY - chordPan.y);
+        event.preventDefault();
+        return;
+      }
+      if (isChord(event) && stage.value && diagram.value && event.isPrimary && (positionDrag || pan || !overScrollbar(stage.value, event))) {
+        beginChordPan(event);
+        return;
+      }
       if (movePositionDrag(event)) return;
       if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
       const marquee = pan.marquee;
@@ -102940,6 +102992,10 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       stage.value.scrollTop = pan.top - (event.clientY - pan.y);
     }
     function endPan(event) {
+      if (chordPan) {
+        if (!event || event.pointerId === chordPan.pointerId) endChordPan(event);
+        return;
+      }
       if (finishPositionDrag(event)) return;
       if (!pan || event && pan.pointerId !== event.pointerId) return;
       const pointerId = pan.pointerId;
@@ -103187,16 +103243,17 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         createElementVNode("div", {
           ref_key: "stage",
           ref: stage,
-          class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "can-select-elements": selectMode.value, "is-position-editing": editingEnabled.value, "is-connect-mode": connectMode.value }]),
+          class: normalizeClass(["canvas-stage", { "is-dragging": dragging.value, "is-panning": panning.value, "can-select-elements": selectMode.value, "is-position-editing": editingEnabled.value, "is-connect-mode": connectMode.value }]),
           tabindex: "0",
-          "aria-label": connectMode.value ? "连线模式，依次点击两个节点创建连线" : "选择画布，单击选中元素，拖动调整位置，空白处右键拖动或 Shift+左键拖动框选，双击连线添加途经点，滚轮缩放",
+          "aria-label": connectMode.value ? "连线模式，依次点击两个节点创建连线，同时按住左右键拖动可平移视窗" : "选择画布，单击选中元素，拖动调整位置，空白处右键拖动或 Shift+左键拖动框选，同时按住左右键拖动可平移视窗，双击连线添加途经点，滚轮缩放",
           onPointerdown: startPan,
           onPointermove: movePan,
           onPointerup: endPan,
           onPointercancel: endPan,
-          onLostpointercapture: endPan,
+          onLostpointercapture: lostCapture,
           onDblclick: addWaypoint,
           onContextmenu: canvasContextMenu,
+          onClickCapture: canvasClick,
           onKeydown: positionKeydown
         }, [
           diagram.value ? (openBlock(), createElementBlock(
@@ -103278,7 +103335,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           createElementVNode(
             "span",
             null,
-            toDisplayString(connectMode.value ? "依次点击两个节点创建连线 · 滚轮缩放" : "单击选中 · 拖动调整 · 右键拖动框选（或 Shift+左键） · 滚轮缩放"),
+            toDisplayString(connectMode.value ? "依次点击两个节点创建连线 · 左右键同按拖动平移 · 滚轮缩放" : "单击选中 · 拖动调整 · 右键拖动框选（或 Shift+左键） · 左右键同按拖动平移 · 滚轮缩放"),
             1
             /* TEXT */
           ),

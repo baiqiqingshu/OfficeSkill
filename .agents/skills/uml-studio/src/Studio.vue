@@ -3425,7 +3425,7 @@ details[open] > summary .summary-chevron { transform: rotate(0deg); }
 .toast-enter-active, .toast-leave-active { transition: opacity .18s var(--ease), transform .18s var(--ease); }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%,-8px); }
 /* 画布去框：无卡片外框，状态徽标与缩放控件浮在画布上。 */
-.studio-shell .diagram-canvas { position: relative; height: 100%; min-height: 560px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink); }
+.studio-shell .diagram-canvas { position: relative; height: calc(100vh - 92px); min-height: 560px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--ink); }
 .studio-shell .canvas-toolbar { position: absolute; z-index: 7; top: 12px; right: 14px; left: auto; min-height: 0; height: auto; padding: 0; background: transparent; border: 0; flex-wrap: nowrap; gap: 6px; pointer-events: none; }
 .studio-shell .canvas-toolbar > * { pointer-events: auto; }
 .studio-shell .canvas-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; background: rgb(255 255 255 / .85); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: var(--r-pill); box-shadow: var(--shadow-md); color: var(--muted); font-size: 11px; white-space: nowrap; }

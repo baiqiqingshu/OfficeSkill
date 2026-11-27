@@ -73,6 +73,53 @@ function canvasContextMenu(event: MouseEvent): void {
   event.stopPropagation();
   suppressContextMenu = false;
 }
+/**
+ * Left+right held together pans the viewport. The second button of a chord arrives as a
+ * pointermove (same pointerId) whose `buttons` is 3, not as a new pointerdown.
+ */
+let chordPan: { pointerId: number; x: number; y: number; left: number; top: number } | undefined;
+const panning = ref(false);
+// A click may still follow the chord's final button release; it must not select anything.
+let suppressClick = false;
+const isChord = (event: PointerEvent): boolean => (event.buttons & 3) === 3;
+function canvasClick(event: MouseEvent): void {
+  if (!suppressClick) return;
+  suppressClick = false;
+  event.preventDefault();
+  event.stopPropagation();
+}
+function beginChordPan(event: PointerEvent): void {
+  const viewport = stage.value;
+  if (!viewport) return;
+  // Like Esc: drop an element drag without committing, and discard any (un)armed marquee.
+  finishPositionDrag();
+  endPan();
+  marqueeBox.value = undefined;
+  chordPan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: viewport.scrollLeft, top: viewport.scrollTop };
+  suppressContextMenu = true;
+  suppressClick = true;
+  dragging.value = true;
+  panning.value = true;
+  try { viewport.setPointerCapture(event.pointerId); } catch { /* pointer already gone */ }
+  viewport.focus({ preventScroll: true });
+  event.preventDefault();
+}
+function endChordPan(event?: PointerEvent): void {
+  const drag = chordPan;
+  if (!drag) return;
+  chordPan = undefined;
+  dragging.value = false;
+  panning.value = false;
+  // While the remaining button is held, keep capture so its release (and contextmenu) stays on
+  // the stage; no drag or marquee state is left for it to resume. pointerup releases implicitly.
+  if (event?.buttons) return;
+  if (stage.value?.hasPointerCapture(drag.pointerId)) stage.value.releasePointerCapture(drag.pointerId);
+}
+function lostCapture(event: PointerEvent): void {
+  // beginChordPan() may release and immediately re-take capture from an aborted drag.
+  if (chordPan && stage.value?.hasPointerCapture(event.pointerId)) return;
+  endPan(event);
+}
 let request = 0;
 const instance = getCurrentInstance();
 let zoomRequest = 0;
@@ -869,14 +916,21 @@ function pickConnectNode(element: Element): void {
     clearConnectSource();
   }
 }
+function overScrollbar(viewport: HTMLElement, event: PointerEvent): boolean {
+  const rect = viewport.getBoundingClientRect();
+  return event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight;
+}
 function startPan(event: PointerEvent): void {
   const viewport = stage.value;
+  if (chordPan) return;
   suppressContextMenu = false;
-  if (!viewport || !diagram.value || pan || positionDrag || !event.isPrimary || (event.button !== 0 && event.button !== 2)) return;
+  suppressClick = false;
+  if (!viewport || !diagram.value || !event.isPrimary || (event.button !== 0 && event.button !== 2)) return;
   if (event.target instanceof Element && event.target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]')) return;
-  const rect = viewport.getBoundingClientRect();
   // Leave the native scrollbars draggable rather than capturing their pointer.
-  if (event.clientX - rect.left >= viewport.clientWidth || event.clientY - rect.top >= viewport.clientHeight) return;
+  if (overScrollbar(viewport, event)) return;
+  if (isChord(event)) { beginChordPan(event); return; }
+  if (pan || positionDrag) return;
   const blank = !(event.target instanceof Element && event.target.closest('[data-editor-key], [data-adjustment-key], [data-waypoint-key], [data-position-handles], .canvas-edge-hit'));
   const rightButton = event.button === 2;
   if (rightButton) {
@@ -910,6 +964,17 @@ function startPan(event: PointerEvent): void {
   event.preventDefault();
 }
 function movePan(event: PointerEvent): void {
+  if (chordPan) {
+    if (event.pointerId !== chordPan.pointerId || !stage.value) return;
+    // Releasing either button ends the pan (pointerup only follows the last release).
+    if (!isChord(event)) { endChordPan(event); return; }
+    stage.value.scrollLeft = chordPan.left - (event.clientX - chordPan.x);
+    stage.value.scrollTop = chordPan.top - (event.clientY - chordPan.y);
+    event.preventDefault();
+    return;
+  }
+  if (isChord(event) && stage.value && diagram.value && event.isPrimary
+    && (positionDrag || pan || !overScrollbar(stage.value, event))) { beginChordPan(event); return; }
   if (movePositionDrag(event)) return;
   if (!pan || pan.pointerId !== event.pointerId || !stage.value) return;
   const marquee = pan.marquee;
@@ -931,6 +996,10 @@ function movePan(event: PointerEvent): void {
   stage.value.scrollTop = pan.top - (event.clientY - pan.y);
 }
 function endPan(event?: PointerEvent): void {
+  if (chordPan) {
+    if (!event || event.pointerId === chordPan.pointerId) endChordPan(event);
+    return;
+  }
   if (finishPositionDrag(event)) return;
   if (!pan || (event && pan.pointerId !== event.pointerId)) return;
   const pointerId = pan.pointerId;
@@ -1056,7 +1125,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml, layoutSna
         <button type="button" :disabled="!selectedWaypoints.length || pending" @click="clearWaypoints">清空此连线途经点</button>
       </div>
     </div>
-    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'can-select-elements': selectMode, 'is-position-editing': editingEnabled, 'is-connect-mode': connectMode }" tabindex="0" :aria-label="connectMode ? '连线模式，依次点击两个节点创建连线' : '选择画布，单击选中元素，拖动调整位置，空白处右键拖动或 Shift+左键拖动框选，双击连线添加途经点，滚轮缩放'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="endPan" @dblclick="addWaypoint" @contextmenu="canvasContextMenu" @keydown="positionKeydown">
+    <div ref="stage" class="canvas-stage" :class="{ 'is-dragging': dragging, 'is-panning': panning, 'can-select-elements': selectMode, 'is-position-editing': editingEnabled, 'is-connect-mode': connectMode }" tabindex="0" :aria-label="connectMode ? '连线模式，依次点击两个节点创建连线，同时按住左右键拖动可平移视窗' : '选择画布，单击选中元素，拖动调整位置，空白处右键拖动或 Shift+左键拖动框选，同时按住左右键拖动可平移视窗，双击连线添加途经点，滚轮缩放'" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @lostpointercapture="lostCapture" @dblclick="addWaypoint" @contextmenu="canvasContextMenu" @click.capture="canvasClick" @keydown="positionKeydown">
       <div v-if="diagram" ref="artboard" class="canvas-artboard" :class="{ 'is-transparent': transparent }" :style="{ width: `${(diagram.width + grow.left + grow.right) * zoomValue}px`, height: `${(diagram.height + grow.top + grow.bottom) * zoomValue}px`, translate: shift.x || shift.y ? `${shift.x}px ${shift.y}px` : '' }">
         <div class="canvas-svg" :style="{ width: `${diagram.width + grow.left + grow.right}px`, height: `${diagram.height + grow.top + grow.bottom}px`, transform: `scale(${zoomValue})` }" v-html="diagram.svg"></div>
       </div>
@@ -1064,7 +1133,7 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml, layoutSna
       <div v-if="marqueeBox" class="canvas-marquee" :style="{ left: `${marqueeBox.left}px`, top: `${marqueeBox.top}px`, width: `${marqueeBox.width}px`, height: `${marqueeBox.height}px` }"></div>
     </div>
     <div v-if="failure && diagram" class="canvas-error" role="status">未替换当前图表：{{ failure }}</div>
-    <div class="canvas-footer"><span>{{ connectMode ? '依次点击两个节点创建连线 · 滚轮缩放' : '单击选中 · 拖动调整 · 右键拖动框选（或 Shift+左键） · 滚轮缩放' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
+    <div class="canvas-footer"><span>{{ connectMode ? '依次点击两个节点创建连线 · 左右键同按拖动平移 · 滚轮缩放' : '单击选中 · 拖动调整 · 右键拖动框选（或 Shift+左键） · 左右键同按拖动平移 · 滚轮缩放' }}</span><span>{{ zoom === 'fit' ? '自适应' : '手动缩放' }}</span></div>
   </section>
 </template>
 
@@ -1317,6 +1386,9 @@ defineExpose({ ready, getSpec, setSpec, getSvg, exportImage, saveHtml, layoutSna
 }
 .canvas-stage.is-dragging {
   cursor: move;
+}
+.canvas-stage.is-dragging.is-panning {
+  cursor: grabbing;
 }
 .canvas-position-tools {
   display: flex;
