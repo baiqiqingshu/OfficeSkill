@@ -21,3 +21,6 @@ playwright-report/
 .webtest/
 
 skills_hub/
+
+# 本地安装的设计技能（不入库）
+.agents/skills/huashu-design/
