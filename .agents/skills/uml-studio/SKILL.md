@@ -3,7 +3,7 @@ name: uml-studio
 description: 根据结构化 JSON 绘制 UML 活动图、时序图、泳道图、流程图、用例图、类图、状态图、组件图、包图，以及系统架构、功能模块、部署、4+1 视图和鱼骨图。输出可离线编辑的 HTML 或 SVG、PNG、JPEG、WebP 图片；可直接导入已有 Mermaid（flowchart、sequence、state、class），支持多色与渐变风格；用户要求草稿时先提供可直接修改的 ASCII / Unicode 纯文本图。
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # UML Studio
