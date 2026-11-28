@@ -53,14 +53,14 @@ function geometry(svg) {
       nodes.set(attrs['data-node-id'], { ...layoutBox(shape, { ...box, stroke: +a['stroke-width'] }), outline })
     }
     if (attrs.class?.split(' ').includes('uml-edge')) {
-      const data = props(node.childNodes.find(child => child.tagName === 'path')).d
+      const pathProps = props(node.childNodes.find(child => child.tagName === 'path')), data = pathProps.d
       const points = [], arcs = []
       for (const [, command, raw] of data.matchAll(/([A-Z])([^A-Z]*)/g)) {
         const [x, y] = raw.trim().split(/[ ,]+/).map(Number).slice(-2), point = { x, y }
         if (command === 'A') arcs.push([points.at(-1), point])
         points.push(point)
       }
-      routes.set(attrs['data-edge-id'], { from: attrs['data-from'], to: attrs['data-to'], data, points, arcs, merged: attrs['data-merged'] === 'true' })
+      routes.set(attrs['data-edge-id'], { from: attrs['data-from'], to: attrs['data-to'], data, points, arcs, merged: attrs['data-merged'] === 'true', marker: pathProps['marker-end'] })
     }
   }
   return { nodes, routes }
@@ -225,12 +225,51 @@ test('activity, swimlane, state and flowchart examples keep all diamond endpoint
     const spec = scenarios.find(d => d.type === name)
     const { nodes, routes } = geometry((await renderDiagram({ ...spec, layout: { ...spec.layout, edgeCrossing: 'plain' } })).svg)
     const decisions = new Set(spec.nodes.filter(node => node.kind === 'decision').map(node => node.id))
-    for (const route of routes.values()) for (const [id, point] of [[route.from, route.points[0]], [route.to, route.points.at(-1)]]) {
+    for (const route of routes.values()) for (const [id, point] of [[route.from, route.points[0]], ...(route.merged ? [] : [[route.to, route.points.at(-1)]])]) {
       if (!decisions.has(id)) continue
       const box = nodes.get(id)
       centered(point, box, `${name}/${id}`)
       close(Math.abs(point.x - box.x - box.width / 2) / (box.width / 2)
         + Math.abs(point.y - box.y - box.height / 2) / (box.height / 2), 1, `${name}/${id}`)
+    }
+  }
+})
+
+const corners = points => points.filter((point, i) => {
+  if (!i || i === points.length - 1) return true
+  const a = points[i - 1], b = points[i + 1]
+  return Math.abs((point.x - a.x) * (b.y - point.y) - (point.y - a.y) * (b.x - point.x)) > .03
+})
+const onPolyline = (point, points) => points.some((b, i) => {
+  if (!i) return false
+  const a = points[i - 1]
+  return Math.abs((point.x - a.x) * (b.y - a.y) - (point.y - a.y) * (b.x - a.x)) / Math.max(distance(a, b), 1e-6) < .05
+    && point.x >= Math.min(a.x, b.x) - .05 && point.x <= Math.max(a.x, b.x) + .05
+    && point.y >= Math.min(a.y, b.y) - .05 && point.y <= Math.max(a.y, b.y) + .05
+})
+
+test('merged fan-in branches show no arrowhead and join their trunk clear of its corners and source stem', async () => {
+  const login = JSON.parse(await readFile(new URL('./fixtures/login.json', import.meta.url), 'utf8')).activity
+  const decision = { version: 1, type: 'flowchart', title: 'converge', nodes: [
+    { id: 's', label: '开始', kind: 'start' }, { id: 'in', label: '输入' }, { id: 'ok', label: '校验通过？', kind: 'decision' },
+    { id: 'a', label: '错误 A' }, { id: 'b', label: '错误 B' }, { id: 'c', label: '错误 C' }, { id: 'done', label: '完成', kind: 'end' }],
+  edges: [{ from: 's', to: 'in' }, { from: 'in', to: 'ok' }, { from: 'ok', to: 'a', label: '格式' }, { from: 'ok', to: 'b', label: '权限' }, { from: 'ok', to: 'c', label: '库存' },
+    { from: 'ok', to: 'done', label: '是' }, { from: 'a', to: 'ok' }, { from: 'b', to: 'ok' }, { from: 'c', to: 'ok' }] }
+  const specs = [['login', login], ['login-lr', { ...login, direction: 'LR', layout: { mode: 'compact' } }], ['decision', decision]]
+  for (const [name, spec] of specs) {
+    const { routes } = geometry((await renderDiagram(spec)).svg)
+    const merged = [...routes.values()].filter(route => route.merged)
+    assert.ok(merged.length >= 1, `${name}: expected a fan-in merge`)
+    for (const route of merged) {
+      const context = `${name}: ${route.from} → ${route.to}`
+      assert.equal(route.marker, undefined, `${context}: merged branch must not carry an arrowhead`)
+      const end = route.points.at(-1)
+      const trunk = [...routes.values()].find(other => !other.merged && other.to === route.to && onPolyline(end, other.points))
+      assert.ok(trunk, `${context}: merged end must sit on the trunk of the same target`)
+      assert.ok(trunk.marker, `${context}: the trunk carries the arrowhead`)
+      const bends = corners(trunk.points), stub = bends.length > 2 ? bends.at(-2) : undefined
+      if (stub && distance(stub, end) < .05) continue
+      for (const bend of bends) assert.ok(distance(bend, end) >= 15.9, `${context}: junction hugs a trunk corner or end`)
     }
   }
 })
